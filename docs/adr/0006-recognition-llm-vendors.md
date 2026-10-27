@@ -55,13 +55,16 @@ Notes:
 - Meta Wonder refused 29 of 35 benign questions as "self-harm" and redirected 1 more (for example the bicycle gears question), and its lesson drafts often came back with empty required arrays. At `reasoning_effort: low` it isn't usable with these prompts.
 - The single over-refusal for Spark and GPT-5.4 is the same prompt: `seed-037`, an abstract painting with the question "What is this a picture of?". Redirecting it is reasonable.
 - After seed set 2.0.0 fixed those photos, a recognition-only re-run ([`2026-10-27T16-43-25`](../research/benchmark/2026-10-27T16-43-25.md)) gave Meta Spark 100% top-3 and 92% status-correct (p95 12.1 s), and GPT-5.4-mini 92% and 92% (p95 6.4 s).
-- Lesson accuracy and age fit still need human scoring in the run's rubric CSV.
+- Lessons now teach from first principles (`lesson-p0.2`): the short answer, then steps that derive it, with guesses. A lesson-only re-run ([`2026-10-27T18-44-40`](../research/benchmark/2026-10-27T18-44-40.md), 68 calls, about $0.95) gave:
+  - Meta Spark: 100% contract-valid and 100% deriving the answer, a median of 11 steps and 6 guesses. p50 latency is 17.0 s, up from 8.7 s, because the lessons are longer.
+  - GPT-5.4-mini: 97% valid and 94% deriving the answer, at 12.9 s p50. Two lessons skipped "Put it together", and one cited a claim with no source.
+- Lesson accuracy, age fit and whether the reasoning steps really lead to the answer still need human scoring in the rubric CSV. Use the `lesson-p0.2` rubric, not the earlier one.
 
 ## Decision
 
 1. **Primary: `meta-spark` (`muse-spark-1.3`, Standard mode).**
    - It meets the bar on recognition (92% top-3, against an 85% target), lesson validity (100%, against 90%) and safety (5 of 5 risky prompts).
-   - It writes lessons fastest (8.7 s p50) and costs about 40% of GPT-5.4.
+   - It wrote the old one-block-per-module lessons fastest (8.7 s p50), and step lessons at 17.0 s p50, and costs about 40% of GPT-5.4. Lesson latency needs streaming, or a short answer sent ahead of the steps, before Phase 1.
 2. **Fallback: `openai-mini` (`gpt-5.4-mini`).**
    - It has the best safety score (40 of 40 exact) and the lowest cost, and 97% of its lessons are valid. It's used automatically when Meta errors or times out, behind the same `LlmProvider` interface.
    - GPT-5.4 recognises photos slightly better but takes 39 s to write a lesson, which is too slow for a fallback.
