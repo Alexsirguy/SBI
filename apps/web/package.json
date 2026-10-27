@@ -1,0 +1,23 @@
+{
+  "name": "@sbi/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Next.js client: capture, confirmation, lesson reader, visuals and tutor UI.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  }
+}
