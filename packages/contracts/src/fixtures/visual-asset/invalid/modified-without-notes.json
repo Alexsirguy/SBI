@@ -1,0 +1,15 @@
+{
+  "assetId": "edited_photo",
+  "kind": "data",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Example.jpg",
+  "creator": "Jane Photographer",
+  "assetLicense": { "id": "CC-BY-SA-4.0" },
+  "attribution": "Photo by Jane Photographer, CC BY-SA 4.0",
+  "modified": true,
+  "commercialUse": "allowed",
+  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "format": "jpg",
+  "sizeBytes": 2048,
+  "accessibilityFallback": "Photo of a copper kettle on a stove.",
+  "reviewOwner": "content-ops"
+}

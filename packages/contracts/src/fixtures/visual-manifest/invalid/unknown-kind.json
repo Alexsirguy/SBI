@@ -1,0 +1,6 @@
+{
+  "visualId": "ai_picture",
+  "kind": "generated-image",
+  "alt": "An AI-generated kettle.",
+  "fallback": { "text": "A kettle." }
+}
