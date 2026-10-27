@@ -1,0 +1,29 @@
+{
+  "name": "@sbi/benchmark",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Research benchmark: versioned seed set, provider runs, scoring and feasibility spikes.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "seed:fetch": "tsx scripts/fetch-images.ts",
+    "bench": "tsx scripts/bench.ts",
+    "spikes": "tsx scripts/spikes.ts"
+  },
+  "dependencies": {
+    "@sbi/contracts": "workspace:*",
+    "@sbi/llm": "workspace:*",
+    "@sbi/recognition": "workspace:*",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*",
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "resultId": "0192f1a0-0000-7000-9000-000000000001",
+  "sessionId": "0192f1a0-0000-7000-8000-000000000011",
+  "imageSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "provider": "vision-provider-a",
+  "model": "detector",
+  "modelVersion": "2026-09",
+  "calibrationVersion": "cal-v1",
+  "candidates": [
+    {
+      "taxonomyId": "household.kitchen.kettle",
+      "label": "Electric kettle",
+      "certainty": "likely",
+      "calibratedConfidence": 1.4,
+      "reasons": ["Spout and handle", "Base with power connector"]
+    },
+    {
+      "taxonomyId": "household.kitchen.coffee-pot",
+      "label": "Coffee pot",
+      "certainty": "possible",
+      "calibratedConfidence": 0.11
+    }
+  ],
+  "observations": ["Metal body", "Black plastic handle"],
+  "selectedTaxonomyId": "household.kitchen.kettle",
+  "createdAt": "2026-10-27T10:00:00Z",
+  "deleteBy": "2026-10-28T10:00:00Z"
+}

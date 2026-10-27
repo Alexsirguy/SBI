@@ -16,6 +16,21 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_PUBLIC_API_URL: http://localhost:4000
+      TEST_DATABASE_URL: mysql://sbi:sbi@127.0.0.1:3306/sbi_test
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_USER: sbi
+          MARIADB_PASSWORD: sbi
+          MARIADB_DATABASE: sbi_test
+          MARIADB_ROOT_PASSWORD: sbi-root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v7
 
@@ -38,6 +53,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm --filter @sbi/contracts generate:check
       - run: pnpm build
 
   e2e:

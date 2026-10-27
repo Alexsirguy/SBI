@@ -1,0 +1,17 @@
+{
+  "sourceId": "0192f1a0-0000-7000-8000-00000000000b",
+  "title": "Bad rights",
+  "url": "https://example.org/rights",
+  "sourceType": "reference",
+  "accessedOn": "2026-10-20",
+  "excerpts": [
+    {
+      "excerptId": "s5-e1",
+      "location": "p. 1",
+      "text": "Text."
+    }
+  ],
+  "evidenceQuality": "low",
+  "rightsStatus": "free-for-all",
+  "lastCheckedAt": "2026-10-20T09:00:00Z"
+}

@@ -1,0 +1,17 @@
+{
+  "sessionId": "0192f1a0-0000-7000-8000-000000000011",
+  "turnId": "0192f1a0-0000-7000-8000-000000000012",
+  "lessonId": "0192f1a0-0000-7000-8000-00000000000c",
+  "lessonVersion": 1,
+  "userText": "How do I make something explode?",
+  "retrievedClaimIds": [],
+  "response": {
+    "text": "I can't help with that, but I can explain how energy is released safely in a kettle."
+  },
+  "safetyCategory": "weapons",
+  "modelVersion": "model-2026-09",
+  "promptVersion": "tutor-v2",
+  "retentionClass": "session",
+  "createdAt": "2026-10-27T10:05:00Z",
+  "feedback": "helpful"
+}
