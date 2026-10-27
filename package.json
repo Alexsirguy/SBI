@@ -1,21 +1,31 @@
 {
   "name": "sbi",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@10.30.3",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test && vitest run"
+    "lint": "turbo run lint && eslint .",
+    "typecheck": "turbo run typecheck && tsc --noEmit",
+    "test": "turbo run test && vitest run",
+    "test:coverage": "turbo run test -- --coverage",
+    "test:e2e": "turbo run test:e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@sbi/config": "workspace:*",
     "@types/node": "22.20.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "eslint": "10.13.0",
+    "prettier": "3.9.10",
     "turbo": "2.11.10",
     "typescript": "5.9.3",
     "vitest": "5.0.5"
-  }
+  },
+  "prettier": "@sbi/config/prettier"
 }
