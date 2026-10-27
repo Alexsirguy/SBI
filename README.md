@@ -10,7 +10,7 @@ Requires Node 22 (`nvm use`), pnpm 10 (`corepack enable`) and Docker.
 pnpm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
-docker compose up -d   # Postgres :5432, S3-compatible storage :8333
+docker compose up -d   # MariaDB :3306, S3-compatible storage :8333
 pnpm dev               # web :3000, api :4000
 ```
 

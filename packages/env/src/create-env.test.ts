@@ -10,16 +10,14 @@ const schema = z.object({
 
 describe("createEnv", () => {
   it("parses and coerces valid values", () => {
-    expect(createEnv(schema, { DATABASE_URL: "postgres://localhost/sbi", PORT: "5000" })).toEqual({
-      DATABASE_URL: "postgres://localhost/sbi",
+    expect(createEnv(schema, { DATABASE_URL: "mysql://localhost/sbi", PORT: "5000" })).toEqual({
+      DATABASE_URL: "mysql://localhost/sbi",
       PORT: 5000,
     });
   });
 
   it("treats empty strings as unset so defaults apply", () => {
-    expect(createEnv(schema, { DATABASE_URL: "postgres://localhost/sbi", PORT: "" }).PORT).toBe(
-      4000,
-    );
+    expect(createEnv(schema, { DATABASE_URL: "mysql://localhost/sbi", PORT: "" }).PORT).toBe(4000);
   });
 
   it("fails fast listing every invalid variable", () => {

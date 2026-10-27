@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { loadEnv } from "./env";
 
 const valid = {
-  DATABASE_URL: "postgres://sbi:sbi@localhost:5432/sbi",
+  DATABASE_URL: "mysql://sbi:sbi@localhost:3306/sbi",
   S3_ENDPOINT: "http://localhost:8333",
   S3_REGION: "us-east-1",
   S3_BUCKET: "sbi-media",
