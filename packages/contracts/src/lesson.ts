@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, IsoDateTime, Locale, SafetyClass, Sha256 } from "./common";
+import { Id, IsoDateTime, Locale, SafetyClass, Sha256, Uuid } from "./common";
 import { Claim } from "./evidence";
 import { VisualRef } from "./visual";
 
@@ -42,7 +42,7 @@ export const LessonSection = z.object({
   sectionId: Id,
   module: LessonModule,
   text: Text,
-  claimIds: z.array(Id).default([]),
+  claimIds: z.array(Uuid).default([]),
 });
 
 export const LessonReuse = z.object({
@@ -51,7 +51,7 @@ export const LessonReuse = z.object({
   cacheScope: z.enum(["private", "shared"]),
   generatedAt: IsoDateTime,
   validatedAt: IsoDateTime.optional(),
-  evidenceSnapshotId: Id,
+  evidenceSnapshotId: Uuid,
   sourceFreshness: z.enum(["fresh", "stale", "unknown"]),
   modelVersion: Text,
   promptVersion: Text,
@@ -63,7 +63,7 @@ export const LessonReuse = z.object({
 });
 
 const LessonShape = z.object({
-  lessonId: Id,
+  lessonId: Uuid,
   version: z.int().positive(),
   taxonomyId: Id,
   title: Text,

@@ -1,5 +1,5 @@
 {
-  "sourceId": "s1",
+  "sourceId": "0192f1a0-0000-7000-8000-000000000001",
   "title": "How electric kettles heat water",
   "publisher": "Example Science Museum",
   "url": "https://example.org/kettles",
@@ -12,7 +12,7 @@
       "text": "The heating element converts electrical energy into thermal energy."
     }
   ],
-  "claimIds": ["c1"],
+  "claimIds": ["0192f1a0-0000-7000-8000-000000000005"],
   "evidenceQuality": "high",
   "rightsStatus": "quote-only",
   "lastCheckedAt": "2026-10-20T09:00:00Z"
