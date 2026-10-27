@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { buildApp } from "./app.js";
+import { buildApp } from "./app";
 
 describe("api app", () => {
   const app = buildApp();

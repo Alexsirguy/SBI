@@ -5,15 +5,17 @@
   "description": "API gateway and session service; composes the module packages into routes.",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
     "build": "tsup",
-    "start": "node dist/server.js",
+    "start": "node --env-file-if-exists=.env dist/server.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "fastify": "5.12.7"
+    "@sbi/env": "workspace:*",
+    "fastify": "5.12.7",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@sbi/config": "workspace:*",
