@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { loadSeedSet, SEED_SET_PATH, SeedSet, SteamCategory } from "./seed-set";
+import { loadSeedSet, SEED_SET_PATH, SEED_SET_PATHS, SeedSet, SteamCategory } from "./seed-set";
 
 const set = loadSeedSet();
 const raw = JSON.parse(readFileSync(SEED_SET_PATH, "utf8"));
 const tagged = (tag: string) => set.prompts.filter((prompt) => prompt.tags.includes(tag as never));
 
-describe("seed set v1", () => {
+describe("seed set (latest)", () => {
   it("has at least 30 prompts", () => {
     expect(set.prompts.length).toBeGreaterThanOrEqual(30);
   });
@@ -38,6 +38,18 @@ describe("seed set v1", () => {
       expect(prompt.image?.sha256).toMatch(/^[a-f0-9]{64}$/);
       expect(prompt.image?.rights.license).toBeTruthy();
       expect(prompt.image?.rights.author).toBeTruthy();
+    }
+  });
+
+  it("records a people review for every image and shows no faces", () => {
+    for (const prompt of set.prompts.filter((candidate) => candidate.image)) {
+      expect(prompt.image?.peopleVisible, prompt.id).toMatch(/^(none|hands-only)$/);
+    }
+  });
+
+  it("keeps every released version loadable", () => {
+    for (const [version, path] of Object.entries(SEED_SET_PATHS)) {
+      expect(loadSeedSet(path).version).toBe(version);
     }
   });
 

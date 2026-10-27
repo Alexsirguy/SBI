@@ -3,10 +3,16 @@ import { join } from "node:path";
 import { AudienceBand, Id, IsoDate, Sha256 } from "@sbi/contracts";
 import { z } from "zod";
 
-export const SEED_SET_PATH = join(
-  import.meta.dirname,
-  "../../../docs/research/seed-set/v1/prompts.json",
-);
+const seedSetPath = (dir: string) =>
+  join(import.meta.dirname, `../../../docs/research/seed-set/${dir}/prompts.json`);
+
+// Released versions stay on disk so old runs can be rescored against the set they used.
+export const SEED_SET_PATHS: Record<string, string> = {
+  "1.0.0": seedSetPath("v1"),
+  "2.0.0": seedSetPath("v2"),
+};
+
+export const SEED_SET_PATH = seedSetPath("v2");
 
 export const SteamCategory = z.enum(["maths", "physics", "biology", "chemistry", "arts"]);
 
@@ -38,6 +44,8 @@ export const SeedImage = z.object({
   mime: z.enum(["image/jpeg", "image/png"]),
   sha256: Sha256,
   rights: ImageRights,
+  // Added in 2.0.0 after a photo with a child's face slipped into 1.0.0.
+  peopleVisible: z.enum(["none", "hands-only"]).optional(),
 });
 
 export const SeedPrompt = z.object({

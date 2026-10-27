@@ -7,8 +7,17 @@ Versioned prompts used by the vendor benchmark (E1-6), the feasibility spikes (E
 | Version | Path              | Prompts | Notes                               |
 | ------- | ----------------- | ------- | ----------------------------------- |
 | 1.0.0   | `v1/prompts.json` | 40      | Initial set for Phase 0 (issue #10) |
+| 2.0.0   | `v2/prompts.json` | 40      | Current. Changes are listed below.  |
 
-Never edit a released version in place. Copy it to `v2/`, bump `version`, and update the benchmark to point at it so results stay comparable.
+Changes in 2.0.0, found by the first vendor run:
+
+- `seed-006` (swing): the photo showed a child's face, which breaks the no-faces rule. Replaced with an empty swing seat.
+- `seed-008` (feather): the photo was an illustrated plate. Replaced with a photo of a single feather.
+- `seed-022` (cactus): the photo was a botanical illustration. Replaced with a photo of a golden barrel cactus.
+- `seed-009` (socket): added the alias "electrical outlet".
+- Every image now records `peopleVisible` (`none` or `hands-only`), checked by hand on a contact sheet. A test rejects any other value.
+
+Never edit a released version in place. Copy it to the next `vN/` folder, bump `version`, add it to `SEED_SET_PATHS`, and point `SEED_SET_PATH` at it. Old runs keep scoring against the version they used.
 
 ## What each prompt holds
 
