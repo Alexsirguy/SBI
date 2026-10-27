@@ -18,6 +18,7 @@ Check everything before pushing:
 
 ```sh
 pnpm lint && pnpm typecheck && pnpm test && pnpm format:check
+pnpm test:e2e   # first run: pnpm --filter @sbi/web exec playwright install chromium
 ```
 
 Feature flags are comma lists in `FEATURE_FLAGS` (api) and `NEXT_PUBLIC_FEATURE_FLAGS` (web), e.g. `tutor,!visualLab`. Defaults live in `@sbi/env`.
@@ -42,6 +43,7 @@ Feature flags are comma lists in `FEATURE_FLAGS` (api) and `NEXT_PUBLIC_FEATURE_
 | `packages/analytics`    | Privacy-safe analytics events                                           |
 | `packages/ui`           | Shared accessible React components                                      |
 | `packages/env`          | Typed environment loading and feature flags                             |
+| `packages/testing`      | Shared test utilities and contract fixture validation                   |
 | `packages/config`       | Shared TypeScript/lint configuration                                    |
 
 Each package exposes one public entry, `src/index.ts`. Import packages only through `@sbi/<name>`, never their internals.

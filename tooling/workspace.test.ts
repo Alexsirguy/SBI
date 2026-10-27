@@ -17,6 +17,7 @@ const MODULES = [
   "rights",
   "safety",
   "taxonomy",
+  "testing",
   "tutor",
   "ui",
   "visuals",
