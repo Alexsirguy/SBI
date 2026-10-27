@@ -20,6 +20,14 @@ python3 -m http.server 8765 --directory design/prototype   # then open http://lo
   - The key stays in `sessionStorage` for that tab only. Use a Standard-mode key, never a `-contributor` model.
   - Meta advises against keys in client code, so use live mode only on a facilitator's device, never on a link shared with participants.
 
+## Lessons
+
+Each demo topic (bicycle, kettle, leaf) has all 8 modules at three depths, with claims linked to sources and a one-question concept check before and after the lesson.
+
+- **Prepared lessons:** the demo lessons are written by hand and checked against the cited sources. Every question for a topic leads to the same lesson.
+- **Live lessons:** in live mode, any other object or question gets a lesson written by Meta's model in the same structure. Its safety gate redirects risky questions.
+- **Module order:** the session panel switches between order A (spec order) and B (parts and hands-on first), so the two can be compared.
+
 ## Facilitator mode
 
 Add `?facilitator=1` to the URL to show the **Session** button. In the panel:
