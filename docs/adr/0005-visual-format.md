@@ -40,6 +40,8 @@ Pending. Fill in from `docs/research/usability/e1-5-visual-formats.md`: per form
 
 Revisit point 3 if the sessions show 3D clearly improves comprehension.
 
+Update after first demo feedback: the product owner expected "See it in action" to open a model they could change, not a fixed view. The prototype now has an interactive 3D gear lab that combines points 2 and 3: a code-built model with sliders. It's still loaded only on request. The sessions should test whether it beats the 2D simulation.
+
 ## Consequences
 
 - `@sbi/visuals` needs an SVG renderer and a small simulation kit first; the Three.js renderer can wait.

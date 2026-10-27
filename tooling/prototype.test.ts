@@ -108,8 +108,53 @@ describe("prototype visual lab", () => {
     expect(html).toMatch(/"three": "https:\/\/cdn\.jsdelivr\.net\/npm\/three@\d+\.\d+\.\d+\//);
   });
 
-  it.each(["mountSvg", "mountGlb", "mountSim"])("defines %s", (name) => {
+  it("places live guess answers in code and checks live guesses before they're asked", () => {
+    expect(html).toContain("function placeGuess(");
+    expect(html).toContain("checkLiveGuesses(currentTopic());");
+    expect(html).not.toMatch(/answer as the 0-based index/);
+  });
+
+  it.each([
+    "mountSvg",
+    "mountGlb",
+    "mountSim",
+    "mountLab",
+    "mountGearLab",
+    "mountEngineLab",
+    "mountLeverLab",
+    "mountHeatingLab",
+    "buildDrivetrain",
+  ])("defines %s", (name) => {
     expect(html).toContain(`function ${name}(`);
+  });
+
+  const kit = [...html.matchAll(/^ {8}(\w+): \{\n {10}title: "/gm)].map((match) => match[1]);
+
+  it("offers live lessons exactly the models in the kit", () => {
+    expect(kit).toEqual(["gears", "engine", "lever", "heating"]);
+    expect(html).toContain(
+      `visual: { type: "string", enum: [${[...kit, "none"].map((name) => `"${name}"`).join(", ")}] }`,
+    );
+  });
+
+  it.each([
+    ["bicycle", "gears"],
+    ["kettle", "heating"],
+  ])("opens the %s lesson's %s model from one of its steps", (topic, visual) => {
+    expect(html).toContain('data-action="lab">See it in action');
+    const lesson = demo.topics[topic] as Topic & { visual?: string };
+    expect(lesson.visual).toBe(visual);
+    expect(lesson.steps.some((step) => (step as { visual?: boolean }).visual)).toBe(true);
+  });
+
+  it("states the simplifications behind every model", () => {
+    expect([...html.matchAll(/assumptions:\s+"Simplified: /g)]).toHaveLength(kit.length);
+  });
+
+  it("builds the 3D gears in code when gears.glb can't load", () => {
+    expect(html).toMatch(
+      /catch \{\s*\/\/ Opened from disk[^\n]*\n\s*\(\{ ring, cog \} = buildDrivetrain/,
+    );
   });
 });
 
