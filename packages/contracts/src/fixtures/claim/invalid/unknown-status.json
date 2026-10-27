@@ -1,0 +1,8 @@
+{
+  "claimId": "c4",
+  "text": "Kettles are magic.",
+  "status": "probably",
+  "sourceIds": ["s1"],
+  "scope": "general",
+  "confidence": "low"
+}
