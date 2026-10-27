@@ -95,6 +95,25 @@ importers:
         specifier: workspace:*
         version: link:../config
 
+  packages/benchmark:
+    dependencies:
+      '@sbi/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@sbi/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
+
   packages/config:
     dependencies:
       '@eslint/js':

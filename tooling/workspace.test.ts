@@ -6,6 +6,7 @@ const root = join(import.meta.dirname, "..");
 
 const MODULES = [
   "analytics",
+  "benchmark",
   "config",
   "contracts",
   "db",
