@@ -1,0 +1,310 @@
+{
+  "catalog": {
+    "object.bicycle": [
+      {
+        "id": "gearing",
+        "keywords": [
+          "gear",
+          "gears",
+          "low",
+          "high",
+          "hill",
+          "hills",
+          "uphill",
+          "pedal",
+          "pedalling",
+          "cog",
+          "chain",
+          "easier"
+        ]
+      },
+      { "id": "balance", "keywords": ["fall", "balance", "upright", "stay", "steer", "topple"] },
+      { "id": "brakes", "keywords": ["brake", "brakes", "stop", "stopping"] }
+    ],
+    "object.electric-kettle": [
+      { "id": "bubbles", "keywords": ["bubble", "bubbles", "steam", "vapour"] },
+      { "id": "switch-off", "keywords": ["switch", "off", "turn", "know", "click", "automatic"] },
+      { "id": "boiling-point", "keywords": ["100", "temperature", "degrees", "mountain"] }
+    ],
+    "object.leaf": [
+      {
+        "id": "photosynthesis",
+        "keywords": ["food", "sunlight", "light", "sugar", "energy", "make"]
+      },
+      { "id": "mass", "keywords": ["wood", "heavy", "mass", "soil", "weight"] },
+      { "id": "colour", "keywords": ["green", "colour", "color", "red", "autumn"] }
+    ],
+    "object.magnifying-glass": [
+      { "id": "magnify", "keywords": ["bigger", "larger", "magnify", "zoom", "enlarge"] },
+      { "id": "burn", "keywords": ["burn", "fire", "focus", "hot"] }
+    ],
+    "object.ice-cubes": [
+      { "id": "float", "keywords": ["float", "floats", "sink", "top"] },
+      { "id": "melt", "keywords": ["melt", "melting", "faster", "salt"] }
+    ]
+  },
+  "pairs": [
+    {
+      "note": "seed-001/002 gears, paraphrase",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.bicycle",
+        "question": "Why does a low gear make pedalling uphill easier?",
+        "audience": "child"
+      },
+      "b": {
+        "taxonomyId": "object.bicycle",
+        "question": "How do bike gears help me get up hills?",
+        "audience": "child"
+      }
+    },
+    {
+      "note": "seed-003/004 bubbles, paraphrase",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "What are the bubbles when water boils?",
+        "audience": "teen"
+      },
+      "b": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "Why does water bubble when the kettle boils?",
+        "audience": "teen"
+      }
+    },
+    {
+      "note": "photosynthesis, paraphrase",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.leaf",
+        "question": "How does a leaf make food from sunlight?",
+        "audience": "child"
+      },
+      "b": {
+        "taxonomyId": "object.leaf",
+        "question": "How do plants use light to make their food?",
+        "audience": "child"
+      }
+    },
+    {
+      "note": "kettle switch-off, paraphrase",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "Why does a kettle switch itself off?",
+        "audience": "adult"
+      },
+      "b": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "How does my kettle know when to turn off?",
+        "audience": "adult"
+      }
+    },
+    {
+      "note": "bike balance, paraphrase",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.bicycle",
+        "question": "Why don't I fall over when I'm riding?",
+        "audience": "teen"
+      },
+      "b": {
+        "taxonomyId": "object.bicycle",
+        "question": "How does a moving bike stay upright?",
+        "audience": "teen"
+      }
+    },
+    {
+      "note": "magnifier, paraphrase",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.magnifying-glass",
+        "question": "How does a lens make things look bigger?",
+        "audience": "child"
+      },
+      "b": {
+        "taxonomyId": "object.magnifying-glass",
+        "question": "Why do things look larger through a magnifying glass?",
+        "audience": "child"
+      }
+    },
+    {
+      "note": "ice floats, paraphrase",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.ice-cubes",
+        "question": "Why does ice float in my drink?",
+        "audience": "child"
+      },
+      "b": {
+        "taxonomyId": "object.ice-cubes",
+        "question": "Why doesn't ice sink to the bottom of the glass?",
+        "audience": "child"
+      }
+    },
+    {
+      "note": "tree mass, paraphrase",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.leaf",
+        "question": "Where does a tree's wood come from, the soil?",
+        "audience": "teen"
+      },
+      "b": {
+        "taxonomyId": "object.leaf",
+        "question": "How does a tree get so heavy?",
+        "audience": "teen"
+      }
+    },
+    {
+      "note": "held-out: gears, no shared keywords",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.bicycle",
+        "question": "How do bike gears help me get up hills?",
+        "audience": "adult"
+      },
+      "b": {
+        "taxonomyId": "object.bicycle",
+        "question": "What's the point of all those sprockets at the back?",
+        "audience": "adult"
+      }
+    },
+    {
+      "note": "held-out: steam wording",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "What are the bubbles when water boils?",
+        "audience": "adult"
+      },
+      "b": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "What's actually inside those big blobs rising in my kettle?",
+        "audience": "adult"
+      }
+    },
+    {
+      "note": "same intent, different audience",
+      "sameIntent": true,
+      "a": {
+        "taxonomyId": "object.leaf",
+        "question": "How does a leaf make food from sunlight?",
+        "audience": "child"
+      },
+      "b": {
+        "taxonomyId": "object.leaf",
+        "question": "How does a leaf make food from sunlight?",
+        "audience": "adult"
+      }
+    },
+    {
+      "note": "gears vs balance",
+      "sameIntent": false,
+      "a": {
+        "taxonomyId": "object.bicycle",
+        "question": "How do gears make hills easier?",
+        "audience": "child"
+      },
+      "b": {
+        "taxonomyId": "object.bicycle",
+        "question": "Why don't I fall off my bike?",
+        "audience": "child"
+      }
+    },
+    {
+      "note": "gears vs brakes",
+      "sameIntent": false,
+      "a": {
+        "taxonomyId": "object.bicycle",
+        "question": "Why do low gears help on hills?",
+        "audience": "teen"
+      },
+      "b": {
+        "taxonomyId": "object.bicycle",
+        "question": "How do bike brakes stop the wheel?",
+        "audience": "teen"
+      }
+    },
+    {
+      "note": "bubbles vs switch-off",
+      "sameIntent": false,
+      "a": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "What are the bubbles when water boils?",
+        "audience": "teen"
+      },
+      "b": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "Why does a kettle switch itself off?",
+        "audience": "teen"
+      }
+    },
+    {
+      "note": "bubbles vs boiling point",
+      "sameIntent": false,
+      "a": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "Why does water boil at 100 °C?",
+        "audience": "adult"
+      },
+      "b": {
+        "taxonomyId": "object.electric-kettle",
+        "question": "What are the bubbles in boiling water?",
+        "audience": "adult"
+      }
+    },
+    {
+      "note": "photosynthesis vs colour",
+      "sameIntent": false,
+      "a": {
+        "taxonomyId": "object.leaf",
+        "question": "How does a leaf make food?",
+        "audience": "child"
+      },
+      "b": { "taxonomyId": "object.leaf", "question": "Why are leaves green?", "audience": "child" }
+    },
+    {
+      "note": "photosynthesis vs mass (seed-017/018)",
+      "sameIntent": false,
+      "a": {
+        "taxonomyId": "object.leaf",
+        "question": "How does a leaf make food from sunlight?",
+        "audience": "teen"
+      },
+      "b": {
+        "taxonomyId": "object.leaf",
+        "question": "Where does a tree's wood come from, the soil?",
+        "audience": "teen"
+      }
+    },
+    {
+      "note": "magnify vs burn",
+      "sameIntent": false,
+      "a": {
+        "taxonomyId": "object.magnifying-glass",
+        "question": "How does a lens make things look bigger?",
+        "audience": "teen"
+      },
+      "b": {
+        "taxonomyId": "object.magnifying-glass",
+        "question": "Why can a magnifying glass set paper on fire?",
+        "audience": "teen"
+      }
+    },
+    {
+      "note": "float vs melt",
+      "sameIntent": false,
+      "a": {
+        "taxonomyId": "object.ice-cubes",
+        "question": "Why does ice float in my drink?",
+        "audience": "child"
+      },
+      "b": {
+        "taxonomyId": "object.ice-cubes",
+        "question": "Why does ice melt faster in my hand?",
+        "audience": "child"
+      }
+    }
+  ]
+}
