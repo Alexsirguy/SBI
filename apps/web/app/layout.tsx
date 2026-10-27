@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+// Validates public env at build and startup.
+import "../env";
 
 export const metadata: Metadata = {
   title: "Science Behind It",

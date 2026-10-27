@@ -1,9 +1,11 @@
 {
   "$schema": "https://turborepo.com/schema.json",
+  "cacheDir": ".turbo/cache",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
     },
     "dev": {
       "cache": false,
@@ -11,6 +13,13 @@
     },
     "lint": {},
     "typecheck": {},
-    "test": {}
+    "test": {
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "outputs": ["playwright-report/**", "test-results/**"],
+      "passThroughEnv": ["CI"]
+    }
   }
 }
