@@ -1,0 +1,8 @@
+{
+  "claimId": "c9",
+  "text": "Whether this kettle uses a concealed element is not visible in the photo.",
+  "status": "unsupported",
+  "scope": "this photo",
+  "confidence": "low",
+  "uncertainty": "Internal design varies by model."
+}

@@ -1,0 +1,11 @@
+{
+  "sourceId": "s6",
+  "title": "Ambiguous time",
+  "url": "https://example.org/time",
+  "sourceType": "reference",
+  "accessedOn": "2026-10-20",
+  "excerpts": [{ "excerptId": "s6-e1", "location": "p. 1", "text": "Text." }],
+  "evidenceQuality": "low",
+  "rightsStatus": "unknown",
+  "lastCheckedAt": "2026-10-20 09:00"
+}
