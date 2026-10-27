@@ -1,9 +1,11 @@
 {
-  "assetId": "bad_checksum",
+  "assetId": "0192f1a0-0000-7000-8000-000000000016",
   "kind": "model",
   "sourceUrl": "https://example.org/models/bad",
   "creator": "Example Studio",
-  "assetLicense": { "id": "CC0-1.0" },
+  "assetLicense": {
+    "id": "CC0-1.0"
+  },
   "attribution": "Public domain",
   "modified": false,
   "commercialUse": "allowed",

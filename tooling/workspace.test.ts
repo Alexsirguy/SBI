@@ -8,6 +8,7 @@ const MODULES = [
   "analytics",
   "config",
   "contracts",
+  "db",
   "env",
   "evidence",
   "llm",

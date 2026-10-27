@@ -1,7 +1,7 @@
 {
-  "sessionId": "sess-123",
-  "turnId": "t1",
-  "lessonId": "kettle_heat_transfer_v1",
+  "sessionId": "0192f1a0-0000-7000-8000-000000000011",
+  "turnId": "0192f1a0-0000-7000-8000-000000000012",
+  "lessonId": "0192f1a0-0000-7000-8000-00000000000c",
   "lessonVersion": 1,
   "userText": "How do I make something explode?",
   "retrievedClaimIds": [],

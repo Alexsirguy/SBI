@@ -1,9 +1,11 @@
 {
-  "visualId": "kettle_heat_v1",
+  "visualId": "0192f1a0-0000-7000-8000-00000000000d",
   "kind": "svg-diagram",
   "alt": "Diagram of a kettle: the element at the base heats water, which rises and circulates.",
   "fallback": {
     "text": "The element heats the water at the bottom; warm water rises and cooler water sinks."
   },
-  "params": { "labels": ["Element", "Convection current", "Steam vent"] }
+  "params": {
+    "labels": ["Element", "Convection current", "Steam vent"]
+  }
 }

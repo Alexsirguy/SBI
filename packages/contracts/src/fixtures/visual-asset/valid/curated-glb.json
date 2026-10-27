@@ -1,5 +1,5 @@
 {
-  "assetId": "kettle_cutaway_glb",
+  "assetId": "0192f1a0-0000-7000-8000-000000000017",
   "kind": "model",
   "sourceUrl": "https://example.org/models/kettle",
   "creator": "Example Studio",
@@ -18,5 +18,5 @@
   "accessibilityFallback": "Labelled cutaway diagram of a kettle showing the element at the base.",
   "reviewOwner": "content-ops",
   "reviewDueOn": "2027-04-01",
-  "approvedLessonIds": ["kettle_heat_transfer_v1"]
+  "approvedLessonIds": ["0192f1a0-0000-7000-8000-00000000000c"]
 }

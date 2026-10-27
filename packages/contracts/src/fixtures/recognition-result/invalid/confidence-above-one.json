@@ -1,5 +1,6 @@
 {
-  "sessionId": "sess-123",
+  "resultId": "0192f1a0-0000-7000-9000-000000000001",
+  "sessionId": "0192f1a0-0000-7000-8000-000000000011",
   "imageSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "provider": "vision-provider-a",
   "model": "detector",

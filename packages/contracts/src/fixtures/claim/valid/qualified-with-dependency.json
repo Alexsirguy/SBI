@@ -1,9 +1,9 @@
 {
-  "claimId": "c2",
+  "claimId": "0192f1a0-0000-7000-8000-000000000004",
   "text": "Most kettles switch off when steam reaches a bimetallic strip.",
   "status": "qualified",
-  "sourceIds": ["s1"],
+  "sourceIds": ["0192f1a0-0000-7000-8000-000000000001"],
   "scope": "many electric kettles; some use electronic sensors",
   "confidence": "medium",
-  "dependsOn": ["c1"]
+  "dependsOn": ["0192f1a0-0000-7000-8000-000000000005"]
 }
