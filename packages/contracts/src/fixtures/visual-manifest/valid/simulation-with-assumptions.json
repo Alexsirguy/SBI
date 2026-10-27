@@ -1,0 +1,12 @@
+{
+  "visualId": "lever_sim_v1",
+  "kind": "simulation",
+  "alt": "Interactive lever with adjustable fulcrum position and load.",
+  "longDescription": "Move the fulcrum to see how the effort needed to lift the load changes.",
+  "fallback": {
+    "text": "Moving the fulcrum closer to the load reduces the effort needed.",
+    "stillImageUrl": "https://example.org/lever.png"
+  },
+  "assumptions": ["Rigid, massless beam", "No friction at the fulcrum"],
+  "params": { "loadNewtons": { "min": 1, "max": 100 } }
+}
