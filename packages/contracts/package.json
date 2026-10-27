@@ -10,11 +10,14 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate": "tsx scripts/generate.ts",
+    "generate:check": "tsx scripts/generate.ts --check"
   },
   "devDependencies": {
     "@sbi/config": "workspace:*",
-    "@sbi/testing": "workspace:*"
+    "@sbi/testing": "workspace:*",
+    "tsx": "4.23.15"
   },
   "dependencies": {
     "zod": "4.6.7"

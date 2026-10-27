@@ -1,0 +1,80 @@
+{
+  "$id": "VisualManifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "visualId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "svg-diagram",
+        "canvas-diagram",
+        "gltf-model",
+        "simulation",
+        "molecular"
+      ]
+    },
+    "alt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "longDescription": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fallback": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stillImageUrl": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "assetIds": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+      }
+    },
+    "assumptions": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "params": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "visualId",
+    "kind",
+    "alt",
+    "fallback",
+    "assetIds",
+    "assumptions",
+    "params"
+  ],
+  "additionalProperties": false
+}
