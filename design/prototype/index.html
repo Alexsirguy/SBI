@@ -1926,9 +1926,19 @@
           .join("")}</ul></details>`;
       }
 
+      // A guess is asked only in variant A, until answered, and if the live check hasn't dropped it.
+      const asks = (step, index) =>
+        Boolean(step?.guess) &&
+        !step.guess.dropped &&
+        guessing() &&
+        state.guesses[index] === undefined;
+
       function guessMarkup(guess, index) {
         const choice = state.guesses[index];
-        if (guessing() && choice === undefined) {
+        if (guess.dropped && choice === undefined) {
+          return `<div class="why" id="why-${index}" tabindex="-1"><p>${esc(levelText(guess.why))}</p></div>`;
+        }
+        if (asks({ guess }, index)) {
           return `
             <form class="guess stack" data-action="guess" data-index="${index}">
               <fieldset class="options">
@@ -1962,7 +1972,7 @@
         const answer = step.module === "short-answer";
         const text = esc(levelText(step.text));
         // Evidence can give the guess away, so it waits until the learner has committed.
-        const pending = step.guess && guessing() && state.guesses[index] === undefined;
+        const pending = asks(step, index);
         return `
           <li class="module${answer ? " answer" : ""}" id="s-${index}" data-module="${step.module}">
             <h3>${esc(step.title)}</h3>
@@ -1980,7 +1990,7 @@
       SCREENS.lesson = () => {
         const steps = currentTopic().steps;
         const last = steps[state.shown - 1];
-        const waiting = guessing() && last?.guess && state.guesses[state.shown - 1] === undefined;
+        const waiting = asks(last, state.shown - 1);
         const next = waiting ? null : steps[state.shown];
         return `
           ${backButton("question", "Change question")}
@@ -2203,6 +2213,7 @@
           }
           Object.assign(currentTopic(), toTopic(lesson));
           go("precheck");
+          checkLiveGuesses(currentTopic());
         } catch (error) {
           log("error", { where: "lesson", message: String(error.message).slice(0, 120) });
           go("unsupported", {
@@ -2252,7 +2263,7 @@
         go("nolesson", { requested: label });
       }
 
-      // Diverges from lesson-p0.1 in @sbi/benchmark: steps that derive the answer, tagged with contract modules.
+      // Mirrors lesson-p0.4 in @sbi/benchmark, with all three reading levels and a safety gate.
       const LESSON_SYSTEM = `You write short, accurate science lessons about everyday objects for a learning app used by people aged 8 and up. Lessons teach from first principles: the learner should be able to rebuild the answer from basic truths, not just remember it.
 First decide safety: "allow" for normal curiosity; "redirect" or "refuse" if answering could lead to harm (eating wild plants, medicine doses, mixing chemicals, electricity, weapons) or the question isn't about science. If not "allow", leave other fields minimal and put a kind message for the learner in learnerMessage.
 Write 8 to 12 steps, each tagged with a module from: ${MODULES.join(", ")}. In order:
@@ -2261,9 +2272,13 @@ Write 8 to 12 steps, each tagged with a module from: ${MODULES.join(", ")}. In o
 3. "first-principles", 1-2 steps: basic truths the learner can check or already trusts (e.g. energy isn't created, matter is made of moving particles). Explain any jargon.
 4. "how-parts-work", 2-4 steps: reason from those truths through the object's parts to the answer, one small inference per step. Title the last one "Put it together"; it restates the answer as the conclusion of the chain.
 5. "try-an-idea": a safe experiment that tests the reasoning. 6. "check-thinking": apply the idea to a new situation. 7. "history": how someone first worked it out. 8. "go-further".
-Give most reasoning steps, and the check-thinking step, a guess: a question the learner can work out from the steps so far, 2-3 options, answer as the 0-based index, and why at three levels. guess is null elsewhere.
+Give most reasoning steps, and the check-thinking step, a guess: a question the learner can work out from the steps so far. guess is null elsewhere. For each guess, in this order:
+- why: the correct answer and the reason, at three levels.
+- correct: the right answer, as a short answer to that exact question, matching why.
+- wrong: 1-2 tempting wrong answers to the same question.
+Every answer must answer the question directly: if it asks what happens to the plunger, each one says what the plunger does.
 Every text has three levels: simple (age 8), plain (teen or adult), technical. Every factual statement belongs to a claim citing sourceIds; use only real, well-known reference pages whose URL you are confident exists. "history" must cite a claim.
-check: one multiple-choice question about the key idea, with 3 options plus "I'm not sure" last; answer is the 0-based index of the right option; explain is one sentence.`;
+check: one multiple-choice question about the key idea, with correct (the right answer), wrong (2 tempting wrong answers to the same question) and explain (one sentence).`;
 
       const levelsSchema = {
         type: "object",
@@ -2292,11 +2307,11 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
           check: {
             type: "object",
             additionalProperties: false,
-            required: ["question", "options", "answer", "explain"],
+            required: ["question", "correct", "wrong", "explain"],
             properties: {
               question: { type: "string" },
-              options: { type: "array", items: { type: "string" } },
-              answer: { type: "integer" },
+              correct: { type: "string" },
+              wrong: { type: "array", items: { type: "string" } },
               explain: { type: "string" },
             },
           },
@@ -2313,12 +2328,12 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
                 guess: {
                   type: ["object", "null"],
                   additionalProperties: false,
-                  required: ["question", "options", "answer", "why"],
+                  required: ["question", "why", "correct", "wrong"],
                   properties: {
                     question: { type: "string" },
-                    options: { type: "array", items: { type: "string" } },
-                    answer: { type: "integer" },
                     why: levelsSchema,
+                    correct: { type: "string" },
+                    wrong: { type: "array", items: { type: "string" } },
                   },
                 },
                 claimIds: { type: "array", items: { type: "string" } },
@@ -2367,13 +2382,22 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
         );
       }
 
+      // Mirrors placeGuess in @sbi/benchmark: the model names the right answer and code places it.
+      function placeGuess({ question, correct, wrong, ...rest }) {
+        const answer = question.length % (wrong.length + 1);
+        const options = [...wrong];
+        options.splice(answer, 0, correct);
+        return { question, options, answer, ...rest };
+      }
+
       function toTopic(lesson) {
+        const check = placeGuess(lesson.check);
         return {
-          check: lesson.check,
+          check: { ...check, options: [...check.options, "I'm not sure"] },
           steps: lesson.steps.map(({ claimIds, guess, ...step }) => ({
             ...step,
             claims: claimIds,
-            ...(guess ? { guess } : {}),
+            ...(guess ? { guess: placeGuess(guess) } : {}),
           })),
           claims: Object.fromEntries(
             lesson.claims.map((claim) => [
@@ -2385,6 +2409,69 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
             lesson.sources.map(({ sourceId, ...source }) => [sourceId, source]),
           ),
         };
+      }
+
+      // Mirrors guess-judge-p0.2 in @sbi/benchmark.
+      const GUESS_CHECK_SYSTEM = `You review multiple-choice guesses in science lessons for learners aged 8 and up.
+For each numbered guess, decide whether it fits. Wrong options are meant to be wrong; that is not a problem. It fits when both hold:
+- every option is a possible answer to the question exactly as asked, even if wrong (if it asks what happens to a plunger, every option says what the plunger does);
+- the marked answer is the correct one.
+Set fits to false only if one of these fails, and give the problem in one short sentence; otherwise problem is null.`;
+      const GUESS_CHECK_SCHEMA = {
+        type: "object",
+        additionalProperties: false,
+        required: ["verdicts"],
+        properties: {
+          verdicts: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["index", "fits", "problem"],
+              properties: {
+                index: { type: "integer" },
+                fits: { type: "boolean" },
+                problem: { type: ["string", "null"] },
+              },
+            },
+          },
+        },
+      };
+
+      // Runs while the learner does the pre-check; a guess that fails is shown as a plain explanation.
+      async function checkLiveGuesses(topic) {
+        const guessed = topic.steps.flatMap((step, stepIndex) =>
+          step.guess ? [{ step, stepIndex }] : [],
+        );
+        if (!guessed.length) return;
+        const listing = guessed
+          .map(({ step, stepIndex }, index) => {
+            const { question, options, answer } = step.guess;
+            const choices = options.map((option, n) => `  ${n}. ${option}`).join("\n");
+            return `Guess ${index} (step ${stepIndex})\nStep "${step.title}": ${step.text.plain}\nQuestion: ${question}\n${choices}\nMarked answer: ${answer}`;
+          })
+          .join("\n\n");
+        try {
+          const { verdicts } = await metaComplete(
+            [
+              { role: "system", content: GUESS_CHECK_SYSTEM },
+              { role: "user", content: listing },
+            ],
+            "GuessVerdicts",
+            GUESS_CHECK_SCHEMA,
+            4000,
+          );
+          const dropped = verdicts.flatMap((verdict) => {
+            const hit = !verdict.fits && guessed[verdict.index];
+            if (!hit || state.guesses[hit.stepIndex] !== undefined) return [];
+            hit.step.guess.dropped = true;
+            return [hit.stepIndex];
+          });
+          log("guessCheck", { checked: guessed.length, dropped: dropped.length });
+          if (dropped.some((index) => index < state.shown) && state.screen === "lesson") render();
+        } catch (error) {
+          log("error", { where: "guessCheck", message: String(error.message).slice(0, 120) });
+        }
       }
 
       async function downscale(file) {

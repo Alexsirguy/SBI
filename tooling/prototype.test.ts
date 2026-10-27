@@ -108,6 +108,12 @@ describe("prototype visual lab", () => {
     expect(html).toMatch(/"three": "https:\/\/cdn\.jsdelivr\.net\/npm\/three@\d+\.\d+\.\d+\//);
   });
 
+  it("places live guess answers in code and checks live guesses before they're asked", () => {
+    expect(html).toContain("function placeGuess(");
+    expect(html).toContain("checkLiveGuesses(currentTopic());");
+    expect(html).not.toMatch(/answer as the 0-based index/);
+  });
+
   it.each(["mountSvg", "mountGlb", "mountSim", "mountLab", "buildDrivetrain"])(
     "defines %s",
     (name) => {

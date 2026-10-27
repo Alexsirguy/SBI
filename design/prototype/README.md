@@ -33,7 +33,10 @@ Evidence sits behind **How do we know?** under each step, and opens only after t
 
 - **Lesson structure:** each demo topic (bicycle, kettle, leaf) has 11–12 steps at three depths, and each step is tagged with one of the 8 Lesson contract modules. Every topic also has a one-question concept check before and after the lesson.
 - **Prepared lessons:** written by hand and checked against the cited sources. Every question for a topic leads to the same lesson.
-- **Live lessons:** in live mode, any other object or question gets a lesson written by Meta's model in the same step structure. Its safety gate redirects risky questions. This prompt has moved on from `lesson-p0.1` in `@sbi/benchmark`, which still asks for one block per module.
+- **Live lessons:** in live mode, any other object or question gets a lesson written by Meta's model in the same step structure, using the `lesson-p0.4` prompt from `@sbi/benchmark`. Its safety gate redirects risky questions.
+  - The model writes each guess's correct and wrong answers as text, and the page places them. Models often mark the wrong option when they number answers themselves.
+  - While the learner answers the pre-lesson question, a second call checks each guess's options answer its question and the marked answer is right. A guess that fails is shown as a plain explanation instead (logged as `guessCheck`).
+  - Live lessons have no gear lab or other interactive visual. Only the prepared bicycle lesson has one.
 - **Variant:** the session panel switches between A (guess at each step) and B (the same steps with each answer shown, no guessing), to test whether predicting helps.
 
 ## Gear lab
