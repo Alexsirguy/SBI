@@ -1,0 +1,16 @@
+{
+  "name": "@sbi/evidence",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Evidence store, source retrieval, claim graph and citation resolution.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*"
+  }
+}

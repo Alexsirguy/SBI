@@ -1,0 +1,16 @@
+{
+  "name": "@sbi/tutor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Lesson-grounded tutor pipeline.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*"
+  }
+}

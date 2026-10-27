@@ -1,0 +1,22 @@
+{
+  "name": "@sbi/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "API gateway and session service; composes the module packages into routes.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsup",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "fastify": "5.12.7"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*",
+    "tsup": "8.5.1",
+    "tsx": "4.23.15"
+  }
+}
