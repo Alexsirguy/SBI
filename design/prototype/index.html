@@ -996,6 +996,7 @@
           "kettle": {
             "label": "Kettle",
             "aliases": ["kettle"],
+            "visual": "heating",
             "questions": [
               "What are the bubbles when water boils?",
               "Why does a kettle switch itself off?",
@@ -1128,7 +1129,8 @@
                     "plain": "It stays near 100 °C. The extra heat just makes steam faster.",
                     "technical": "It stays at the boiling point; the vaporisation rate rises with power."
                   }
-                }
+                },
+                "visual": true
               },
               {
                 "module": "how-parts-work",
@@ -1926,9 +1928,19 @@
           .join("")}</ul></details>`;
       }
 
+      // A guess is asked only in variant A, until answered, and if the live check hasn't dropped it.
+      const asks = (step, index) =>
+        Boolean(step?.guess) &&
+        !step.guess.dropped &&
+        guessing() &&
+        state.guesses[index] === undefined;
+
       function guessMarkup(guess, index) {
         const choice = state.guesses[index];
-        if (guessing() && choice === undefined) {
+        if (guess.dropped && choice === undefined) {
+          return `<div class="why" id="why-${index}" tabindex="-1"><p>${esc(levelText(guess.why))}</p></div>`;
+        }
+        if (asks({ guess }, index)) {
           return `
             <form class="guess stack" data-action="guess" data-index="${index}">
               <fieldset class="options">
@@ -1962,7 +1974,7 @@
         const answer = step.module === "short-answer";
         const text = esc(levelText(step.text));
         // Evidence can give the guess away, so it waits until the learner has committed.
-        const pending = step.guess && guessing() && state.guesses[index] === undefined;
+        const pending = asks(step, index);
         return `
           <li class="module${answer ? " answer" : ""}" id="s-${index}" data-module="${step.module}">
             <h3>${esc(step.title)}</h3>
@@ -1970,7 +1982,7 @@
             ${step.guess ? guessMarkup(step.guess, index) : ""}
             ${
               step.visual && currentTopic().visual && SCREENS.visuals
-                ? `<button class="btn secondary" type="button" data-action="visuals">See it in action</button>`
+                ? `<button class="btn secondary" type="button" data-action="lab">See it in action</button>`
                 : ""
             }
             ${pending ? "" : evidenceFor(step.claims ?? [], index)}
@@ -1980,7 +1992,7 @@
       SCREENS.lesson = () => {
         const steps = currentTopic().steps;
         const last = steps[state.shown - 1];
-        const waiting = guessing() && last?.guess && state.guesses[state.shown - 1] === undefined;
+        const waiting = asks(last, state.shown - 1);
         const next = waiting ? null : steps[state.shown];
         return `
           ${backButton("question", "Change question")}
@@ -2026,7 +2038,7 @@
             <textarea id="explain-back" name="text" rows="4"></textarea>
             <div class="row" style="margin-top:0.5rem">
               <button class="btn" type="submit">Done</button>
-              ${currentTopic().visual && SCREENS.visuals ? `<button class="btn secondary" type="button" data-action="visuals">Compare ways of seeing it</button>` : ""}
+              ${currentTopic().visual === "gears" && SCREENS.visuals ? `<button class="btn secondary" type="button" data-action="visuals">Compare ways of seeing it</button>` : ""}
             </div>
           </form>`;
       };
@@ -2203,6 +2215,7 @@
           }
           Object.assign(currentTopic(), toTopic(lesson));
           go("precheck");
+          checkLiveGuesses(currentTopic());
         } catch (error) {
           log("error", { where: "lesson", message: String(error.message).slice(0, 120) });
           go("unsupported", {
@@ -2252,7 +2265,7 @@
         go("nolesson", { requested: label });
       }
 
-      // Diverges from lesson-p0.1 in @sbi/benchmark: steps that derive the answer, tagged with contract modules.
+      // Mirrors lesson-p0.4 in @sbi/benchmark, with all three reading levels and a safety gate.
       const LESSON_SYSTEM = `You write short, accurate science lessons about everyday objects for a learning app used by people aged 8 and up. Lessons teach from first principles: the learner should be able to rebuild the answer from basic truths, not just remember it.
 First decide safety: "allow" for normal curiosity; "redirect" or "refuse" if answering could lead to harm (eating wild plants, medicine doses, mixing chemicals, electricity, weapons) or the question isn't about science. If not "allow", leave other fields minimal and put a kind message for the learner in learnerMessage.
 Write 8 to 12 steps, each tagged with a module from: ${MODULES.join(", ")}. In order:
@@ -2261,9 +2274,14 @@ Write 8 to 12 steps, each tagged with a module from: ${MODULES.join(", ")}. In o
 3. "first-principles", 1-2 steps: basic truths the learner can check or already trusts (e.g. energy isn't created, matter is made of moving particles). Explain any jargon.
 4. "how-parts-work", 2-4 steps: reason from those truths through the object's parts to the answer, one small inference per step. Title the last one "Put it together"; it restates the answer as the conclusion of the chain.
 5. "try-an-idea": a safe experiment that tests the reasoning. 6. "check-thinking": apply the idea to a new situation. 7. "history": how someone first worked it out. 8. "go-further".
-Give most reasoning steps, and the check-thinking step, a guess: a question the learner can work out from the steps so far, 2-3 options, answer as the 0-based index, and why at three levels. guess is null elsewhere.
+Give most reasoning steps, and the check-thinking step, a guess: a question the learner can work out from the steps so far. guess is null elsewhere. For each guess, in this order:
+- why: the correct answer and the reason, at three levels.
+- correct: the right answer, as a short answer to that exact question, matching why.
+- wrong: 1-2 tempting wrong answers to the same question.
+Every answer must answer the question directly: if it asks what happens to the plunger, each one says what the plunger does.
 Every text has three levels: simple (age 8), plain (teen or adult), technical. Every factual statement belongs to a claim citing sourceIds; use only real, well-known reference pages whose URL you are confident exists. "history" must cite a claim.
-check: one multiple-choice question about the key idea, with 3 options plus "I'm not sure" last; answer is the 0-based index of the right option; explain is one sentence.`;
+check: one multiple-choice question about the key idea, with correct (the right answer), wrong (2 tempting wrong answers to the same question) and explain (one sentence).
+visual: the interactive model that best shows the mechanism, or "none" if none fits: "gears" (gear ratios, chains, bikes), "engine" (pistons, burning fuel, four-stroke engines), "lever" (levers, seesaws, crowbars, scissors, trading force for distance), "heating" (heating, boiling, temperature, how pressure changes boiling).`;
 
       const levelsSchema = {
         type: "object",
@@ -2278,8 +2296,10 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
       const LESSON_SCHEMA = {
         type: "object",
         additionalProperties: false,
-        required: ["safety", "check", "steps", "claims", "sources"],
+        required: ["safety", "check", "visual", "steps", "claims", "sources"],
         properties: {
+          // Listed here because KIT is declared further down; a test keeps the two in step.
+          visual: { type: "string", enum: ["gears", "engine", "lever", "heating", "none"] },
           safety: {
             type: "object",
             additionalProperties: false,
@@ -2292,11 +2312,11 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
           check: {
             type: "object",
             additionalProperties: false,
-            required: ["question", "options", "answer", "explain"],
+            required: ["question", "correct", "wrong", "explain"],
             properties: {
               question: { type: "string" },
-              options: { type: "array", items: { type: "string" } },
-              answer: { type: "integer" },
+              correct: { type: "string" },
+              wrong: { type: "array", items: { type: "string" } },
               explain: { type: "string" },
             },
           },
@@ -2313,12 +2333,12 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
                 guess: {
                   type: ["object", "null"],
                   additionalProperties: false,
-                  required: ["question", "options", "answer", "why"],
+                  required: ["question", "why", "correct", "wrong"],
                   properties: {
                     question: { type: "string" },
-                    options: { type: "array", items: { type: "string" } },
-                    answer: { type: "integer" },
                     why: levelsSchema,
+                    correct: { type: "string" },
+                    wrong: { type: "array", items: { type: "string" } },
                   },
                 },
                 claimIds: { type: "array", items: { type: "string" } },
@@ -2367,13 +2387,29 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
         );
       }
 
+      // Mirrors placeGuess in @sbi/benchmark: the model names the right answer and code places it.
+      function placeGuess({ question, correct, wrong, ...rest }) {
+        const answer = question.length % (wrong.length + 1);
+        const options = [...wrong];
+        options.splice(answer, 0, correct);
+        return { question, options, answer, ...rest };
+      }
+
       function toTopic(lesson) {
+        const check = placeGuess(lesson.check);
+        const visual = KIT_NAMES.includes(lesson.visual) ? lesson.visual : null;
+        // The model only names a model from the kit; the button goes on the first parts step.
+        const visualAt = visual
+          ? lesson.steps.findIndex((step) => step.module === "how-parts-work")
+          : -1;
         return {
-          check: lesson.check,
-          steps: lesson.steps.map(({ claimIds, guess, ...step }) => ({
+          visual,
+          check: { ...check, options: [...check.options, "I'm not sure"] },
+          steps: lesson.steps.map(({ claimIds, guess, ...step }, index) => ({
             ...step,
             claims: claimIds,
-            ...(guess ? { guess } : {}),
+            ...(guess ? { guess: placeGuess(guess) } : {}),
+            ...(index === visualAt ? { visual: true } : {}),
           })),
           claims: Object.fromEntries(
             lesson.claims.map((claim) => [
@@ -2385,6 +2421,69 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
             lesson.sources.map(({ sourceId, ...source }) => [sourceId, source]),
           ),
         };
+      }
+
+      // Mirrors guess-judge-p0.2 in @sbi/benchmark.
+      const GUESS_CHECK_SYSTEM = `You review multiple-choice guesses in science lessons for learners aged 8 and up.
+For each numbered guess, decide whether it fits. Wrong options are meant to be wrong; that is not a problem. It fits when both hold:
+- every option is a possible answer to the question exactly as asked, even if wrong (if it asks what happens to a plunger, every option says what the plunger does);
+- the marked answer is the correct one.
+Set fits to false only if one of these fails, and give the problem in one short sentence; otherwise problem is null.`;
+      const GUESS_CHECK_SCHEMA = {
+        type: "object",
+        additionalProperties: false,
+        required: ["verdicts"],
+        properties: {
+          verdicts: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["index", "fits", "problem"],
+              properties: {
+                index: { type: "integer" },
+                fits: { type: "boolean" },
+                problem: { type: ["string", "null"] },
+              },
+            },
+          },
+        },
+      };
+
+      // Runs while the learner does the pre-check; a guess that fails is shown as a plain explanation.
+      async function checkLiveGuesses(topic) {
+        const guessed = topic.steps.flatMap((step, stepIndex) =>
+          step.guess ? [{ step, stepIndex }] : [],
+        );
+        if (!guessed.length) return;
+        const listing = guessed
+          .map(({ step, stepIndex }, index) => {
+            const { question, options, answer } = step.guess;
+            const choices = options.map((option, n) => `  ${n}. ${option}`).join("\n");
+            return `Guess ${index} (step ${stepIndex})\nStep "${step.title}": ${step.text.plain}\nQuestion: ${question}\n${choices}\nMarked answer: ${answer}`;
+          })
+          .join("\n\n");
+        try {
+          const { verdicts } = await metaComplete(
+            [
+              { role: "system", content: GUESS_CHECK_SYSTEM },
+              { role: "user", content: listing },
+            ],
+            "GuessVerdicts",
+            GUESS_CHECK_SCHEMA,
+            4000,
+          );
+          const dropped = verdicts.flatMap((verdict) => {
+            const hit = !verdict.fits && guessed[verdict.index];
+            if (!hit || state.guesses[hit.stepIndex] !== undefined) return [];
+            hit.step.guess.dropped = true;
+            return [hit.stepIndex];
+          });
+          log("guessCheck", { checked: guessed.length, dropped: dropped.length });
+          if (dropped.some((index) => index < state.shown) && state.screen === "lesson") render();
+        } catch (error) {
+          log("error", { where: "guessCheck", message: String(error.message).slice(0, 120) });
+        }
       }
 
       async function downscale(file) {
@@ -2558,6 +2657,10 @@ observations: up to 3 short visual details that justify your answer. Never descr
         </form>`;
 
       Object.assign(ACTIONS, {
+        lab() {
+          log("tap", { action: "lab", template: currentTopic().visual });
+          go("lab", { labTemplate: currentTopic().visual });
+        },
         visuals() {
           log("tap", { action: "visuals", order: visualOrder().join(",") });
           go("visuals", { visualStep: 0, returnTo: state.screen });
@@ -2660,11 +2763,23 @@ observations: up to 3 short visual details that justify your answer. Never descr
           const controls = new OrbitControls(camera, canvas);
           controls.enableZoom = false;
           controls.enablePan = false;
-          const gltf = await new GLTFLoader().loadAsync("gears.glb");
+          let ring;
+          let cog;
+          let note = "";
+          try {
+            const gltf = await new GLTFLoader().loadAsync("gears.glb");
+            scene.add(gltf.scene);
+            ring = gltf.scene.getObjectByName("chainring");
+            cog = gltf.scene.getObjectByName("cog");
+          } catch {
+            // Opened from disk or hosted without gears.glb: show the same gears built in code.
+            ({ ring, cog } = buildDrivetrain(THREE, 34, 17));
+            ring.parent.position.x = -0.6;
+            scene.add(ring.parent);
+            camera.position.set(0, 1.2, 11);
+            note = "gears.glb unavailable, built in code. ";
+          }
           if (stopped) return;
-          scene.add(gltf.scene);
-          const ring = gltf.scene.getObjectByName("chainring");
-          const cog = gltf.scene.getObjectByName("cog");
           const ratio = (ring.userData.teeth ?? 34) / (cog.userData.teeth ?? 17);
           const resize = () => {
             const width = stage.clientWidth;
@@ -2685,7 +2800,7 @@ observations: up to 3 short visual details that justify your answer. Never descr
             renderer.render(scene, camera);
             if (first) {
               first = false;
-              visualReady("glb", started);
+              visualReady("glb", started, note);
             }
             requestAnimationFrame(frame);
           };
@@ -2810,7 +2925,894 @@ observations: up to 3 short visual details that justify your answer. Never descr
         requestAnimationFrame(frame);
       }
 
-      const MOUNTS = { svg: mountSvg, glb: mountGlb, sim: mountSim };
+      // Tooth pitch is the same on every sprocket, so radius grows with tooth count and one chain fits all.
+      const TOOTH = 0.045;
+      const CENTRES = 5;
+
+      function gearShape(THREE, teeth) {
+        const pitch = teeth * TOOTH;
+        const shape = new THREE.Shape();
+        const step = (Math.PI * 2) / teeth;
+        for (let i = 0; i < teeth; i += 1) {
+          const a = i * step;
+          [
+            [pitch - 0.09, a],
+            [pitch + 0.09, a + step * 0.2],
+            [pitch + 0.09, a + step * 0.45],
+            [pitch - 0.09, a + step * 0.65],
+          ].forEach(([r, t], index) =>
+            shape[i === 0 && index === 0 ? "moveTo" : "lineTo"](r * Math.cos(t), r * Math.sin(t)),
+          );
+        }
+        const hole = new THREE.Path();
+        hole.absarc(0, 0, pitch * 0.28, 0, Math.PI * 2, true);
+        shape.holes.push(hole);
+        return new THREE.ExtrudeGeometry(shape, { depth: 0.16, bevelEnabled: false });
+      }
+
+      // Open-belt path around both sprockets, sampled by distance so links can slide along it.
+      function chainPath(r1, r2) {
+        const x1 = -CENTRES / 2;
+        const x2 = CENTRES / 2;
+        const phi = Math.asin((r1 - r2) / CENTRES);
+        const top = Math.PI / 2 + phi;
+        const segments = [
+          {
+            kind: "line",
+            from: [x1 + r1 * Math.cos(top), r1 * Math.sin(top)],
+            to: [x2 + r2 * Math.cos(top), r2 * Math.sin(top)],
+          },
+          { kind: "arc", cx: x2, r: r2, start: top, sweep: -2 * top },
+          {
+            kind: "line",
+            from: [x2 + r2 * Math.cos(-top), r2 * Math.sin(-top)],
+            to: [x1 + r1 * Math.cos(-top), r1 * Math.sin(-top)],
+          },
+          { kind: "arc", cx: x1, r: r1, start: -top, sweep: -(2 * Math.PI - 2 * top) },
+        ].map((segment) => ({
+          ...segment,
+          length:
+            segment.kind === "line"
+              ? Math.hypot(segment.to[0] - segment.from[0], segment.to[1] - segment.from[1])
+              : Math.abs(segment.sweep) * segment.r,
+        }));
+        const total = segments.reduce((sum, segment) => sum + segment.length, 0);
+        const at = (distance) => {
+          let d = ((distance % total) + total) % total;
+          for (const segment of segments) {
+            if (d <= segment.length) {
+              const f = d / segment.length;
+              if (segment.kind === "line") {
+                const [ax, ay] = segment.from;
+                const [bx, by] = segment.to;
+                return {
+                  x: ax + (bx - ax) * f,
+                  y: ay + (by - ay) * f,
+                  angle: Math.atan2(by - ay, bx - ax),
+                };
+              }
+              const t = segment.start + segment.sweep * f;
+              return {
+                x: segment.cx + segment.r * Math.cos(t),
+                y: segment.r * Math.sin(t),
+                angle: t - Math.PI / 2,
+              };
+            }
+            d -= segment.length;
+          }
+          return { x: 0, y: 0, angle: 0 };
+        };
+        return { total, at };
+      }
+
+      /** Builds the drivetrain in code, so the 3D view works from a single file with any tooth counts. */
+      function buildDrivetrain(THREE, front, back) {
+        const css = getComputedStyle(document.documentElement);
+        const color = (name) => new THREE.Color(css.getPropertyValue(name).trim() || "#888");
+        const group = new THREE.Group();
+        const metal = (name) =>
+          new THREE.MeshStandardMaterial({ color: color(name), metalness: 0.3, roughness: 0.5 });
+        const ring = new THREE.Group();
+        ring.position.x = -CENTRES / 2;
+        ring.add(new THREE.Mesh(gearShape(THREE, front), metal("--action")));
+        const crank = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.1, 0.12), metal("--ink"));
+        crank.position.set(0, -1.05, 0.3);
+        const pedal = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.22, 0.3), metal("--ink"));
+        pedal.position.set(0, -2.05, 0.5);
+        ring.add(crank, pedal);
+        const cog = new THREE.Group();
+        cog.position.x = CENTRES / 2;
+        cog.add(new THREE.Mesh(gearShape(THREE, back), metal("--highlight")));
+        const wheel = new THREE.Group();
+        wheel.position.set(CENTRES / 2, 0, -0.5);
+        const tyre = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.12, 8, 64), metal("--ink"));
+        wheel.add(tyre);
+        for (let i = 0; i < 12; i += 1) {
+          const spoke = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.015, 0.015, 3.1),
+            metal("--ink-soft"),
+          );
+          spoke.rotation.z = (i / 12) * Math.PI;
+          wheel.add(spoke);
+        }
+        const valve = new THREE.Mesh(new THREE.SphereGeometry(0.16), metal("--highlight"));
+        valve.position.y = 3.1;
+        wheel.add(valve);
+        const path = chainPath(front * TOOTH, back * TOOTH);
+        const pitch = (Math.PI * 2 * front * TOOTH) / front;
+        const count = Math.round(path.total / pitch);
+        const links = new THREE.InstancedMesh(
+          new THREE.BoxGeometry(pitch * 0.8, 0.07, 0.1),
+          metal("--ink"),
+          count,
+        );
+        links.position.z = 0.08;
+        group.add(wheel, ring, cog, links);
+        const dummy = new THREE.Object3D();
+        const placeLinks = (offset) => {
+          for (let i = 0; i < count; i += 1) {
+            const point = path.at(offset + (i * path.total) / count);
+            dummy.position.set(point.x, point.y, 0);
+            dummy.rotation.z = point.angle;
+            dummy.updateMatrix();
+            links.setMatrixAt(i, dummy.matrix);
+          }
+          links.instanceMatrix.needsUpdate = true;
+        };
+        placeLinks(0);
+        const dispose = () =>
+          group.traverse((object) => {
+            object.geometry?.dispose();
+            object.material?.dispose();
+          });
+        return { group, ring, cog, wheel, placeLinks, radius: front * TOOTH, dispose };
+      }
+
+      async function loadThree() {
+        const [THREE, { OrbitControls }] = await Promise.all([
+          import(THREE_URL),
+          import(`${ADDONS_URL}controls/OrbitControls.js`),
+        ]);
+        return { THREE, OrbitControls };
+      }
+
+      function labScene(THREE, OrbitControls, canvas) {
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        const scene = new THREE.Scene();
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 2.2));
+        const sun = new THREE.DirectionalLight(0xffffff, 2);
+        sun.position.set(3, 4, 6);
+        scene.add(sun);
+        const camera = new THREE.PerspectiveCamera(40, 4 / 3, 0.1, 100);
+        camera.position.set(1.2, 1.6, 11);
+        const controls = new OrbitControls(camera, canvas);
+        controls.enableZoom = false;
+        controls.enablePan = false;
+        controls.target.set(0.6, 0, 0);
+        const resize = () => {
+          const width = canvas.parentElement.clientWidth - 24;
+          renderer.setSize(width, width * 0.75, false);
+        };
+        resize();
+        return { renderer, scene, camera, controls };
+      }
+
+      function mountGearLab(stage, started) {
+        stage.innerHTML = `
+          <canvas role="img" aria-label="3D bike gears"></canvas>
+          <p class="hint legend">Teal: front ring and pedal. Yellow: back cog, fixed to the back wheel. Drag to turn the model.</p>
+          <div class="row lab-presets">
+            <button class="btn secondary" type="button" data-preset="34,34">Low gear for hills</button>
+            <button class="btn secondary" type="button" data-preset="50,11">High gear for speed</button>
+          </div>
+          <div class="sim-controls">
+            <label class="field"><span>Front ring: <output id="lab-front">34</output> teeth</span>
+              <input type="range" min="22" max="52" value="34" id="lab-front-input" /></label>
+            <label class="field"><span>Back cog: <output id="lab-back">17</output> teeth</span>
+              <input type="range" min="11" max="36" value="17" id="lab-back-input" /></label>
+            <label class="field"><span>Pedalling: <output id="lab-cadence">60</output> turns a minute</span>
+              <input type="range" min="20" max="120" step="10" value="60" id="lab-cadence-input" /></label>
+          </div>
+          <div class="row">
+            <button class="btn" type="button" id="lab-once">Turn the pedals once</button>
+            <button class="btn secondary" type="button" id="lab-run">Keep pedalling</button>
+          </div>
+          <dl class="compare sim-readout" aria-live="polite">
+            <div><dt>Counted so far</dt><dd id="lab-count"></dd></div>
+            <div><dt>Wheel turns per pedal turn</dt><dd id="lab-turns"></dd></div>
+            <div><dt>Speed</dt><dd id="lab-speed"></dd></div>
+            <div><dt>Push needed on a hill</dt><dd><span class="effort"><span id="lab-effort"></span></span></dd></div>
+          </dl>`;
+        const $ = (selector) => stage.querySelector(selector);
+        const inputs = {
+          front: $("#lab-front-input"),
+          back: $("#lab-back-input"),
+          cadence: $("#lab-cadence-input"),
+        };
+        const values = () => ({
+          front: Number(inputs.front.value),
+          back: Number(inputs.back.value),
+          cadence: Number(inputs.cadence.value),
+        });
+        let crank = 0;
+        let target = null;
+        let running = !reducedMotion();
+        let stopped = false;
+        state.cleanup = () => {
+          stopped = true;
+        };
+
+        function readouts() {
+          const { front, back, cadence } = values();
+          const ratio = front / back;
+          $("#lab-front").textContent = front;
+          $("#lab-back").textContent = back;
+          $("#lab-cadence").textContent = cadence;
+          $("#lab-turns").textContent = `${ratio.toFixed(2)} (${front} ÷ ${back})`;
+          // Wheel circumference about 2.1 m, as in the lesson's technical text.
+          $("#lab-speed").textContent = `${((ratio * 2.1 * cadence * 60) / 1000).toFixed(1)} km/h`;
+          const bar = $("#lab-effort");
+          bar.style.width = `${Math.min(100, Math.round((ratio / 4.7) * 100))}%`;
+          bar.textContent = ratio < 1.2 ? "Gentle" : ratio < 2.4 ? "Medium" : "Hard";
+          $("canvas").setAttribute(
+            "aria-label",
+            `3D bike gears: front ring ${front} teeth, back cog ${back} teeth. One pedal turn turns the wheel ${ratio.toFixed(2)} times.`,
+          );
+        }
+        function counts() {
+          const { front, back } = values();
+          const pedal = crank / (Math.PI * 2);
+          $("#lab-count").textContent =
+            `${pedal.toFixed(1)} pedal turns, ${((pedal * front) / back).toFixed(1)} wheel turns`;
+        }
+
+        let model = null;
+        let three = null;
+        function rebuild() {
+          if (!three) return;
+          const { front, back } = values();
+          if (model) {
+            three.scene.remove(model.group);
+            model.dispose();
+          }
+          model = buildDrivetrain(three.THREE, front, back);
+          three.scene.add(model.group);
+          crank = 0;
+        }
+
+        const onChange = () => {
+          log("labChange", values());
+          rebuild();
+          counts();
+        };
+        Object.values(inputs).forEach((input) => {
+          input.addEventListener("input", readouts);
+          input.addEventListener("change", onChange);
+        });
+        stage.querySelectorAll("[data-preset]").forEach((button) =>
+          button.addEventListener("click", () => {
+            const [front, back] = button.dataset.preset.split(",");
+            inputs.front.value = front;
+            inputs.back.value = back;
+            readouts();
+            onChange();
+          }),
+        );
+        $("#lab-once").addEventListener("click", () => {
+          log("labTurnOnce", values());
+          crank = 0;
+          target = Math.PI * 2;
+          running = false;
+          if (reducedMotion()) {
+            crank = target;
+            target = null;
+          }
+          counts();
+        });
+        $("#lab-run").addEventListener("click", () => {
+          log("labRun", values());
+          target = null;
+          running = true;
+        });
+        readouts();
+        counts();
+
+        loadThree()
+          .then(({ THREE, OrbitControls }) => {
+            if (stopped) return;
+            three = { THREE, ...labScene(THREE, OrbitControls, $("canvas")) };
+            rebuild();
+            let first = true;
+            let last = performance.now();
+            const frame = (now) => {
+              if (stopped) {
+                model?.dispose();
+                return three.renderer.dispose();
+              }
+              const dt = Math.min(0.05, (now - last) / 1000);
+              last = now;
+              const { front, back, cadence } = values();
+              const speed = (cadence / 60) * Math.PI * 2;
+              if (target !== null) {
+                crank = Math.min(target, crank + dt * speed);
+                if (crank >= target) target = null;
+                counts();
+              } else if (running) {
+                crank += dt * speed;
+                counts();
+              }
+              // Clockwise from the drive side; the cog turns front ÷ back times as fast.
+              model.ring.rotation.z = -crank;
+              model.cog.rotation.z = (-crank * front) / back;
+              model.wheel.rotation.z = (-crank * front) / back;
+              model.placeLinks(crank * model.radius);
+              three.controls.update();
+              three.renderer.render(three.scene, three.camera);
+              if (first) {
+                first = false;
+                visualReady("lab", started);
+              }
+              requestAnimationFrame(frame);
+            };
+            requestAnimationFrame(frame);
+          })
+          .catch((error) => {
+            log("error", { where: "lab", message: String(error.message).slice(0, 120) });
+            $("canvas").replaceWith(
+              Object.assign(document.createElement("p"), {
+                className: "notice",
+                textContent:
+                  "The 3D view couldn't load on this device, but the numbers below still work.",
+              }),
+            );
+            visualReady("lab", started, "3D failed. ");
+          });
+      }
+
+      // First demo kit; #88 replaces it with tested simulations in @sbi/visuals, and #96 lets the tutor pick them.
+      const KIT = {
+        gears: {
+          title: "Try the gears yourself",
+          lede: "Change the teeth and watch how far the back wheel turns for each turn of the pedals.",
+          assumptions: "Simplified: the chain never slips, and the wheel goes 2.1 m per turn.",
+          mount: (stage, started) => mountGearLab(stage, started),
+        },
+        engine: {
+          title: "Run the engine yourself",
+          lede: "Step through the four strokes and see which one pushes the car.",
+          assumptions:
+            "Simplified: one cylinder of a four-stroke petrol engine, slowed down 40 times. Power is shown relative to full throttle at 6,000 rpm.",
+          mount: (stage, started) => mountEngineLab(stage, started),
+        },
+        lever: {
+          title: "Try the lever yourself",
+          lede: "Move the load and your hand, and see how hard you have to push.",
+          assumptions: "Simplified: a stiff, weightless bar with no friction, and g = 9.8 m/s².",
+          mount: (stage, started) => mountLeverLab(stage, started),
+        },
+        heating: {
+          title: "Heat the water yourself",
+          lede: "Change the heater, the water and how high up you are, and watch the temperature.",
+          assumptions:
+            "Simplified: no heat is lost, and the water starts at 20 °C. Water takes 4.19 kJ per kg per °C to warm and 2,260 kJ per kg to boil. Air pressure halves about every 5.8 km of height. Time runs 20 times faster.",
+          mount: (stage, started) => mountHeatingLab(stage, started),
+        },
+      };
+      const KIT_NAMES = Object.keys(KIT);
+
+      SCREENS.lab = () => {
+        const kit = KIT[state.labTemplate] ?? KIT.gears;
+        return `
+        ${backButton("lesson", "Back to the lesson")}
+        <p class="topic-chip">${esc(currentTopic().label)}</p>
+        <h2>${kit.title}</h2>
+        <p class="lede">${kit.lede}</p>
+        <div class="visual" id="visual-stage" data-format="lab"></div>
+        <p class="hint" id="visual-status" aria-live="polite">Loading…</p>
+        <p class="hint">${kit.assumptions}</p>`;
+      };
+
+      function mountLab(stage, started) {
+        (KIT[state.labTemplate] ?? KIT.gears).mount(stage, started);
+      }
+
+      function slider(id, label, unit, min, max, step, value) {
+        return `<label class="field"><span>${label}: <output id="${id}">${value}</output> ${unit}</span>
+          <input type="range" min="${min}" max="${max}" step="${step}" value="${value}" id="${id}-input" /></label>`;
+      }
+
+      // Shared plumbing: reads sliders, logs settled changes, and runs a frame loop until the screen changes.
+      function labPlumbing(stage, ids, onInput) {
+        const $ = (selector) => stage.querySelector(selector);
+        const values = () =>
+          Object.fromEntries(ids.map((id) => [id, Number($(`#${id}-input`).value)]));
+        const show = () => {
+          for (const id of ids) $(`#${id}`).textContent = $(`#${id}-input`).value;
+          onInput(values());
+        };
+        for (const id of ids) {
+          $(`#${id}-input`).addEventListener("input", show);
+          $(`#${id}-input`).addEventListener("change", () =>
+            log("labChange", { template: state.labTemplate, ...values() }),
+          );
+        }
+        let stopped = false;
+        state.cleanup = () => {
+          stopped = true;
+        };
+        const loop = (draw) => {
+          let last = performance.now();
+          const frame = (now) => {
+            if (stopped) return;
+            draw(Math.min(0.05, (now - last) / 1000));
+            last = now;
+            requestAnimationFrame(frame);
+          };
+          requestAnimationFrame(frame);
+        };
+        return { $, values, show, loop };
+      }
+
+      const token = (name) =>
+        getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+      const STROKES = [
+        ["Intake", "The piston moves down and pulls in fuel and air."],
+        ["Compression", "The piston moves up and squeezes the fuel and air."],
+        [
+          "Power",
+          "The spark lights the fuel. Hot gas shoves the piston down. This is the only push.",
+        ],
+        ["Exhaust", "The piston moves up and pushes the burnt gas out."],
+      ];
+
+      function mountEngineLab(stage, started) {
+        stage.innerHTML = `
+          <canvas width="640" height="420" role="img" aria-label="Engine cylinder"></canvas>
+          <div class="sim-controls">
+            ${slider("eng-rpm", "Engine speed", "turns a minute (rpm)", 600, 6000, 100, 1800)}
+            ${slider("eng-throttle", "Accelerator", "%", 10, 100, 5, 50)}
+          </div>
+          <div class="row">
+            <button class="btn" type="button" id="eng-step">Next stroke</button>
+            <button class="btn secondary" type="button" id="eng-run">Keep running</button>
+          </div>
+          <dl class="compare sim-readout" aria-live="polite">
+            <div><dt>Now</dt><dd id="eng-stroke"></dd></div>
+            <div><dt>Pushes per minute</dt><dd id="eng-pushes"></dd></div>
+            <div><dt>Power</dt><dd><span class="effort"><span id="eng-power"></span></span></dd></div>
+          </dl>`;
+        const canvas = stage.querySelector("canvas");
+        const ctx = canvas.getContext("2d");
+        // Crank angle runs 0 to 4π over the four strokes; 0 is the piston at the top.
+        let angle = 0;
+        let target = null;
+        let running = !reducedMotion();
+        let shownStroke = -1;
+        const { $, values, show, loop } = labPlumbing(stage, ["eng-rpm", "eng-throttle"], (v) => {
+          $("#eng-pushes").textContent =
+            `${Math.round(v["eng-rpm"] / 2).toLocaleString()} (one every 2 turns)`;
+          const power = Math.round((v["eng-throttle"] / 100) * (v["eng-rpm"] / 6000) * 100);
+          const bar = $("#eng-power");
+          bar.style.width = `${Math.max(power, 8)}%`;
+          bar.textContent = `${power}%`;
+        });
+        const strokeOf = (a) =>
+          Math.floor((((a % (4 * Math.PI)) + 4 * Math.PI) % (4 * Math.PI)) / Math.PI);
+        const announce = () => {
+          const stroke = strokeOf(angle + 1e-6);
+          if (stroke === shownStroke) return;
+          shownStroke = stroke;
+          const [name, text] = STROKES[stroke];
+          $("#eng-stroke").textContent = `${stroke + 1}. ${name}: ${text}`;
+          canvas.setAttribute(
+            "aria-label",
+            `Engine cylinder, ${name.toLowerCase()} stroke. ${text}`,
+          );
+        };
+        $("#eng-step").addEventListener("click", () => {
+          running = false;
+          target = (Math.floor(angle / Math.PI + 1e-6) + 1) * Math.PI;
+          if (reducedMotion()) {
+            angle = target;
+            target = null;
+          }
+          log("labStep", { template: "engine", stroke: strokeOf(angle) });
+        });
+        $("#eng-run").addEventListener("click", () => {
+          target = null;
+          running = true;
+          log("labRun", { template: "engine" });
+        });
+
+        function draw() {
+          const ink = token("--ink");
+          const action = token("--action");
+          const paper = token("--paper");
+          const { "eng-throttle": throttle } = values();
+          const w = canvas.width;
+          ctx.clearRect(0, 0, w, canvas.height);
+          const cx = w / 2;
+          const crankY = 330;
+          const r = 55;
+          const rod = 150;
+          const pistonH = 50;
+          const boreTop = 90;
+          const stroke = strokeOf(angle + 1e-6);
+          const within = (angle % Math.PI) / Math.PI;
+          // Slider-crank geometry: distance from crank centre to the piston pin.
+          const pin = r * Math.cos(angle) + Math.sqrt(rod * rod - (r * Math.sin(angle)) ** 2);
+          const pistonY = crankY - pin - pistonH / 2;
+          const gas = [
+            "rgba(80, 160, 230, 0.45)",
+            "rgba(40, 110, 200, 0.65)",
+            `rgba(240, 130, 30, ${0.35 + 0.6 * (throttle / 100) * (1 - within)})`,
+            "rgba(130, 130, 130, 0.5)",
+          ][stroke];
+          ctx.fillStyle = gas;
+          ctx.fillRect(cx - 70, boreTop, 140, pistonY - boreTop);
+          ctx.strokeStyle = ink;
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(cx - 74, boreTop - 10);
+          ctx.lineTo(cx - 74, crankY - r - 40);
+          ctx.moveTo(cx + 74, boreTop - 10);
+          ctx.lineTo(cx + 74, crankY - r - 40);
+          ctx.moveTo(cx - 74, boreTop - 10);
+          ctx.lineTo(cx + 74, boreTop - 10);
+          ctx.stroke();
+          const valve = (x, open, label) => {
+            ctx.fillStyle = ink;
+            ctx.fillRect(x - 3, boreTop - 50, 6, 40 + (open ? 16 : 0));
+            ctx.fillRect(x - 18, boreTop - 12 + (open ? 16 : 0), 36, 6);
+            // The canvas is shown at about half size on phones, so text is drawn large.
+            ctx.font = `600 24px ${token("--body") || "sans-serif"}`;
+            ctx.textAlign = x < cx ? "right" : "left";
+            ctx.fillText(label, x + (x < cx ? -30 : 30), boreTop - 30);
+          };
+          valve(cx - 40, stroke === 0, "Fuel + air in");
+          valve(cx + 40, stroke === 3, "Exhaust out");
+          ctx.fillStyle = ink;
+          ctx.fillRect(cx - 4, boreTop - 48, 8, 30);
+          if (stroke === 2 && within < 0.15) {
+            ctx.fillStyle = token("--highlight");
+            ctx.beginPath();
+            ctx.arc(cx, boreTop - 2, 14, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = action;
+          ctx.fillRect(cx - 68, pistonY, 136, pistonH);
+          const crankX = cx + r * Math.sin(angle);
+          const crankPinY = crankY - r * Math.cos(angle);
+          ctx.strokeStyle = ink;
+          ctx.lineWidth = 10;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(cx, pistonY + pistonH / 2);
+          ctx.lineTo(crankX, crankPinY);
+          ctx.stroke();
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(cx, crankY, r + 14, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.lineWidth = 12;
+          ctx.beginPath();
+          ctx.moveTo(cx, crankY);
+          ctx.lineTo(crankX, crankPinY);
+          ctx.stroke();
+          ctx.fillStyle = paper;
+          ctx.beginPath();
+          ctx.arc(cx, crankY, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = ink;
+          ctx.textAlign = "left";
+          ctx.fillText("Crankshaft", cx + r + 26, crankY - 6);
+          ctx.fillText("turns the wheels", cx + r + 26, crankY + 22);
+          ctx.font = `700 30px ${token("--body") || "sans-serif"}`;
+          ctx.fillText(STROKES[stroke][0], cx + 90, boreTop + 60);
+        }
+
+        show();
+        announce();
+        loop((dt) => {
+          // Slowed 40 times so each stroke can be followed by eye.
+          const speed = (values()["eng-rpm"] / 60 / 40) * Math.PI * 2;
+          if (target !== null) {
+            angle = Math.min(target, angle + dt * Math.max(speed, Math.PI));
+            if (angle >= target) target = null;
+          } else if (running) angle += dt * speed;
+          announce();
+          draw();
+        });
+        requestAnimationFrame(() => visualReady("engine", started));
+      }
+
+      function mountLeverLab(stage, started) {
+        stage.innerHTML = `
+          <canvas width="640" height="300" role="img" aria-label="Lever"></canvas>
+          <div class="sim-controls">
+            ${slider("lev-load", "Load", "kg", 5, 100, 5, 40)}
+            ${slider("lev-dl", "Load to pivot", "m", 0.2, 2, 0.1, 0.5)}
+            ${slider("lev-de", "Your hand to pivot", "m", 0.2, 2, 0.1, 1.5)}
+          </div>
+          <button class="btn" type="button" id="lev-lift">Lift the load 10 cm</button>
+          <dl class="compare sim-readout" aria-live="polite">
+            <div><dt>Push you need</dt><dd id="lev-force"></dd></div>
+            <div><dt>When the load rises 10 cm</dt><dd id="lev-move"></dd></div>
+            <div><dt>Work done</dt><dd id="lev-work"></dd></div>
+          </dl>`;
+        const canvas = stage.querySelector("canvas");
+        const ctx = canvas.getContext("2d");
+        let tilt = 0;
+        let lifting = false;
+        const maths = (v) => {
+          const force = (v["lev-load"] * 9.8 * v["lev-dl"]) / v["lev-de"];
+          return { force, hand: (10 * v["lev-de"]) / v["lev-dl"] };
+        };
+        const { $, values, show, loop } = labPlumbing(
+          stage,
+          ["lev-load", "lev-dl", "lev-de"],
+          (v) => {
+            const { force, hand } = maths(v);
+            $("#lev-force").textContent =
+              `${Math.round(force)} N, like lifting ${(force / 9.8).toFixed(1)} kg`;
+            $("#lev-move").textContent = `your hand moves ${hand.toFixed(0)} cm`;
+            const work = v["lev-load"] * 9.8 * 0.1;
+            $("#lev-work").textContent =
+              `${work.toFixed(1)} J on the load, ${((force * hand) / 100).toFixed(1)} J from you: the same`;
+            canvas.setAttribute(
+              "aria-label",
+              `Lever: ${v["lev-load"]} kg load ${v["lev-dl"]} m from the pivot, hand ${v["lev-de"]} m from the pivot. Push needed ${Math.round(force)} newtons.`,
+            );
+          },
+        );
+        $("#lev-lift").addEventListener("click", () => {
+          lifting = true;
+          tilt = 0;
+          if (reducedMotion()) {
+            tilt = 1;
+            lifting = false;
+          }
+          log("labLift", { template: "lever", ...values() });
+        });
+
+        function draw() {
+          const v = values();
+          const { force } = maths(v);
+          const ink = token("--ink");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const px = 320;
+          const py = 200;
+          const scale = 140;
+          // The tilt is exaggerated so it shows, but capped so the hand end stays above the ground.
+          const angle = -tilt * Math.min(0.25, Math.asin(Math.min(1, 36 / (v["lev-de"] * scale))));
+          const end = (d) => ({
+            x: px + d * scale * Math.cos(angle),
+            y: py - d * scale * Math.sin(angle),
+          });
+          const load = end(-v["lev-dl"]);
+          const hand = end(v["lev-de"]);
+          ctx.fillStyle = ink;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px - 22, py + 40);
+          ctx.lineTo(px + 22, py + 40);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillRect(0, py + 40, canvas.width, 4);
+          ctx.strokeStyle = token("--action");
+          ctx.lineWidth = 10;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(load.x, load.y);
+          ctx.lineTo(hand.x, hand.y);
+          ctx.stroke();
+          const box = 18 + v["lev-load"] * 0.45;
+          ctx.fillStyle = token("--highlight");
+          ctx.fillRect(load.x - box / 2, load.y - box - 5, box, box);
+          ctx.fillStyle = ink;
+          ctx.font = `600 22px ${token("--body") || "sans-serif"}`;
+          ctx.textAlign = "center";
+          ctx.fillText(`${v["lev-load"]} kg`, load.x, load.y - box - 14);
+          const arrow = Math.min(150, 20 + force / 6);
+          ctx.strokeStyle = ink;
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.moveTo(hand.x, hand.y - arrow - 8);
+          ctx.lineTo(hand.x, hand.y - 8);
+          ctx.lineTo(hand.x - 9, hand.y - 20);
+          ctx.moveTo(hand.x, hand.y - 8);
+          ctx.lineTo(hand.x + 9, hand.y - 20);
+          ctx.stroke();
+          ctx.fillText(`push ${Math.round(force)} N`, hand.x, hand.y - arrow - 16);
+          ctx.fillText("pivot", px, py + 62);
+        }
+
+        show();
+        loop((dt) => {
+          if (lifting) {
+            tilt = Math.min(1, tilt + dt * 0.8);
+            if (tilt >= 1) lifting = false;
+          }
+          draw();
+        });
+        requestAnimationFrame(() => visualReady("lever", started));
+      }
+
+      // Boiling point from pressure (Clausius–Clapeyron), with pressure falling exponentially with height.
+      function boilingPointC(heightKm) {
+        const pressureAtm = Math.exp(-heightKm / 8.4);
+        return 1 / (1 / 373.15 - (8.314 / 40660) * Math.log(pressureAtm)) - 273.15;
+      }
+
+      function mountHeatingLab(stage, started) {
+        stage.innerHTML = `
+          <canvas width="640" height="320" role="img" aria-label="Water heating"></canvas>
+          <div class="sim-controls">
+            ${slider("heat-power", "Heater", "W", 500, 3000, 100, 2000)}
+            ${slider("heat-water", "Water", "litres", 0.25, 2, 0.25, 1)}
+            ${slider("heat-height", "Height above the sea", "km", 0, 8.8, 0.2, 0)}
+          </div>
+          <div class="row">
+            <button class="btn" type="button" id="heat-go">Start heating</button>
+            <button class="btn secondary" type="button" id="heat-reset">Start again</button>
+          </div>
+          <dl class="compare sim-readout" aria-live="polite">
+            <div><dt>Water temperature</dt><dd id="heat-temp"></dd></div>
+            <div><dt>Boils here at</dt><dd id="heat-bp"></dd></div>
+            <div><dt>Time to boil</dt><dd id="heat-time"></dd></div>
+            <div><dt>Water left</dt><dd id="heat-left"></dd></div>
+          </dl>`;
+        const canvas = stage.querySelector("canvas");
+        const ctx = canvas.getContext("2d");
+        let temp = 20;
+        let mass = 1;
+        let seconds = 0;
+        let heating = false;
+        let history = [];
+        const particles = Array.from({ length: 36 }, () => ({
+          x: Math.random(),
+          y: Math.random(),
+          a: Math.random() * Math.PI * 2,
+        }));
+        const bubbles = [];
+        const reset = () => {
+          temp = 20;
+          mass = values()["heat-water"];
+          seconds = 0;
+          history = [];
+          heating = false;
+        };
+        const { $, values, show, loop } = labPlumbing(
+          stage,
+          ["heat-power", "heat-water", "heat-height"],
+          (v) => {
+            const bp = boilingPointC(v["heat-height"]);
+            $("#heat-bp").textContent = `${bp.toFixed(0)} °C`;
+            const toBoil = (v["heat-water"] * 4190 * (bp - 20)) / v["heat-power"];
+            $("#heat-time").textContent = `${(toBoil / 60).toFixed(1)} minutes from 20 °C`;
+            if (!heating && seconds === 0) mass = v["heat-water"];
+          },
+        );
+        $("#heat-go").addEventListener("click", () => {
+          if (seconds === 0) reset();
+          heating = true;
+          log("labRun", { template: "heating", ...values() });
+        });
+        $("#heat-reset").addEventListener("click", reset);
+
+        function step(dt) {
+          if (!heating || mass <= 0) return;
+          const v = values();
+          const bp = boilingPointC(v["heat-height"]);
+          const simDt = dt * 20;
+          const energy = v["heat-power"] * simDt;
+          if (temp < bp) temp = Math.min(bp, temp + energy / (mass * 4190));
+          else mass = Math.max(0, mass - energy / 2.26e6);
+          seconds += simDt;
+          history.push([seconds, temp]);
+          if (history.length > 2000) history = history.filter((_, i) => i % 2 === 0);
+        }
+
+        function draw(dt) {
+          const v = values();
+          const bp = boilingPointC(v["heat-height"]);
+          const ink = token("--ink");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const pot = { x: 30, y: 60, w: 220, h: 200 };
+          const level = pot.y + pot.h - (pot.h - 30) * Math.min(1, mass / 2);
+          ctx.fillStyle = `rgba(80, 160, 230, ${0.25 + 0.5 * ((temp - 20) / 80)})`;
+          ctx.fillRect(pot.x, level, pot.w, pot.y + pot.h - level);
+          const speed = reducedMotion() ? 0 : 0.15 + ((temp - 20) / 80) * 1.4;
+          ctx.fillStyle = ink;
+          for (const p of particles) {
+            p.a += (Math.random() - 0.5) * 2;
+            p.x = Math.min(1, Math.max(0, p.x + Math.cos(p.a) * speed * dt));
+            p.y = Math.min(1, Math.max(0, p.y + Math.sin(p.a) * speed * dt));
+            ctx.beginPath();
+            ctx.arc(
+              pot.x + 8 + p.x * (pot.w - 16),
+              level + 6 + p.y * (pot.y + pot.h - level - 12),
+              3,
+              0,
+              Math.PI * 2,
+            );
+            ctx.fill();
+          }
+          if (heating && temp >= bp - 0.01 && mass > 0 && !reducedMotion() && Math.random() < 0.5)
+            bubbles.push({
+              x: pot.x + 20 + Math.random() * (pot.w - 40),
+              y: pot.y + pot.h - 8,
+              r: 3 + Math.random() * 6,
+            });
+          ctx.strokeStyle = ink;
+          ctx.lineWidth = 2;
+          for (const bubble of bubbles) {
+            bubble.y -= 120 * dt;
+            ctx.beginPath();
+            ctx.arc(bubble.x, bubble.y, bubble.r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          while (bubbles.length && bubbles[0].y < level) bubbles.shift();
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(pot.x, pot.y);
+          ctx.lineTo(pot.x, pot.y + pot.h);
+          ctx.lineTo(pot.x + pot.w, pot.y + pot.h);
+          ctx.lineTo(pot.x + pot.w, pot.y);
+          ctx.stroke();
+          ctx.fillStyle = heating ? "rgb(230, 90, 30)" : token("--rule");
+          ctx.fillRect(pot.x + 10, pot.y + pot.h + 8, pot.w - 20, 10);
+          const g = { x: 320, y: 40, w: 290, h: 220 };
+          const maxT = 110;
+          const maxS = Math.max(240, seconds * 1.1);
+          const gx = (s) => g.x + (s / maxS) * g.w;
+          const gy = (t) => g.y + g.h - (t / maxT) * g.h;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(g.x, g.y);
+          ctx.lineTo(g.x, g.y + g.h);
+          ctx.lineTo(g.x + g.w, g.y + g.h);
+          ctx.stroke();
+          ctx.setLineDash([5, 5]);
+          ctx.strokeStyle = token("--ink-soft");
+          ctx.beginPath();
+          ctx.moveTo(g.x, gy(bp));
+          ctx.lineTo(g.x + g.w, gy(bp));
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.strokeStyle = token("--action");
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(gx(0), gy(20));
+          for (const [s, t] of history) ctx.lineTo(gx(s), gy(t));
+          ctx.stroke();
+          ctx.fillStyle = ink;
+          ctx.font = `600 20px ${token("--body") || "sans-serif"}`;
+          ctx.textAlign = "left";
+          ctx.fillText(`boils at ${bp.toFixed(0)} °C`, g.x + 8, gy(bp) - 8);
+          ctx.fillText("°C", g.x - 4, g.y - 10);
+          ctx.textAlign = "right";
+          ctx.fillText(`${(maxS / 60).toFixed(0)} min`, g.x + g.w, g.y + g.h + 20);
+          $("#heat-temp").textContent =
+            `${temp.toFixed(1)} °C${temp >= bp - 0.01 && heating ? ", boiling: the heat now turns water into steam" : ""}`;
+          $("#heat-left").textContent = `${mass.toFixed(2)} litres`;
+          canvas.setAttribute(
+            "aria-label",
+            `Water at ${temp.toFixed(0)} °C. It boils here at ${bp.toFixed(0)} °C.`,
+          );
+        }
+
+        show();
+        loop((dt) => {
+          step(dt);
+          draw(dt);
+        });
+        requestAnimationFrame(() => visualReady("heating", started));
+      }
+
+      const MOUNTS = { svg: mountSvg, glb: mountGlb, sim: mountSim, lab: mountLab };
 
       function renderFacilitator() {
         const dialog = document.getElementById("facilitator");
