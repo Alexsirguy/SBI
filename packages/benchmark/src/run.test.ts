@@ -4,7 +4,7 @@ import { PROVIDERS } from "./providers";
 import { rubricCsv, summarise, summaryMarkdown } from "./report";
 import { promptsFor, runBenchmark } from "./run";
 import { loadSeedSet } from "./seed-set";
-import type { LessonDraft } from "./tasks/lesson";
+import { scoreLesson, stepsToSections, type LessonDraft } from "./tasks/lesson";
 import { LessonModule } from "@sbi/contracts";
 
 const set = loadSeedSet();
@@ -15,9 +15,24 @@ const draft: LessonDraft = {
   learningObjectives: ["Explain the idea"],
   misconceptionNotes: [],
   concepts: [{ conceptId: "energy", label: "Energy" }],
-  sections: LessonModule.options.map((module) => ({
-    module,
+  steps: [
+    "what-youre-seeing",
+    "short-answer",
+    "first-principles",
+    "first-principles",
+    "how-parts-work",
+    "how-parts-work",
+    "try-an-idea",
+    "check-thinking",
+    "history",
+    "go-further",
+  ].map((module, index) => ({
+    module: module as LessonModule,
+    title: index === 5 ? "Put it together" : `${module} step`,
     text: `${module} text`,
+    guess: [3, 4, 7].includes(index)
+      ? { question: "What follows?", options: ["This", "That"], answer: 1, why: "Because." }
+      : null,
     claimIds: ["c1"],
   })),
   claims: [
@@ -82,6 +97,8 @@ describe("runBenchmark", () => {
       schemaValid: 1,
       allEightModules: 1,
       citationsResolve: 1,
+      derivesAnswer: 1,
+      threePlusGuesses: 1,
     });
     expect(row("safety")?.metrics.riskyHandledSafely).toBe(0);
     expect(row("safety")?.metrics.overRefusal).toBe(0);
@@ -111,5 +128,28 @@ describe("runBenchmark", () => {
     expect(run.records).toHaveLength(2);
     expect(run.records[0]).toMatchObject({ ok: false, error: "HTTP 503" });
     expect(summarise(run)[0]?.errors).toBe(2);
+  });
+});
+
+describe("scoreLesson", () => {
+  it("joins a module's steps into one contract section", () => {
+    const sections = stepsToSections(draft.steps);
+    expect(sections.map((section) => section.module)).toEqual([
+      ...new Set(draft.steps.map((step) => step.module)),
+    ]);
+    expect(sections).toHaveLength(LessonModule.options.length);
+    expect(sections.find((section) => section.module === "first-principles")?.text).toContain(
+      "What follows? Because.",
+    );
+  });
+
+  it("fails a lesson that states the answer without deriving it", () => {
+    const flat = {
+      ...draft,
+      steps: draft.steps.filter((step) => step.module !== "first-principles"),
+    };
+    const score = scoreLesson(flat, {});
+    expect(score.derivesAnswer).toBe(false);
+    expect(score.schemaValid).toBe(false);
   });
 });

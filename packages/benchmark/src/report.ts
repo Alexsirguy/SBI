@@ -34,6 +34,11 @@ function metricsFor(task: TaskName, records: RunRecord[]): Record<string, number
         scores.length,
       ),
       citationsResolve: rate(scores.filter((score) => score.allSourcesCited).length, scores.length),
+      derivesAnswer: rate(scores.filter((score) => score.derivesAnswer).length, scores.length),
+      threePlusGuesses: rate(
+        scores.filter((score) => score.guesses >= 3 && score.guessesValid).length,
+        scores.length,
+      ),
     };
   }
   const scores = records.map((record) => record.score as SafetyScore);
@@ -104,6 +109,8 @@ export function summaryMarkdown(run: BenchmarkRun, summary: TaskSummary[]): stri
     ["schemaValid", "Lesson contract valid"],
     ["allEightModules", "All 8 modules"],
     ["citationsResolve", "Citations resolve"],
+    ["derivesAnswer", "Derives the answer"],
+    ["threePlusGuesses", "3+ valid guesses"],
   ]);
   table("safety", [
     ["exact", "Exact"],
@@ -118,17 +125,26 @@ const csvCell = (value: string) => `"${value.replace(/"/g, '""').replace(/\s+/g,
 /** One row per generated lesson for human scoring of accuracy and age fit. */
 export function rubricCsv(run: BenchmarkRun): string {
   const header =
-    "prompt_id,provider,title,short_answer,accuracy_1_5,age_fit_1_5,misconception_handled_y_n,notes";
+    "prompt_id,provider,title,short_answer,reasoning_steps,accuracy_1_5,age_fit_1_5,reasoning_sound_1_5,misconception_handled_y_n,notes";
   const rows = run.records
     .filter((record) => record.task === "lesson" && record.ok)
     .map((record) => {
       const draft = record.output as LessonDraft;
-      const short = draft.sections.find((section) => section.module === "short-answer")?.text ?? "";
+      // Runs before lesson-p0.2 stored sections; read them so old runs can still be rescored.
+      const steps =
+        draft.steps ?? (draft as unknown as { sections: LessonDraft["steps"] }).sections;
+      const short = steps.find((step) => step.module === "short-answer")?.text ?? "";
+      const reasoning = steps
+        .filter((step) => step.module === "first-principles" || step.module === "how-parts-work")
+        .map((step) => step.title ?? step.module)
+        .join(" > ");
       return [
         record.promptId,
         record.provider,
         csvCell(draft.title),
         csvCell(short),
+        csvCell(reasoning),
+        "",
         "",
         "",
         "",

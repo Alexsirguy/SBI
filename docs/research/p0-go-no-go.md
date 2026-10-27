@@ -79,6 +79,7 @@ The rights workflow works as a manual register. `@sbi/rights` should enforce the
 - [ ] Hold the learner sessions (#11–#14), then fill in the synthesis and usability findings.
 - [x] Do the vendor benchmark run (#15), then update ADR 0006.
 - [x] Run `spikes --llm meta-spark`, then fill in the pending rows above.
-- [ ] Score the lesson rubric CSV by hand (accuracy, age fit, misconception handled).
+- [x] Move lessons to first principles (short answer, then steps that derive it, with guesses) in the prototype and `lesson-p0.2`; re-run lessons (Meta Spark 100% valid and deriving the answer, p50 17.0 s).
+- [ ] Score the `2026-10-27T18-44-40` lesson rubric CSV by hand (accuracy, age fit, reasoning sound, misconception handled).
 - [x] Seed set 2.0.0: replace the `seed-006`, `seed-008` and `seed-022` photos and add the alias "electrical outlet"; then re-run recognition (Meta Spark 100% top-3, GPT-5.4-mini 92%).
 - [ ] Re-run the evidence spike after adding table-aware extraction.
