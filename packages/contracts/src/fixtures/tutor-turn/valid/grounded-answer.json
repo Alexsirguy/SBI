@@ -1,15 +1,18 @@
 {
-  "sessionId": "sess-123",
-  "turnId": "t1",
-  "lessonId": "kettle_heat_transfer_v1",
+  "sessionId": "0192f1a0-0000-7000-8000-000000000011",
+  "turnId": "0192f1a0-0000-7000-8000-000000000012",
+  "lessonId": "0192f1a0-0000-7000-8000-00000000000c",
   "lessonVersion": 1,
   "userText": "Why does the kettle click off?",
-  "retrievedClaimIds": ["c1", "c2"],
+  "retrievedClaimIds": [
+    "0192f1a0-0000-7000-8000-000000000005",
+    "0192f1a0-0000-7000-8000-000000000004"
+  ],
   "response": {
     "text": "Many kettles switch off when steam heats a small metal strip that bends.",
-    "citedClaimIds": ["c2"],
+    "citedClaimIds": ["0192f1a0-0000-7000-8000-000000000004"],
     "visualAction": {
-      "visualId": "kettle_heat_v1",
+      "visualId": "0192f1a0-0000-7000-8000-00000000000d",
       "state": "highlight-switch"
     }
   },

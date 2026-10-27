@@ -1,0 +1,82 @@
+{
+  "$id": "VisualManifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "visualId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "svg-diagram",
+        "canvas-diagram",
+        "gltf-model",
+        "simulation",
+        "molecular"
+      ]
+    },
+    "alt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "longDescription": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fallback": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stillImageUrl": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "assetIds": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      }
+    },
+    "assumptions": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "params": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "visualId",
+    "kind",
+    "alt",
+    "fallback",
+    "assetIds",
+    "assumptions",
+    "params"
+  ],
+  "additionalProperties": false
+}

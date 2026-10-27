@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, IsoDateTime } from "./common";
+import { IsoDateTime, Uuid } from "./common";
 
 export const SafetyCategory = z.enum([
   "none",
@@ -14,21 +14,21 @@ export const SafetyCategory = z.enum([
 export const RetentionClass = z.enum(["session", "quality-review", "research-consented"]);
 
 export const VisualAction = z.object({
-  visualId: Id,
+  visualId: Uuid,
   state: z.string().min(1),
 });
 
 export const TutorTurn = z
   .object({
-    sessionId: Id,
-    turnId: Id,
-    lessonId: Id,
+    sessionId: Uuid,
+    turnId: Uuid,
+    lessonId: Uuid,
     lessonVersion: z.int().positive(),
     userText: z.string().min(1).max(2000),
-    retrievedClaimIds: z.array(Id).default([]),
+    retrievedClaimIds: z.array(Uuid).default([]),
     response: z.object({
       text: z.string().min(1),
-      citedClaimIds: z.array(Id).default([]),
+      citedClaimIds: z.array(Uuid).default([]),
       visualAction: VisualAction.optional(),
     }),
     safetyCategory: SafetyCategory,

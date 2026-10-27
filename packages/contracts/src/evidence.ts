@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Confidence, Id, IsoDate, IsoDateTime } from "./common";
+import { Confidence, Id, IsoDate, IsoDateTime, Uuid } from "./common";
 
 export const SourceType = z.enum([
   "textbook",
@@ -29,7 +29,7 @@ export const Excerpt = z.object({
 
 export const EvidenceSource = z
   .object({
-    sourceId: Id,
+    sourceId: Uuid,
     title: z.string().min(1),
     publisher: z.string().min(1).optional(),
     authors: z.array(z.string().min(1)).default([]),
@@ -42,7 +42,7 @@ export const EvidenceSource = z
     publishedOn: IsoDate.optional(),
     accessedOn: IsoDate,
     excerpts: z.array(Excerpt).min(1),
-    claimIds: z.array(Id).default([]),
+    claimIds: z.array(Uuid).default([]),
     evidenceQuality: z.enum(["high", "moderate", "low"]),
     rightsStatus: RightsStatus,
     lastCheckedAt: IsoDateTime,
@@ -56,14 +56,14 @@ export const ClaimStatus = z.enum(["supported", "qualified", "disputed", "unsupp
 
 export const Claim = z
   .object({
-    claimId: Id,
+    claimId: Uuid,
     text: z.string().min(1),
     status: ClaimStatus,
-    sourceIds: z.array(Id).default([]),
+    sourceIds: z.array(Uuid).default([]),
     scope: z.string().min(1),
     confidence: Confidence,
     uncertainty: z.string().min(1).optional(),
-    dependsOn: z.array(Id).default([]),
+    dependsOn: z.array(Uuid).default([]),
   })
   .refine((claim) => claim.status === "unsupported" || claim.sourceIds.length > 0, {
     message: "Only unsupported claims may have no sources",
