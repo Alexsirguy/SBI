@@ -4,6 +4,7 @@ import {
   loadSeedSet,
   rubricCsv,
   scoreRecognition,
+  SEED_SET_PATHS,
   summarise,
   summaryMarkdown,
   type BenchmarkRun,
@@ -13,7 +14,9 @@ import {
 const path = process.argv[2];
 if (!path?.endsWith(".json")) throw new Error("Usage: rescore <run>.json");
 const run = JSON.parse(readFileSync(path, "utf8")) as BenchmarkRun & { rescoredAt?: string };
-const prompts = new Map(loadSeedSet().prompts.map((prompt) => [prompt.id, prompt]));
+const seedPath = SEED_SET_PATHS[run.seedVersion];
+if (!seedPath) throw new Error(`No seed set ${run.seedVersion} on disk`);
+const prompts = new Map(loadSeedSet(seedPath).prompts.map((prompt) => [prompt.id, prompt]));
 
 for (const record of run.records) {
   const prompt = prompts.get(record.promptId);

@@ -1,0 +1,3205 @@
+{
+  "runAt": "2026-10-27T16:43:25.317Z",
+  "seedVersion": "2.0.0",
+  "promptVersions": {
+    "recognition": "recognition-p0.1",
+    "lesson": "lesson-p0.1",
+    "safety": "safety-p0.1"
+  },
+  "providers": [
+    {
+      "id": "meta-spark",
+      "vendor": "meta",
+      "model": "muse-spark-1.3"
+    },
+    {
+      "id": "openai-mini",
+      "vendor": "openai",
+      "model": "gpt-5.4-mini"
+    }
+  ],
+  "records": [
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-001",
+      "ok": true,
+      "latencyMs": 5622,
+      "usage": {
+        "inputTokens": 1706,
+        "cachedInputTokens": 241,
+        "outputTokens": 485
+      },
+      "costUsd": 0.00392865,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "bicycle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "two spoked wheels connected by a black frame",
+              "handlebars with front wire basket",
+              "saddle, pedals and rear rack visible"
+            ]
+          }
+        ],
+        "observations": [
+          "black city bike standing on street",
+          "wire basket mounted on front handlebars",
+          "two large thin wheels with fenders"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-002",
+      "ok": true,
+      "latencyMs": 5825,
+      "usage": {
+        "inputTokens": 1782,
+        "cachedInputTokens": 0,
+        "outputTokens": 789
+      },
+      "costUsd": 0.00558075,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "bicycle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.95,
+            "reasons": [
+              "toothed chainring and metal chain visible",
+              "blue frame and wheel in background",
+              "Shimano gear mechanism mounted on frame"
+            ]
+          },
+          {
+            "label": "bicycle front derailleur",
+            "certainty": "likely",
+            "calibratedConfidence": 0.92,
+            "reasons": [
+              "silver Shimano 600 mechanism over chainring",
+              "cable-operated gear changer shape"
+            ]
+          },
+          {
+            "label": "bicycle chain",
+            "certainty": "possible",
+            "calibratedConfidence": 0.85,
+            "reasons": ["linked metal chain running over gears"]
+          }
+        ],
+        "observations": [
+          "silver Shimano 600 front derailleur in close-up",
+          "metal chain on large toothed chainring",
+          "blue frame and tire edge in background"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-003",
+      "ok": true,
+      "latencyMs": 5412,
+      "usage": {
+        "inputTokens": 1931,
+        "cachedInputTokens": 0,
+        "outputTokens": 708
+      },
+      "costUsd": 0.00542275,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "stovetop kettle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "shiny metal body with side pouring spout",
+              "lidded top with black overhead handle"
+            ]
+          },
+          {
+            "label": "teapot",
+            "certainty": "possible",
+            "calibratedConfidence": 0.6,
+            "reasons": ["similar kettle shape used for serving hot drinks"]
+          }
+        ],
+        "observations": [
+          "shiny stainless steel body",
+          "short spout on side",
+          "black handle over lid"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-004",
+      "ok": true,
+      "latencyMs": 5104,
+      "usage": {
+        "inputTokens": 3070,
+        "cachedInputTokens": 0,
+        "outputTokens": 457
+      },
+      "costUsd": 0.00577975,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "electric kettle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "glass jug with handle and lid for boiling water",
+              "water vigorously boiling inside with steam above",
+              "electric metal base with power cord and blue light"
+            ]
+          }
+        ],
+        "observations": [
+          "transparent glass jug with black handle and lid",
+          "boiling water with steam rising from top",
+          "metal electric base with blue light"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-005",
+      "ok": true,
+      "latencyMs": 4427,
+      "usage": {
+        "inputTokens": 564,
+        "cachedInputTokens": 241,
+        "outputTokens": 849
+      },
+      "costUsd": 0.00404815,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "magnifying glass",
+            "certainty": "likely",
+            "calibratedConfidence": 0.95,
+            "reasons": [
+              "round transparent lens dominates center",
+              "dark handle with metal neck",
+              "enlarges object seen through it"
+            ]
+          }
+        ],
+        "observations": [
+          "large circular clear lens in center",
+          "black handle at bottom",
+          "blue pen appears enlarged through lens"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-006",
+      "ok": true,
+      "latencyMs": 2821,
+      "usage": {
+        "inputTokens": 1706,
+        "cachedInputTokens": 0,
+        "outputTokens": 523
+      },
+      "costUsd": 0.00435525,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "swing",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "blue flexible seat suspended by two metal chains",
+              "S-hooks attaching seat typical of playground swings"
+            ]
+          }
+        ],
+        "observations": [
+          "blue U-shaped seat hanging from chains",
+          "metal hooks and chain links visible at top",
+          "green grass background out of focus"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-007",
+      "ok": true,
+      "latencyMs": 3795,
+      "usage": {
+        "inputTokens": 2242,
+        "cachedInputTokens": 0,
+        "outputTokens": 609
+      },
+      "costUsd": 0.00539075,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "compass",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "circular dial shows cardinal directions N, S, E, W",
+              "has sighting wire, degree scale and flip-up magnifier for navigation",
+              "gold-colored hinged metal case typical of lensatic compass"
+            ]
+          }
+        ],
+        "observations": [
+          "round gold-colored metal case with open hinged lid",
+          "circular dial marked with N, S, E, W and degree numbers",
+          "sighting slot and flip-up lens attached to case"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-008",
+      "ok": true,
+      "latencyMs": 3668,
+      "usage": {
+        "inputTokens": 2084,
+        "cachedInputTokens": 241,
+        "outputTokens": 392
+      },
+      "costUsd": 0.0040059,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "white feather",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "central shaft with fine barbs on both sides",
+              "soft fluffy white vane texture",
+              "classic single feather shape"
+            ]
+          }
+        ],
+        "observations": [
+          "single white feather centered on dark background",
+          "visible central shaft with delicate barbs",
+          "soft downy texture at base"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-009",
+      "ok": true,
+      "latencyMs": 2687,
+      "usage": {
+        "inputTokens": 1886,
+        "cachedInputTokens": 241,
+        "outputTokens": 454
+      },
+      "costUsd": 0.0040219,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "electrical outlet",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "white wall-mounted socket plate",
+              "round recess with two pin holes",
+              "metal grounding pin visible"
+            ]
+          }
+        ],
+        "observations": [
+          "white square wall plate mounted on wall",
+          "round recessed socket in center",
+          "two black holes with metal pin"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-010",
+      "ok": true,
+      "latencyMs": 3182,
+      "usage": {
+        "inputTokens": 944,
+        "cachedInputTokens": 0,
+        "outputTokens": 507
+      },
+      "costUsd": 0.00333475,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "honeycomb",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "hexagonal wax cells covering the frame",
+              "golden honey visible inside cells",
+              "bees crawling on the comb"
+            ]
+          }
+        ],
+        "observations": [
+          "repeating hexagonal wax cells",
+          "shiny golden honey coating",
+          "bees on upper right edge"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-011",
+      "ok": true,
+      "latencyMs": 2899,
+      "usage": {
+        "inputTokens": 2702,
+        "cachedInputTokens": 0,
+        "outputTokens": 581
+      },
+      "costUsd": 0.00584675,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "sunflower",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "bright yellow petals around large brown disk center",
+              "tall green stem with large serrated leaves"
+            ]
+          }
+        ],
+        "observations": [
+          "large yellow flower with brown center",
+          "green stem and leaves below bloom",
+          "clear blue sky background"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-012",
+      "ok": true,
+      "latencyMs": 3505,
+      "usage": {
+        "inputTokens": 3070,
+        "cachedInputTokens": 241,
+        "outputTokens": 620
+      },
+      "costUsd": 0.006207399999999999,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "pine cone",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "brown ovoid shape with overlapping woody scales",
+              "curved scale tips typical of a pine cone",
+              "dry tan-brown texture of a mature seed cone"
+            ]
+          }
+        ],
+        "observations": [
+          "brown conical object with layered woody scales",
+          "curved pointed scale tips",
+          "shown isolated on grey background with 1 cm scale"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-013",
+      "ok": true,
+      "latencyMs": 2524,
+      "usage": {
+        "inputTokens": 1552,
+        "cachedInputTokens": 241,
+        "outputTokens": 485
+      },
+      "costUsd": 0.00373615,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "soccer ball",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "round ball with curved paneled construction",
+              "FIFA QUALITY PRO mark and colorful star pattern",
+              "sports ball shape on display table"
+            ]
+          }
+        ],
+        "observations": [
+          "round white ball with red, blue and green panels",
+          "blue star graphics and FIFA logo visible",
+          "resting on a white surface"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-014",
+      "ok": true,
+      "latencyMs": 4447,
+      "usage": {
+        "inputTokens": 1252,
+        "cachedInputTokens": 241,
+        "outputTokens": 463
+      },
+      "costUsd": 0.00326765,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "dice",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "cube shape with white pips for numbers",
+              "four colorful game cubes stacked together"
+            ]
+          }
+        ],
+        "observations": [
+          "four cube-shaped objects with white dots",
+          "bright red, green, purple and blue colors",
+          "stacked together on dark surface"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-015",
+      "ok": true,
+      "latencyMs": 3012,
+      "usage": {
+        "inputTokens": 1976,
+        "cachedInputTokens": 241,
+        "outputTokens": 501
+      },
+      "costUsd": 0.004334149999999999,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "snowflake",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "sixfold symmetrical branching structure",
+              "translucent crystalline ice detail"
+            ]
+          }
+        ],
+        "observations": [
+          "six-sided symmetrical crystal",
+          "intricate branching arms",
+          "clear icy texture on light background"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-016",
+      "ok": true,
+      "latencyMs": 2790,
+      "usage": {
+        "inputTokens": 1886,
+        "cachedInputTokens": 241,
+        "outputTokens": 526
+      },
+      "costUsd": 0.0043279,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "nautilus",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "coiled white shell with brown stripes",
+              "soft body with tentacles at shell opening",
+              "cephalopod swimming underwater"
+            ]
+          }
+        ],
+        "observations": [
+          "coiled white shell with brown stripes",
+          "soft body with tentacles at opening",
+          "deep blue underwater background"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-017",
+      "ok": true,
+      "latencyMs": 3805,
+      "usage": {
+        "inputTokens": 1904,
+        "cachedInputTokens": 241,
+        "outputTokens": 598
+      },
+      "costUsd": 0.0046564,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "green leaf",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "single heart-shaped green blade",
+              "serrated edge with pointed tip and visible veins"
+            ]
+          },
+          {
+            "label": "linden leaf",
+            "certainty": "possible",
+            "calibratedConfidence": 0.7,
+            "reasons": [
+              "broad cordate shape typical of linden",
+              "sharply toothed margin and palmate venation at base"
+            ]
+          }
+        ],
+        "observations": [
+          "single green leaf centered on white background",
+          "toothed margin with pointed tip",
+          "prominent central vein and long green stalk"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-018",
+      "ok": true,
+      "latencyMs": 2585,
+      "usage": {
+        "inputTokens": 1206,
+        "cachedInputTokens": 241,
+        "outputTokens": 600
+      },
+      "costUsd": 0.0037924,
+      "score": {
+        "labelExpected": true,
+        "top1": false,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "oak branch with acorns",
+            "certainty": "likely",
+            "calibratedConfidence": 0.97,
+            "reasons": [
+              "lobed green oak leaves on a woody stem",
+              "brown oval acorns with caps present"
+            ]
+          },
+          {
+            "label": "acorn",
+            "certainty": "likely",
+            "calibratedConfidence": 0.85,
+            "reasons": ["brown oval nuts with textured caps visible"]
+          },
+          {
+            "label": "oak leaf",
+            "certainty": "likely",
+            "calibratedConfidence": 0.9,
+            "reasons": ["distinctive lobed green leaves with rounded lobes"]
+          }
+        ],
+        "observations": [
+          "lobed green leaves with wavy edges",
+          "brown oval nuts with scaly caps",
+          "all arranged on and around a central woody twig"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-019",
+      "ok": true,
+      "latencyMs": 7482,
+      "usage": {
+        "inputTokens": 1782,
+        "cachedInputTokens": 241,
+        "outputTokens": 1160
+      },
+      "costUsd": 0.0068924,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "ambiguous",
+        "candidates": [
+          {
+            "label": "wild mushroom cluster",
+            "certainty": "likely",
+            "calibratedConfidence": 0.92,
+            "reasons": [
+              "dense cluster of gilled fungi growing together",
+              "growing at base of tree trunk in grass"
+            ]
+          },
+          {
+            "label": "shaggy scalycap mushroom",
+            "certainty": "possible",
+            "calibratedConfidence": 0.65,
+            "reasons": ["golden-brown caps with pointed scales", "scaly stems match Pholiota type"]
+          },
+          {
+            "label": "honey mushroom",
+            "certainty": "possible",
+            "calibratedConfidence": 0.35,
+            "reasons": [
+              "similar clustered growth habit",
+              "cap color overlaps but exact species uncertain"
+            ]
+          }
+        ],
+        "observations": [
+          "cluster of tan mushrooms at tree base",
+          "caps covered in brown shaggy scales",
+          "pale gills and thick stems visible"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-020",
+      "ok": true,
+      "latencyMs": 3806,
+      "usage": {
+        "inputTokens": 2104,
+        "cachedInputTokens": 241,
+        "outputTokens": 532
+      },
+      "costUsd": 0.0046259,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "honeybee",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "fuzzy body with black and tan stripes",
+              "transparent wings and large dark eyes",
+              "orange pollen load on hind leg"
+            ]
+          }
+        ],
+        "observations": [
+          "striped fuzzy insect on yellow flower",
+          "transparent wings folded over back",
+          "bright orange pollen sac on leg"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-021",
+      "ok": true,
+      "latencyMs": 4008,
+      "usage": {
+        "inputTokens": 468,
+        "cachedInputTokens": 241,
+        "outputTokens": 874
+      },
+      "costUsd": 0.0040344000000000005,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "banana",
+            "certainty": "likely",
+            "calibratedConfidence": 0.96,
+            "reasons": [
+              "curved elongated shape typical of bananas",
+              "yellow spotted peels on right bunches",
+              "grouped in bunches with stems"
+            ]
+          },
+          {
+            "label": "plantain",
+            "certainty": "possible",
+            "calibratedConfidence": 0.6,
+            "reasons": ["large green curved fruits on left", "thicker skin than common banana"]
+          },
+          {
+            "label": "red banana",
+            "certainty": "possible",
+            "calibratedConfidence": 0.5,
+            "reasons": ["reddish-brown peel in center bunch", "shorter plump shape with sticker"]
+          }
+        ],
+        "observations": [
+          "four bunches of curved fruits on countertop",
+          "peels in green, red-brown, and yellow",
+          "elongated shape with stem ends"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-022",
+      "ok": true,
+      "latencyMs": 7099,
+      "usage": {
+        "inputTokens": 2246,
+        "cachedInputTokens": 241,
+        "outputTokens": 426
+      },
+      "costUsd": 0.0043529,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "golden barrel cactus",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "large round ribbed green stem",
+              "dense yellow spines along ribs",
+              "woolly crown on top with brown buds"
+            ]
+          }
+        ],
+        "observations": [
+          "large spherical green ribbed plant",
+          "covered in dense yellow-white spines",
+          "growing among rocks outdoors"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-024",
+      "ok": true,
+      "latencyMs": 4418,
+      "usage": {
+        "inputTokens": 1706,
+        "cachedInputTokens": 241,
+        "outputTokens": 620
+      },
+      "costUsd": 0.004502399999999999,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "rusted metal surface",
+            "certainty": "likely",
+            "calibratedConfidence": 0.95,
+            "reasons": [
+              "orange-brown flaky corrosion pattern",
+              "rough pitted texture typical of iron oxidation",
+              "mottled dark brown and orange coloring"
+            ]
+          }
+        ],
+        "observations": [
+          "close-up of rough flaky texture",
+          "mottled orange, brown and yellow colors",
+          "pitted corroded surface with no other objects"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-025",
+      "ok": true,
+      "latencyMs": 5162,
+      "usage": {
+        "inputTokens": 2921,
+        "cachedInputTokens": 241,
+        "outputTokens": 730
+      },
+      "costUsd": 0.0064886499999999995,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "lit candle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "white wax stick with burning wick",
+              "bright flame at top",
+              "centered in frame in a holder"
+            ]
+          },
+          {
+            "label": "candlestick holder",
+            "certainty": "possible",
+            "calibratedConfidence": 0.85,
+            "reasons": ["brass holder with round drip tray", "holding the white candle upright"]
+          },
+          {
+            "label": "matchbox",
+            "certainty": "likely",
+            "calibratedConfidence": 0.9,
+            "reasons": ["small yellow box labeled safety matches", "sitting on table beside candle"]
+          }
+        ],
+        "observations": [
+          "white upright candle with visible flame",
+          "brass candlestick with round base on wood table",
+          "yellow matchbox beside the holder"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-026",
+      "ok": true,
+      "latencyMs": 3207,
+      "usage": {
+        "inputTokens": 1082,
+        "cachedInputTokens": 0,
+        "outputTokens": 582
+      },
+      "costUsd": 0.003826,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "ice cube",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "transparent square blocks",
+              "frosty crystalline texture with trapped bubbles",
+              "clear melting appearance"
+            ]
+          }
+        ],
+        "observations": [
+          "clear translucent cube shapes",
+          "stacked in a pile",
+          "blue tint with light reflections"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-027",
+      "ok": true,
+      "latencyMs": 5241,
+      "usage": {
+        "inputTokens": 2840,
+        "cachedInputTokens": 241,
+        "outputTokens": 564
+      },
+      "costUsd": 0.005681899999999999,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": false
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "whiskey glass",
+            "certainty": "likely",
+            "calibratedConfidence": 0.96,
+            "reasons": [
+              "short heavy tumbler shape",
+              "clear cut-glass style typical for whiskey",
+              "thick base for serving spirits"
+            ]
+          },
+          {
+            "label": "drinking glass",
+            "certainty": "likely",
+            "calibratedConfidence": 0.9,
+            "reasons": [
+              "open cylindrical vessel for liquids",
+              "clear transparent glass material",
+              "sized for holding a drink"
+            ]
+          },
+          {
+            "label": "cut crystal tumbler",
+            "certainty": "possible",
+            "calibratedConfidence": 0.85,
+            "reasons": [
+              "intricate starburst cut pattern",
+              "heavy faceted sides that refract light",
+              "decorative crystal-like finish"
+            ]
+          }
+        ],
+        "observations": [
+          "clear short cylindrical glass",
+          "starburst cut pattern on sides",
+          "thick heavy base"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-028",
+      "ok": true,
+      "latencyMs": 4414,
+      "usage": {
+        "inputTokens": 1886,
+        "cachedInputTokens": 241,
+        "outputTokens": 918
+      },
+      "costUsd": 0.0059939,
+      "score": {
+        "labelExpected": true,
+        "top1": false,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "ambiguous",
+        "candidates": [
+          {
+            "label": "quartz crystal",
+            "certainty": "possible",
+            "calibratedConfidence": 0.5,
+            "reasons": ["glassy translucent whitish mass", "rough blocky crystalline form"]
+          },
+          {
+            "label": "rock salt",
+            "certainty": "possible",
+            "calibratedConfidence": 0.3,
+            "reasons": ["clear cubic-looking cleavage", "white translucent appearance"]
+          },
+          {
+            "label": "calcite crystal",
+            "certainty": "unsure",
+            "calibratedConfidence": 0.2,
+            "reasons": [
+              "similar translucent color and lustre",
+              "cannot confirm without hardness test"
+            ]
+          }
+        ],
+        "observations": [
+          "translucent whitish crystalline lump",
+          "glassy shiny rough surfaces",
+          "small orange-brown spots"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-029",
+      "ok": true,
+      "latencyMs": 3154,
+      "usage": {
+        "inputTokens": 1031,
+        "cachedInputTokens": 241,
+        "outputTokens": 459
+      },
+      "costUsd": 0.0029744000000000003,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "apple",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "round fruit with red-yellow skin and brown stem",
+              "cut half shows pale cream flesh with central seeds"
+            ]
+          }
+        ],
+        "observations": [
+          "three views of red-yellow round fruit",
+          "short brown stems at top",
+          "halved view shows white flesh and brown seed"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-030",
+      "ok": true,
+      "latencyMs": 2871,
+      "usage": {
+        "inputTokens": 1920,
+        "cachedInputTokens": 241,
+        "outputTokens": 516
+      },
+      "costUsd": 0.0043279,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "soap bubble",
+            "certainty": "likely",
+            "calibratedConfidence": 0.97,
+            "reasons": [
+              "thin spherical transparent film with rainbow iridescence",
+              "reflection of sky, trees and house on surface",
+              "floating outdoors against blurred background"
+            ]
+          },
+          {
+            "label": "glass sphere",
+            "certainty": "possible",
+            "calibratedConfidence": 0.03,
+            "reasons": [
+              "round reflective transparent shape",
+              "less likely due to thin-film rainbow colors typical of soap"
+            ]
+          }
+        ],
+        "observations": [
+          "spherical transparent object with pink-blue iridescence",
+          "surface reflects house, trees and sky upside-down",
+          "floating in front of blurred green foliage"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-031",
+      "ok": true,
+      "latencyMs": 12544,
+      "usage": {
+        "inputTokens": 590,
+        "cachedInputTokens": 241,
+        "outputTokens": 626
+      },
+      "costUsd": 0.0031329,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "bleach bottle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "white plastic bottles with blue caps and handles",
+              "labels clearly read CLOROX CONCENTRATED",
+              "multiple identical jugs lined up on a table"
+            ]
+          }
+        ],
+        "observations": [
+          "white plastic jugs with blue caps",
+          "front labels read CLOROX",
+          "multiple bottles in different sizes lined up"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-032",
+      "ok": true,
+      "latencyMs": 8181,
+      "usage": {
+        "inputTokens": 1644,
+        "cachedInputTokens": 241,
+        "outputTokens": 591
+      },
+      "costUsd": 0.00430165,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "classical guitar",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "six nylon strings with slotted headstock",
+              "wide fretboard with classical tie-block bridge",
+              "round sound hole with decorative rosette"
+            ]
+          }
+        ],
+        "observations": [
+          "light brown wooden body with round sound hole",
+          "long dark fretboard with six strings",
+          "slotted headstock with tuning pegs"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-033",
+      "ok": true,
+      "latencyMs": 12072,
+      "usage": {
+        "inputTokens": 3898,
+        "cachedInputTokens": 241,
+        "outputTokens": 707
+      },
+      "costUsd": 0.00761215,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "stained glass window",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "large panel made of small colored glass pieces",
+              "black lead framework holding red and blue glass",
+              "tall arched shape typical of church windows"
+            ]
+          },
+          {
+            "label": "rose window",
+            "certainty": "likely",
+            "calibratedConfidence": 0.97,
+            "reasons": [
+              "large symmetrical circular wheel-like design",
+              "central medallion with radiating circular sections"
+            ]
+          }
+        ],
+        "observations": [
+          "large circular arrangement of red and blue glass panels",
+          "dark lead lines dividing small colored sections",
+          "five tall narrow arched windows below the circle"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-034",
+      "ok": true,
+      "latencyMs": 3069,
+      "usage": {
+        "inputTokens": 577,
+        "cachedInputTokens": 241,
+        "outputTokens": 629
+      },
+      "costUsd": 0.0031294,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "paint palette",
+            "certainty": "likely",
+            "calibratedConfidence": 0.97,
+            "reasons": [
+              "oval wooden board covered in thick dabs of paint",
+              "many different colors mixed across the surface",
+              "brushes held in the thumb hole"
+            ]
+          }
+        ],
+        "observations": [
+          "oval wooden board with thumb hole",
+          "covered in blobs of multicolored paint",
+          "paintbrush touching yellow paint"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-035",
+      "ok": true,
+      "latencyMs": 2104,
+      "usage": {
+        "inputTokens": 419,
+        "cachedInputTokens": 241,
+        "outputTokens": 404
+      },
+      "costUsd": 0.0019756500000000002,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "snare drum",
+            "certainty": "likely",
+            "calibratedConfidence": 0.96,
+            "reasons": [
+              "metallic cylindrical shell with white drum head",
+              "mounted on tripod-style drum stand",
+              "tension lugs visible around the rim"
+            ]
+          }
+        ],
+        "observations": [
+          "chrome shell with white top head",
+          "supported by metal tripod stand",
+          "sitting on carpeted floor"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-036",
+      "ok": true,
+      "latencyMs": 4499,
+      "usage": {
+        "inputTokens": 1706,
+        "cachedInputTokens": 241,
+        "outputTokens": 776
+      },
+      "costUsd": 0.0051654,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "clay pot",
+            "certainty": "likely",
+            "calibratedConfidence": 0.96,
+            "reasons": [
+              "round earthen vessel with wide open mouth",
+              "textured handmade clay surface",
+              "unfired tan color"
+            ]
+          },
+          {
+            "label": "earthenware jar",
+            "certainty": "possible",
+            "calibratedConfidence": 0.7,
+            "reasons": ["bulbous storage jar shape", "coarse earthenware material"]
+          }
+        ],
+        "observations": [
+          "round tan vessel with wide opening",
+          "bumpy textured outer surface",
+          "small footed base on sandy ground"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-037",
+      "ok": true,
+      "latencyMs": 3447,
+      "usage": {
+        "inputTokens": 1380,
+        "cachedInputTokens": 241,
+        "outputTokens": 684
+      },
+      "costUsd": 0.0043669,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": false
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "abstract painting",
+            "certainty": "likely",
+            "calibratedConfidence": 0.96,
+            "reasons": [
+              "circular canvas covered in paint",
+              "concentric rings of different colors",
+              "visible brush texture and divided quadrants"
+            ]
+          }
+        ],
+        "observations": [
+          "circular artwork with concentric rings",
+          "segments in red, blue, yellow, purple and black",
+          "painted texture on canvas surface"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-038",
+      "ok": true,
+      "latencyMs": 2403,
+      "usage": {
+        "inputTokens": 1886,
+        "cachedInputTokens": 241,
+        "outputTokens": 283
+      },
+      "costUsd": 0.00329515,
+      "score": {
+        "labelExpected": false,
+        "top1": false,
+        "top3": false,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "unsupported",
+        "candidates": [],
+        "observations": [
+          "many round white tablets scattered together",
+          "plain light green background"
+        ]
+      }
+    },
+    {
+      "provider": "meta-spark",
+      "model": "muse-spark-1.3",
+      "task": "recognition",
+      "promptId": "seed-039",
+      "ok": true,
+      "latencyMs": 3663,
+      "usage": {
+        "inputTokens": 572,
+        "cachedInputTokens": 241,
+        "outputTokens": 749
+      },
+      "costUsd": 0.00363315,
+      "score": {
+        "labelExpected": false,
+        "top1": false,
+        "top3": false,
+        "statusCorrect": false
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "string lights",
+            "certainty": "likely",
+            "calibratedConfidence": 0.85,
+            "reasons": [
+              "many overlapping circular spots of light",
+              "out-of-focus bokeh effect",
+              "bright multicolored glow"
+            ]
+          },
+          {
+            "label": "Christmas lights",
+            "certainty": "possible",
+            "calibratedConfidence": 0.6,
+            "reasons": [
+              "multicolor red blue yellow green lights",
+              "dense cluster typical of holiday decoration"
+            ]
+          }
+        ],
+        "observations": [
+          "out-of-focus circular colorful light spots",
+          "bright red orange blue pink yellow green colors",
+          "dark background"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-001",
+      "ok": true,
+      "latencyMs": 3624,
+      "usage": {
+        "inputTokens": 1615,
+        "cachedInputTokens": 0,
+        "outputTokens": 103
+      },
+      "costUsd": 0.00167475,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "bicycle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Two wheels with spokes and pedals are visible",
+              "Handlebars, saddle, and chain guard match a bike",
+              "A front basket and rear rack are attached"
+            ]
+          }
+        ],
+        "observations": [
+          "Two large spoked wheels",
+          "Handlebars and saddle visible",
+          "Front basket and rear rack attached"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-002",
+      "ok": true,
+      "latencyMs": 4306,
+      "usage": {
+        "inputTokens": 1615,
+        "cachedInputTokens": 0,
+        "outputTokens": 135
+      },
+      "costUsd": 0.00181875,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "bicycle derailleur",
+            "certainty": "likely",
+            "calibratedConfidence": 0.96,
+            "reasons": [
+              "Metal gear-shifting mechanism mounted by the chainring",
+              "Visible chain guide cage and adjustment cable",
+              "Part of a bicycle drivetrain next to the front sprocket"
+            ]
+          }
+        ],
+        "observations": [
+          "Metal shifting mechanism beside a chainring",
+          "Bike chain running through the derailleur",
+          "Close-up of a bicycle drivetrain"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-003",
+      "ok": true,
+      "latencyMs": 4155,
+      "usage": {
+        "inputTokens": 1807,
+        "cachedInputTokens": 0,
+        "outputTokens": 119
+      },
+      "costUsd": 0.00189075,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "kettle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "Has a spout for pouring",
+              "Has a hinged top handle and lid",
+              "Shiny metal body shaped like a stovetop kettle"
+            ]
+          }
+        ],
+        "observations": [
+          "Metal pot with a pouring spout",
+          "Top carrying handle with lid knob",
+          "Rounded body typical of a kettle"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-004",
+      "ok": true,
+      "latencyMs": 3499,
+      "usage": {
+        "inputTokens": 2815,
+        "cachedInputTokens": 2176,
+        "outputTokens": 110
+      },
+      "costUsd": 0.0011374500000000001,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "electric kettle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "glass kettle body on a heated base",
+              "black handle and lid typical of an electric kettle",
+              "water visibly boiling inside"
+            ]
+          }
+        ],
+        "observations": [
+          "Glass pitcher-style kettle with a handle and lid",
+          "Sits on a powered heating base",
+          "Water is actively boiling with steam visible"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-005",
+      "ok": true,
+      "latencyMs": 2113,
+      "usage": {
+        "inputTokens": 535,
+        "cachedInputTokens": 0,
+        "outputTokens": 115
+      },
+      "costUsd": 0.00091875,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "magnifying glass",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "Large round lens with a handle",
+              "Used to enlarge the pen beneath it",
+              "Most prominent object in the photo"
+            ]
+          }
+        ],
+        "observations": [
+          "Round glass lens dominates the image",
+          "Black handle attached below the lens",
+          "A pen is visible beneath the lens"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-006",
+      "ok": true,
+      "latencyMs": 2846,
+      "usage": {
+        "inputTokens": 1615,
+        "cachedInputTokens": 0,
+        "outputTokens": 91
+      },
+      "costUsd": 0.00162075,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "swing seat",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "Blue curved seat hanging from chains",
+              "Outdoor playground-style suspension",
+              "No other object is more prominent"
+            ]
+          }
+        ],
+        "observations": [
+          "Blue curved seat suspended by two chains",
+          "Outdoor grassy background",
+          "Playground equipment shape"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-007",
+      "ok": true,
+      "latencyMs": 3283,
+      "usage": {
+        "inputTokens": 2047,
+        "cachedInputTokens": 0,
+        "outputTokens": 101
+      },
+      "costUsd": 0.00198975,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "compass",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Round dial marked N, E, S, W",
+              "Rotating direction scale inside a hinged case",
+              "Used for navigation and orientation"
+            ]
+          }
+        ],
+        "observations": [
+          "Round navigation dial with cardinal directions",
+          "Hinged metal lid and ring",
+          "Degree markings around the face"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-008",
+      "ok": true,
+      "latencyMs": 3538,
+      "usage": {
+        "inputTokens": 1970,
+        "cachedInputTokens": 0,
+        "outputTokens": 105
+      },
+      "costUsd": 0.00195,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "feather",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Lightweight central shaft with fine barbs on both sides",
+              "Downy fluffy base typical of a bird feather",
+              "Single elongated plume shape"
+            ]
+          }
+        ],
+        "observations": [
+          "A single pale feather on a dark background",
+          "Central shaft with fine branching filaments",
+          "Fluffy down near the base"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-009",
+      "ok": true,
+      "latencyMs": 3007,
+      "usage": {
+        "inputTokens": 1759,
+        "cachedInputTokens": 0,
+        "outputTokens": 109
+      },
+      "costUsd": 0.00180975,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "wall socket",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Round plug holes in a recessed faceplate",
+              "Mounted flush in the wall with an electrical brand mark",
+              "Standard outlet shape for plugging in appliances"
+            ]
+          }
+        ],
+        "observations": [
+          "White electrical faceplate on a wall",
+          "Three-hole socket opening",
+          "Brand mark visible on the lower right"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-010",
+      "ok": true,
+      "latencyMs": 3551,
+      "usage": {
+        "inputTokens": 889,
+        "cachedInputTokens": 0,
+        "outputTokens": 113
+      },
+      "costUsd": 0.00117525,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "honeycomb",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Hexagonal wax cells fill the frame",
+              "Golden translucent material looks like beeswax and honey",
+              "Small dark insects are visible near the comb"
+            ]
+          }
+        ],
+        "observations": [
+          "Hexagonal wax cells cover the image",
+          "Golden translucent honey/wax texture",
+          "A few bees are visible near the top"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-011",
+      "ok": true,
+      "latencyMs": 4322,
+      "usage": {
+        "inputTokens": 2479,
+        "cachedInputTokens": 1920,
+        "outputTokens": 102
+      },
+      "costUsd": 0.00102225,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "sunflower",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Large yellow flower head with many petals",
+              "Round central seed disk",
+              "Tall green stem and broad leaves typical of sunflower"
+            ]
+          }
+        ],
+        "observations": [
+          "Large yellow petals around a round center",
+          "Tall green stem with broad leaves",
+          "Bright flower against a blue sky"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-012",
+      "ok": true,
+      "latencyMs": 5518,
+      "usage": {
+        "inputTokens": 2767,
+        "cachedInputTokens": 2176,
+        "outputTokens": 108
+      },
+      "costUsd": 0.00109245,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "pine cone",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Overlapping woody scales arranged in a cone shape",
+              "Typical conifer seed cone texture and form",
+              "Small scale bar suggests a natural specimen photo"
+            ]
+          }
+        ],
+        "observations": [
+          "Woody scales stacked in a tight cone",
+          "Brown-orange conifer seed structure",
+          "Close-up specimen on plain background"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-013",
+      "ok": true,
+      "latencyMs": 3404,
+      "usage": {
+        "inputTokens": 1423,
+        "cachedInputTokens": 0,
+        "outputTokens": 110
+      },
+      "costUsd": 0.00156225,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "soccer ball",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Spherical sports ball with stitched panel pattern",
+              "FIFA branding visible",
+              "Classic black/white ball shape replaced by colorful World Cup-style design"
+            ]
+          }
+        ],
+        "observations": [
+          "Round inflated sports ball",
+          "FIFA logo and quality label visible",
+          "Multicolor panel design typical of a soccer ball"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-014",
+      "ok": true,
+      "latencyMs": 4697,
+      "usage": {
+        "inputTokens": 1223,
+        "cachedInputTokens": 0,
+        "outputTokens": 98
+      },
+      "costUsd": 0.00135825,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "dice",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Cube-shaped objects with pips on the faces",
+              "Multiple standard gaming dice in different colors"
+            ]
+          }
+        ],
+        "observations": [
+          "Cube-shaped objects with dot markings",
+          "Standard die faces with white pips",
+          "Several colored dice grouped together"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-015",
+      "ok": true,
+      "latencyMs": 4667,
+      "usage": {
+        "inputTokens": 1855,
+        "cachedInputTokens": 0,
+        "outputTokens": 94
+      },
+      "costUsd": 0.00181425,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "snowflake",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Six-sided crystal shape",
+              "Branching symmetrical arms",
+              "Looks like an ice crystal under magnification"
+            ]
+          }
+        ],
+        "observations": [
+          "Six-fold radial symmetry",
+          "Branching icy crystal structure",
+          "Transparent/white object on plain background"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-016",
+      "ok": true,
+      "latencyMs": 4110,
+      "usage": {
+        "inputTokens": 1759,
+        "cachedInputTokens": 0,
+        "outputTokens": 104
+      },
+      "costUsd": 0.00178725,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "nautilus",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Spiral chambered shell shape",
+              "Striped outer shell pattern",
+              "Marine animal visible inside the shell opening"
+            ]
+          }
+        ],
+        "observations": [
+          "Large coiled shell",
+          "Brown-and-white striped pattern",
+          "Visible soft body tucked inside the shell"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-017",
+      "ok": true,
+      "latencyMs": 3674,
+      "usage": {
+        "inputTokens": 1778,
+        "cachedInputTokens": 0,
+        "outputTokens": 103
+      },
+      "costUsd": 0.001797,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "leaf",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Single green plant leaf centered in the image",
+              "Visible stem, veins, and serrated edge",
+              "No other main object present"
+            ]
+          }
+        ],
+        "observations": [
+          "Green leaf with a long stem",
+          "Pointed, serrated edges",
+          "Prominent central vein and branching veins"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-018",
+      "ok": true,
+      "latencyMs": 2751,
+      "usage": {
+        "inputTokens": 1111,
+        "cachedInputTokens": 0,
+        "outputTokens": 109
+      },
+      "costUsd": 0.00132375,
+      "score": {
+        "labelExpected": true,
+        "top1": false,
+        "top3": false,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "oak branch",
+            "certainty": "likely",
+            "calibratedConfidence": 0.96,
+            "reasons": [
+              "lobed leaves typical of oak",
+              "brown acorns attached to the twig",
+              "woody branch with multiple oak leaves"
+            ]
+          }
+        ],
+        "observations": [
+          "Deeply lobed green leaves",
+          "Brown acorns with caps",
+          "Woody twig with attached leaf cluster"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-019",
+      "ok": true,
+      "latencyMs": 6441,
+      "usage": {
+        "inputTokens": 1615,
+        "cachedInputTokens": 0,
+        "outputTokens": 109
+      },
+      "costUsd": 0.00170175,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": false
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "mushroom",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Cluster of cap-and-stem fungi growing at the base of a tree",
+              "Visible gills under the caps and textured mushroom tops"
+            ]
+          }
+        ],
+        "observations": [
+          "Many overlapping caps growing in a clump",
+          "Gills visible on one fallen specimen",
+          "Growing on the ground beside a tree trunk"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-020",
+      "ok": true,
+      "latencyMs": 4567,
+      "usage": {
+        "inputTokens": 1951,
+        "cachedInputTokens": 0,
+        "outputTokens": 99
+      },
+      "costUsd": 0.00190875,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "honey bee",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Fuzzy striped insect body",
+              "Pollen baskets on the hind legs",
+              "Visiting a yellow flower"
+            ]
+          }
+        ],
+        "observations": [
+          "Fuzzy striped insect body",
+          "Pollen basket visible on hind leg",
+          "Sitting on a yellow flower"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-021",
+      "ok": true,
+      "latencyMs": 4941,
+      "usage": {
+        "inputTokens": 428,
+        "cachedInputTokens": 0,
+        "outputTokens": 143
+      },
+      "costUsd": 0.0009645,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "bananas",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Several bunches of curved yellow and green fruit are visible",
+              "The shape, peel texture, and stems match bananas",
+              "One bunch is clearly ripe while others are unripe or overripe"
+            ]
+          }
+        ],
+        "observations": [
+          "Curved fruit with thick peels and stems",
+          "Multiple bunches in green, yellow, and brown stages",
+          "Typical banana shape and size"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-022",
+      "ok": true,
+      "latencyMs": 7005,
+      "usage": {
+        "inputTokens": 2143,
+        "cachedInputTokens": 0,
+        "outputTokens": 101
+      },
+      "costUsd": 0.00206175,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "barrel cactus",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "round, ribbed cactus body",
+              "dense long spines covering the surface",
+              "desert garden setting"
+            ]
+          }
+        ],
+        "observations": [
+          "Large गोल/round cactus with vertical ribs",
+          "Covered in long yellowish spines",
+          "Planted among rocks in a dry garden"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-024",
+      "ok": true,
+      "latencyMs": 4380,
+      "usage": {
+        "inputTokens": 1615,
+        "cachedInputTokens": 0,
+        "outputTokens": 109
+      },
+      "costUsd": 0.00170175,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "rusted metal",
+            "certainty": "likely",
+            "calibratedConfidence": 0.96,
+            "reasons": [
+              "Orange-brown corrosion covering the surface",
+              "Flaking, rough texture typical of rust",
+              "No other distinct object features visible"
+            ]
+          }
+        ],
+        "observations": [
+          "Orange-brown corrosion dominates the surface",
+          "Flaking, pitted texture",
+          "Looks like heavily oxidized metal"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-025",
+      "ok": true,
+      "latencyMs": 4191,
+      "usage": {
+        "inputTokens": 2767,
+        "cachedInputTokens": 2176,
+        "outputTokens": 125
+      },
+      "costUsd": 0.00116895,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "candle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "A white wax candle is burning at the center of the photo.",
+              "The flame and wick are clearly visible.",
+              "The candle is mounted in a candle holder on a tray."
+            ]
+          }
+        ],
+        "observations": [
+          "White candle with a visible flame",
+          "Metal candle holder and drip tray",
+          "Matchbox nearby on the table"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-026",
+      "ok": true,
+      "latencyMs": 2737,
+      "usage": {
+        "inputTokens": 980,
+        "cachedInputTokens": 0,
+        "outputTokens": 102
+      },
+      "costUsd": 0.001194,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "ice cubes",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Transparent cube-shaped blocks with frosty textures",
+              "Stacked together on a cold-looking surface",
+              "Clear melted edges and reflective frozen appearance"
+            ]
+          }
+        ],
+        "observations": [
+          "Cube-shaped transparent blocks",
+          "Frosty, icy texture",
+          "Grouped on a cold surface with melting reflections"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-027",
+      "ok": true,
+      "latencyMs": 2851,
+      "usage": {
+        "inputTokens": 2575,
+        "cachedInputTokens": 2048,
+        "outputTokens": 98
+      },
+      "costUsd": 0.00098985,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": false
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "glass tumbler",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Clear drinking vessel with an open top",
+              "Short cylindrical shape",
+              "Decorative cut-glass pattern"
+            ]
+          }
+        ],
+        "observations": [
+          "Clear drinking vessel",
+          "Short cylindrical shape",
+          "Decorative cut-glass pattern"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-028",
+      "ok": true,
+      "latencyMs": 2867,
+      "usage": {
+        "inputTokens": 1807,
+        "cachedInputTokens": 0,
+        "outputTokens": 136
+      },
+      "costUsd": 0.00196725,
+      "score": {
+        "labelExpected": true,
+        "top1": false,
+        "top3": false,
+        "statusCorrect": false
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "quartz",
+            "certainty": "likely",
+            "calibratedConfidence": 0.97,
+            "reasons": [
+              "Translucent, glassy crystal mass",
+              "Irregular rough fracture surfaces",
+              "Looks like a common rock/mineral specimen"
+            ]
+          }
+        ],
+        "observations": [
+          "Translucent white-to-clear mineral piece",
+          "Glassy, rough crystalline surfaces",
+          "Small orange-brown mineral stains"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-029",
+      "ok": true,
+      "latencyMs": 2176,
+      "usage": {
+        "inputTokens": 991,
+        "cachedInputTokens": 0,
+        "outputTokens": 91
+      },
+      "costUsd": 0.00115275,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "apple",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Round red-yellow fruit with a stem",
+              "One cut half shows apple flesh and seed core"
+            ]
+          }
+        ],
+        "observations": [
+          "Round red-yellow fruit",
+          "Visible stem at the top",
+          "Cut half shows pale flesh and seed cavity"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-030",
+      "ok": true,
+      "latencyMs": 2130,
+      "usage": {
+        "inputTokens": 1759,
+        "cachedInputTokens": 0,
+        "outputTokens": 91
+      },
+      "costUsd": 0.00172875,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "soap bubble",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "round transparent sphere",
+              "rainbow-colored surface reflections",
+              "thin film with reflected surroundings"
+            ]
+          }
+        ],
+        "observations": [
+          "round transparent sphere",
+          "iridescent rainbow sheen",
+          "reflections of trees and a building"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-031",
+      "ok": true,
+      "latencyMs": 2432,
+      "usage": {
+        "inputTokens": 549,
+        "cachedInputTokens": 0,
+        "outputTokens": 107
+      },
+      "costUsd": 0.00089325,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "bleach bottle",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "Branded Clorox labels are visible",
+              "White plastic cleaning product bottles with blue caps",
+              "Typical shape of household bleach containers"
+            ]
+          }
+        ],
+        "observations": [
+          "Multiple Clorox-branded bottles are shown",
+          "White plastic jugs with blue caps",
+          "Labels indicate concentrated bleach"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-032",
+      "ok": true,
+      "latencyMs": 5503,
+      "usage": {
+        "inputTokens": 1549,
+        "cachedInputTokens": 0,
+        "outputTokens": 97
+      },
+      "costUsd": 0.00159825,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "classical guitar",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "Six strings and a fretted neck",
+              "Rounded hollow wooden body",
+              "Wide headstock with tuning pegs"
+            ]
+          }
+        ],
+        "observations": [
+          "Six strings and a fretted neck",
+          "Rounded hollow wooden body",
+          "Wide headstock with tuning pegs"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-033",
+      "ok": true,
+      "latencyMs": 5133,
+      "usage": {
+        "inputTokens": 3314,
+        "cachedInputTokens": 2688,
+        "outputTokens": 109
+      },
+      "costUsd": 0.0011615999999999998,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "stained glass window",
+            "certainty": "likely",
+            "calibratedConfidence": 0.99,
+            "reasons": [
+              "large illuminated church-style glass panels",
+              "colored leaded sections arranged in arches and circles",
+              "religious figures and symbols typical of stained glass"
+            ]
+          }
+        ],
+        "observations": [
+          "Bright colored leaded glass panels",
+          "Arched window sections with figures",
+          "Church-like religious imagery"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-034",
+      "ok": true,
+      "latencyMs": 2712,
+      "usage": {
+        "inputTokens": 535,
+        "cachedInputTokens": 0,
+        "outputTokens": 112
+      },
+      "costUsd": 0.00090525,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "artist palette",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "Oval board covered with mixed paint colors",
+              "Held alongside paintbrushes and a paint tube"
+            ]
+          }
+        ],
+        "observations": [
+          "Oval palette with many paint smears",
+          "Paintbrushes resting on the palette",
+          "White and colored paint mixed across the surface"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-035",
+      "ok": true,
+      "latencyMs": 2283,
+      "usage": {
+        "inputTokens": 394,
+        "cachedInputTokens": 0,
+        "outputTokens": 94
+      },
+      "costUsd": 0.0007185,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "snare drum",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "shallow cylindrical drum body",
+              "white drumhead with tension rods",
+              "mounted on a three-legged stand"
+            ]
+          }
+        ],
+        "observations": [
+          "shallow cylindrical drum",
+          "white drumhead with metal rims",
+          "mounted on a stand"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-036",
+      "ok": true,
+      "latencyMs": 2965,
+      "usage": {
+        "inputTokens": 1615,
+        "cachedInputTokens": 0,
+        "outputTokens": 104
+      },
+      "costUsd": 0.00167925,
+      "score": {
+        "labelExpected": true,
+        "top1": true,
+        "top3": true,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "recognised",
+        "candidates": [
+          {
+            "label": "clay pot",
+            "certainty": "likely",
+            "calibratedConfidence": 0.98,
+            "reasons": [
+              "round earthenware vessel with narrow opening",
+              "textured handmade surface",
+              "used like a storage or water pot"
+            ]
+          }
+        ],
+        "observations": [
+          "round earthenware vessel",
+          "narrow opening with thick rim",
+          "textured handmade surface"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-037",
+      "ok": true,
+      "latencyMs": 6044,
+      "usage": {
+        "inputTokens": 1293,
+        "cachedInputTokens": 0,
+        "outputTokens": 225
+      },
+      "costUsd": 0.00198225,
+      "score": {
+        "labelExpected": true,
+        "top1": false,
+        "top3": false,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "ambiguous",
+        "candidates": [
+          {
+            "label": "plate",
+            "certainty": "possible",
+            "calibratedConfidence": 0.56,
+            "reasons": [
+              "Round flat object with a rim",
+              "Decorative painted surface covering the whole face"
+            ]
+          },
+          {
+            "label": "wall art",
+            "certainty": "possible",
+            "calibratedConfidence": 0.42,
+            "reasons": [
+              "Abstract multicolor design",
+              "Looks like a display piece rather than a functional item"
+            ]
+          },
+          {
+            "label": "decorative dish",
+            "certainty": "possible",
+            "calibratedConfidence": 0.38,
+            "reasons": ["Circular shallow form", "Artwork-like painted pattern"]
+          }
+        ],
+        "observations": [
+          "Large circular object with a thin outer rim",
+          "Concentric multicolor rings and blocks",
+          "Plain white background with no other context"
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-038",
+      "ok": true,
+      "latencyMs": 2942,
+      "usage": {
+        "inputTokens": 1759,
+        "cachedInputTokens": 0,
+        "outputTokens": 73
+      },
+      "costUsd": 0.00164775,
+      "score": {
+        "labelExpected": false,
+        "top1": false,
+        "top3": false,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "unsupported",
+        "candidates": [],
+        "observations": [
+          "The photo shows many white round tablets.",
+          "The objects resemble medication pills.",
+          "No other everyday object is clearly identifiable."
+        ]
+      }
+    },
+    {
+      "provider": "openai-mini",
+      "model": "gpt-5.4-mini",
+      "task": "recognition",
+      "promptId": "seed-039",
+      "ok": true,
+      "latencyMs": 2028,
+      "usage": {
+        "inputTokens": 530,
+        "cachedInputTokens": 0,
+        "outputTokens": 71
+      },
+      "costUsd": 0.000717,
+      "score": {
+        "labelExpected": false,
+        "top1": false,
+        "top3": false,
+        "statusCorrect": true
+      },
+      "output": {
+        "status": "unsupported",
+        "candidates": [],
+        "observations": [
+          "The image is an out-of-focus pattern of colored light spots.",
+          "No distinct everyday object is visible.",
+          "There are no identifiable shapes or предметs to name."
+        ]
+      }
+    }
+  ],
+  "summary": [
+    {
+      "provider": "meta-spark",
+      "task": "recognition",
+      "runs": 38,
+      "errors": 0,
+      "metrics": {
+        "top1": 0.944,
+        "top3": 1,
+        "statusAccuracy": 0.921
+      },
+      "latencyP50Ms": 3795,
+      "latencyP95Ms": 12072,
+      "costUsd": 0.1724
+    },
+    {
+      "provider": "openai-mini",
+      "task": "recognition",
+      "runs": 38,
+      "errors": 0,
+      "metrics": {
+        "top1": 0.917,
+        "top3": 0.917,
+        "statusAccuracy": 0.921
+      },
+      "latencyP50Ms": 3538,
+      "latencyP95Ms": 6441,
+      "costUsd": 0.0556
+    }
+  ]
+}
