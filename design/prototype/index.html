@@ -1,0 +1,1050 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Science Behind It</title>
+    <meta
+      name="description"
+      content="Prototype: photograph an everyday object and learn the science behind it."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='14' cy='14' r='9' fill='none' stroke='%230d6b67' stroke-width='4'/%3E%3Cpath d='M21 21l7 7' stroke='%230d6b67' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap"
+    />
+    <style>
+      :root {
+        --bench: #eef2f1;
+        --paper: #ffffff;
+        --ink: #14263a;
+        --ink-soft: #4f6172;
+        --rule: #c9d3d6;
+        --action: #0d6b67;
+        --action-ink: #ffffff;
+        --highlight: #ffd23f;
+        --caution: #a8321f;
+        --tag: #f7e7b4;
+        --focus: #1f5fd1;
+        --radius-s: 6px;
+        --radius-l: 18px;
+        --body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
+        --display: "Bricolage Grotesque", "Atkinson Hyperlegible Next", system-ui, sans-serif;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bench: #0f1a24;
+          --paper: #17242f;
+          --ink: #e8eef2;
+          --ink-soft: #a9b8c4;
+          --rule: #2f4150;
+          --action: #4cc2b8;
+          --action-ink: #06201e;
+          --highlight: #e8bd2c;
+          --caution: #ff8a73;
+          --tag: #3a3418;
+          --focus: #8fb4ff;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bench: #0f1a24;
+        --paper: #17242f;
+        --ink: #e8eef2;
+        --ink-soft: #a9b8c4;
+        --rule: #2f4150;
+        --action: #4cc2b8;
+        --action-ink: #06201e;
+        --highlight: #e8bd2c;
+        --caution: #ff8a73;
+        --tag: #3a3418;
+        --focus: #8fb4ff;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bench);
+        color: var(--ink);
+        font: 400 1.0625rem/1.55 var(--body);
+        min-height: 100dvh;
+      }
+      main {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 1.25rem 1rem 6rem;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--display);
+        line-height: 1.1;
+        margin: 0 0 0.5rem;
+        letter-spacing: -0.01em;
+      }
+      h1 {
+        font-size: clamp(2rem, 7vw, 2.75rem);
+        font-weight: 800;
+      }
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+      h3 {
+        font-size: 1.15rem;
+        font-weight: 600;
+      }
+      p {
+        margin: 0 0 1rem;
+        max-width: 34rem;
+      }
+      a {
+        color: var(--action);
+      }
+      :focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .lede {
+        color: var(--ink-soft);
+        font-size: 1.125rem;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 3rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 999px;
+        border: 2px solid var(--action);
+        background: var(--action);
+        color: var(--action-ink);
+        font: 600 1.0625rem/1 var(--body);
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .btn.secondary {
+        background: transparent;
+        color: var(--action);
+      }
+      .btn.quiet {
+        border-color: transparent;
+        background: transparent;
+        color: var(--ink-soft);
+        text-decoration: underline;
+        padding-inline: 0.25rem;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
+      .back {
+        margin-bottom: 1rem;
+      }
+
+      .samples {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+        padding: 0;
+        list-style: none;
+      }
+      .sample {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.5rem 0.5rem 0.65rem;
+        border: 1px solid var(--rule);
+        border-radius: var(--radius-s);
+        background: var(--paper);
+        color: var(--ink);
+        font: 600 0.95rem/1.2 var(--body);
+        text-align: left;
+        cursor: pointer;
+      }
+      .sample svg,
+      .photo svg,
+      .photo img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 4px;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+      }
+      .capture {
+        position: relative;
+        overflow: hidden;
+      }
+      .capture input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .photo {
+        position: relative;
+        border-radius: var(--radius-l);
+        overflow: hidden;
+        background: var(--paper);
+        border: 1px solid var(--rule);
+      }
+      .scanline {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--highlight);
+        box-shadow: 0 0 18px 6px color-mix(in srgb, var(--highlight) 55%, transparent);
+        animation: scan 1.4s ease-in-out infinite alternate;
+      }
+      @keyframes scan {
+        from {
+          top: 4%;
+        }
+        to {
+          top: 94%;
+        }
+      }
+
+      .tag {
+        position: relative;
+        margin: -1.75rem 0 1.25rem 1.25rem;
+        width: min(19rem, 85%);
+        padding: 0.85rem 1rem 0.9rem 1.6rem;
+        background: var(--tag);
+        color: var(--ink);
+        border-radius: 4px 14px 14px 4px;
+        clip-path: polygon(0.9rem 0, 100% 0, 100% 100%, 0.9rem 100%, 0 50%);
+        transform: rotate(-2deg);
+        box-shadow: 0 2px 0 var(--rule);
+      }
+      .tag::before {
+        content: "";
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        width: 0.55rem;
+        height: 0.55rem;
+        margin-top: -0.275rem;
+        border-radius: 50%;
+        background: var(--bench);
+        box-shadow: inset 0 0 0 2px var(--ink-soft);
+      }
+      .tag .label {
+        font: 800 1.6rem/1.05 var(--display);
+        display: block;
+      }
+      .tag .certainty {
+        font-size: 0.95rem;
+        color: var(--ink-soft);
+      }
+      .choices {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1rem;
+        display: grid;
+        gap: 0.5rem;
+        width: 100%;
+      }
+      .choice {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.85rem 1rem;
+        border-radius: var(--radius-s);
+        border: 1px solid var(--rule);
+        background: var(--paper);
+        color: var(--ink);
+        font: 600 1.05rem/1.3 var(--body);
+        text-align: left;
+        cursor: pointer;
+      }
+      .choice small {
+        font-weight: 400;
+        color: var(--ink-soft);
+      }
+      .field {
+        display: grid;
+        gap: 0.35rem;
+        width: 100%;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        min-height: 2.75rem;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid var(--ink-soft);
+        border-radius: var(--radius-s);
+        background: var(--paper);
+        color: var(--ink);
+        font: inherit;
+      }
+      .hint {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+      }
+      .notice {
+        border-left: 4px solid var(--caution);
+        padding: 0.75rem 1rem;
+        background: var(--paper);
+        border-radius: 0 var(--radius-s) var(--radius-s) 0;
+        margin-bottom: 1rem;
+      }
+
+      .facilitator-toggle {
+        position: fixed;
+        right: 1rem;
+        bottom: calc(1rem + env(safe-area-inset-bottom));
+        z-index: 10;
+        box-shadow: 0 2px 0 var(--rule);
+      }
+      dialog {
+        width: min(36rem, calc(100vw - 2rem));
+        max-height: calc(100dvh - 2rem);
+        border: 1px solid var(--rule);
+        border-radius: var(--radius-l);
+        background: var(--paper);
+        color: var(--ink);
+        padding: 1.25rem;
+      }
+      dialog::backdrop {
+        background: rgb(0 0 0 / 0.45);
+      }
+      .panel-grid {
+        display: grid;
+        gap: 0.85rem;
+      }
+      .log {
+        max-height: 10rem;
+        overflow: auto;
+        font-size: 0.85rem;
+        color: var(--ink-soft);
+        border: 1px solid var(--rule);
+        border-radius: var(--radius-s);
+        padding: 0.5rem;
+        margin: 0;
+        list-style: none;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+      @media (min-width: 36rem) {
+        .samples {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="app" tabindex="-1"></main>
+    <p id="status" class="sr-only" aria-live="polite"></p>
+    <button id="facilitator-toggle" class="btn secondary facilitator-toggle" type="button" hidden>
+      Session
+    </button>
+    <dialog id="facilitator" aria-labelledby="facilitator-title"></dialog>
+
+    <script type="application/json" id="demo-data">
+      {
+        "source": "authored",
+        "samples": [
+          {
+            "id": "bicycle",
+            "name": "Bicycle",
+            "path": "confident",
+            "recognition": {
+              "status": "recognised",
+              "candidates": [
+                { "label": "Bicycle", "certainty": "likely", "topic": "bicycle" },
+                { "label": "Exercise bike", "certainty": "unsure" }
+              ]
+            }
+          },
+          {
+            "id": "stovetop",
+            "name": "Shiny pot",
+            "path": "ambiguous",
+            "recognition": {
+              "status": "ambiguous",
+              "candidates": [
+                { "label": "Kettle", "certainty": "possible", "topic": "kettle" },
+                { "label": "Teapot", "certainty": "possible" },
+                { "label": "Coffee pot", "certainty": "unsure" }
+              ]
+            }
+          },
+          {
+            "id": "leaf",
+            "name": "Leaf",
+            "path": "confident",
+            "recognition": {
+              "status": "recognised",
+              "candidates": [
+                { "label": "Leaf", "certainty": "likely", "topic": "leaf" },
+                { "label": "Lettuce", "certainty": "unsure" }
+              ]
+            }
+          },
+          {
+            "id": "pills",
+            "name": "Tablets",
+            "path": "unsupported",
+            "recognition": {
+              "status": "unsupported",
+              "candidates": [],
+              "redirect": "This looks like medicine. We don't explain medicines, because the right answer depends on the person. A pharmacist, doctor or trusted adult can help."
+            }
+          }
+        ],
+        "topics": {
+          "bicycle": {
+            "label": "Bicycle",
+            "aliases": ["bicycle", "bike", "cycle"],
+            "questions": [
+              "Why does a low gear make pedalling uphill easier?",
+              "How do bike gears help me get up hills?",
+              "Why don't I fall over when I'm riding?"
+            ]
+          },
+          "kettle": {
+            "label": "Kettle",
+            "aliases": ["kettle"],
+            "questions": [
+              "What are the bubbles when water boils?",
+              "Why does a kettle switch itself off?",
+              "Why does water boil at 100 °C?"
+            ]
+          },
+          "leaf": {
+            "label": "Leaf",
+            "aliases": ["leaf", "leaves", "plant"],
+            "questions": [
+              "How does a leaf make food from sunlight?",
+              "Where does a tree's wood come from?",
+              "Why are leaves green?"
+            ]
+          }
+        }
+      }
+    </script>
+
+    <script>
+      "use strict";
+
+      const DEMO = JSON.parse(document.getElementById("demo-data").textContent);
+      const params = new URLSearchParams(location.search);
+      const FACILITATOR = params.has("facilitator");
+      const STORE_KEY = "sbi-proto-session";
+      const KEY_KEY = "sbi-meta-key";
+      const META_URL = "https://api.meta.ai/v1/chat/completions";
+      const app = document.getElementById("app");
+
+      const ART = {
+        bicycle: `<svg viewBox="0 0 400 300" role="img" aria-label="Photo of a bicycle"><rect width="400" height="300" fill="#cfe3e0"/><rect y="230" width="400" height="70" fill="#9fb9b4"/><g fill="none" stroke="#1d2b3a" stroke-width="7"><circle cx="110" cy="200" r="58"/><circle cx="292" cy="200" r="58"/><path d="M110 200 L170 120 L262 120 L292 200 M170 120 L200 200 L262 120 M200 200 L110 200" stroke-linejoin="round"/><path d="M160 106 h28 M262 120 l-6 -26 h26" stroke-linecap="round"/></g><circle cx="200" cy="200" r="14" fill="#d3a21b" stroke="#1d2b3a" stroke-width="4"/><circle cx="110" cy="200" r="5" fill="#1d2b3a"/><circle cx="292" cy="200" r="5" fill="#1d2b3a"/></svg>`,
+        stovetop: `<svg viewBox="0 0 400 300" role="img" aria-label="Photo of a shiny metal pot with a spout"><rect width="400" height="300" fill="#e7e1d4"/><rect y="236" width="400" height="64" fill="#b9ad97"/><path d="M118 236 Q110 150 200 132 Q290 150 282 236 Z" fill="#b8c3cc" stroke="#33414f" stroke-width="5"/><path d="M276 182 Q330 166 350 120" fill="none" stroke="#33414f" stroke-width="14" stroke-linecap="round"/><path d="M276 182 Q330 166 350 120" fill="none" stroke="#b8c3cc" stroke-width="7" stroke-linecap="round"/><path d="M150 140 Q200 64 250 140" fill="none" stroke="#33414f" stroke-width="9"/><ellipse cx="200" cy="132" rx="26" ry="8" fill="#8f9ba5" stroke="#33414f" stroke-width="4"/><path d="M150 180 Q160 210 150 226" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".7"/></svg>`,
+        leaf: `<svg viewBox="0 0 400 300" role="img" aria-label="Photo of a green leaf"><rect width="400" height="300" fill="#f0eadb"/><path d="M80 230 Q90 70 320 60 Q320 220 80 230 Z" fill="#3f8a3c" stroke="#24521f" stroke-width="5"/><path d="M80 230 Q200 150 320 60" fill="none" stroke="#cde3a4" stroke-width="4"/><g stroke="#a9cf7d" stroke-width="3" fill="none"><path d="M140 190 Q150 150 140 120"/><path d="M190 160 Q210 120 200 90"/><path d="M240 125 Q262 95 255 75"/><path d="M140 190 Q180 200 215 195"/><path d="M190 160 Q235 170 265 160"/></g><path d="M80 230 L58 258" stroke="#24521f" stroke-width="6" stroke-linecap="round"/></svg>`,
+        pills: `<svg viewBox="0 0 400 300" role="img" aria-label="Photo of a blister pack of tablets"><rect width="400" height="300" fill="#dfe5ee"/><rect x="70" y="60" width="260" height="180" rx="14" fill="#f5f7fa" stroke="#7d8a99" stroke-width="4"/><g fill="#ffffff" stroke="#9aa6b4" stroke-width="3">${[
+          0, 1, 2,
+        ]
+          .map((r) =>
+            [0, 1, 2, 3]
+              .map((c) => `<ellipse cx="${115 + c * 57}" cy="${100 + r * 50}" rx="20" ry="14"/>`)
+              .join(""),
+          )
+          .join("")}</g></svg>`,
+      };
+
+      const state = {
+        screen: "home",
+        sample: null,
+        photoUrl: null,
+        recognition: null,
+        topic: null,
+        question: null,
+      };
+
+      function loadSession() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+          if (saved) return saved;
+        } catch {}
+        return {
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+          participant: "",
+          segment: "",
+          moduleOrder: "A",
+          visualOrder: "auto",
+          mode: "demo",
+          model: "muse-spark-1.3",
+          startedAt: new Date().toISOString(),
+          events: [],
+        };
+      }
+      let session = loadSession();
+
+      function saveSession() {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(session));
+        } catch {}
+      }
+
+      function metaKey() {
+        try {
+          return sessionStorage.getItem(KEY_KEY) || "";
+        } catch {
+          return "";
+        }
+      }
+
+      // Events hold taps, timings and answers only; photos and free text never enter the log.
+      function log(type, data = {}) {
+        const event = {
+          at: new Date().toISOString(),
+          ms: Math.round(performance.now()),
+          screen: state.screen,
+          type,
+          ...data,
+        };
+        session.events.push(event);
+        saveSession();
+        const list = document.getElementById("event-log");
+        if (list)
+          list.insertAdjacentHTML(
+            "afterbegin",
+            `<li>${esc(type)} ${esc(JSON.stringify(data))}</li>`,
+          );
+      }
+
+      function esc(value) {
+        return String(value).replace(
+          /[&<>"']/g,
+          (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch],
+        );
+      }
+
+      function announce(text) {
+        document.getElementById("status").textContent = text;
+      }
+
+      function go(screen, patch = {}) {
+        Object.assign(state, patch, { screen });
+        log("screen", { to: screen });
+        render();
+        window.scrollTo(0, 0);
+        const heading = app.querySelector("h1, h2");
+        if (heading) {
+          heading.setAttribute("tabindex", "-1");
+          heading.focus({ preventScroll: true });
+        }
+      }
+
+      const SCREENS = {};
+
+      function render() {
+        app.innerHTML = SCREENS[state.screen]();
+        app.querySelectorAll("[data-action]").forEach((el) => {
+          const handler = ACTIONS[el.dataset.action];
+          el.addEventListener(el.tagName === "FORM" ? "submit" : "click", (event) => {
+            if (el.tagName === "FORM") event.preventDefault();
+            handler(el, event);
+          });
+        });
+        app
+          .querySelectorAll("[data-change]")
+          .forEach((el) =>
+            el.addEventListener("change", (event) => ACTIONS[el.dataset.change](el, event)),
+          );
+      }
+
+      const backButton = (to, label = "Back") =>
+        `<button class="btn quiet back" type="button" data-action="back" data-to="${to}">${label}</button>`;
+
+      function photoMarkup() {
+        if (state.photoUrl) return `<img src="${state.photoUrl}" alt="Your photo" />`;
+        return ART[state.sample?.id] ?? "";
+      }
+
+      SCREENS.home = () => `
+        <h1>What's the science behind it?</h1>
+        <p class="lede">Take a photo of something near you. We'll work out what it is, then show you how it works.</p>
+        <div class="stack">
+          <label class="btn capture">
+            Take a photo
+            <input type="file" accept="image/*" capture="environment" data-change="photo" />
+          </label>
+          ${
+            session.mode === "live" && metaKey()
+              ? `<p class="hint">Live mode: your photo is sent to Meta's model to recognise it, and isn't saved here.</p>`
+              : `<p class="hint">In this demo, pick one of these photos to try it.</p>`
+          }
+        </div>
+        <h2>Try a sample photo</h2>
+        <ul class="samples">
+          ${DEMO.samples
+            .map(
+              (
+                sample,
+              ) => `<li><button class="sample" type="button" data-action="sample" data-id="${sample.id}">
+                ${ART[sample.id]}<span>${esc(sample.name)}</span></button></li>`,
+            )
+            .join("")}
+        </ul>`;
+
+      SCREENS.looking = () => `
+        <h2>Looking closely…</h2>
+        <div class="photo">${photoMarkup()}<div class="scanline" aria-hidden="true"></div></div>
+        <p class="hint" style="margin-top:1rem">Checking shapes, parts and materials.</p>`;
+
+      const CERTAINTY_COPY = {
+        likely: "We're fairly sure",
+        possible: "This is our best guess",
+        unsure: "We're not sure about this one",
+      };
+
+      SCREENS.confirm = () => {
+        const result = state.recognition;
+        const [top, ...rest] = result.candidates;
+        if (result.status === "unsupported" || !top) return SCREENS.unsupported();
+        if (result.status === "ambiguous") {
+          return `
+            ${backButton("home", "Try a different photo")}
+            <div class="photo">${photoMarkup()}</div>
+            <h2 style="margin-top:1.25rem">Which one is it?</h2>
+            <p>We can see a few possibilities. Pick the one that matches.</p>
+            <ul class="choices">
+              ${result.candidates
+                .map(
+                  (
+                    candidate,
+                    index,
+                  ) => `<li><button class="choice" type="button" data-action="pick" data-index="${index}">
+                    <span>${esc(candidate.label)}</span><small>${candidate.certainty === "possible" ? "possible" : "less likely"}</small></button></li>`,
+                )
+                .join("")}
+            </ul>
+            ${somethingElse()}`;
+        }
+        return `
+          ${backButton("home", "Try a different photo")}
+          <div class="photo">${photoMarkup()}</div>
+          <div class="tag" role="group" aria-label="Our guess">
+            <span class="label">${esc(top.label)}</span>
+            <span class="certainty">${CERTAINTY_COPY[top.certainty]}</span>
+          </div>
+          <h2>Is this a ${esc(top.label.toLowerCase())}?</h2>
+          <div class="row" style="margin-bottom:1.25rem">
+            <button class="btn" type="button" data-action="pick" data-index="0">Yes, that's it</button>
+          </div>
+          ${
+            rest.length
+              ? `<h3>Or is it…</h3><ul class="choices">${rest
+                  .map(
+                    (
+                      candidate,
+                      index,
+                    ) => `<li><button class="choice" type="button" data-action="pick" data-index="${index + 1}">
+                      <span>${esc(candidate.label)}</span><small>less likely</small></button></li>`,
+                  )
+                  .join("")}</ul>`
+              : ""
+          }
+          ${somethingElse()}`;
+      };
+
+      function somethingElse() {
+        return `
+          <form class="field" data-action="correct">
+            <label for="correction">Something else? Tell us what it is</label>
+            <div class="row">
+              <input id="correction" name="correction" maxlength="200" autocomplete="off" style="flex:1;min-width:12rem" />
+              <button class="btn secondary" type="submit">Use this</button>
+            </div>
+          </form>`;
+      }
+
+      SCREENS.unsupported = () => `
+        <div class="photo">${photoMarkup()}</div>
+        <h2 style="margin-top:1.25rem">We can't explain this one</h2>
+        <div class="notice"><p style="margin:0">${esc(
+          state.recognition?.redirect ||
+            "We couldn't tell what this is, or it's something we don't explain. Try a photo of an everyday object, close up and in good light.",
+        )}</p></div>
+        <button class="btn" type="button" data-action="back" data-to="home">Try another photo</button>`;
+
+      SCREENS.nolesson = () => `
+        ${backButton("home", "Try another photo")}
+        <h2>We don't have that one yet</h2>
+        <p>This demo has lessons for a bicycle, a kettle and a leaf. ${
+          session.mode === "live"
+            ? ""
+            : "Turn on live mode in the session panel to try anything else."
+        }</p>
+        <button class="btn" type="button" data-action="back" data-to="home">Pick a sample photo</button>`;
+
+      SCREENS.question = () => {
+        const topic = DEMO.topics[state.topic];
+        return `
+          ${backButton("home", "Start again")}
+          <h2>What do you want to know about the ${esc(topic.label.toLowerCase())}?</h2>
+          <ul class="choices">
+            ${topic.questions
+              .map(
+                (
+                  question,
+                  index,
+                ) => `<li><button class="choice" type="button" data-action="question" data-index="${index}">
+                  <span>${esc(question)}</span></button></li>`,
+              )
+              .join("")}
+          </ul>`;
+      };
+
+      SCREENS.lesson = () => `
+        ${backButton("question")}
+        <h2>${esc(state.question)}</h2>
+        <p>The lesson goes here.</p>`;
+
+      const ACTIONS = {
+        back(el) {
+          log("tap", { action: "back", to: el.dataset.to });
+          go(
+            el.dataset.to,
+            el.dataset.to === "home" ? { sample: null, photoUrl: null, recognition: null } : {},
+          );
+        },
+        sample(el) {
+          const sample = DEMO.samples.find((item) => item.id === el.dataset.id);
+          log("sample", { sample: sample.id, path: sample.path });
+          startRecognition({ sample, recognition: sample.recognition });
+        },
+        async photo(el) {
+          const file = el.files?.[0];
+          if (!file) return;
+          const photoUrl = await downscale(file);
+          log("photo", { live: session.mode === "live" && Boolean(metaKey()) });
+          if (session.mode === "live" && metaKey()) {
+            go("looking", { sample: null, photoUrl });
+            try {
+              const recognition = await recogniseLive(photoUrl);
+              log("recognition", {
+                status: recognition.status,
+                candidates: recognition.candidates.length,
+              });
+              go("confirm", { recognition });
+            } catch (error) {
+              log("error", { where: "recognition", message: String(error.message).slice(0, 120) });
+              go("unsupported", {
+                recognition: {
+                  status: "unsupported",
+                  candidates: [],
+                  redirect: `Live recognition failed: ${error.message}`,
+                },
+              });
+            }
+            return;
+          }
+          // Demo mode cannot recognise real photos, so it shows the honest fallback.
+          go("unsupported", {
+            sample: null,
+            photoUrl,
+            recognition: {
+              status: "unsupported",
+              candidates: [],
+              redirect:
+                "This demo can only recognise the sample photos. Pick one of those to carry on.",
+            },
+          });
+        },
+        pick(el) {
+          const index = Number(el.dataset.index);
+          const candidate = state.recognition.candidates[index];
+          log("confirm", { choice: index, label: candidate.label, certainty: candidate.certainty });
+          chooseTopic(candidate.topic ?? matchTopic(candidate.label), candidate.label);
+        },
+        correct(form) {
+          const text = form.correction.value.trim();
+          if (!text) return;
+          const topic = matchTopic(text);
+          log("correction", { length: text.length, matched: Boolean(topic) });
+          chooseTopic(topic, text);
+        },
+        question(el) {
+          const topic = DEMO.topics[state.topic];
+          const question = topic.questions[Number(el.dataset.index)];
+          log("question", { index: Number(el.dataset.index) });
+          go("lesson", { question });
+        },
+      };
+
+      function startRecognition(patch) {
+        go("looking", { ...patch, photoUrl: null });
+        const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 300 : 1600;
+        setTimeout(() => {
+          log("recognition", {
+            status: patch.recognition.status,
+            candidates: patch.recognition.candidates.length,
+          });
+          go("confirm");
+        }, delay);
+      }
+
+      function matchTopic(label) {
+        const text = label.toLowerCase();
+        return Object.entries(DEMO.topics).find(([, topic]) =>
+          topic.aliases.some((alias) => text.includes(alias)),
+        )?.[0];
+      }
+
+      function chooseTopic(topic, label) {
+        if (topic && DEMO.topics[topic]) return go("question", { topic });
+        go("nolesson", { requested: label });
+      }
+
+      async function downscale(file) {
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, 768 / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(bitmap.width * scale);
+        canvas.height = Math.round(bitmap.height * scale);
+        canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL("image/jpeg", 0.8);
+      }
+
+      async function metaComplete(messages, name, schema, maxTokens) {
+        const response = await fetch(META_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${metaKey()}` },
+          body: JSON.stringify({
+            model: session.model,
+            messages,
+            max_tokens: maxTokens,
+            reasoning_effort: "low",
+            response_format: { type: "json_schema", json_schema: { name, schema, strict: true } },
+          }),
+        });
+        if (!response.ok) throw new Error(`Meta API returned ${response.status}`);
+        const data = await response.json();
+        return JSON.parse(data.choices[0].message.content);
+      }
+
+      // Mirrors RECOGNITION_PROMPT_VERSION recognition-p0.1 in @sbi/recognition.
+      const RECOGNITION_SYSTEM = `You identify the main everyday object in a photo for a science-learning app used by people aged 8 and up.
+Return up to 3 candidate labels, most likely first, each a short common noun phrase (e.g. "bicycle", "electric kettle").
+certainty: "likely" only when you would bet on it, "possible" when plausible, "unsure" otherwise; calibratedConfidence is your probability from 0 to 1.
+status: "recognised" when the top candidate is clearly identifiable; "ambiguous" when two or more candidates are similarly plausible or key details are hidden; "unsupported" when the photo shows medicine, people as the subject, personal documents, or nothing identifiable, with no candidates.
+observations: up to 3 short visual details that justify your answer. Never describe people.`;
+
+      const RECOGNITION_SCHEMA = {
+        type: "object",
+        additionalProperties: false,
+        required: ["status", "candidates", "observations"],
+        properties: {
+          status: { type: "string", enum: ["recognised", "ambiguous", "unsupported"] },
+          candidates: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["label", "certainty", "calibratedConfidence", "reasons"],
+              properties: {
+                label: { type: "string" },
+                certainty: { type: "string", enum: ["likely", "possible", "unsure"] },
+                calibratedConfidence: { type: "number" },
+                reasons: { type: "array", items: { type: "string" } },
+              },
+            },
+          },
+          observations: { type: "array", items: { type: "string" } },
+        },
+      };
+
+      async function recogniseLive(photoUrl) {
+        const output = await metaComplete(
+          [
+            { role: "system", content: RECOGNITION_SYSTEM },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "What is the main object in this photo?" },
+                { type: "image_url", image_url: { url: photoUrl } },
+              ],
+            },
+          ],
+          "RecognitionOutput",
+          RECOGNITION_SCHEMA,
+          2000,
+        );
+        const candidates = output.candidates.slice(0, 3).map((candidate) => ({
+          label: candidate.label.replace(/^./, (ch) => ch.toUpperCase()),
+          certainty: candidate.certainty,
+        }));
+        return { status: output.status, candidates };
+      }
+
+      function renderFacilitator() {
+        const dialog = document.getElementById("facilitator");
+        const hasKey = Boolean(metaKey());
+        dialog.innerHTML = `
+          <form method="dialog" class="panel-grid" id="facilitator-form">
+            <h2 id="facilitator-title">Session</h2>
+            <p class="hint">For the person running the session. Learners don't need this panel.</p>
+            <div class="field"><label for="f-participant">Participant code</label>
+              <input id="f-participant" name="participant" value="${esc(session.participant)}" placeholder="C01" autocomplete="off" /></div>
+            <div class="field"><label for="f-segment">Segment</label>
+              <select id="f-segment" name="segment">
+                ${["", "child 8-12", "teen", "adult", "family"]
+                  .map(
+                    (value) =>
+                      `<option value="${value}" ${session.segment === value ? "selected" : ""}>${value || "Choose…"}</option>`,
+                  )
+                  .join("")}
+              </select></div>
+            <div class="field"><label for="f-mode">Mode</label>
+              <select id="f-mode" name="mode">
+                <option value="demo" ${session.mode === "demo" ? "selected" : ""}>Demo: sample photos and prepared lessons</option>
+                <option value="live" ${session.mode === "live" ? "selected" : ""}>Live: real photos via Meta Model API</option>
+              </select></div>
+            <div class="field"><label for="f-key">Meta Model API key</label>
+              <input id="f-key" name="key" type="password" autocomplete="off" placeholder="${hasKey ? "Key saved for this tab" : "Paste key for live mode"}" />
+              <span class="hint">Kept in this browser tab only and cleared when you close it. Use a Standard-mode key so content isn't used for training.</span></div>
+            <div class="field"><label for="f-model">Meta model</label>
+              <input id="f-model" name="model" value="${esc(session.model)}" autocomplete="off" /></div>
+            <p class="hint">${session.events.length} events since ${esc(session.startedAt.slice(0, 16).replace("T", " "))}</p>
+            <ul class="log" id="event-log">${session.events
+              .slice(-30)
+              .reverse()
+              .map(
+                (event) =>
+                  `<li>${esc(event.type)} ${esc(JSON.stringify({ ...event, at: undefined, ms: undefined, type: undefined }))}</li>`,
+              )
+              .join("")}</ul>
+            <div class="row">
+              <button class="btn" value="save">Save</button>
+              <button class="btn secondary" type="button" id="f-json">Export JSON</button>
+              <button class="btn secondary" type="button" id="f-csv">Export CSV</button>
+              <button class="btn quiet" type="button" id="f-new">New session</button>
+            </div>
+          </form>`;
+        dialog.querySelector("#f-json").addEventListener("click", () => download("json"));
+        dialog.querySelector("#f-csv").addEventListener("click", () => download("csv"));
+        dialog.querySelector("#f-new").addEventListener("click", () => {
+          if (!confirm("Start a new session? Export this one first if you need it.")) return;
+          try {
+            localStorage.removeItem(STORE_KEY);
+          } catch {}
+          session = loadSession();
+          saveSession();
+          renderFacilitator();
+          go("home", { sample: null, photoUrl: null, recognition: null });
+        });
+        dialog.querySelector("form").addEventListener("submit", () => {
+          const form = dialog.querySelector("form");
+          Object.assign(session, {
+            participant: form.participant.value.trim(),
+            segment: form.segment.value,
+            mode: form.mode.value,
+            model: form.model.value.trim() || "muse-spark-1.3",
+          });
+          if (form.key.value.trim()) {
+            try {
+              sessionStorage.setItem(KEY_KEY, form.key.value.trim());
+            } catch {}
+          }
+          log("session", {
+            participant: session.participant,
+            segment: session.segment,
+            mode: session.mode,
+          });
+          render();
+        });
+      }
+
+      function download(kind) {
+        const name = `sbi-session-${session.participant || "anon"}-${session.startedAt.slice(0, 10)}`;
+        let body;
+        if (kind === "json") {
+          const { events, ...meta } = session;
+          body = JSON.stringify({ ...meta, events }, null, 2);
+        } else {
+          const columns = ["at", "ms", "screen", "type", "data"];
+          const rows = session.events.map((event) => {
+            const { at, ms, screen, type, ...data } = event;
+            return [at, ms, screen, type, JSON.stringify(data)]
+              .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+              .join(",");
+          });
+          body = [columns.join(","), ...rows].join("\n");
+        }
+        const url = URL.createObjectURL(
+          new Blob([body], { type: kind === "json" ? "application/json" : "text/csv" }),
+        );
+        const link = Object.assign(document.createElement("a"), {
+          href: url,
+          download: `${name}.${kind}`,
+        });
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        log("export", { kind });
+      }
+
+      if (FACILITATOR) {
+        const toggle = document.getElementById("facilitator-toggle");
+        toggle.hidden = false;
+        toggle.addEventListener("click", () => {
+          renderFacilitator();
+          document.getElementById("facilitator").showModal();
+        });
+      }
+
+      render();
+      log("open", { facilitator: FACILITATOR });
+    </script>
+  </body>
+</html>
