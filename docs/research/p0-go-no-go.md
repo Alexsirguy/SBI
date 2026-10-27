@@ -70,7 +70,7 @@ The rules were written knowing the seed set, so 5 of 5 is an upper bound, not ev
 - **Internal-only:** `seed-002`, `seed-011`, `seed-029` and `seed-035` (GFDL or FAL) must not be republished without review.
 - **Prototype assets** are project-owned (SVG illustrations, `gears.glb`) or OFL/MIT (fonts, Three.js), recorded in `design/prototype/CREDITS.md`.
 
-- **Gap found by the vendor run:** `seed-006` (swing) has a complete rights record but shows a child's face. Every model refused it, which is the correct behaviour. The rights record didn't catch it, so the register needs a people/faces check alongside the licence fields. The photo is to be replaced in seed set 1.1.
+- **Gap found by the vendor run:** `seed-006` (swing) has a complete rights record but shows a child's face. Every model refused it, which is the correct behaviour. The rights record didn't catch it, so the register needs a people/faces check alongside the licence fields. Seed set 2.0.0 replaces it, along with two illustrations (feather, cactus), and adds a `peopleVisible` field to every image, enforced by a test.
 
 The rights workflow works as a manual register. `@sbi/rights` should enforce the same rule automatically: no publication without a complete record and a publishable licence.
 
@@ -80,5 +80,5 @@ The rights workflow works as a manual register. `@sbi/rights` should enforce the
 - [x] Do the vendor benchmark run (#15), then update ADR 0006.
 - [x] Run `spikes --llm meta-spark`, then fill in the pending rows above.
 - [ ] Score the lesson rubric CSV by hand (accuracy, age fit, misconception handled).
-- [ ] Seed set 1.1: replace the `seed-006` and `seed-008` photos and add the alias "electrical outlet"; then re-run.
+- [x] Seed set 2.0.0: replace the `seed-006`, `seed-008` and `seed-022` photos and add the alias "electrical outlet"; then re-run recognition (Meta Spark 100% top-3, GPT-5.4-mini 92%).
 - [ ] Re-run the evidence spike after adding table-aware extraction.

@@ -54,6 +54,7 @@ Notes:
   - `seed-009` was answered "electrical outlet", which isn't in the aliases.
 - Meta Wonder refused 29 of 35 benign questions as "self-harm" and redirected 1 more (for example the bicycle gears question), and its lesson drafts often came back with empty required arrays. At `reasoning_effort: low` it isn't usable with these prompts.
 - The single over-refusal for Spark and GPT-5.4 is the same prompt: `seed-037`, an abstract painting with the question "What is this a picture of?". Redirecting it is reasonable.
+- After seed set 2.0.0 fixed those photos, a recognition-only re-run ([`2026-10-27T16-43-25`](../research/benchmark/2026-10-27T16-43-25.md)) gave Meta Spark 100% top-3 and 92% status-correct (p95 12.1 s), and GPT-5.4-mini 92% and 92% (p95 6.4 s).
 - Lesson accuracy and age fit still need human scoring in the run's rubric CSV.
 
 ## Decision
