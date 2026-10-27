@@ -2,7 +2,7 @@
   "claimId": "claim with spaces",
   "text": "Text.",
   "status": "supported",
-  "sourceIds": ["s1"],
+  "sourceIds": ["0192f1a0-0000-7000-8000-000000000001"],
   "scope": "general",
   "confidence": "high"
 }

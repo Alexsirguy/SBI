@@ -1,6 +1,8 @@
 {
-  "visualId": "kettle_heat_v3",
+  "visualId": "0192f1a0-0000-7000-8000-000000000019",
   "kind": "svg-diagram",
   "alt": "",
-  "fallback": { "text": "A kettle." }
+  "fallback": {
+    "text": "A kettle."
+  }
 }

@@ -10,7 +10,9 @@ Requires Node 22 (`nvm use`), pnpm 10 (`corepack enable`) and Docker.
 pnpm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
+cp packages/db/.env.example packages/db/.env
 docker compose up -d   # MariaDB :3306, S3-compatible storage :8333
+pnpm db:migrate
 pnpm dev               # web :3000, api :4000
 ```
 
@@ -42,6 +44,7 @@ Feature flags are comma lists in `FEATURE_FLAGS` (api) and `NEXT_PUBLIC_FEATURE_
 | `packages/tutor`        | Lesson-grounded tutor                                                   |
 | `packages/analytics`    | Privacy-safe analytics events                                           |
 | `packages/ui`           | Shared accessible React components                                      |
+| `packages/db`           | MariaDB persistence: schema, migrations, repository implementations     |
 | `packages/env`          | Typed environment loading and feature flags                             |
 | `packages/testing`      | Shared test utilities and contract fixture validation                   |
 | `packages/config`       | Shared TypeScript/lint configuration                                    |

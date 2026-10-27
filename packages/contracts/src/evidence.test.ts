@@ -11,10 +11,10 @@ describeContract("Claim", Claim, join(fixtures, "claim"));
 describe("Claim defaults", () => {
   it("defaults dependsOn to an empty list", () => {
     const claim = Claim.parse({
-      claimId: "c1",
+      claimId: "0192f1a0-0000-7000-8000-000000000005",
       text: "Heat flows from hotter to cooler regions.",
       status: "supported",
-      sourceIds: ["s1"],
+      sourceIds: ["0192f1a0-0000-7000-8000-000000000001"],
       scope: "general",
       confidence: "high",
     });
