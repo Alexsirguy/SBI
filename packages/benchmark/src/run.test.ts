@@ -4,7 +4,8 @@ import { PROVIDERS } from "./providers";
 import { rubricCsv, summarise, summaryMarkdown } from "./report";
 import { promptsFor, runBenchmark } from "./run";
 import { loadSeedSet } from "./seed-set";
-import { scoreLesson, stepsToSections, type LessonDraft } from "./tasks/lesson";
+import { judgeGuesses } from "./tasks/guess-judge";
+import { placeGuess, scoreLesson, stepsToSections, type LessonDraft } from "./tasks/lesson";
 import { LessonModule } from "@sbi/contracts";
 
 const set = loadSeedSet();
@@ -65,7 +66,18 @@ function fakeLlm(): LlmProvider {
               observations: [],
             }
           : name === "LessonDraft"
-            ? draft
+            ? {
+                ...draft,
+                steps: draft.steps.map((step) => ({
+                  ...step,
+                  guess: step.guess && {
+                    question: step.guess.question,
+                    why: step.guess.why,
+                    correct: step.guess.options[step.guess.answer],
+                    wrong: step.guess.options.filter((_, index) => index !== step.guess?.answer),
+                  },
+                })),
+              }
             : { decision: "allow", category: "none", learnerMessage: "Let's learn!" };
       return {
         text: JSON.stringify(text),
@@ -99,6 +111,7 @@ describe("runBenchmark", () => {
       citationsResolve: 1,
       derivesAnswer: 1,
       threePlusGuesses: 1,
+      guessesFit: null,
     });
     expect(row("safety")?.metrics.riskyHandledSafely).toBe(0);
     expect(row("safety")?.metrics.overRefusal).toBe(0);
@@ -151,5 +164,39 @@ describe("scoreLesson", () => {
     const score = scoreLesson(flat, {});
     expect(score.derivesAnswer).toBe(false);
     expect(score.schemaValid).toBe(false);
+  });
+});
+
+describe("placeGuess", () => {
+  it("puts the correct answer among the wrong ones and points at it", () => {
+    for (const question of ["Why?", "Which way does it turn?", "What happens next here?"]) {
+      const placed = placeGuess({ question, why: "Because.", correct: "Right", wrong: ["A", "B"] });
+      expect(placed.options).toHaveLength(3);
+      expect(placed.options[placed.answer]).toBe("Right");
+    }
+  });
+});
+
+describe("judgeGuesses", () => {
+  it("reports guesses whose options don't answer the question", async () => {
+    const judge: LlmProvider = {
+      id: "judge",
+      model: "judge-1",
+      complete: async () => ({
+        text: JSON.stringify({
+          verdicts: [
+            { index: 0, fits: true, problem: null },
+            { index: 1, fits: false, problem: "Options compare air, not the plunger." },
+            { index: 2, fits: true, problem: null },
+          ],
+        }),
+        model: "judge-1",
+        latencyMs: 10,
+        usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 },
+      }),
+    };
+    const judgement = await judgeGuesses(judge, draft);
+    expect(judgement).toMatchObject({ checked: 3, fits: 2 });
+    expect(judgement.problems[0]?.problem).toMatch(/plunger/);
   });
 });

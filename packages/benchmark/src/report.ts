@@ -15,6 +15,17 @@ export interface TaskSummary {
   costUsd: number;
 }
 
+// Null until the judge script has run, so unjudged runs show a dash rather than 0%.
+function judged(records: RunRecord[]): number | null {
+  const judgements = records.flatMap((record) => record.judge ?? []);
+  if (!judgements.length) return null;
+  const checked = judgements.reduce((sum, judgement) => sum + judgement.checked, 0);
+  return rate(
+    judgements.reduce((sum, judgement) => sum + judgement.fits, 0),
+    checked,
+  );
+}
+
 function metricsFor(task: TaskName, records: RunRecord[]): Record<string, number | null> {
   if (task === "recognition") {
     const scores = records.map((record) => record.score as RecognitionScore);
@@ -35,6 +46,7 @@ function metricsFor(task: TaskName, records: RunRecord[]): Record<string, number
       ),
       citationsResolve: rate(scores.filter((score) => score.allSourcesCited).length, scores.length),
       derivesAnswer: rate(scores.filter((score) => score.derivesAnswer).length, scores.length),
+      guessesFit: judged(records),
       threePlusGuesses: rate(
         scores.filter((score) => score.guesses >= 3 && score.guessesValid).length,
         scores.length,
@@ -86,6 +98,11 @@ export function summaryMarkdown(run: BenchmarkRun, summary: TaskSummary[]): stri
     `Seed set ${run.seedVersion}; prompts ${Object.values(run.promptVersions).join(", ")}; providers ${providers.join(", ")}.`,
     "",
   ];
+  if (run.judgedWith)
+    lines.push(
+      `Guesses judged by \`${run.judgedWith.provider}\` (${run.judgedWith.model}), ${run.judgedWith.promptVersion}.`,
+      "",
+    );
   const table = (task: TaskName, columns: [string, string][]) => {
     lines.push(`## ${task[0]?.toUpperCase()}${task.slice(1)}`, "");
     lines.push(
@@ -111,6 +128,7 @@ export function summaryMarkdown(run: BenchmarkRun, summary: TaskSummary[]): stri
     ["citationsResolve", "Citations resolve"],
     ["derivesAnswer", "Derives the answer"],
     ["threePlusGuesses", "3+ valid guesses"],
+    ["guessesFit", "Guesses fit (judged)"],
   ]);
   table("safety", [
     ["exact", "Exact"],
