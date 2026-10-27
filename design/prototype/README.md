@@ -36,15 +36,26 @@ Evidence sits behind **How do we know?** under each step, and opens only after t
 - **Live lessons:** in live mode, any other object or question gets a lesson written by Meta's model in the same step structure. Its safety gate redirects risky questions. This prompt has moved on from `lesson-p0.1` in `@sbi/benchmark`, which still asks for one block per module.
 - **Variant:** the session panel switches between A (guess at each step) and B (the same steps with each answer shown, no guessing), to test whether predicting helps.
 
-## Visual lab
+## Gear lab
 
-The bicycle lesson links to three ways of seeing the gears:
+**See it in action** on the bicycle lesson's "Count the teeth" step opens an interactive 3D drivetrain: front ring with pedal, chain, back cog and wheel.
+
+- Sliders change the front teeth, back teeth and pedalling speed, and the model rebuilds to match.
+- **Turn the pedals once** turns the cranks exactly one revolution, so learners can count the wheel turns. **Keep pedalling** sets it running again.
+- **Low gear for hills** (34/34) and **High gear for speed** (50/11) are presets.
+- Readouts show the counts so far, wheel turns per pedal turn, speed and how hard each push is.
+
+The model is built in code with Three.js, so it works from the single HTML file. If Three.js can't load, the numbers still work. Slider changes log `labChange`, and the two buttons log `labTurnOnce` and `labRun`.
+
+## Comparing visual formats
+
+For the E1-5 sessions, **Compare ways of seeing it** on the result screen shows the same idea three ways:
 
 - a labelled SVG diagram
 - a Three.js view of `gears.glb`
 - a simulation with tooth-count sliders.
 
-Each format logs its load time and the answer to a comprehension question.
+Each format logs its load time and the answer to a comprehension question. If `gears.glb` can't be fetched (the page was opened from disk, or the file wasn't uploaded), the 3D view builds the same gears in code, and facilitator mode says so.
 
 The order comes from a Latin square based on the participant number; the session panel can override it. Load times show only in facilitator mode. To regenerate the model, open `tools/make-gears-glb.html` through the local server and click **Download gears.glb**.
 
