@@ -374,6 +374,201 @@
           transition: none !important;
         }
       }
+      .options {
+        border: 0;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 0.5rem;
+        width: 100%;
+      }
+      .option {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        padding: 0.85rem 1rem;
+        border: 1px solid var(--rule);
+        border-radius: var(--radius-s);
+        background: var(--paper);
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .option input {
+        width: 1.25rem;
+        height: 1.25rem;
+        accent-color: var(--action);
+        flex: none;
+      }
+      .option:has(input:checked) {
+        border-color: var(--action);
+        box-shadow: inset 0 0 0 1px var(--action);
+      }
+      .topic-chip {
+        display: inline-block;
+        margin: 0 0 0.5rem;
+        padding: 0.15rem 0.6rem 0.2rem;
+        background: var(--tag);
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .depth {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem;
+        border: 0;
+        padding: 0;
+        margin: 0.25rem 0 1.5rem;
+      }
+      .depth legend {
+        float: left;
+        margin-right: 0.5rem;
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+      }
+      .depth label {
+        position: relative;
+      }
+      .depth input {
+        position: absolute;
+        opacity: 0;
+        inset: 0;
+      }
+      .depth span {
+        display: block;
+        padding: 0.45rem 0.9rem;
+        border: 1px solid var(--rule);
+        border-radius: 999px;
+        background: var(--paper);
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      .depth input:checked + span {
+        background: var(--ink);
+        color: var(--bench);
+        border-color: var(--ink);
+      }
+      .depth input:focus-visible + span {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      /* The depth rail: a line that fills as the learner goes deeper, with unopened parts left hollow. */
+      .rail {
+        list-style: none;
+        margin: 0 0 1.25rem;
+        padding: 0 0 0 1.75rem;
+        position: relative;
+      }
+      .module {
+        position: relative;
+        padding: 0 0 1.5rem;
+      }
+      .module::before {
+        content: "";
+        position: absolute;
+        left: -1.75rem;
+        top: 0.15rem;
+        width: 0.9rem;
+        height: 0.9rem;
+        margin-left: 0.05rem;
+        border-radius: 50%;
+        background: var(--action);
+        box-shadow: 0 0 0 3px var(--bench);
+        z-index: 1;
+      }
+      .module::after {
+        content: "";
+        position: absolute;
+        left: calc(-1.75rem + 0.45rem);
+        top: 0.5rem;
+        bottom: -0.5rem;
+        width: 3px;
+        background: var(--action);
+      }
+      .module:last-child::after {
+        display: none;
+      }
+      .module.ghost {
+        padding-bottom: 0.9rem;
+        color: var(--ink-soft);
+        opacity: 0.75;
+      }
+      .module.ghost::before {
+        background: var(--bench);
+        box-shadow:
+          inset 0 0 0 2px var(--rule),
+          0 0 0 3px var(--bench);
+      }
+      .module.ghost::after {
+        background: var(--rule);
+      }
+      .module:not(.ghost):has(+ .ghost)::after {
+        background: linear-gradient(var(--action), var(--rule));
+      }
+      .module h3 {
+        margin-bottom: 0.35rem;
+      }
+      .module.answer > p:first-of-type {
+        font-size: 1.2rem;
+        line-height: 1.5;
+      }
+      mark {
+        background: linear-gradient(
+          transparent 12%,
+          var(--highlight) 12%,
+          var(--highlight) 88%,
+          transparent 88%
+        );
+        color: var(--ink);
+        padding: 0 0.1em;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+      }
+      details {
+        margin: 0 0 0.75rem;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--action);
+      }
+      .sources {
+        font-size: 0.9rem;
+        color: var(--ink-soft);
+        margin: 0.25rem 0 0;
+      }
+      .lesson-actions {
+        position: sticky;
+        bottom: 0;
+        padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
+        background: linear-gradient(transparent, var(--bench) 30%);
+      }
+      .compare {
+        display: grid;
+        gap: 0.5rem;
+        margin: 0 0 1rem;
+      }
+      .compare div {
+        padding: 0.75rem 1rem;
+        background: var(--paper);
+        border: 1px solid var(--rule);
+        border-radius: var(--radius-s);
+      }
+      .compare dt {
+        color: var(--ink-soft);
+        font-size: 0.9rem;
+      }
+      .compare dd {
+        margin: 0;
+        font-weight: 600;
+      }
+      .compare small {
+        font-weight: 400;
+        color: var(--ink-soft);
+      }
       @media (min-width: 36rem) {
         .samples {
           grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -400,8 +595,15 @@
             "recognition": {
               "status": "recognised",
               "candidates": [
-                { "label": "Bicycle", "certainty": "likely", "topic": "bicycle" },
-                { "label": "Exercise bike", "certainty": "unsure" }
+                {
+                  "label": "Bicycle",
+                  "certainty": "likely",
+                  "topic": "bicycle"
+                },
+                {
+                  "label": "Exercise bike",
+                  "certainty": "unsure"
+                }
               ]
             }
           },
@@ -412,9 +614,19 @@
             "recognition": {
               "status": "ambiguous",
               "candidates": [
-                { "label": "Kettle", "certainty": "possible", "topic": "kettle" },
-                { "label": "Teapot", "certainty": "possible" },
-                { "label": "Coffee pot", "certainty": "unsure" }
+                {
+                  "label": "Kettle",
+                  "certainty": "possible",
+                  "topic": "kettle"
+                },
+                {
+                  "label": "Teapot",
+                  "certainty": "possible"
+                },
+                {
+                  "label": "Coffee pot",
+                  "certainty": "unsure"
+                }
               ]
             }
           },
@@ -425,8 +637,15 @@
             "recognition": {
               "status": "recognised",
               "candidates": [
-                { "label": "Leaf", "certainty": "likely", "topic": "leaf" },
-                { "label": "Lettuce", "certainty": "unsure" }
+                {
+                  "label": "Leaf",
+                  "certainty": "likely",
+                  "topic": "leaf"
+                },
+                {
+                  "label": "Lettuce",
+                  "certainty": "unsure"
+                }
               ]
             }
           },
@@ -445,11 +664,147 @@
           "bicycle": {
             "label": "Bicycle",
             "aliases": ["bicycle", "bike", "cycle"],
+            "visual": "gears",
             "questions": [
               "Why does a low gear make pedalling uphill easier?",
               "How do bike gears help me get up hills?",
-              "Why don't I fall over when I'm riding?"
-            ]
+              "Why do racing cyclists use big gears on flat roads?"
+            ],
+            "check": {
+              "question": "On a steep hill, which gear makes pedalling easiest?",
+              "options": [
+                "Big front ring, small back cog",
+                "Small front ring, big back cog",
+                "It makes no difference",
+                "I'm not sure"
+              ],
+              "answer": 1,
+              "explain": "A small front ring with a big back cog turns the wheel less per pedal turn, so each push needs less force."
+            },
+            "modules": {
+              "what-youre-seeing": {
+                "text": {
+                  "simple": "A bike with two wheels, pedals and a chain. The chain joins a toothed wheel by the pedals to a toothed wheel on the back wheel.",
+                  "plain": "A bicycle with pedals, a chain and toothed wheels called sprockets. The front one, the chainring, turns with the pedals. The chain carries that turn to a sprocket on the back wheel, called a cog.",
+                  "technical": "A chain-driven bicycle: the chainring on the crankset drives a rear cog through a roller chain. A derailleur lets the rider move the chain between rings and cogs with different numbers of teeth."
+                },
+                "claims": ["b1"]
+              },
+              "short-answer": {
+                "text": {
+                  "simple": "In a low gear, each push on the pedals turns the back wheel less. You go slower, but every push is easier, which is perfect for hills.",
+                  "plain": "A low gear pairs a small front ring with a big back cog, so one turn of the pedals turns the wheel less than once. You trade speed for force: each pedal stroke needs less effort, so hills get easier.",
+                  "technical": "Low gears have a small gear ratio (chainring teeth ÷ cog teeth). The wheel turns fewer times per crank revolution, so for the same power the rider applies less torque per stroke at a higher cadence."
+                },
+                "claims": ["b2", "b3"]
+              },
+              "first-principles": {
+                "text": {
+                  "simple": "Getting up a hill takes a fixed amount of work. A low gear lets you push more gently, but you have to push more times.",
+                  "plain": "Climbing a hill takes a set amount of energy to lift you and the bike. Gears can't reduce that energy; they change how it's split up. A low gear spreads it over more pedal turns, so each turn needs less force.",
+                  "technical": "Energy is conserved: work = force × distance. A gear train changes the ratio of force to distance (its mechanical advantage) without creating energy. Ignoring friction, crank torque × crank speed = wheel torque × wheel speed."
+                },
+                "claims": ["b3", "b4"]
+              },
+              "how-parts-work": {
+                "text": {
+                  "simple": "Count the teeth! If the front has 30 teeth and the back has 30, one pedal turn makes one wheel turn. If the back has 40, the wheel turns less, and pedalling gets easier.",
+                  "plain": "Each tooth on the front ring pulls one link of chain, and each link moves the back cog by one tooth. So the wheel turns (front teeth ÷ back teeth) times per pedal turn: 34 ÷ 34 is one turn, while 34 ÷ 17 is two turns, which is faster but harder.",
+                  "technical": "Gear ratio = N(chainring) ÷ N(cog). Distance per crank turn = ratio × wheel circumference. For a road wheel of about 2.1 m, 34/34 gives about 2.1 m per crank turn and 50/11 about 9.5 m. The derailleur's parallelogram pushes the chain sideways between cogs."
+                },
+                "claims": ["b2", "b5"]
+              },
+              "try-an-idea": {
+                "text": {
+                  "simple": "Ask a grown-up to help you turn a bike upside down. Turn the pedals once in each gear and count how many times the back wheel spins.",
+                  "plain": "With an adult's help, turn a bike upside down. Put a piece of tape on the back tyre, then turn the pedals exactly once in the lowest and highest gears. Count the wheel turns and compare them with the tooth counts.",
+                  "technical": "Measure your own gearing: mark the tyre, turn the cranks once in several gears, and record wheel revolutions. Compare each with N(chainring) ÷ N(cog), then ride the same hill in each and note how hard it feels."
+                },
+                "claims": []
+              },
+              "history": {
+                "text": {
+                  "simple": "Old penny-farthing bikes had pedals fixed to a giant front wheel. To go faster, you needed a bigger wheel! Chains and gears solved that in the 1880s.",
+                  "plain": "Penny-farthings of the 1870s had pedals fixed straight onto a huge front wheel, so a bigger wheel was the only way to go further per pedal turn. The chain-driven safety bicycle, made popular by John Kemp Starley's Rover in 1885, let gears do that job with normal-sized wheels.",
+                  "technical": "Direct-drive penny-farthings had pedals on the front hub, so 'gearing' meant wheel diameter. Starley's Rover (1885) moved the drive to the rear wheel through a chain, and choosing sprocket sizes replaced choosing wheel sizes. Multi-speed derailleurs followed in the 20th century."
+                },
+                "claims": ["b6", "b7"]
+              },
+              "check-thinking": {
+                "text": {
+                  "simple": "You want to go really fast on a flat road. Would you pick a big or a small back cog?",
+                  "plain": "You're on a long, flat road and want to go fast. Would you choose a big or a small back cog, and what would it feel like?",
+                  "technical": "On a flat road at 40 km/h, why would a rider choose 50/11 rather than 34/34? What would happen to their cadence if they didn't?"
+                },
+                "reveal": "A small back cog. Each pedal turn spins the wheel more times, so you go faster, but each push takes more force. In a low gear you'd have to pedal impossibly fast to keep up.",
+                "claims": ["b3"]
+              },
+              "go-further": {
+                "text": {
+                  "simple": "Look for gears in other places: an egg whisk, a clock or a hand drill.",
+                  "plain": "Gears are everywhere. Hand drills, clocks and car gearboxes make the same trade between force and speed. Levers and pulleys do it too; search for 'mechanical advantage'.",
+                  "technical": "Explore internal gear hubs (planetary gears), continuously variable transmissions, and why racing cyclists try to keep their cadence near 90 pedal turns a minute."
+                },
+                "claims": ["b4"]
+              }
+            },
+            "claims": {
+              "b1": {
+                "text": "A bicycle chain carries the pedals' turning motion from the chainring to a cog on the rear wheel.",
+                "sources": ["wp-bicycle-gearing"]
+              },
+              "b2": {
+                "text": "The rear wheel turns (chainring teeth ÷ cog teeth) times per pedal revolution.",
+                "sources": ["wp-bicycle-gearing"]
+              },
+              "b3": {
+                "text": "A lower gear needs less force per pedal stroke but more strokes to cover the same distance.",
+                "sources": ["wp-bicycle-gearing", "wp-mechanical-advantage"]
+              },
+              "b4": {
+                "text": "Gears change the balance of force and distance but do not create energy.",
+                "sources": ["wp-mechanical-advantage"]
+              },
+              "b5": {
+                "text": "A derailleur moves the chain from one sprocket to another.",
+                "sources": ["wp-derailleur"]
+              },
+              "b6": {
+                "text": "Penny-farthings had their pedals attached directly to a large front wheel.",
+                "sources": ["wp-penny-farthing"]
+              },
+              "b7": {
+                "text": "John Kemp Starley's Rover of 1885 is widely regarded as the first successful chain-driven safety bicycle.",
+                "sources": ["wp-safety-bicycle"]
+              }
+            },
+            "sources": {
+              "wp-bicycle-gearing": {
+                "title": "Bicycle gearing",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Bicycle_gearing"
+              },
+              "wp-mechanical-advantage": {
+                "title": "Mechanical advantage",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Mechanical_advantage"
+              },
+              "wp-derailleur": {
+                "title": "Derailleur",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Derailleur"
+              },
+              "wp-penny-farthing": {
+                "title": "Penny-farthing",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Penny-farthing"
+              },
+              "wp-safety-bicycle": {
+                "title": "Safety bicycle",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Safety_bicycle"
+              }
+            }
           },
           "kettle": {
             "label": "Kettle",
@@ -458,7 +813,155 @@
               "What are the bubbles when water boils?",
               "Why does a kettle switch itself off?",
               "Why does water boil at 100 °C?"
-            ]
+            ],
+            "check": {
+              "question": "What are the big bubbles in boiling water mostly made of?",
+              "options": ["Air", "Water vapour (steam)", "Hydrogen and oxygen gas", "I'm not sure"],
+              "answer": 1,
+              "explain": "The big bubbles are water that has turned into a gas. The tiny bubbles you see earlier are mostly dissolved air escaping."
+            },
+            "modules": {
+              "what-youre-seeing": {
+                "text": {
+                  "simple": "A kettle: a pot with a spout and a lid for heating water. Many kettles plug in and have a heater hidden inside.",
+                  "plain": "A kettle is a container with a spout and handle for boiling water. Electric kettles hide a heating element in the base; stovetop kettles are heated from below by the hob.",
+                  "technical": "A kettle, either stovetop (heated through its base by a hob) or electric (a resistive heating element under a flat base plate, with an automatic cut-out)."
+                },
+                "claims": ["k1"]
+              },
+              "short-answer": {
+                "text": {
+                  "simple": "The big bubbles are water that has turned into a gas, called water vapour. They are not air!",
+                  "plain": "The big bubbles in boiling water are water vapour: water that has turned into a gas. The tiny bubbles you see early on are mostly air that was dissolved in the water, escaping as it warms.",
+                  "technical": "At the boiling point, water's vapour pressure equals the surrounding pressure, so vapour bubbles can form and grow inside the liquid. Those bubbles are H₂O vapour; the earlier small bubbles are dissolved gases leaving because gases dissolve less in warmer water."
+                },
+                "claims": ["k2", "k3"]
+              },
+              "first-principles": {
+                "text": {
+                  "simple": "Heat makes the tiny bits of water move faster. When they move fast enough, they break free and become a gas.",
+                  "plain": "Water is made of tiny particles that are always jiggling. Heating makes them move faster. At about 100 °C at sea level, they move fast enough to escape as gas even from inside the water, which makes bubbles.",
+                  "technical": "Boiling starts when vapour pressure reaches ambient pressure. Turning liquid into vapour needs latent heat, about 2,260 kJ per kilogram for water, so the temperature stays near 100 °C while it boils, however much power the element supplies."
+                },
+                "claims": ["k4", "k5"]
+              },
+              "how-parts-work": {
+                "text": {
+                  "simple": "The hot part at the bottom heats the water touching it. Hot water rises and cooler water sinks, so the whole kettle warms up.",
+                  "plain": "The element heats the water touching it. That warm water is lighter, so it rises while cooler water sinks, a loop called convection that spreads the heat. Bubbles form first at the hot base and collapse higher up, which is why a kettle rumbles before it boils.",
+                  "technical": "Heat moves from the element into the water by conduction, then spreads by natural convection. Vapour bubbles form at the base and collapse in the cooler water above until the whole volume reaches boiling temperature. A thermostat, often a bimetallic disc warmed by steam, then switches the element off."
+                },
+                "claims": ["k6", "k7"]
+              },
+              "try-an-idea": {
+                "text": {
+                  "simple": "With a grown-up, watch water heat up in a see-through pan. Spot the tiny bubbles first, then the big ones. Boiling water burns, so look from a safe distance.",
+                  "plain": "With an adult, watch water heat in a clear pan or a see-through kettle. Notice when small bubbles cling to the sides (air) and when big bubbles rise from the bottom (steam). Keep your hands and face away from the steam.",
+                  "technical": "Heat water in a clear vessel and record its temperature every 30 seconds. Look for the plateau at boiling, and use the slope before it to estimate how much power reaches the water. Keep clear of steam."
+                },
+                "claims": []
+              },
+              "history": {
+                "text": {
+                  "simple": "Kettles that switch themselves off were invented in 1955. Before that, people had to watch them!",
+                  "plain": "The first automatic electric kettle, the Russell Hobbs K1, came out in 1955. Steam from the boiling water bent a strip of two metals, which switched the kettle off.",
+                  "technical": "The Russell Hobbs K1 (1955) is credited as the first automatic electric kettle, using a bimetallic strip heated by steam. Steam-sensing bimetallic cut-outs are still the basic design in most kettles."
+                },
+                "claims": ["k8", "k7"]
+              },
+              "check-thinking": {
+                "text": {
+                  "simple": "On top of a very tall mountain, would water boil when it is hotter or cooler than at the seaside?",
+                  "plain": "On top of a high mountain, does water boil at more or less than 100 °C? Why?",
+                  "technical": "Predict the boiling point near the summit of Everest, where air pressure is about a third of sea level. What does that mean for cooking pasta there?"
+                },
+                "reveal": "Cooler. Higher up there's less air pressing down, so water can turn to vapour at a lower temperature: near the top of Everest it boils at roughly 70 °C, which makes cooking slow.",
+                "claims": ["k9"]
+              },
+              "go-further": {
+                "text": {
+                  "simple": "A pressure cooker does the opposite of a mountain: it squeezes the steam so water gets hotter than 100 °C.",
+                  "plain": "Pressure cookers trap steam to raise the pressure, so water boils above 100 °C and food cooks faster. Look up why steam engines worked the same way.",
+                  "technical": "Look up phase diagrams and the Clausius–Clapeyron relation, which link boiling temperature to pressure. Then see how pressure cookers and steam engines use them."
+                },
+                "claims": ["k4"]
+              }
+            },
+            "claims": {
+              "k1": {
+                "text": "Electric kettles heat water with an electric heating element.",
+                "sources": ["wp-kettle"]
+              },
+              "k2": {
+                "text": "The bubbles that form in boiling water are water vapour.",
+                "sources": ["wp-boiling"]
+              },
+              "k3": {
+                "text": "Gases dissolve less in warmer water, so dissolved air comes out as small bubbles before boiling.",
+                "sources": ["wp-henrys-law"]
+              },
+              "k4": {
+                "text": "Pure water boils at about 100 °C at sea-level pressure, and at lower temperatures where pressure is lower.",
+                "sources": ["wp-boiling-point"]
+              },
+              "k5": {
+                "text": "Turning water into vapour at its boiling point takes about 2,260 kJ of energy per kilogram.",
+                "sources": ["wp-enthalpy-vaporization"]
+              },
+              "k6": {
+                "text": "Heat spreads through water in a kettle mainly by convection.",
+                "sources": ["wp-convection"]
+              },
+              "k7": {
+                "text": "Many electric kettles switch off using a bimetallic thermostat that senses steam.",
+                "sources": ["wp-kettle"]
+              },
+              "k8": {
+                "text": "The Russell Hobbs K1 of 1955 is credited as the first automatic electric kettle.",
+                "sources": ["wp-russell-hobbs"]
+              },
+              "k9": {
+                "text": "Near the summit of Mount Everest, water boils at roughly 70 °C.",
+                "sources": ["wp-boiling-point"]
+              }
+            },
+            "sources": {
+              "wp-kettle": {
+                "title": "Kettle",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Kettle"
+              },
+              "wp-boiling": {
+                "title": "Boiling",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Boiling"
+              },
+              "wp-henrys-law": {
+                "title": "Henry's law",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Henry%27s_law"
+              },
+              "wp-boiling-point": {
+                "title": "Boiling point",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Boiling_point"
+              },
+              "wp-enthalpy-vaporization": {
+                "title": "Enthalpy of vaporization",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Enthalpy_of_vaporization"
+              },
+              "wp-convection": {
+                "title": "Convection",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Convection"
+              },
+              "wp-russell-hobbs": {
+                "title": "Russell Hobbs",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Russell_Hobbs"
+              }
+            }
           },
           "leaf": {
             "label": "Leaf",
@@ -467,7 +970,150 @@
               "How does a leaf make food from sunlight?",
               "Where does a tree's wood come from?",
               "Why are leaves green?"
-            ]
+            ],
+            "check": {
+              "question": "Where does most of the wood in a tree come from?",
+              "options": ["The soil", "Water", "Carbon dioxide from the air", "I'm not sure"],
+              "answer": 2,
+              "explain": "Most of the dry mass of wood is built from carbon that leaves take in from the air as carbon dioxide."
+            },
+            "modules": {
+              "what-youre-seeing": {
+                "text": {
+                  "simple": "A green leaf. The lines on it are veins that carry water and food.",
+                  "plain": "A leaf works like a thin, flat solar panel for a plant. Its veins carry water in and sugar out, and tiny pores underneath, called stomata, let gases in and out.",
+                  "technical": "A broad leaf with a midrib and branching veins. The veins hold xylem (water in) and phloem (sugars out). Stomata, mostly on the underside, control how much CO₂ comes in and how much water escapes."
+                },
+                "claims": ["l1", "l2"]
+              },
+              "short-answer": {
+                "text": {
+                  "simple": "A leaf uses sunlight to turn air and water into sugar. That sugar is the plant's food.",
+                  "plain": "Leaves use the energy in sunlight to join carbon dioxide from the air with water, making sugar (food for the plant) and giving off oxygen. This is called photosynthesis.",
+                  "technical": "In photosynthesis, chlorophyll absorbs light and drives reactions that split water (releasing O₂) and fix CO₂ into sugars. Overall: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂."
+                },
+                "claims": ["l3", "l4"]
+              },
+              "first-principles": {
+                "text": {
+                  "simple": "Light is a kind of energy. Plants catch it and keep it in sugar, a bit like charging a battery.",
+                  "plain": "Energy can't come from nothing. Sunlight carries energy, and the leaf stores some of it in the chemical bonds of sugar. Later the plant, or an animal that eats it, releases that energy.",
+                  "technical": "Photosynthesis turns light energy into chemical energy: glucose and O₂ hold more energy than CO₂ and water. The light-dependent reactions make ATP and NADPH, which the Calvin cycle spends to turn CO₂ into sugar."
+                },
+                "claims": ["l5"]
+              },
+              "how-parts-work": {
+                "text": {
+                  "simple": "Green stuff called chlorophyll catches the light. Tiny holes let air in. The roots send water up through the veins.",
+                  "plain": "Chlorophyll, packed into tiny parts of each cell called chloroplasts, absorbs red and blue light and reflects green, which is why leaves look green. Stomata let carbon dioxide in, and the veins bring water up from the roots.",
+                  "technical": "Chlorophylls a and b absorb strongly in the blue and red and weakly in the green, which is reflected. The light reactions run in the thylakoid membranes; the Calvin cycle, driven by the enzyme RuBisCO, runs in the stroma."
+                },
+                "claims": ["l6", "l2"]
+              },
+              "try-an-idea": {
+                "text": {
+                  "simple": "Put a leaf in a clear bowl of water in the sun. After an hour, look for tiny bubbles on it.",
+                  "plain": "Put a fresh leaf in a clear bowl of water in bright sunlight. After an hour, look for tiny bubbles on the leaf. Some of that gas is oxygen made by photosynthesis.",
+                  "technical": "Try the floating leaf-disc test: soak leaf discs in a weak baking-soda solution until they sink, then time how long they take to float under bright and dim light as oxygen builds up inside."
+                },
+                "claims": []
+              },
+              "history": {
+                "text": {
+                  "simple": "Long ago, a scientist grew a willow tree in a pot for five years. The tree got much heavier, but the soil hardly changed!",
+                  "plain": "In the 1600s, Jan van Helmont grew a willow in a pot for five years. The tree gained about 74 kg while the soil lost only about 57 g, so the mass didn't come from the soil. He guessed it came from water; later scientists showed most of it comes from carbon dioxide in the air.",
+                  "technical": "Van Helmont's willow experiment (17th century) ruled out soil as the main source of plant mass. Joseph Priestley (1771) showed plants 'restore' air that a candle had used up, and Jan Ingenhousz (1779) showed this needs light."
+                },
+                "claims": ["l7", "l8", "l9"]
+              },
+              "check-thinking": {
+                "text": {
+                  "simple": "Why might a plant kept in a dark cupboard slowly die, even if you water it?",
+                  "plain": "A plant in a dark cupboard gets plenty of water but slowly dies. Why?",
+                  "technical": "A plant in the dark still respires. What happens to its stored sugar over a few weeks, and why does watering not help?"
+                },
+                "reveal": "Without light it can't make sugar, so it slowly uses up the food it has stored. Water is only one of the ingredients; light provides the energy.",
+                "claims": ["l3"]
+              },
+              "go-further": {
+                "text": {
+                  "simple": "Every breath you take has oxygen that plants and tiny sea creatures helped make.",
+                  "plain": "Photosynthesis is half of the carbon cycle: breathing and burning release the carbon dioxide that leaves capture. Look up why forests and ocean algae matter for the air we breathe.",
+                  "technical": "Look up C4 and CAM photosynthesis, which help maize and cacti photosynthesise in hot, dry conditions, and how scientists are trying to engineer RuBisCO to be faster."
+                },
+                "claims": ["l8"]
+              }
+            },
+            "claims": {
+              "l1": {
+                "text": "Leaf veins contain xylem, which carries water, and phloem, which carries sugars.",
+                "sources": ["wp-leaf"]
+              },
+              "l2": {
+                "text": "Stomata are pores, mostly on the underside of leaves, that let carbon dioxide in and oxygen and water vapour out.",
+                "sources": ["wp-stoma"]
+              },
+              "l3": {
+                "text": "Photosynthesis uses light energy to make sugar from carbon dioxide and water, releasing oxygen.",
+                "sources": ["wp-photosynthesis", "os-biology"]
+              },
+              "l4": {
+                "text": "The overall equation of photosynthesis is 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂.",
+                "sources": ["wp-photosynthesis"]
+              },
+              "l5": {
+                "text": "Photosynthesis stores light energy as chemical energy in sugars.",
+                "sources": ["os-biology"]
+              },
+              "l6": {
+                "text": "Chlorophyll absorbs mainly blue and red light and reflects green light.",
+                "sources": ["wp-chlorophyll"]
+              },
+              "l7": {
+                "text": "In van Helmont's willow experiment the tree gained about 74 kg over five years while the soil lost about 57 g.",
+                "sources": ["wp-van-helmont"]
+              },
+              "l8": {
+                "text": "Most of a plant's dry mass is built from carbon taken from carbon dioxide in the air.",
+                "sources": ["wp-photosynthesis"]
+              },
+              "l9": {
+                "text": "Priestley (1771) found plants restore air used up by a candle, and Ingenhousz (1779) found this needs light.",
+                "sources": ["wp-photosynthesis"]
+              }
+            },
+            "sources": {
+              "wp-leaf": {
+                "title": "Leaf",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Leaf"
+              },
+              "wp-stoma": {
+                "title": "Stoma",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Stoma"
+              },
+              "wp-photosynthesis": {
+                "title": "Photosynthesis",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Photosynthesis"
+              },
+              "os-biology": {
+                "title": "Biology 2e, 8.1 Overview of Photosynthesis",
+                "publisher": "OpenStax",
+                "url": "https://openstax.org/books/biology-2e/pages/8-1-overview-of-photosynthesis"
+              },
+              "wp-chlorophyll": {
+                "title": "Chlorophyll",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Chlorophyll"
+              },
+              "wp-van-helmont": {
+                "title": "Jan Baptist van Helmont",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Jan_Baptist_van_Helmont"
+              }
+            }
           }
         }
       }
@@ -506,6 +1152,11 @@
         recognition: null,
         topic: null,
         question: null,
+        level: "plain",
+        shown: 2,
+        pre: null,
+        post: null,
+        lessonStartedAt: 0,
       };
 
       function loadSession() {
@@ -741,13 +1392,188 @@
                   <span>${esc(question)}</span></button></li>`,
               )
               .join("")}
-          </ul>`;
+          </ul>
+          ${
+            topic.live
+              ? `<form class="field" data-action="ownQuestion">
+                  <label for="own-question">Or ask your own question</label>
+                  <div class="row">
+                    <input id="own-question" name="question" maxlength="200" autocomplete="off" style="flex:1;min-width:12rem" />
+                    <button class="btn secondary" type="submit">Ask</button>
+                  </div>
+                </form>`
+              : ""
+          }`;
       };
 
-      SCREENS.lesson = () => `
-        ${backButton("question")}
-        <h2>${esc(state.question)}</h2>
-        <p>The lesson goes here.</p>`;
+      const MODULE_ORDERS = {
+        A: [
+          "what-youre-seeing",
+          "short-answer",
+          "first-principles",
+          "how-parts-work",
+          "try-an-idea",
+          "history",
+          "check-thinking",
+          "go-further",
+        ],
+        // Variant B tests concrete-before-abstract: parts and a hands-on idea come before the big idea.
+        B: [
+          "what-youre-seeing",
+          "short-answer",
+          "how-parts-work",
+          "try-an-idea",
+          "first-principles",
+          "check-thinking",
+          "history",
+          "go-further",
+        ],
+      };
+      const MODULE_TITLES = {
+        "what-youre-seeing": "What you're seeing",
+        "short-answer": "The short answer",
+        "first-principles": "The big idea",
+        "how-parts-work": "How the parts work",
+        "try-an-idea": "Try it yourself",
+        history: "How we found out",
+        "check-thinking": "Check your thinking",
+        "go-further": "Go further",
+      };
+      const LEVELS = [
+        ["simple", "Simply"],
+        ["plain", "Normally"],
+        ["technical", "In depth"],
+      ];
+
+      const currentTopic = () => DEMO.topics[state.topic];
+      const moduleOrder = () => MODULE_ORDERS[session.moduleOrder] ?? MODULE_ORDERS.A;
+      const levelText = (text) =>
+        typeof text === "string" ? text : (text[state.level] ?? text.plain);
+
+      function checkMarkup(kind) {
+        const check = currentTopic().check;
+        const before = kind === "pre";
+        return `
+          <h2>${before ? "Before we start: what do you think?" : "One last time: what do you think now?"}</h2>
+          <p class="lede">${esc(check.question)}</p>
+          <form data-action="answer" data-kind="${kind}" class="stack">
+            <fieldset class="options">
+              <legend class="sr-only">${esc(check.question)}</legend>
+              ${check.options
+                .map(
+                  (
+                    option,
+                    index,
+                  ) => `<label class="option"><input type="radio" name="choice" value="${index}" required />
+                    <span>${esc(option)}</span></label>`,
+                )
+                .join("")}
+            </fieldset>
+            <button class="btn" type="submit">${before ? "Start the lesson" : "See how you did"}</button>
+          </form>
+          ${before ? `<p class="hint">It's fine to guess. This isn't a test of you.</p>` : ""}`;
+      }
+
+      SCREENS.precheck = () => checkMarkup("pre");
+      SCREENS.postcheck = () => checkMarkup("post");
+
+      SCREENS.writing = () => `
+        <h2>Writing your lesson…</h2>
+        <p class="lede">Checking facts and sources for “${esc(state.question)}”.</p>
+        <div class="photo">${photoMarkup()}<div class="scanline" aria-hidden="true"></div></div>`;
+
+      function sourcesFor(claimIds) {
+        const topic = currentTopic();
+        const ids = [...new Set(claimIds.flatMap((id) => topic.claims[id]?.sources ?? []))];
+        if (!ids.length) return "";
+        return `<p class="sources">Source${ids.length > 1 ? "s" : ""}: ${ids
+          .map((id) => topic.sources[id])
+          .filter(Boolean)
+          .map(
+            (source) =>
+              `<a href="${esc(source.url)}" target="_blank" rel="noopener" data-source="${esc(source.title)}">${esc(source.title)}</a> (${esc(source.publisher)})`,
+          )
+          .join(", ")}</p>`;
+      }
+
+      function moduleMarkup(id, index) {
+        const module = currentTopic().modules[id];
+        const answer = id === "short-answer";
+        return `
+          <li class="module${answer ? " answer" : ""}" id="m-${id}">
+            <h3>${MODULE_TITLES[id]}</h3>
+            <p>${answer ? `<mark>${esc(levelText(module.text))}</mark>` : esc(levelText(module.text))}</p>
+            ${
+              module.reveal
+                ? `<details data-reveal="${id}"><summary>Show an answer</summary><p>${esc(module.reveal)}</p></details>`
+                : ""
+            }
+            ${
+              id === "how-parts-work" && currentTopic().visual && SCREENS.visuals
+                ? `<button class="btn secondary" type="button" data-action="visuals">See it in action</button>`
+                : ""
+            }
+            ${sourcesFor(module.claims ?? [])}
+          </li>`;
+      }
+
+      SCREENS.lesson = () => {
+        const order = moduleOrder();
+        const shown = order.slice(0, state.shown);
+        const next = order[state.shown];
+        return `
+          ${backButton("question", "Change question")}
+          <p class="topic-chip">${esc(currentTopic().label)}</p>
+          <h2>${esc(state.question)}</h2>
+          <fieldset class="depth">
+            <legend>Explain it</legend>
+            ${LEVELS.map(
+              ([value, label]) =>
+                `<label><input type="radio" name="level" value="${value}" data-change="level" ${
+                  state.level === value ? "checked" : ""
+                } /><span>${label}</span></label>`,
+            ).join("")}
+          </fieldset>
+          <ol class="rail" aria-label="Lesson, ${state.shown} of ${order.length} parts open">
+            ${shown.map(moduleMarkup).join("")}
+            ${order
+              .slice(state.shown)
+              .map(
+                (id) =>
+                  `<li class="module ghost" aria-hidden="true"><span>${MODULE_TITLES[id]}</span></li>`,
+              )
+              .join("")}
+          </ol>
+          <div class="row lesson-actions">
+            ${next ? `<button class="btn" type="button" data-action="deeper">Go deeper: ${MODULE_TITLES[next].toLowerCase()}</button>` : ""}
+            <button class="btn ${next ? "secondary" : ""}" type="button" data-action="finish">I've got it</button>
+          </div>`;
+      };
+
+      SCREENS.result = () => {
+        const check = currentTopic().check;
+        const mark = (choice) => (choice === check.answer ? "right" : "not quite");
+        return `
+          <h2>${state.post === check.answer ? "You've got it" : "Nearly there"}</h2>
+          <dl class="compare">
+            <div><dt>Before the lesson</dt><dd>${esc(check.options[state.pre] ?? "–")} <small>(${mark(state.pre)})</small></dd></div>
+            <div><dt>After the lesson</dt><dd>${esc(check.options[state.post] ?? "–")} <small>(${mark(state.post)})</small></dd></div>
+          </dl>
+          <p>${esc(check.explain)}</p>
+          <form class="field" data-action="explainBack">
+            <label for="explain-back">Now explain it in your own words. You can say it out loud or type it here.</label>
+            <textarea id="explain-back" name="text" rows="4"></textarea>
+            <div class="row" style="margin-top:0.5rem">
+              <button class="btn" type="submit">Done</button>
+              ${currentTopic().visual && SCREENS.visuals ? `<button class="btn secondary" type="button" data-action="visuals">Compare ways of seeing it</button>` : ""}
+            </div>
+          </form>`;
+      };
+
+      SCREENS.done = () => `
+        <h2>Thanks for trying it</h2>
+        <p class="lede">What would you like to look at next?</p>
+        <button class="btn" type="button" data-action="back" data-to="home">Take another photo</button>`;
 
       const ACTIONS = {
         back(el) {
@@ -814,12 +1640,104 @@
           chooseTopic(topic, text);
         },
         question(el) {
-          const topic = DEMO.topics[state.topic];
-          const question = topic.questions[Number(el.dataset.index)];
+          const question = currentTopic().questions[Number(el.dataset.index)];
           log("question", { index: Number(el.dataset.index) });
-          go("lesson", { question });
+          startLesson(question);
+        },
+        ownQuestion(form) {
+          const question = form.question.value.trim();
+          if (!question) return;
+          log("question", { own: true, length: question.length });
+          startLesson(question);
+        },
+        answer(form) {
+          const choice = Number(new FormData(form).get("choice"));
+          const kind = form.dataset.kind;
+          const correct = choice === currentTopic().check.answer;
+          log(kind === "pre" ? "precheck" : "postcheck", { choice, correct });
+          if (kind === "pre") {
+            go("lesson", { pre: choice, shown: 2, lessonStartedAt: performance.now() });
+          } else {
+            go("result", { post: choice });
+          }
+        },
+        level(el) {
+          state.level = el.value;
+          log("depth", { level: el.value, shown: state.shown });
+          render();
+          app.querySelector(`input[value="${el.value}"]`)?.focus();
+        },
+        deeper() {
+          const id = moduleOrder()[state.shown];
+          state.shown += 1;
+          log("module", { module: id, position: state.shown, variant: session.moduleOrder });
+          render();
+          const heading = document.querySelector(`#m-${id} h3`);
+          heading?.setAttribute("tabindex", "-1");
+          heading?.focus();
+          heading?.scrollIntoView({ block: "start", behavior: "smooth" });
+        },
+        finish() {
+          log("finish", {
+            shown: state.shown,
+            level: state.level,
+            seconds: Math.round((performance.now() - state.lessonStartedAt) / 1000),
+          });
+          go("postcheck");
+        },
+        explainBack(form) {
+          log("explainBack", { length: form.text.value.trim().length });
+          go("done");
         },
       };
+
+      app.addEventListener(
+        "toggle",
+        (event) => {
+          if (event.target.matches?.("details[data-reveal]") && event.target.open) {
+            log("reveal", { module: event.target.dataset.reveal });
+          }
+        },
+        true,
+      );
+      app.addEventListener("click", (event) => {
+        const link = event.target.closest?.("a[data-source]");
+        if (link) log("source", { title: link.dataset.source });
+      });
+
+      function defaultLevel() {
+        return session.segment === "child 8-12" ? "simple" : "plain";
+      }
+
+      async function startLesson(question) {
+        state.level = defaultLevel();
+        if (!currentTopic().live) return go("precheck", { question });
+        go("writing", { question });
+        try {
+          const lesson = await writeLiveLesson(currentTopic().label, question);
+          if (lesson.safety.decision !== "allow") {
+            log("safety", { decision: lesson.safety.decision });
+            return go("unsupported", {
+              recognition: {
+                status: "unsupported",
+                candidates: [],
+                redirect: lesson.safety.learnerMessage,
+              },
+            });
+          }
+          Object.assign(currentTopic(), toTopic(lesson));
+          go("precheck");
+        } catch (error) {
+          log("error", { where: "lesson", message: String(error.message).slice(0, 120) });
+          go("unsupported", {
+            recognition: {
+              status: "unsupported",
+              candidates: [],
+              redirect: `Writing the lesson failed: ${error.message}`,
+            },
+          });
+        }
+      }
 
       function startRecognition(patch) {
         go("looking", { ...patch, photoUrl: null });
@@ -842,7 +1760,142 @@
 
       function chooseTopic(topic, label) {
         if (topic && DEMO.topics[topic]) return go("question", { topic });
+        if (session.mode === "live" && metaKey()) {
+          DEMO.topics.live = {
+            label,
+            aliases: [],
+            live: true,
+            questions: [
+              `How does a ${label.toLowerCase()} work?`,
+              "What is it made of, and why?",
+              "Who invented it?",
+            ],
+          };
+          return go("question", { topic: "live" });
+        }
         go("nolesson", { requested: label });
+      }
+
+      // Mirrors LESSON_PROMPT_VERSION lesson-p0.1 in @sbi/benchmark, plus a safety gate and concept check.
+      const LESSON_SYSTEM = `You write short, accurate science lessons about everyday objects for a learning app used by people aged 8 and up.
+First decide safety: "allow" for normal curiosity; "redirect" or "refuse" if answering could lead to harm (eating wild plants, medicine doses, mixing chemicals, electricity, weapons) or the question isn't about science. If not "allow", leave other fields minimal and put a kind message for the learner in learnerMessage.
+Write one module for each of: ${MODULE_ORDERS.A.join(", ")}. Give each module text at three levels: simple (age 8), plain (teen or adult), technical. "short-answer" answers the question in 1-2 sentences; later modules go deeper. "check-thinking" asks a question and gives the answer in reveal; reveal is null elsewhere.
+Every factual statement belongs to a claim citing sourceIds; use only real, well-known reference pages whose URL you are confident exists. "history" must cite a claim.
+check: one multiple-choice question about the key idea, with 3 options plus "I'm not sure" last; answer is the 0-based index of the right option; explain is one sentence.`;
+
+      const levelsSchema = {
+        type: "object",
+        additionalProperties: false,
+        required: ["simple", "plain", "technical"],
+        properties: {
+          simple: { type: "string" },
+          plain: { type: "string" },
+          technical: { type: "string" },
+        },
+      };
+      const LESSON_SCHEMA = {
+        type: "object",
+        additionalProperties: false,
+        required: ["safety", "check", "modules", "claims", "sources"],
+        properties: {
+          safety: {
+            type: "object",
+            additionalProperties: false,
+            required: ["decision", "learnerMessage"],
+            properties: {
+              decision: { type: "string", enum: ["allow", "redirect", "refuse"] },
+              learnerMessage: { type: "string" },
+            },
+          },
+          check: {
+            type: "object",
+            additionalProperties: false,
+            required: ["question", "options", "answer", "explain"],
+            properties: {
+              question: { type: "string" },
+              options: { type: "array", items: { type: "string" } },
+              answer: { type: "integer" },
+              explain: { type: "string" },
+            },
+          },
+          modules: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["module", "text", "reveal", "claimIds"],
+              properties: {
+                module: { type: "string", enum: MODULE_ORDERS.A },
+                text: levelsSchema,
+                reveal: { type: ["string", "null"] },
+                claimIds: { type: "array", items: { type: "string" } },
+              },
+            },
+          },
+          claims: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["claimId", "text", "sourceIds"],
+              properties: {
+                claimId: { type: "string" },
+                text: { type: "string" },
+                sourceIds: { type: "array", items: { type: "string" } },
+              },
+            },
+          },
+          sources: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["sourceId", "title", "publisher", "url"],
+              properties: {
+                sourceId: { type: "string" },
+                title: { type: "string" },
+                publisher: { type: "string" },
+                url: { type: "string" },
+              },
+            },
+          },
+        },
+      };
+
+      function writeLiveLesson(label, question) {
+        return metaComplete(
+          [
+            { role: "system", content: LESSON_SYSTEM },
+            { role: "user", content: `Object: ${label}\nLearner question: ${question}` },
+          ],
+          "LiveLesson",
+          LESSON_SCHEMA,
+          12000,
+        );
+      }
+
+      function toTopic(lesson) {
+        const modules = Object.fromEntries(
+          lesson.modules.map((module) => [
+            module.module,
+            { text: module.text, reveal: module.reveal, claims: module.claimIds },
+          ]),
+        );
+        for (const id of MODULE_ORDERS.A)
+          modules[id] ??= { text: "This part wasn't written.", claims: [] };
+        return {
+          check: lesson.check,
+          modules,
+          claims: Object.fromEntries(
+            lesson.claims.map((claim) => [
+              claim.claimId,
+              { text: claim.text, sources: claim.sourceIds },
+            ]),
+          ),
+          sources: Object.fromEntries(
+            lesson.sources.map(({ sourceId, ...source }) => [sourceId, source]),
+          ),
+        };
       }
 
       async function downscale(file) {
@@ -944,6 +1997,11 @@ observations: up to 3 short visual details that justify your answer. Never descr
                   )
                   .join("")}
               </select></div>
+            <div class="field"><label for="f-order">Lesson module order</label>
+              <select id="f-order" name="moduleOrder">
+                <option value="A" ${session.moduleOrder === "A" ? "selected" : ""}>A: big idea before parts (spec order)</option>
+                <option value="B" ${session.moduleOrder === "B" ? "selected" : ""}>B: parts and hands-on before big idea</option>
+              </select></div>
             <div class="field"><label for="f-mode">Mode</label>
               <select id="f-mode" name="mode">
                 <option value="demo" ${session.mode === "demo" ? "selected" : ""}>Demo: sample photos and prepared lessons</option>
@@ -988,6 +2046,7 @@ observations: up to 3 short visual details that justify your answer. Never descr
             participant: form.participant.value.trim(),
             segment: form.segment.value,
             mode: form.mode.value,
+            moduleOrder: form.moduleOrder.value,
             model: form.model.value.trim() || "muse-spark-1.3",
           });
           if (form.key.value.trim()) {
