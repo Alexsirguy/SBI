@@ -1,0 +1,16 @@
+{
+  "name": "@sbi/analytics",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Typed, privacy-safe analytics events and sink adapter.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*"
+  }
+}

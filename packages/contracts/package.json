@@ -1,0 +1,16 @@
+{
+  "name": "@sbi/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Versioned Zod schemas and generated JSON Schema/OpenAPI for all shared records.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@sbi/visuals",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Visual registry and renderers behind a common component interface.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*"
+  }
+}
