@@ -66,6 +66,23 @@ describe("prototype lessons", () => {
   });
 });
 
+describe("prototype visual lab", () => {
+  const glb = readFileSync(join(import.meta.dirname, "../design/prototype/gears.glb"));
+
+  it("ships a valid, small GLB model", () => {
+    expect(glb.subarray(0, 4).toString("latin1")).toBe("glTF");
+    expect(glb.length).toBeLessThan(150 * 1024);
+  });
+
+  it("pins the Three.js version", () => {
+    expect(html).toMatch(/"three": "https:\/\/cdn\.jsdelivr\.net\/npm\/three@\d+\.\d+\.\d+\//);
+  });
+
+  it.each(["mountSvg", "mountGlb", "mountSim"])("defines %s", (name) => {
+    expect(html).toContain(`function ${name}(`);
+  });
+});
+
 describe("prototype demo data", () => {
   it.each(["confident", "ambiguous", "unsupported"])("has a %s sample", (path) => {
     expect(demo.samples.some((sample) => sample.path === path)).toBe(true);
