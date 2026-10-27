@@ -14,6 +14,7 @@ export default tseslint.config(
     plugins: { local },
     rules: {
       "local/max-comment-lines": "error",
+      "local/no-cross-package-internals": "error",
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
