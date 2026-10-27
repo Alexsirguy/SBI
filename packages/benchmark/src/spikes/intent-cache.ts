@@ -84,10 +84,26 @@ export function llmClassifier(
           properties: { intent: { type: "string", enum: [...ids, "other"] } },
         },
       },
-      maxTokens: 800,
+      // Reasoning models spend part of this budget thinking before they answer.
+      maxTokens: 4000,
     });
     const intent = (JSON.parse(completion.text) as { intent: string }).intent;
     return intent === "other" ? null : intent;
+  };
+}
+
+/** Treats a failed classification as "no match", so the lesson is regenerated instead of reused. */
+export function safeClassifier(
+  classify: IntentClassifier,
+  errors: string[] = [],
+): IntentClassifier {
+  return async (query) => {
+    try {
+      return await classify(query);
+    } catch (error) {
+      errors.push(String(error).slice(0, 200));
+      return null;
+    }
   };
 }
 

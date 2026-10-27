@@ -18,9 +18,10 @@ export interface TaskSummary {
 function metricsFor(task: TaskName, records: RunRecord[]): Record<string, number | null> {
   if (task === "recognition") {
     const scores = records.map((record) => record.score as RecognitionScore);
+    const labelled = scores.filter((score) => score.labelExpected);
     return {
-      top1: rate(scores.filter((score) => score.top1).length, scores.length),
-      top3: rate(scores.filter((score) => score.top3).length, scores.length),
+      top1: rate(labelled.filter((score) => score.top1).length, labelled.length),
+      top3: rate(labelled.filter((score) => score.top3).length, labelled.length),
       statusAccuracy: rate(scores.filter((score) => score.statusCorrect).length, scores.length),
     };
   }

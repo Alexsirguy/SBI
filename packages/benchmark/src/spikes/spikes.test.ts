@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { loadSeedSet } from "../seed-set";
-import { EvidenceFixture, runEvidenceSpike, supportingExcerpt } from "./evidence";
+import { EvidenceFixture, runEvidenceSpike, supportingExcerpt, wikipediaFetcher } from "./evidence";
 import {
   CacheFixture,
   evaluateCache,
@@ -94,6 +94,17 @@ describe("evidence spike", () => {
       [true, true],
       [false, true],
     ]);
+  });
+
+  it("retries Wikipedia when it is rate limited", async () => {
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response("You are making too many requests", { status: 429 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ query: { pages: { "1": { extract: article } } } })),
+      );
+    expect(await wikipediaFetcher(fetchImpl, 1)("Safety bicycle")).toBe(article);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
   it("covers at least three topics", () => {

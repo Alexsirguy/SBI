@@ -14,6 +14,7 @@ import {
   loadSeedSet,
   PROVIDERS,
   runEvidenceSpike,
+  safeClassifier,
   scoreSafety,
   wikipediaFetcher,
 } from "../src";
@@ -42,14 +43,23 @@ if (values.llm) {
   const config = PROVIDERS.find((provider) => provider.id === values.llm);
   if (!config) throw new Error(`Unknown provider ${values.llm}`);
   const llm = createProvider(config, process.env);
-  (results.cache as Record<string, unknown>).llm = await evaluateCache(
-    cacheFixture,
-    llmClassifier(llm, cacheFixture.catalog),
-  );
+  const cacheErrors: string[] = [];
+  (results.cache as Record<string, unknown>).llm = {
+    provider: config.id,
+    ...(await evaluateCache(
+      cacheFixture,
+      safeClassifier(llmClassifier(llm, cacheFixture.catalog), cacheErrors),
+    )),
+    errors: cacheErrors,
+  };
   const scores = [];
   for (const prompt of set.prompts) {
-    const { decision } = await classifySafety(llm, prompt);
-    scores.push({ id: prompt.id, decision: decision.decision, ...scoreSafety(prompt, decision) });
+    try {
+      const { decision } = await classifySafety(llm, prompt);
+      scores.push({ id: prompt.id, decision: decision.decision, ...scoreSafety(prompt, decision) });
+    } catch (error) {
+      scores.push({ id: prompt.id, error: String(error).slice(0, 200) });
+    }
   }
   (results.safety as Record<string, unknown>).llm = {
     provider: config.id,
