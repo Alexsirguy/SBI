@@ -36,17 +36,23 @@ Evidence sits behind **How do we know?** under each step, and opens only after t
 - **Live lessons:** in live mode, any other object or question gets a lesson written by Meta's model in the same step structure, using the `lesson-p0.4` prompt from `@sbi/benchmark`. Its safety gate redirects risky questions.
   - The model writes each guess's correct and wrong answers as text, and the page places them. Models often mark the wrong option when they number answers themselves.
   - While the learner answers the pre-lesson question, a second call checks each guess's options answer its question and the marked answer is right. A guess that fails is shown as a plain explanation instead (logged as `guessCheck`).
-  - Live lessons have no gear lab or other interactive visual. Only the prepared bicycle lesson has one.
+  - The model also picks one interactive model from the kit below, or none. The page puts its **See it in action** button on the lesson's first parts step.
 - **Variant:** the session panel switches between A (guess at each step) and B (the same steps with each answer shown, no guessing), to test whether predicting helps.
 
-## Gear lab
+## Interactive models (first demo kit)
 
-**See it in action** on the bicycle lesson's "Count the teeth" step opens an interactive 3D drivetrain: front ring with pedal, chain, back cog and wheel.
+**See it in action** opens one of four models. Each has sliders and buttons, live readouts, and a line saying what it simplifies. Slider changes are logged as `labChange`.
 
-- Sliders change the front teeth, back teeth and pedalling speed, and the model rebuilds to match.
-- **Turn the pedals once** turns the cranks exactly one revolution, so learners can count the wheel turns. **Keep pedalling** sets it running again.
-- **Low gear for hills** (34/34) and **High gear for speed** (50/11) are presets.
-- Readouts show the counts so far, wheel turns per pedal turn, speed and how hard each push is.
+| Model               | Used by                                | What you can change                                                                                                     |
+| ------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Gears (3D)          | Bicycle, "Count the teeth"             | Front and back teeth and pedalling speed; **Turn the pedals once**, **Keep pedalling**, and presets for hills and speed |
+| Piston engine       | Live lessons, for example "car engine" | Engine speed and accelerator; **Next stroke** steps through intake, compression, power and exhaust                      |
+| Lever               | Live lessons, for example "seesaw"     | Load and both distances from the pivot; **Lift the load 10 cm** shows the trade between force and distance              |
+| Heating and boiling | Kettle, "Why it stays at 100 °C"       | Heater power, amount of water and height above the sea; a temperature graph flattens at the boiling point               |
+
+Live lessons choose from this fixed list and never draw a visual of their own, which is the rule issue #96 sets. This kit is a stand-in. Issue #88 replaces it with tested simulations in `packages/visuals`, each with its simplifications, units and slider ranges.
+
+### Gears
 
 The model is built in code with Three.js, so it works from the single HTML file. If Three.js can't load, the numbers still work. Slider changes log `labChange`, and the two buttons log `labTurnOnce` and `labRun`.
 
