@@ -1,0 +1,88 @@
+{
+  "lessonId": "0192f1a0-0000-7000-8000-000000000010",
+  "version": 1,
+  "taxonomyId": "household.kitchen.kettle",
+  "title": "Why a kettle boils water",
+  "locale": "en",
+  "audience": ["general", "teen"],
+  "readingLevel": "plain",
+  "summary": "An electric kettle turns electrical energy into heat at its base; the heat spreads through the water by conduction and convection until it boils.",
+  "learningObjectives": ["Explain how heat moves from the element into the water"],
+  "assumptions": [],
+  "concepts": [
+    {
+      "conceptId": "energy-transfer",
+      "label": "Energy transfer"
+    },
+    {
+      "conceptId": "convection",
+      "label": "Convection",
+      "prerequisites": ["energy-transfer"]
+    }
+  ],
+  "misconceptionNotes": [],
+  "sections": [
+    {
+      "sectionId": "seeing",
+      "module": "what-youre-seeing",
+      "text": "A kettle with a base and a spout; we assume an electric element.",
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000007"]
+    },
+    {
+      "sectionId": "short",
+      "module": "short-answer",
+      "text": "The element heats the water at the bottom, and warm water rises.",
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000005", "0192f1a0-0000-7000-8000-000000000004"]
+    },
+    {
+      "sectionId": "principles",
+      "module": "first-principles",
+      "text": "Energy moves from hotter to cooler places.",
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000005"]
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "0192f1a0-0000-7000-8000-000000000005",
+      "text": "The element converts electrical energy into thermal energy.",
+      "status": "supported",
+      "sourceIds": ["0192f1a0-0000-7000-8000-000000000001"],
+      "scope": "typical electric kettle",
+      "confidence": "high"
+    },
+    {
+      "claimId": "0192f1a0-0000-7000-8000-000000000004",
+      "text": "Heated water rises, forming convection currents.",
+      "status": "supported",
+      "sourceIds": ["0192f1a0-0000-7000-8000-000000000001", "0192f1a0-0000-7000-8000-000000000006"],
+      "scope": "general",
+      "confidence": "high",
+      "dependsOn": ["0192f1a0-0000-7000-8000-000000000005"]
+    },
+    {
+      "claimId": "0192f1a0-0000-7000-8000-000000000007",
+      "text": "The element type is not visible in the photo.",
+      "status": "unsupported",
+      "scope": "this photo",
+      "confidence": "low",
+      "uncertainty": "Concealed and exposed elements look similar from outside."
+    }
+  ],
+  "visuals": [],
+  "safetyClass": "low",
+  "reviewStatus": "auto-validated",
+  "reuse": {
+    "intentSignature": "why-boil|household.kitchen.kettle|explore|en|low",
+    "matchDimensions": ["intent", "depth", "locale", "safety"],
+    "cacheScope": "shared",
+    "generatedAt": "2026-09-30T12:00:00Z",
+    "validatedAt": "2026-10-01T10:00:00Z",
+    "evidenceSnapshotId": "0192f1a0-0000-7000-8000-00000000000e",
+    "sourceFreshness": "fresh",
+    "modelVersion": "model-2026-09",
+    "promptVersion": "lesson-v3",
+    "policyVersion": "policy-v1",
+    "reuseCount": 4,
+    "contentHash": "c92ebf1c5e8217459c77b32b502177e4bbcea8b6c095bcba10c5ce2a3048a966"
+  }
+}

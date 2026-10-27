@@ -1,0 +1,14 @@
+{
+  "assetId": "0192f1a0-0000-7000-8000-000000000015",
+  "kind": "model",
+  "sourceUrl": "https://example.org/models/mystery",
+  "creator": "Unknown",
+  "attribution": "Unknown",
+  "modified": false,
+  "commercialUse": "unknown",
+  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "format": "glb",
+  "sizeBytes": 1000,
+  "accessibilityFallback": "A model.",
+  "reviewOwner": "content-ops"
+}

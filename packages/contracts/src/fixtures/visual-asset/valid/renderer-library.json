@@ -1,0 +1,17 @@
+{
+  "assetId": "0192f1a0-0000-7000-8000-000000000018",
+  "kind": "renderer",
+  "sourceUrl": "https://github.com/mrdoob/three.js",
+  "creator": "three.js authors",
+  "softwareLicense": {
+    "id": "MIT"
+  },
+  "attribution": "three.js, MIT License",
+  "modified": false,
+  "commercialUse": "allowed",
+  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "format": "js",
+  "sizeBytes": 670000,
+  "accessibilityFallback": "Not user-facing; renderer library.",
+  "reviewOwner": "engineering"
+}

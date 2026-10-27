@@ -1,0 +1,22 @@
+{
+  "assetId": "0192f1a0-0000-7000-8000-000000000017",
+  "kind": "model",
+  "sourceUrl": "https://example.org/models/kettle",
+  "creator": "Example Studio",
+  "assetLicense": {
+    "id": "CC-BY-4.0",
+    "version": "4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "attribution": "Kettle cutaway by Example Studio, CC BY 4.0",
+  "modified": true,
+  "modificationNotes": "Reduced polygon count; removed brand logo.",
+  "commercialUse": "allowed",
+  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "format": "glb",
+  "sizeBytes": 845120,
+  "accessibilityFallback": "Labelled cutaway diagram of a kettle showing the element at the base.",
+  "reviewOwner": "content-ops",
+  "reviewDueOn": "2027-04-01",
+  "approvedLessonIds": ["0192f1a0-0000-7000-8000-00000000000c"]
+}

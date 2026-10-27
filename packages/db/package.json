@@ -1,0 +1,35 @@
+{
+  "name": "@sbi/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MariaDB persistence: Drizzle schema, migrations and repository implementations.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts"
+  },
+  "dependencies": {
+    "@sbi/contracts": "workspace:*",
+    "@sbi/evidence": "workspace:*",
+    "@sbi/orchestrator": "workspace:*",
+    "@sbi/recognition": "workspace:*",
+    "@sbi/rights": "workspace:*",
+    "@sbi/tutor": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "mysql2": "3.24.6"
+  },
+  "devDependencies": {
+    "@sbi/config": "workspace:*",
+    "@sbi/env": "workspace:*",
+    "@sbi/testing": "workspace:*",
+    "drizzle-kit": "0.31.11",
+    "tsx": "4.23.15",
+    "zod": "4.6.7"
+  }
+}
