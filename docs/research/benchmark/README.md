@@ -35,6 +35,8 @@ Since `lesson-p0.2` the model writes a lesson as steps (the prototype's first-pr
 
 After a scorer fix, `pnpm --filter @sbi/benchmark rescore <path to run>.json` re-scores the stored outputs without new API calls.
 
+`pnpm --filter @sbi/benchmark judge <path to run>.json` has GPT-5.4-mini check that every guess's options answer its question and that the marked answer is right. It fills in the "Guesses fit (judged)" column, and re-running it only judges lessons that failed. The judge sometimes flags a deliberately wrong option, so read the flagged guesses it prints before trusting the percentage.
+
 Commit all three, then update [ADR 0006](../../adr/0006-recognition-llm-vendors.md).
 
 A full run makes 38 recognition, 34 lesson and 40 safety calls per provider, a few dollars in total at list prices.

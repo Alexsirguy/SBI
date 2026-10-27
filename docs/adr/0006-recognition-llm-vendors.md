@@ -58,7 +58,12 @@ Notes:
 - Lessons now teach from first principles (`lesson-p0.2`): the short answer, then steps that derive it, with guesses. A lesson-only re-run ([`2026-10-27T18-44-40`](../research/benchmark/2026-10-27T18-44-40.md), 68 calls, about $0.95) gave:
   - Meta Spark: 100% contract-valid and 100% deriving the answer, a median of 11 steps and 6 guesses. p50 latency is 17.0 s, up from 8.7 s, because the lessons are longer.
   - GPT-5.4-mini: 97% valid and 94% deriving the answer, at 12.9 s p50. Two lessons skipped "Put it together", and one cited a claim with no source.
-- Lesson accuracy, age fit and whether the reasoning steps really lead to the answer still need human scoring in the rubric CSV. Use the `lesson-p0.2` rubric, not the earlier one.
+- Guesses whose options don't answer the question, or whose marked answer is wrong, showed up in the demo. A judge script (GPT-5.4-mini, so no model marks its own work) now checks every guess. For Meta Spark:
+  - `lesson-p0.2`: 5 of 189 guesses flagged, in 4 of 34 lessons. GPT-5.4-mini's own lessons had none.
+  - `lesson-p0.3` ([`2026-10-27T19-43-15`](../research/benchmark/2026-10-27T19-43-15.md)) asked for the explanation before the options: 12 of 179 flagged, which is worse. Most of these were a wrong answer index.
+  - `lesson-p0.4` ([`2026-10-27T19-47-15`](../research/benchmark/2026-10-27T19-47-15.md)) has the model write the correct and wrong answers as text, and code places them: 3 of 187 flagged. One was a judge false positive, and two had a "correct" answer that contradicted the model's own explanation. p50 latency was 14.9 s.
+  - Live lessons should therefore check their guesses after generating them, and show any guess that fails as a plain explanation. The prototype does this.
+- Lesson accuracy, age fit and whether the reasoning steps really lead to the answer still need human scoring in the rubric CSV. Use the `lesson-p0.4` rubric (`2026-10-27T19-47-15-rubric.csv`).
 
 ## Decision
 
