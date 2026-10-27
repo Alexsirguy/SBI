@@ -1,0 +1,132 @@
+{
+  "$id": "TutorTurn.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "sessionId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+    },
+    "turnId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+    },
+    "lessonId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+    },
+    "lessonVersion": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "userText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "retrievedClaimIds": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+      }
+    },
+    "response": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "citedClaimIds": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+          }
+        },
+        "visualAction": {
+          "type": "object",
+          "properties": {
+            "visualId": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            },
+            "state": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "visualId",
+            "state"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "text",
+        "citedClaimIds"
+      ],
+      "additionalProperties": false
+    },
+    "safetyCategory": {
+      "type": "string",
+      "enum": [
+        "none",
+        "medical",
+        "chemical",
+        "weapons",
+        "self-harm",
+        "biological",
+        "other"
+      ]
+    },
+    "modelVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "promptVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "feedback": {
+      "type": "string",
+      "enum": [
+        "helpful",
+        "not-helpful"
+      ]
+    },
+    "retentionClass": {
+      "type": "string",
+      "enum": [
+        "session",
+        "quality-review",
+        "research-consented"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    }
+  },
+  "required": [
+    "sessionId",
+    "turnId",
+    "lessonId",
+    "lessonVersion",
+    "userText",
+    "retrievedClaimIds",
+    "response",
+    "safetyCategory",
+    "modelVersion",
+    "promptVersion",
+    "retentionClass",
+    "createdAt"
+  ],
+  "additionalProperties": false
+}

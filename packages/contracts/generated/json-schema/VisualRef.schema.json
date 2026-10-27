@@ -1,0 +1,36 @@
+{
+  "$id": "VisualRef.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "visualId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "svg-diagram",
+        "canvas-diagram",
+        "gltf-model",
+        "simulation",
+        "molecular"
+      ]
+    },
+    "manifestUri": {
+      "type": "string",
+      "minLength": 1
+    },
+    "alt": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "visualId",
+    "kind",
+    "manifestUri",
+    "alt"
+  ],
+  "additionalProperties": false
+}
