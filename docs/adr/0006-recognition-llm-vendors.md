@@ -1,4 +1,4 @@
-# 0004. Recognition and LLM vendors
+# 0006. Recognition and LLM vendors
 
 - Status: proposed (selection pending the first benchmark run)
 - Date: 2026-10-27

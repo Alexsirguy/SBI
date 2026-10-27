@@ -28,6 +28,18 @@ Each demo topic (bicycle, kettle, leaf) has all 8 modules at three depths, with 
 - **Live lessons:** in live mode, any other object or question gets a lesson written by Meta's model in the same structure. Its safety gate redirects risky questions.
 - **Module order:** the session panel switches between order A (spec order) and B (parts and hands-on first), so the two can be compared.
 
+## Visual lab
+
+The bicycle lesson links to three ways of seeing the gears:
+
+- a labelled SVG diagram
+- a Three.js view of `gears.glb`
+- a simulation with tooth-count sliders.
+
+Each format logs its load time and the answer to a comprehension question.
+
+The order comes from a Latin square based on the participant number; the session panel can override it. Load times show only in facilitator mode. To regenerate the model, open `tools/make-gears-glb.html` through the local server and click **Download gears.glb**.
+
 ## Facilitator mode
 
 Add `?facilitator=1` to the URL to show the **Session** button. In the panel:

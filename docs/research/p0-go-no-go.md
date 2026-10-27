@@ -74,6 +74,6 @@ The rights workflow works as a manual register. `@sbi/rights` should enforce the
 ## Before the final verdict
 
 - [ ] Hold the learner sessions (#11–#14), then fill in the synthesis and usability findings.
-- [ ] Do the vendor benchmark run (#15), then update ADR 0004.
+- [ ] Do the vendor benchmark run (#15), then update ADR 0006.
 - [ ] Run `spikes --llm meta-spark`, then fill in the pending rows above.
 - [ ] Re-run the evidence spike after adding table-aware extraction.
