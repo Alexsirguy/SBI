@@ -28,6 +28,7 @@ While the version is `0.x`, breaking changes bump the minor version and must sti
 ## Conventions
 
 - Field names are camelCase; multi-word enum values are kebab-case.
+- System-generated record ids (lessons, sources, claims, assets, visuals, sessions, turns, recognition results) are UUIDv7 from `newId()`. Readable ids are kept only for canonical keys such as taxonomy and concept ids, and for ids local to one record (sections, excerpts).
 - Timestamps are ISO 8601 with an offset; dates are `YYYY-MM-DD`.
 - Generated schemas describe parsed output, so fields with defaults appear as required.
 - Cross-field rules (for example "sections cite only claims in the lesson") are enforced by Zod at runtime; JSON Schema carries field-level rules only.

@@ -12,7 +12,8 @@
         "properties": {
           "claimId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "text": {
             "type": "string",
@@ -32,7 +33,8 @@
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
           "scope": {
@@ -56,7 +58,8 @@
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           }
         },
@@ -76,7 +79,8 @@
         "properties": {
           "sourceId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "title": {
             "type": "string",
@@ -158,7 +162,8 @@
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
           "evidenceQuality": {
@@ -204,7 +209,8 @@
         "properties": {
           "lessonId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "version": {
             "type": "integer",
@@ -335,7 +341,8 @@
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 }
               },
@@ -356,7 +363,8 @@
               "properties": {
                 "claimId": {
                   "type": "string",
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
                 "text": {
                   "type": "string",
@@ -376,7 +384,8 @@
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 },
                 "scope": {
@@ -400,7 +409,8 @@
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 }
               },
@@ -424,7 +434,8 @@
               "properties": {
                 "visualId": {
                   "type": "string",
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 },
                 "kind": {
                   "type": "string",
@@ -515,7 +526,8 @@
               },
               "evidenceSnapshotId": {
                 "type": "string",
-                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
               "sourceFreshness": {
                 "type": "string",
@@ -598,9 +610,15 @@
       "RecognitionResult": {
         "type": "object",
         "properties": {
+          "resultId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
           "sessionId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "imageSha256": {
             "type": "string",
@@ -732,6 +750,7 @@
           }
         },
         "required": [
+          "resultId",
           "sessionId",
           "imageSha256",
           "provider",
@@ -750,15 +769,18 @@
         "properties": {
           "sessionId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "turnId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "lessonId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "lessonVersion": {
             "type": "integer",
@@ -775,7 +797,8 @@
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
           "response": {
@@ -790,7 +813,8 @@
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 }
               },
               "visualAction": {
@@ -798,7 +822,8 @@
                 "properties": {
                   "visualId": {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   },
                   "state": {
                     "type": "string",
@@ -880,7 +905,8 @@
         "properties": {
           "assetId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "kind": {
             "type": "string",
@@ -993,7 +1019,8 @@
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           }
         },
@@ -1019,7 +1046,8 @@
         "properties": {
           "visualId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "kind": {
             "type": "string",
@@ -1061,7 +1089,8 @@
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
           },
           "assumptions": {
@@ -1097,7 +1126,8 @@
         "properties": {
           "visualId": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
           "kind": {
             "type": "string",

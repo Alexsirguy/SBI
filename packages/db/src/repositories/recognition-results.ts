@@ -10,6 +10,7 @@ export function createRecognitionResultRepository(db: Database): RecognitionResu
     async save(input) {
       const result = RecognitionResult.parse(input);
       await db.insert(recognitionResults).values({
+        resultId: result.resultId,
         sessionId: result.sessionId,
         imageSha256: result.imageSha256,
         createdAt: new Date(result.createdAt),

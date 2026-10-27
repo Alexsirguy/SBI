@@ -1,5 +1,5 @@
 {
-  "lessonId": "kettle_heat_transfer_v1",
+  "lessonId": "0192f1a0-0000-7000-8000-00000000000c",
   "version": 1,
   "taxonomyId": "household.kitchen.kettle",
   "title": "Why a kettle boils water",
@@ -26,55 +26,55 @@
       "sectionId": "seeing",
       "module": "what-youre-seeing",
       "text": "A kettle with a base and a spout; we assume an electric element.",
-      "claimIds": ["c9"]
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000007"]
     },
     {
       "sectionId": "short",
       "module": "short-answer",
       "text": "The element heats the water at the bottom, and warm water rises.",
-      "claimIds": ["c1", "c2"]
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000005", "0192f1a0-0000-7000-8000-000000000004"]
     },
     {
       "sectionId": "principles",
       "module": "first-principles",
       "text": "Energy moves from hotter to cooler places.",
-      "claimIds": ["c1"]
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000005"]
     },
     {
       "sectionId": "history",
       "module": "history",
       "text": "Electric kettles became common in the 20th century.",
-      "claimIds": ["c3"]
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000002"]
     }
   ],
   "claims": [
     {
-      "claimId": "c1",
+      "claimId": "0192f1a0-0000-7000-8000-000000000005",
       "text": "The element converts electrical energy into thermal energy.",
       "status": "supported",
-      "sourceIds": ["s1"],
+      "sourceIds": ["0192f1a0-0000-7000-8000-000000000001"],
       "scope": "typical electric kettle",
       "confidence": "high"
     },
     {
-      "claimId": "c2",
+      "claimId": "0192f1a0-0000-7000-8000-000000000004",
       "text": "Heated water rises, forming convection currents.",
       "status": "supported",
-      "sourceIds": ["s1", "s2"],
+      "sourceIds": ["0192f1a0-0000-7000-8000-000000000001", "0192f1a0-0000-7000-8000-000000000006"],
       "scope": "general",
       "confidence": "high",
-      "dependsOn": ["c1"]
+      "dependsOn": ["0192f1a0-0000-7000-8000-000000000005"]
     },
     {
-      "claimId": "c3",
+      "claimId": "0192f1a0-0000-7000-8000-000000000002",
       "text": "Electric kettles spread widely during the 20th century.",
       "status": "qualified",
-      "sourceIds": ["s3"],
+      "sourceIds": ["0192f1a0-0000-7000-8000-00000000000a"],
       "scope": "varies by country",
       "confidence": "medium"
     },
     {
-      "claimId": "c9",
+      "claimId": "0192f1a0-0000-7000-8000-000000000007",
       "text": "The element type is not visible in the photo.",
       "status": "unsupported",
       "scope": "this photo",
@@ -83,7 +83,7 @@
   ],
   "visuals": [
     {
-      "visualId": "kettle_heat_v1",
+      "visualId": "0192f1a0-0000-7000-8000-00000000000d",
       "kind": "svg-diagram",
       "manifestUri": "/visuals/kettle_heat_v1.json",
       "alt": "Diagram of convection currents inside a kettle."
@@ -99,7 +99,7 @@
     "cacheScope": "shared",
     "generatedAt": "2026-09-30T12:00:00Z",
     "validatedAt": "2026-10-01T10:00:00Z",
-    "evidenceSnapshotId": "snap-2026-09-30",
+    "evidenceSnapshotId": "0192f1a0-0000-7000-8000-00000000000e",
     "sourceFreshness": "fresh",
     "modelVersion": "model-2026-09",
     "promptVersion": "lesson-v3",

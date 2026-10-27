@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, IsoDateTime, Sha256 } from "./common";
+import { Id, IsoDateTime, Sha256, Uuid } from "./common";
 
 // Learners see qualitative certainty only; the calibrated number stays internal.
 export const Certainty = z.enum(["likely", "possible", "unsure"]);
@@ -19,7 +19,8 @@ export const UserCorrection = z.discriminatedUnion("kind", [
 
 export const RecognitionResult = z
   .object({
-    sessionId: Id,
+    resultId: Uuid,
+    sessionId: Uuid,
     imageSha256: Sha256,
     provider: z.string().min(1),
     model: z.string().min(1),

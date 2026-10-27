@@ -1,5 +1,4 @@
 import {
-  bigint,
   char,
   datetime,
   index,
@@ -9,6 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 import { jsonDocument } from "./json-document";
+import { uuid } from "./uuid-column";
 
 const id = (name: string) => varchar(name, { length: 200 });
 const timestamp = (name: string) => datetime(name, { mode: "date", fsp: 3 });
@@ -16,7 +16,7 @@ const timestamp = (name: string) => datetime(name, { mode: "date", fsp: 3 });
 export const lessons = mysqlTable(
   "lessons",
   {
-    lessonId: id("lesson_id").notNull(),
+    lessonId: uuid("lesson_id").notNull(),
     version: int("version").notNull(),
     taxonomyId: id("taxonomy_id").notNull(),
     locale: varchar("locale", { length: 16 }).notNull(),
@@ -35,20 +35,20 @@ export const lessons = mysqlTable(
 );
 
 export const evidenceSources = mysqlTable("evidence_sources", {
-  sourceId: id("source_id").primaryKey(),
+  sourceId: uuid("source_id").primaryKey(),
   rightsStatus: varchar("rights_status", { length: 32 }).notNull(),
   lastCheckedAt: timestamp("last_checked_at").notNull(),
   document: jsonDocument("document").notNull(),
 });
 
 export const claims = mysqlTable("claims", {
-  claimId: id("claim_id").primaryKey(),
+  claimId: uuid("claim_id").primaryKey(),
   status: varchar("status", { length: 32 }).notNull(),
   document: jsonDocument("document").notNull(),
 });
 
 export const visualAssets = mysqlTable("visual_assets", {
-  assetId: id("asset_id").primaryKey(),
+  assetId: uuid("asset_id").primaryKey(),
   kind: varchar("kind", { length: 32 }).notNull(),
   commercialUse: varchar("commercial_use", { length: 32 }).notNull(),
   document: jsonDocument("document").notNull(),
@@ -57,9 +57,8 @@ export const visualAssets = mysqlTable("visual_assets", {
 export const recognitionResults = mysqlTable(
   "recognition_results",
   {
-    // Drizzle's serial() emits "serial AUTO_INCREMENT", which MariaDB rejects.
-    id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
-    sessionId: id("session_id").notNull(),
+    resultId: uuid("result_id").primaryKey(),
+    sessionId: uuid("session_id").notNull(),
     imageSha256: char("image_sha256", { length: 64 }).notNull(),
     createdAt: timestamp("created_at").notNull(),
     deleteBy: timestamp("delete_by").notNull(),
@@ -74,9 +73,9 @@ export const recognitionResults = mysqlTable(
 export const tutorTurns = mysqlTable(
   "tutor_turns",
   {
-    sessionId: id("session_id").notNull(),
-    turnId: id("turn_id").notNull(),
-    lessonId: id("lesson_id").notNull(),
+    sessionId: uuid("session_id").notNull(),
+    turnId: uuid("turn_id").notNull(),
+    lessonId: uuid("lesson_id").notNull(),
     lessonVersion: int("lesson_version").notNull(),
     retentionClass: varchar("retention_class", { length: 32 }).notNull(),
     createdAt: timestamp("created_at").notNull(),

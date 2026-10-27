@@ -13,9 +13,10 @@ Lessons, evidence, asset rights, recognition results and tutor turns need durabl
 - Drizzle ORM with the `mysql2` driver and `drizzle-kit` migrations, in a dedicated `@sbi/db` package.
 - Each owning package defines its repository interface (e.g. `LessonRepository` in `@sbi/orchestrator`); `@sbi/db` implements them. No other package imports Drizzle or writes SQL.
 - Each table stores the full contract record as a JSON `document` plus indexed scalar columns for lookups. Documents are validated with the Zod contract on write and on read.
+- Primary keys are app-generated UUIDv7 values in MariaDB's native `UUID` column: unguessable, safe to expose, known before insert, and time-ordered so inserts append to the index.
 
 ## Consequences
 
 - Contracts can gain fields without a migration; new lookup columns still need one.
-- MariaDB is not MySQL: Drizzle's `serial()` emits SQL MariaDB rejects, so auto-increment ids use `bigint().autoincrement()`, and JSON arrives as text and is parsed by a custom column type. Integration tests run against real MariaDB to catch these differences.
+- MariaDB is not MySQL: its `UUID` type and text-backed `JSON` need small custom Drizzle column types, and Drizzle's `serial()` emits SQL MariaDB rejects. Integration tests run against real MariaDB to catch these differences.
 - Swapping the database later means a new implementation of the repository interfaces, not changes in domain packages.

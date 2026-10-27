@@ -1,12 +1,12 @@
 CREATE TABLE `claims` (
-	`claim_id` varchar(200) NOT NULL,
+	`claim_id` uuid NOT NULL,
 	`status` varchar(32) NOT NULL,
 	`document` json NOT NULL,
 	CONSTRAINT `claims_claim_id` PRIMARY KEY(`claim_id`)
 );
 --> statement-breakpoint
 CREATE TABLE `evidence_sources` (
-	`source_id` varchar(200) NOT NULL,
+	`source_id` uuid NOT NULL,
 	`rights_status` varchar(32) NOT NULL,
 	`last_checked_at` datetime(3) NOT NULL,
 	`document` json NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE `evidence_sources` (
 );
 --> statement-breakpoint
 CREATE TABLE `lessons` (
-	`lesson_id` varchar(200) NOT NULL,
+	`lesson_id` uuid NOT NULL,
 	`version` int NOT NULL,
 	`taxonomy_id` varchar(200) NOT NULL,
 	`locale` varchar(16) NOT NULL,
@@ -28,19 +28,19 @@ CREATE TABLE `lessons` (
 );
 --> statement-breakpoint
 CREATE TABLE `recognition_results` (
-	`id` bigint unsigned AUTO_INCREMENT NOT NULL,
-	`session_id` varchar(200) NOT NULL,
+	`result_id` uuid NOT NULL,
+	`session_id` uuid NOT NULL,
 	`image_sha256` char(64) NOT NULL,
 	`created_at` datetime(3) NOT NULL,
 	`delete_by` datetime(3) NOT NULL,
 	`document` json NOT NULL,
-	CONSTRAINT `recognition_results_id` PRIMARY KEY(`id`)
+	CONSTRAINT `recognition_results_result_id` PRIMARY KEY(`result_id`)
 );
 --> statement-breakpoint
 CREATE TABLE `tutor_turns` (
-	`session_id` varchar(200) NOT NULL,
-	`turn_id` varchar(200) NOT NULL,
-	`lesson_id` varchar(200) NOT NULL,
+	`session_id` uuid NOT NULL,
+	`turn_id` uuid NOT NULL,
+	`lesson_id` uuid NOT NULL,
 	`lesson_version` int NOT NULL,
 	`retention_class` varchar(32) NOT NULL,
 	`created_at` datetime(3) NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE `tutor_turns` (
 );
 --> statement-breakpoint
 CREATE TABLE `visual_assets` (
-	`asset_id` varchar(200) NOT NULL,
+	`asset_id` uuid NOT NULL,
 	`kind` varchar(32) NOT NULL,
 	`commercial_use` varchar(32) NOT NULL,
 	`document` json NOT NULL,

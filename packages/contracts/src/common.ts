@@ -1,8 +1,17 @@
+import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 
 export const Id = z
   .string()
   .regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/, "Use letters, digits, '.', '_', ':' or '-'");
+
+/** System-generated record ids; readable `Id`s are kept for canonical keys like taxonomy paths. */
+export const Uuid = z.uuid();
+
+/** Time-ordered UUIDv7, so new rows append to the end of database indexes. */
+export function newId(): string {
+  return uuidv7();
+}
 
 export const IsoDate = z.iso.date();
 export const IsoDateTime = z.iso.datetime({ offset: true });

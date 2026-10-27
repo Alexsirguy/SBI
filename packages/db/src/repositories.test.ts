@@ -3,6 +3,7 @@ import {
   Claim,
   EvidenceSource,
   Lesson,
+  newId,
   RecognitionResult,
   TutorTurn,
   VisualAsset,
@@ -147,11 +148,12 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
     it("lists and deletes a session's turns", async () => {
       const turn = fixture(TutorTurn, "tutor-turn", "grounded-answer");
       await repos.tutorTurns.save(turn);
-      await repos.tutorTurns.save({ ...turn, turnId: "t2", createdAt: "2026-10-27T10:06:00Z" });
+      const second = { ...turn, turnId: newId(), createdAt: "2026-10-27T10:06:00Z" };
+      await repos.tutorTurns.save(second);
 
       expect((await repos.tutorTurns.listBySession(turn.sessionId)).map((t) => t.turnId)).toEqual([
-        "t1",
-        "t2",
+        turn.turnId,
+        second.turnId,
       ]);
       expect(await repos.tutorTurns.deleteBySession(turn.sessionId)).toBe(2);
     });

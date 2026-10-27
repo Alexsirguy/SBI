@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "7d324d7f-489f-47ad-ae15-76ef8196850b",
+  "id": "4e87ac06-3045-45fb-abd6-774e781c39da",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "claims": {
@@ -9,7 +9,7 @@
       "columns": {
         "claim_id": {
           "name": "claim_id",
-          "type": "varchar(200)",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -45,7 +45,7 @@
       "columns": {
         "source_id": {
           "name": "source_id",
-          "type": "varchar(200)",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -88,7 +88,7 @@
       "columns": {
         "lesson_id": {
           "name": "lesson_id",
-          "type": "varchar(200)",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -182,16 +182,16 @@
     "recognition_results": {
       "name": "recognition_results",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
+        "result_id": {
+          "name": "result_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "session_id": {
           "name": "session_id",
-          "type": "varchar(200)",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -239,9 +239,9 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "recognition_results_id": {
-          "name": "recognition_results_id",
-          "columns": ["id"]
+        "recognition_results_result_id": {
+          "name": "recognition_results_result_id",
+          "columns": ["result_id"]
         }
       },
       "uniqueConstraints": {},
@@ -252,21 +252,21 @@
       "columns": {
         "session_id": {
           "name": "session_id",
-          "type": "varchar(200)",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "turn_id": {
           "name": "turn_id",
-          "type": "varchar(200)",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "lesson_id": {
           "name": "lesson_id",
-          "type": "varchar(200)",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -316,7 +316,7 @@
       "columns": {
         "asset_id": {
           "name": "asset_id",
-          "type": "varchar(200)",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
