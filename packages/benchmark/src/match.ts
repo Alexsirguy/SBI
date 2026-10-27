@@ -1,12 +1,21 @@
 import type { SeedPrompt } from "./seed-set";
 
+function singular(word: string): string {
+  if (word.length <= 3) return word;
+  if (word.endsWith("ves")) return `${word.slice(0, -3)}f`;
+  if (word.endsWith("ies")) return `${word.slice(0, -3)}y`;
+  if (/(ss|x|ch|sh)es$/.test(word)) return word.slice(0, -2);
+  if (word.endsWith("s") && !word.endsWith("ss")) return word.slice(0, -1);
+  return word;
+}
+
 function normalise(label: string): string {
   return label
     .toLowerCase()
     .replace(/[^a-z ]/g, " ")
     .split(/\s+/)
     .filter(Boolean)
-    .map((word) => (word.length > 3 ? word.replace(/(es|s)$/, "") : word))
+    .map(singular)
     .join(" ");
 }
 

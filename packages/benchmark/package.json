@@ -13,7 +13,8 @@
     "test": "vitest run",
     "seed:fetch": "tsx scripts/fetch-images.ts",
     "bench": "tsx scripts/bench.ts",
-    "spikes": "tsx scripts/spikes.ts"
+    "spikes": "tsx scripts/spikes.ts",
+    "rescore": "tsx scripts/rescore.ts"
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",

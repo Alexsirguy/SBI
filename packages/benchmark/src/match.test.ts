@@ -16,6 +16,15 @@ describe("labelMatches", () => {
   });
 });
 
+describe("labelMatches plurals", () => {
+  const leaf = prompts.find((prompt) => prompt.taxonomyId === "object.leaf");
+  if (!leaf) throw new Error("seed set needs a leaf");
+
+  it.each(["oak leaves", "Leaf", "green leaves"])("accepts %s for a leaf", (label) => {
+    expect(labelMatches(label, leaf)).toBe(true);
+  });
+});
+
 describe("percentile", () => {
   it("uses nearest rank", () => {
     expect(percentile([5, 1, 3, 2, 4], 50)).toBe(3);

@@ -23,23 +23,27 @@ export type ArticleFetcher = (title: string) => Promise<string>;
 
 const USER_AGENT = "SBI-benchmark/1.0 (research prototype)";
 
-export function wikipediaFetcher(fetchImpl: typeof fetch = fetch): ArticleFetcher {
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Wikipedia answers bursts with a plain-text "too many requests" page, so back off and retry.
+async function fetchExtract(fetchImpl: typeof fetch, title: string, waitMs: number) {
+  const url = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=${encodeURIComponent(title)}`;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const response = await fetchImpl(url, { headers: { "User-Agent": USER_AGENT } });
+    const text = await response.text();
+    if (response.ok && text.startsWith("{")) {
+      const body = JSON.parse(text) as { query: { pages: Record<string, { extract?: string }> } };
+      return Object.values(body.query.pages)[0]?.extract ?? "";
+    }
+    await sleep(waitMs * 2 ** attempt);
+  }
+  throw new Error(`Wikipedia kept refusing "${title}"`);
+}
+
+export function wikipediaFetcher(fetchImpl: typeof fetch = fetch, waitMs = 2000): ArticleFetcher {
   const cache = new Map<string, Promise<string>>();
   return (title) => {
-    if (!cache.has(title)) {
-      const url = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=${encodeURIComponent(title)}`;
-      cache.set(
-        title,
-        fetchImpl(url, { headers: { "User-Agent": USER_AGENT } })
-          .then(
-            (response) =>
-              response.json() as Promise<{
-                query: { pages: Record<string, { extract?: string }> };
-              }>,
-          )
-          .then((body) => Object.values(body.query.pages)[0]?.extract ?? ""),
-      );
-    }
+    if (!cache.has(title)) cache.set(title, fetchExtract(fetchImpl, title, waitMs));
     return cache.get(title) as Promise<string>;
   };
 }
