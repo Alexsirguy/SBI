@@ -108,8 +108,24 @@ describe("prototype visual lab", () => {
     expect(html).toMatch(/"three": "https:\/\/cdn\.jsdelivr\.net\/npm\/three@\d+\.\d+\.\d+\//);
   });
 
-  it.each(["mountSvg", "mountGlb", "mountSim"])("defines %s", (name) => {
-    expect(html).toContain(`function ${name}(`);
+  it.each(["mountSvg", "mountGlb", "mountSim", "mountLab", "buildDrivetrain"])(
+    "defines %s",
+    (name) => {
+      expect(html).toContain(`function ${name}(`);
+    },
+  );
+
+  it("opens the interactive gear lab from the lesson", () => {
+    expect(html).toContain('data-action="lab">See it in action');
+    expect(demo.topics.bicycle?.steps.some((step) => (step as { visual?: boolean }).visual)).toBe(
+      true,
+    );
+  });
+
+  it("builds the 3D gears in code when gears.glb can't load", () => {
+    expect(html).toMatch(
+      /catch \{\s*\/\/ Opened from disk[^\n]*\n\s*\(\{ ring, cog \} = buildDrivetrain/,
+    );
   });
 });
 

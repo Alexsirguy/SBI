@@ -1970,7 +1970,7 @@
             ${step.guess ? guessMarkup(step.guess, index) : ""}
             ${
               step.visual && currentTopic().visual && SCREENS.visuals
-                ? `<button class="btn secondary" type="button" data-action="visuals">See it in action</button>`
+                ? `<button class="btn secondary" type="button" data-action="lab">See it in action</button>`
                 : ""
             }
             ${pending ? "" : evidenceFor(step.claims ?? [], index)}
@@ -2558,6 +2558,10 @@ observations: up to 3 short visual details that justify your answer. Never descr
         </form>`;
 
       Object.assign(ACTIONS, {
+        lab() {
+          log("tap", { action: "lab" });
+          go("lab");
+        },
         visuals() {
           log("tap", { action: "visuals", order: visualOrder().join(",") });
           go("visuals", { visualStep: 0, returnTo: state.screen });
@@ -2660,11 +2664,23 @@ observations: up to 3 short visual details that justify your answer. Never descr
           const controls = new OrbitControls(camera, canvas);
           controls.enableZoom = false;
           controls.enablePan = false;
-          const gltf = await new GLTFLoader().loadAsync("gears.glb");
+          let ring;
+          let cog;
+          let note = "";
+          try {
+            const gltf = await new GLTFLoader().loadAsync("gears.glb");
+            scene.add(gltf.scene);
+            ring = gltf.scene.getObjectByName("chainring");
+            cog = gltf.scene.getObjectByName("cog");
+          } catch {
+            // Opened from disk or hosted without gears.glb: show the same gears built in code.
+            ({ ring, cog } = buildDrivetrain(THREE, 34, 17));
+            ring.parent.position.x = -0.6;
+            scene.add(ring.parent);
+            camera.position.set(0, 1.2, 11);
+            note = "gears.glb unavailable, built in code. ";
+          }
           if (stopped) return;
-          scene.add(gltf.scene);
-          const ring = gltf.scene.getObjectByName("chainring");
-          const cog = gltf.scene.getObjectByName("cog");
           const ratio = (ring.userData.teeth ?? 34) / (cog.userData.teeth ?? 17);
           const resize = () => {
             const width = stage.clientWidth;
@@ -2685,7 +2701,7 @@ observations: up to 3 short visual details that justify your answer. Never descr
             renderer.render(scene, camera);
             if (first) {
               first = false;
-              visualReady("glb", started);
+              visualReady("glb", started, note);
             }
             requestAnimationFrame(frame);
           };
@@ -2810,7 +2826,360 @@ observations: up to 3 short visual details that justify your answer. Never descr
         requestAnimationFrame(frame);
       }
 
-      const MOUNTS = { svg: mountSvg, glb: mountGlb, sim: mountSim };
+      // Tooth pitch is the same on every sprocket, so radius grows with tooth count and one chain fits all.
+      const TOOTH = 0.045;
+      const CENTRES = 5;
+
+      function gearShape(THREE, teeth) {
+        const pitch = teeth * TOOTH;
+        const shape = new THREE.Shape();
+        const step = (Math.PI * 2) / teeth;
+        for (let i = 0; i < teeth; i += 1) {
+          const a = i * step;
+          [
+            [pitch - 0.09, a],
+            [pitch + 0.09, a + step * 0.2],
+            [pitch + 0.09, a + step * 0.45],
+            [pitch - 0.09, a + step * 0.65],
+          ].forEach(([r, t], index) =>
+            shape[i === 0 && index === 0 ? "moveTo" : "lineTo"](r * Math.cos(t), r * Math.sin(t)),
+          );
+        }
+        const hole = new THREE.Path();
+        hole.absarc(0, 0, pitch * 0.28, 0, Math.PI * 2, true);
+        shape.holes.push(hole);
+        return new THREE.ExtrudeGeometry(shape, { depth: 0.16, bevelEnabled: false });
+      }
+
+      // Open-belt path around both sprockets, sampled by distance so links can slide along it.
+      function chainPath(r1, r2) {
+        const x1 = -CENTRES / 2;
+        const x2 = CENTRES / 2;
+        const phi = Math.asin((r1 - r2) / CENTRES);
+        const top = Math.PI / 2 + phi;
+        const segments = [
+          {
+            kind: "line",
+            from: [x1 + r1 * Math.cos(top), r1 * Math.sin(top)],
+            to: [x2 + r2 * Math.cos(top), r2 * Math.sin(top)],
+          },
+          { kind: "arc", cx: x2, r: r2, start: top, sweep: -2 * top },
+          {
+            kind: "line",
+            from: [x2 + r2 * Math.cos(-top), r2 * Math.sin(-top)],
+            to: [x1 + r1 * Math.cos(-top), r1 * Math.sin(-top)],
+          },
+          { kind: "arc", cx: x1, r: r1, start: -top, sweep: -(2 * Math.PI - 2 * top) },
+        ].map((segment) => ({
+          ...segment,
+          length:
+            segment.kind === "line"
+              ? Math.hypot(segment.to[0] - segment.from[0], segment.to[1] - segment.from[1])
+              : Math.abs(segment.sweep) * segment.r,
+        }));
+        const total = segments.reduce((sum, segment) => sum + segment.length, 0);
+        const at = (distance) => {
+          let d = ((distance % total) + total) % total;
+          for (const segment of segments) {
+            if (d <= segment.length) {
+              const f = d / segment.length;
+              if (segment.kind === "line") {
+                const [ax, ay] = segment.from;
+                const [bx, by] = segment.to;
+                return {
+                  x: ax + (bx - ax) * f,
+                  y: ay + (by - ay) * f,
+                  angle: Math.atan2(by - ay, bx - ax),
+                };
+              }
+              const t = segment.start + segment.sweep * f;
+              return {
+                x: segment.cx + segment.r * Math.cos(t),
+                y: segment.r * Math.sin(t),
+                angle: t - Math.PI / 2,
+              };
+            }
+            d -= segment.length;
+          }
+          return { x: 0, y: 0, angle: 0 };
+        };
+        return { total, at };
+      }
+
+      /** Builds the drivetrain in code, so the 3D view works from a single file with any tooth counts. */
+      function buildDrivetrain(THREE, front, back) {
+        const css = getComputedStyle(document.documentElement);
+        const color = (name) => new THREE.Color(css.getPropertyValue(name).trim() || "#888");
+        const group = new THREE.Group();
+        const metal = (name) =>
+          new THREE.MeshStandardMaterial({ color: color(name), metalness: 0.3, roughness: 0.5 });
+        const ring = new THREE.Group();
+        ring.position.x = -CENTRES / 2;
+        ring.add(new THREE.Mesh(gearShape(THREE, front), metal("--action")));
+        const crank = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.1, 0.12), metal("--ink"));
+        crank.position.set(0, -1.05, 0.3);
+        const pedal = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.22, 0.3), metal("--ink"));
+        pedal.position.set(0, -2.05, 0.5);
+        ring.add(crank, pedal);
+        const cog = new THREE.Group();
+        cog.position.x = CENTRES / 2;
+        cog.add(new THREE.Mesh(gearShape(THREE, back), metal("--highlight")));
+        const wheel = new THREE.Group();
+        wheel.position.set(CENTRES / 2, 0, -0.5);
+        const tyre = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.12, 8, 64), metal("--ink"));
+        wheel.add(tyre);
+        for (let i = 0; i < 12; i += 1) {
+          const spoke = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.015, 0.015, 3.1),
+            metal("--ink-soft"),
+          );
+          spoke.rotation.z = (i / 12) * Math.PI;
+          wheel.add(spoke);
+        }
+        const valve = new THREE.Mesh(new THREE.SphereGeometry(0.16), metal("--highlight"));
+        valve.position.y = 3.1;
+        wheel.add(valve);
+        const path = chainPath(front * TOOTH, back * TOOTH);
+        const pitch = (Math.PI * 2 * front * TOOTH) / front;
+        const count = Math.round(path.total / pitch);
+        const links = new THREE.InstancedMesh(
+          new THREE.BoxGeometry(pitch * 0.8, 0.07, 0.1),
+          metal("--ink"),
+          count,
+        );
+        links.position.z = 0.08;
+        group.add(wheel, ring, cog, links);
+        const dummy = new THREE.Object3D();
+        const placeLinks = (offset) => {
+          for (let i = 0; i < count; i += 1) {
+            const point = path.at(offset + (i * path.total) / count);
+            dummy.position.set(point.x, point.y, 0);
+            dummy.rotation.z = point.angle;
+            dummy.updateMatrix();
+            links.setMatrixAt(i, dummy.matrix);
+          }
+          links.instanceMatrix.needsUpdate = true;
+        };
+        placeLinks(0);
+        const dispose = () =>
+          group.traverse((object) => {
+            object.geometry?.dispose();
+            object.material?.dispose();
+          });
+        return { group, ring, cog, wheel, placeLinks, radius: front * TOOTH, dispose };
+      }
+
+      async function loadThree() {
+        const [THREE, { OrbitControls }] = await Promise.all([
+          import(THREE_URL),
+          import(`${ADDONS_URL}controls/OrbitControls.js`),
+        ]);
+        return { THREE, OrbitControls };
+      }
+
+      function labScene(THREE, OrbitControls, canvas) {
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        const scene = new THREE.Scene();
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 2.2));
+        const sun = new THREE.DirectionalLight(0xffffff, 2);
+        sun.position.set(3, 4, 6);
+        scene.add(sun);
+        const camera = new THREE.PerspectiveCamera(40, 4 / 3, 0.1, 100);
+        camera.position.set(1.2, 1.6, 11);
+        const controls = new OrbitControls(camera, canvas);
+        controls.enableZoom = false;
+        controls.enablePan = false;
+        controls.target.set(0.6, 0, 0);
+        const resize = () => {
+          const width = canvas.parentElement.clientWidth - 24;
+          renderer.setSize(width, width * 0.75, false);
+        };
+        resize();
+        return { renderer, scene, camera, controls };
+      }
+
+      SCREENS.lab = () => `
+        ${backButton("lesson", "Back to the lesson")}
+        <p class="topic-chip">Bicycle gears</p>
+        <h2>Try the gears yourself</h2>
+        <p class="lede">Change the teeth and watch how far the back wheel turns for each turn of the pedals.</p>
+        <div class="visual" id="visual-stage" data-format="lab"></div>
+        <p class="hint" id="visual-status" aria-live="polite">Loading…</p>`;
+
+      function mountLab(stage, started) {
+        stage.innerHTML = `
+          <canvas role="img" aria-label="3D bike gears"></canvas>
+          <p class="hint legend">Teal: front ring and pedal. Yellow: back cog, fixed to the back wheel. Drag to turn the model.</p>
+          <div class="row lab-presets">
+            <button class="btn secondary" type="button" data-preset="34,34">Low gear for hills</button>
+            <button class="btn secondary" type="button" data-preset="50,11">High gear for speed</button>
+          </div>
+          <div class="sim-controls">
+            <label class="field"><span>Front ring: <output id="lab-front">34</output> teeth</span>
+              <input type="range" min="22" max="52" value="34" id="lab-front-input" /></label>
+            <label class="field"><span>Back cog: <output id="lab-back">17</output> teeth</span>
+              <input type="range" min="11" max="36" value="17" id="lab-back-input" /></label>
+            <label class="field"><span>Pedalling: <output id="lab-cadence">60</output> turns a minute</span>
+              <input type="range" min="20" max="120" step="10" value="60" id="lab-cadence-input" /></label>
+          </div>
+          <div class="row">
+            <button class="btn" type="button" id="lab-once">Turn the pedals once</button>
+            <button class="btn secondary" type="button" id="lab-run">Keep pedalling</button>
+          </div>
+          <dl class="compare sim-readout" aria-live="polite">
+            <div><dt>Counted so far</dt><dd id="lab-count"></dd></div>
+            <div><dt>Wheel turns per pedal turn</dt><dd id="lab-turns"></dd></div>
+            <div><dt>Speed</dt><dd id="lab-speed"></dd></div>
+            <div><dt>Push needed on a hill</dt><dd><span class="effort"><span id="lab-effort"></span></span></dd></div>
+          </dl>`;
+        const $ = (selector) => stage.querySelector(selector);
+        const inputs = {
+          front: $("#lab-front-input"),
+          back: $("#lab-back-input"),
+          cadence: $("#lab-cadence-input"),
+        };
+        const values = () => ({
+          front: Number(inputs.front.value),
+          back: Number(inputs.back.value),
+          cadence: Number(inputs.cadence.value),
+        });
+        let crank = 0;
+        let target = null;
+        let running = !reducedMotion();
+        let stopped = false;
+        state.cleanup = () => {
+          stopped = true;
+        };
+
+        function readouts() {
+          const { front, back, cadence } = values();
+          const ratio = front / back;
+          $("#lab-front").textContent = front;
+          $("#lab-back").textContent = back;
+          $("#lab-cadence").textContent = cadence;
+          $("#lab-turns").textContent = `${ratio.toFixed(2)} (${front} ÷ ${back})`;
+          // Wheel circumference about 2.1 m, as in the lesson's technical text.
+          $("#lab-speed").textContent = `${((ratio * 2.1 * cadence * 60) / 1000).toFixed(1)} km/h`;
+          const bar = $("#lab-effort");
+          bar.style.width = `${Math.min(100, Math.round((ratio / 4.7) * 100))}%`;
+          bar.textContent = ratio < 1.2 ? "Gentle" : ratio < 2.4 ? "Medium" : "Hard";
+          $("canvas").setAttribute(
+            "aria-label",
+            `3D bike gears: front ring ${front} teeth, back cog ${back} teeth. One pedal turn turns the wheel ${ratio.toFixed(2)} times.`,
+          );
+        }
+        function counts() {
+          const { front, back } = values();
+          const pedal = crank / (Math.PI * 2);
+          $("#lab-count").textContent =
+            `${pedal.toFixed(1)} pedal turns, ${((pedal * front) / back).toFixed(1)} wheel turns`;
+        }
+
+        let model = null;
+        let three = null;
+        function rebuild() {
+          if (!three) return;
+          const { front, back } = values();
+          if (model) {
+            three.scene.remove(model.group);
+            model.dispose();
+          }
+          model = buildDrivetrain(three.THREE, front, back);
+          three.scene.add(model.group);
+          crank = 0;
+        }
+
+        const onChange = () => {
+          log("labChange", values());
+          rebuild();
+          counts();
+        };
+        Object.values(inputs).forEach((input) => {
+          input.addEventListener("input", readouts);
+          input.addEventListener("change", onChange);
+        });
+        stage.querySelectorAll("[data-preset]").forEach((button) =>
+          button.addEventListener("click", () => {
+            const [front, back] = button.dataset.preset.split(",");
+            inputs.front.value = front;
+            inputs.back.value = back;
+            readouts();
+            onChange();
+          }),
+        );
+        $("#lab-once").addEventListener("click", () => {
+          log("labTurnOnce", values());
+          crank = 0;
+          target = Math.PI * 2;
+          running = false;
+          if (reducedMotion()) {
+            crank = target;
+            target = null;
+          }
+          counts();
+        });
+        $("#lab-run").addEventListener("click", () => {
+          log("labRun", values());
+          target = null;
+          running = true;
+        });
+        readouts();
+        counts();
+
+        loadThree()
+          .then(({ THREE, OrbitControls }) => {
+            if (stopped) return;
+            three = { THREE, ...labScene(THREE, OrbitControls, $("canvas")) };
+            rebuild();
+            let first = true;
+            let last = performance.now();
+            const frame = (now) => {
+              if (stopped) {
+                model?.dispose();
+                return three.renderer.dispose();
+              }
+              const dt = Math.min(0.05, (now - last) / 1000);
+              last = now;
+              const { front, back, cadence } = values();
+              const speed = (cadence / 60) * Math.PI * 2;
+              if (target !== null) {
+                crank = Math.min(target, crank + dt * speed);
+                if (crank >= target) target = null;
+                counts();
+              } else if (running) {
+                crank += dt * speed;
+                counts();
+              }
+              // Clockwise from the drive side; the cog turns front ÷ back times as fast.
+              model.ring.rotation.z = -crank;
+              model.cog.rotation.z = (-crank * front) / back;
+              model.wheel.rotation.z = (-crank * front) / back;
+              model.placeLinks(crank * model.radius);
+              three.controls.update();
+              three.renderer.render(three.scene, three.camera);
+              if (first) {
+                first = false;
+                visualReady("lab", started);
+              }
+              requestAnimationFrame(frame);
+            };
+            requestAnimationFrame(frame);
+          })
+          .catch((error) => {
+            log("error", { where: "lab", message: String(error.message).slice(0, 120) });
+            $("canvas").replaceWith(
+              Object.assign(document.createElement("p"), {
+                className: "notice",
+                textContent:
+                  "The 3D view couldn't load on this device, but the numbers below still work.",
+              }),
+            );
+            visualReady("lab", started, "3D failed. ");
+          });
+      }
+
+      const MOUNTS = { svg: mountSvg, glb: mountGlb, sim: mountSim, lab: mountLab };
 
       function renderFacilitator() {
         const dialog = document.getElementById("facilitator");
