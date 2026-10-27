@@ -22,11 +22,19 @@ python3 -m http.server 8765 --directory design/prototype   # then open http://lo
 
 ## Lessons
 
-Each demo topic (bicycle, kettle, leaf) has all 8 modules at three depths, with claims linked to sources and a one-question concept check before and after the lesson.
+Lessons teach from first principles. Each lesson opens with what's in the photo and the short answer, then **Show me why** builds that answer step by step:
 
-- **Prepared lessons:** the demo lessons are written by hand and checked against the cited sources. Every question for a topic leads to the same lesson.
-- **Live lessons:** in live mode, any other object or question gets a lesson written by Meta's model in the same structure. Its safety gate redirects risky questions.
-- **Module order:** the session panel switches between order A (spec order) and B (parts and hands-on first), so the two can be compared.
+1. Start from basic truths the learner already trusts or can check, such as "energy isn't created" or "water is made of moving particles".
+2. Reason through the object's parts, one small step at a time. Most steps ask the learner to guess what follows before showing the answer.
+3. **Put it together** gives the answer again, this time as the conclusion of the steps.
+4. Then come a test to try at home, a new situation to apply the idea to, how someone first worked it out, and where to go further.
+
+Evidence sits behind **How do we know?** under each step, and opens only after the learner has guessed.
+
+- **Lesson structure:** each demo topic (bicycle, kettle, leaf) has 11–12 steps at three depths, and each step is tagged with one of the 8 Lesson contract modules. Every topic also has a one-question concept check before and after the lesson.
+- **Prepared lessons:** written by hand and checked against the cited sources. Every question for a topic leads to the same lesson.
+- **Live lessons:** in live mode, any other object or question gets a lesson written by Meta's model in the same step structure. Its safety gate redirects risky questions. This prompt has moved on from `lesson-p0.1` in `@sbi/benchmark`, which still asks for one block per module.
+- **Variant:** the session panel switches between A (guess at each step) and B (the same steps with each answer shown, no guessing), to test whether predicting helps.
 
 ## Visual lab
 

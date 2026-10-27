@@ -18,7 +18,13 @@ interface Sample {
 interface Topic {
   questions: string[];
   check: { question: string; options: string[]; answer: number; explain: string };
-  modules: Record<string, { text: Record<string, string>; claims: string[]; reveal?: string }>;
+  steps: {
+    module: string;
+    title: string;
+    text: Record<string, string>;
+    claims: string[];
+    guess?: { question: string; options: string[]; answer: number; why: Record<string, string> };
+  }[];
   claims: Record<string, { text: string; sources: string[] }>;
   sources: Record<string, { title: string; publisher: string; url: string }>;
 }
@@ -41,11 +47,35 @@ describe("prototype lessons", () => {
     expect(topics.length).toBeGreaterThanOrEqual(3);
   });
 
-  it.each(topics)("%s has all 8 modules at three depths", (_, topic) => {
-    expect(Object.keys(topic.modules).sort()).toEqual([...MODULES].sort());
-    for (const module of Object.values(topic.modules)) {
-      expect(Object.keys(module.text).sort()).toEqual(["plain", "simple", "technical"]);
+  it.each(topics)("%s covers all 8 modules at three depths", (_, topic) => {
+    expect([...new Set(topic.steps.map((step) => step.module))].sort()).toEqual(
+      [...MODULES].sort(),
+    );
+    for (const step of topic.steps) {
+      expect(Object.keys(step.text).sort()).toEqual(["plain", "simple", "technical"]);
+      if (step.guess)
+        expect(Object.keys(step.guess.why).sort()).toEqual(["plain", "simple", "technical"]);
     }
+  });
+
+  it.each(topics)(
+    "%s gives the short answer, then derives it from first principles",
+    (_, topic) => {
+      const modules = topic.steps.map((step) => step.module);
+      expect(modules.indexOf("short-answer")).toBe(1);
+      expect(modules.indexOf("first-principles")).toBeLessThan(modules.indexOf("how-parts-work"));
+      const reasoning = topic.steps.filter((step) =>
+        ["first-principles", "how-parts-work"].includes(step.module),
+      );
+      expect(reasoning.length).toBeGreaterThanOrEqual(4);
+      expect(reasoning.at(-1)?.title).toBe("Put it together");
+    },
+  );
+
+  it.each(topics)("%s asks the learner to predict before most reveals", (_, topic) => {
+    const guesses = topic.steps.flatMap((step) => step.guess ?? []);
+    expect(guesses.length).toBeGreaterThanOrEqual(4);
+    for (const guess of guesses) expect(guess.options[guess.answer]).toBeTruthy();
   });
 
   it.each(topics)("%s has a valid pre/post concept check", (_, topic) => {
@@ -54,15 +84,15 @@ describe("prototype lessons", () => {
   });
 
   it.each(topics)("%s traces every cited claim to a stored source", (_, topic) => {
-    for (const module of Object.values(topic.modules)) {
-      for (const claimId of module.claims) {
+    for (const step of topic.steps) {
+      for (const claimId of step.claims) {
         const claim = topic.claims[claimId];
         expect(claim, claimId).toBeTruthy();
         for (const sourceId of claim?.sources ?? [])
           expect(topic.sources[sourceId]?.url).toMatch(/^https:\/\//);
       }
     }
-    expect(topic.modules.history?.claims.length).toBeGreaterThan(0);
+    expect(topic.steps.find((step) => step.module === "history")?.claims.length).toBeGreaterThan(0);
   });
 });
 
