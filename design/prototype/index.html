@@ -548,6 +548,35 @@
         color: var(--ink-soft);
         margin: 0.25rem 0 0;
       }
+      .guess {
+        margin: 0.25rem 0 0.75rem;
+      }
+      .guess legend {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      .why {
+        margin: 0.25rem 0 0.75rem;
+        padding: 0.6rem 0.8rem;
+        border-left: 3px solid var(--action);
+        background: var(--paper);
+      }
+      .why p {
+        margin: 0;
+      }
+      .why .why-q {
+        color: var(--ink-soft);
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+      }
+      .evidence summary {
+        font-size: 0.9rem;
+      }
+      .evidence ul {
+        margin: 0.4rem 0 0;
+        padding-left: 1.1rem;
+        font-size: 0.95rem;
+      }
       .lesson-actions {
         position: sticky;
         bottom: 0;
@@ -734,73 +763,169 @@
               "answer": 1,
               "explain": "A small front ring with a big back cog turns the wheel less per pedal turn, so each push needs less force."
             },
-            "modules": {
-              "what-youre-seeing": {
+            "steps": [
+              {
+                "module": "what-youre-seeing",
+                "title": "What you're seeing",
                 "text": {
-                  "simple": "A bike with two wheels, pedals and a chain. The chain joins a toothed wheel by the pedals to a toothed wheel on the back wheel.",
-                  "plain": "A bicycle with pedals, a chain and toothed wheels called sprockets. The front one, the chainring, turns with the pedals. The chain carries that turn to a sprocket on the back wheel, called a cog.",
-                  "technical": "A chain-driven bicycle: the chainring on the crankset drives a rear cog through a roller chain. A derailleur lets the rider move the chain between rings and cogs with different numbers of teeth."
+                  "simple": "A bike with pedals, a chain and toothed wheels. Some gears make a hill feel easy and some make it feel really hard, but the hill is the same. So what changes?",
+                  "plain": "A bicycle: the pedals turn a toothed ring at the front, and a chain carries that turn to a toothed cog on the back wheel. Same rider, same hill, but in one gear it's easy and in another it's exhausting. What's different?",
+                  "technical": "A chain-driven bicycle: the chainring on the crankset drives a rear cog through a roller chain, and a derailleur moves the chain between sprockets. The climb is identical in every gear, yet the effort per pedal stroke isn't. Why?"
                 },
                 "claims": ["b1"]
               },
-              "short-answer": {
+              {
+                "module": "short-answer",
+                "title": "The short answer",
                 "text": {
-                  "simple": "In a low gear, each push on the pedals turns the back wheel less. You go slower, but every push is easier, which is perfect for hills.",
-                  "plain": "A low gear pairs a small front ring with a big back cog, so one turn of the pedals turns the wheel less than once. You trade speed for force: each pedal stroke needs less effort, so hills get easier.",
-                  "technical": "Low gears have a small gear ratio (chainring teeth ÷ cog teeth). The wheel turns fewer times per crank revolution, so for the same power the rider applies less torque per stroke at a higher cadence."
+                  "simple": "A low gear makes you pedal more times to climb the hill, but every push is easier.",
+                  "plain": "A low gear swaps speed for force: your feet go round more times for each metre you climb, so each push needs less effort.",
+                  "technical": "A low gear (small chainring ÷ cog ratio) trades wheel speed for torque: more crank revolutions per metre climbed, so less force per stroke for the same power."
                 },
                 "claims": ["b2", "b3"]
               },
-              "first-principles": {
+              {
+                "module": "first-principles",
+                "title": "Start from what's true",
                 "text": {
-                  "simple": "Getting up a hill takes a fixed amount of work. A low gear lets you push more gently, but you have to push more times.",
-                  "plain": "Climbing a hill takes a set amount of energy to lift you and the bike. Gears can't reduce that energy; they change how it's split up. A low gear spreads it over more pedal turns, so each turn needs less force.",
-                  "technical": "Energy is conserved: work = force × distance. A gear train changes the ratio of force to distance (its mechanical advantage) without creating energy. Ignoring friction, crank torque × crank speed = wheel torque × wheel speed."
+                  "simple": "To get up a hill, you have to lift yourself and your bike. Lifting something heavy always takes the same amount of energy, however you do it.",
+                  "plain": "Climbing a hill means lifting you and the bike up by its height. Lifting a weight through a height always takes the same energy: weight × height. That's fixed before you even pick a gear.",
+                  "technical": "Climbing raises the rider and bike's potential energy by m·g·h. That amount is set by the mass and the height of the hill, not by the route or the drivetrain."
+                },
+                "claims": ["b8"],
+                "guess": {
+                  "question": "Can changing gear reduce the energy you need to get up the hill?",
+                  "options": ["Yes, that's what gears are for", "No, the energy stays the same"],
+                  "answer": 1,
+                  "why": {
+                    "simple": "No. A machine can't make energy from nothing, so the hill always needs the same amount. Gears can only change how that job is shared out.",
+                    "plain": "No. No machine creates energy, so the climb costs the same in every gear. Gears can only change how the work is split into pushes.",
+                    "technical": "No. Energy is conserved, and a gear train only changes the ratio of force to distance (its mechanical advantage). Friction means real gears waste a little, never save any."
+                  }
+                }
+              },
+              {
+                "module": "first-principles",
+                "title": "Energy is push × distance",
+                "text": {
+                  "simple": "The energy you use is how hard you push times how far you push. So you can do the same job with a big push over a short way, or a small push over a long way.",
+                  "plain": "Work (energy) = force × distance. The same amount of work can be a big force over a short distance or a small force over a long distance.",
+                  "technical": "W = F·d for a force along the motion. Fix W, and F and d are inversely related: halve the force at the pedal and the pedal must travel twice as far."
+                },
+                "claims": ["b9", "b4"],
+                "guess": {
+                  "question": "If you push half as hard, how far must your feet travel to do the same work?",
+                  "options": ["Half as far", "The same distance", "Twice as far"],
+                  "answer": 2,
+                  "why": {
+                    "simple": "Twice as far. Half the push, double the distance: the total stays the same.",
+                    "plain": "Twice as far. Force × distance has to stay the same, so halving one doubles the other.",
+                    "technical": "Twice as far. With W fixed, d = W/F, so halving F doubles d."
+                  }
+                }
+              },
+              {
+                "module": "how-parts-work",
+                "title": "Count the teeth",
+                "text": {
+                  "simple": "Each link of the chain fits one tooth at the front and one tooth at the back. So if the front has twice as many teeth as the back, the back wheel spins twice for every pedal turn.",
+                  "plain": "The chain moves one link per tooth, at both ends. So for one pedal turn, the back cog turns (front teeth ÷ back teeth) times, and the wheel turns with it.",
+                  "technical": "Chain links mesh tooth for tooth, so linear chain speed is shared: wheel revolutions per crank revolution = N(chainring) ÷ N(cog). Distance per crank turn = that ratio × wheel circumference."
+                },
+                "claims": ["b2"],
+                "guess": {
+                  "question": "The front ring has 34 teeth and the back cog has 17. One pedal turn makes the back wheel turn how many times?",
+                  "options": ["Half a turn", "1 turn", "2 turns"],
+                  "answer": 2,
+                  "why": {
+                    "simple": "2 turns. 34 teeth pull 34 links, and 34 links turn a 17-tooth cog twice.",
+                    "plain": "2 turns. 34 ÷ 17 = 2.",
+                    "technical": "2 turns: 34 ÷ 17 = 2, so about 4.2 m per crank turn on a 2.1 m road wheel."
+                  }
+                },
+                "visual": true
+              },
+              {
+                "module": "how-parts-work",
+                "title": "Now try a low gear",
+                "text": {
+                  "simple": "Swap to a big back cog with 34 teeth. Now one pedal turn makes just one wheel turn, so the bike goes less far each time you pedal round.",
+                  "plain": "Shift to a 34-tooth cog at the back. Now 34 ÷ 34 = 1: one pedal turn, one wheel turn. Each pedal turn moves the bike half as far as before.",
+                  "technical": "Shift to 34/34 for a ratio of 1.0, about 2.1 m per crank turn: half the distance of 34/17."
+                },
+                "claims": ["b2"],
+                "guess": {
+                  "question": "To climb the same hill in this low gear, your feet go round…",
+                  "options": ["Fewer times", "The same number of times", "Twice as many times"],
+                  "answer": 2,
+                  "why": {
+                    "simple": "Twice as many times, because each pedal turn only moves you half as far.",
+                    "plain": "Twice as many times. Half the distance per pedal turn means twice the turns for the same hill.",
+                    "technical": "Twice as many crank revolutions, so your feet travel twice the distance to deliver the same m·g·h."
+                  }
+                }
+              },
+              {
+                "module": "how-parts-work",
+                "title": "Put it together",
+                "text": {
+                  "simple": "The hill needs the same energy either way. In a low gear your feet go round more times, so each push can be gentler. That's why it feels easier.",
+                  "plain": "The climb costs the same energy in every gear. A low gear makes your feet travel further for the same climb, and since energy = force × distance, each push needs less force.",
+                  "technical": "Fixed m·g·h, larger pedal distance, therefore lower pedal force (and torque per stroke). The rider pays in cadence: a higher rpm for the same road speed."
                 },
                 "claims": ["b3", "b4"]
               },
-              "how-parts-work": {
+              {
+                "module": "try-an-idea",
+                "title": "Test it yourself",
                 "text": {
-                  "simple": "Count the teeth! If the front has 30 teeth and the back has 30, one pedal turn makes one wheel turn. If the back has 40, the wheel turns less, and pedalling gets easier.",
-                  "plain": "Each tooth on the front ring pulls one link of chain, and each link moves the back cog by one tooth. So the wheel turns (front teeth ÷ back teeth) times per pedal turn: 34 ÷ 34 is one turn, while 34 ÷ 17 is two turns, which is faster but harder.",
-                  "technical": "Gear ratio = N(chainring) ÷ N(cog). Distance per crank turn = ratio × wheel circumference. For a road wheel of about 2.1 m, 34/34 gives about 2.1 m per crank turn and 50/11 about 9.5 m. The derailleur's parallelogram pushes the chain sideways between cogs."
-                },
-                "claims": ["b2", "b5"]
-              },
-              "try-an-idea": {
-                "text": {
-                  "simple": "Ask a grown-up to help you turn a bike upside down. Turn the pedals once in each gear and count how many times the back wheel spins.",
-                  "plain": "With an adult's help, turn a bike upside down. Put a piece of tape on the back tyre, then turn the pedals exactly once in the lowest and highest gears. Count the wheel turns and compare them with the tooth counts.",
-                  "technical": "Measure your own gearing: mark the tyre, turn the cranks once in several gears, and record wheel revolutions. Compare each with N(chainring) ÷ N(cog), then ride the same hill in each and note how hard it feels."
+                  "simple": "Ask a grown-up to help you turn a bike upside down. Turn the pedals once in each gear and count how many times the back wheel spins. Do your counts match the teeth?",
+                  "plain": "With an adult's help, turn a bike upside down. Put tape on the back tyre, turn the pedals exactly once in the lowest and highest gears, and count the wheel turns. Check them against front teeth ÷ back teeth.",
+                  "technical": "Mark the tyre, turn the cranks once in several gears, and record wheel revolutions. Compare each with N(chainring) ÷ N(cog), then ride the same hill in each and note your cadence."
                 },
                 "claims": []
               },
-              "history": {
+              {
+                "module": "check-thinking",
+                "title": "Use it on something new",
                 "text": {
-                  "simple": "Old penny-farthing bikes had pedals fixed to a giant front wheel. To go faster, you needed a bigger wheel! Chains and gears solved that in the 1880s.",
-                  "plain": "Penny-farthings of the 1870s had pedals fixed straight onto a huge front wheel, so a bigger wheel was the only way to go further per pedal turn. The chain-driven safety bicycle, made popular by John Kemp Starley's Rover in 1885, let gears do that job with normal-sized wheels.",
-                  "technical": "Direct-drive penny-farthings had pedals on the front hub, so 'gearing' meant wheel diameter. Starley's Rover (1885) moved the drive to the rear wheel through a chain, and choosing sprocket sizes replaced choosing wheel sizes. Multi-speed derailleurs followed in the 20th century."
+                  "simple": "You want to go really fast on a flat road. Which back cog would you pick?",
+                  "plain": "You're on a long, flat road and want to go fast. Which back cog would you choose?",
+                  "technical": "On a flat road at 40 km/h, which rear cog would a rider choose with a 50-tooth chainring?"
+                },
+                "claims": ["b3"],
+                "guess": {
+                  "question": "Which back cog?",
+                  "options": ["A big back cog", "A small back cog"],
+                  "answer": 1,
+                  "why": {
+                    "simple": "A small back cog. Each pedal turn spins the wheel more times, so you go faster, but each push is harder.",
+                    "plain": "A small back cog. Each pedal turn covers more road, so you go fast without spinning your legs madly, but each push takes more force.",
+                    "technical": "A small cog such as 50/11 gives about 9.5 m per crank turn, keeping cadence near 70 rpm. In 34/34 you'd need over 300 rpm."
+                  }
+                }
+              },
+              {
+                "module": "history",
+                "title": "How people figured it out",
+                "text": {
+                  "simple": "Old penny-farthing bikes had pedals fixed to a giant front wheel. To go further each time you pedalled, you needed a bigger wheel! Then people worked out that a chain and different-sized wheels could do the same job.",
+                  "plain": "Penny-farthings had pedals fixed straight onto a huge front wheel, so a bigger wheel was the only way to go further per pedal turn. The chain-driven safety bicycle, made popular by John Kemp Starley's Rover in 1885, let sprocket sizes do that job with normal wheels.",
+                  "technical": "On direct-drive penny-farthings, 'gearing' meant wheel diameter. Starley's Rover (1885) drove the rear wheel through a chain, so choosing tooth counts replaced choosing wheel sizes. Multi-speed derailleurs came later."
                 },
                 "claims": ["b6", "b7"]
               },
-              "check-thinking": {
+              {
+                "module": "go-further",
+                "title": "Go further",
                 "text": {
-                  "simple": "You want to go really fast on a flat road. Would you pick a big or a small back cog?",
-                  "plain": "You're on a long, flat road and want to go fast. Would you choose a big or a small back cog, and what would it feel like?",
-                  "technical": "On a flat road at 40 km/h, why would a rider choose 50/11 rather than 34/34? What would happen to their cadence if they didn't?"
-                },
-                "reveal": "A small back cog. Each pedal turn spins the wheel more times, so you go faster, but each push takes more force. In a low gear you'd have to pedal impossibly fast to keep up.",
-                "claims": ["b3"]
-              },
-              "go-further": {
-                "text": {
-                  "simple": "Look for gears in other places: an egg whisk, a clock or a hand drill.",
-                  "plain": "Gears are everywhere. Hand drills, clocks and car gearboxes make the same trade between force and speed. Levers and pulleys do it too; search for 'mechanical advantage'.",
-                  "technical": "Explore internal gear hubs (planetary gears), continuously variable transmissions, and why racing cyclists try to keep their cadence near 90 pedal turns a minute."
+                  "simple": "Look for the same trick in an egg whisk, a clock or a hand drill.",
+                  "plain": "Hand drills, clocks and car gearboxes make the same trade between force and distance. Levers and pulleys do too: look up 'mechanical advantage'.",
+                  "technical": "Explore internal gear hubs (planetary gears), continuously variable transmissions, and why racing cyclists try to keep their cadence near 90 rpm."
                 },
                 "claims": ["b4"]
               }
-            },
+            ],
             "claims": {
               "b1": {
                 "text": "A bicycle chain carries the pedals' turning motion from the chainring to a cog on the rear wheel.",
@@ -818,10 +943,6 @@
                 "text": "Gears change the balance of force and distance but do not create energy.",
                 "sources": ["wp-mechanical-advantage"]
               },
-              "b5": {
-                "text": "A derailleur moves the chain from one sprocket to another.",
-                "sources": ["wp-derailleur"]
-              },
               "b6": {
                 "text": "Penny-farthings had their pedals attached directly to a large front wheel.",
                 "sources": ["wp-penny-farthing"]
@@ -829,6 +950,14 @@
               "b7": {
                 "text": "John Kemp Starley's Rover of 1885 is widely regarded as the first successful chain-driven safety bicycle.",
                 "sources": ["wp-safety-bicycle"]
+              },
+              "b8": {
+                "text": "Lifting an object against gravity takes energy equal to its weight times the height it is raised.",
+                "sources": ["wp-potential-energy"]
+              },
+              "b9": {
+                "text": "Work, the energy transferred by a force, equals the force times the distance moved along it.",
+                "sources": ["wp-work"]
               }
             },
             "sources": {
@@ -842,11 +971,6 @@
                 "publisher": "Wikipedia",
                 "url": "https://en.wikipedia.org/wiki/Mechanical_advantage"
               },
-              "wp-derailleur": {
-                "title": "Derailleur",
-                "publisher": "Wikipedia",
-                "url": "https://en.wikipedia.org/wiki/Derailleur"
-              },
               "wp-penny-farthing": {
                 "title": "Penny-farthing",
                 "publisher": "Wikipedia",
@@ -856,6 +980,16 @@
                 "title": "Safety bicycle",
                 "publisher": "Wikipedia",
                 "url": "https://en.wikipedia.org/wiki/Safety_bicycle"
+              },
+              "wp-potential-energy": {
+                "title": "Potential energy",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Potential_energy"
+              },
+              "wp-work": {
+                "title": "Work (physics)",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Work_(physics)"
               }
             }
           },
@@ -873,73 +1007,190 @@
               "answer": 1,
               "explain": "The big bubbles are water that has turned into a gas. The tiny bubbles you see earlier are mostly dissolved air escaping."
             },
-            "modules": {
-              "what-youre-seeing": {
+            "steps": [
+              {
+                "module": "what-youre-seeing",
+                "title": "What you're seeing",
                 "text": {
-                  "simple": "A kettle: a pot with a spout and a lid for heating water. Many kettles plug in and have a heater hidden inside.",
-                  "plain": "A kettle is a container with a spout and handle for boiling water. Electric kettles hide a heating element in the base; stovetop kettles are heated from below by the hob.",
-                  "technical": "A kettle, either stovetop (heated through its base by a hob) or electric (a resistive heating element under a flat base plate, with an automatic cut-out)."
+                  "simple": "Heat water in a kettle and you get two kinds of bubbles: tiny ones on the sides first, then big ones rushing up from the bottom. What's inside them?",
+                  "plain": "As a kettle heats up, two kinds of bubbles appear: tiny ones clinging to the sides early on, then big ones rising from the hot base. What are they filled with?",
+                  "technical": "During heating you see small bubbles nucleating on the walls well below boiling, then large vapour bubbles forming at the heating element. What gas is in each?"
                 },
                 "claims": ["k1"]
               },
-              "short-answer": {
+              {
+                "module": "short-answer",
+                "title": "The short answer",
                 "text": {
-                  "simple": "The big bubbles are water that has turned into a gas, called water vapour. They are not air!",
-                  "plain": "The big bubbles in boiling water are water vapour: water that has turned into a gas. The tiny bubbles you see early on are mostly air that was dissolved in the water, escaping as it warms.",
-                  "technical": "At the boiling point, water's vapour pressure equals the surrounding pressure, so vapour bubbles can form and grow inside the liquid. Those bubbles are H₂O vapour; the earlier small bubbles are dissolved gases leaving because gases dissolve less in warmer water."
+                  "simple": "The big bubbles are water that has turned into a gas, called water vapour. They are not air! The tiny early ones are air.",
+                  "plain": "The big bubbles are water vapour: water that has turned into a gas. The tiny early bubbles are mostly air that was dissolved in the water.",
+                  "technical": "The large bubbles are H₂O vapour, formed once vapour pressure reaches the surrounding pressure. The early small bubbles are dissolved gases coming out of solution."
                 },
                 "claims": ["k2", "k3"]
               },
-              "first-principles": {
+              {
+                "module": "first-principles",
+                "title": "Start from what's true",
                 "text": {
-                  "simple": "Heat makes the tiny bits of water move faster. When they move fast enough, they break free and become a gas.",
-                  "plain": "Water is made of tiny particles that are always jiggling. Heating makes them move faster. At about 100 °C at sea level, they move fast enough to escape as gas even from inside the water, which makes bubbles.",
-                  "technical": "Boiling starts when vapour pressure reaches ambient pressure. Turning liquid into vapour needs latent heat, about 2,260 kJ per kilogram for water, so the temperature stays near 100 °C while it boils, however much power the element supplies."
+                  "simple": "Water is made of tiny bits that are always jiggling and holding on to each other. Heating them makes them jiggle faster.",
+                  "plain": "Water is made of tiny particles that are always moving and pulling on each other. Temperature is a measure of how fast they move, so heating makes them move faster.",
+                  "technical": "Water is a liquid of molecules held together by intermolecular attraction. Temperature reflects their average kinetic energy, so adding heat raises their speeds."
                 },
-                "claims": ["k4", "k5"]
+                "claims": ["k10"]
               },
-              "how-parts-work": {
+              {
+                "module": "first-principles",
+                "title": "What a gas is",
                 "text": {
-                  "simple": "The hot part at the bottom heats the water touching it. Hot water rises and cooler water sinks, so the whole kettle warms up.",
-                  "plain": "The element heats the water touching it. That warm water is lighter, so it rises while cooler water sinks, a loop called convection that spreads the heat. Bubbles form first at the hot base and collapse higher up, which is why a kettle rumbles before it boils.",
-                  "technical": "Heat moves from the element into the water by conduction, then spreads by natural convection. Vapour bubbles form at the base and collapse in the cooler water above until the whole volume reaches boiling temperature. A thermostat, often a bimetallic disc warmed by steam, then switches the element off."
+                  "simple": "In a liquid the bits stay close together. In a gas they have broken free and fly about. A bit that moves fast enough can break free.",
+                  "plain": "In a liquid, particles stay close and cling together. In a gas, they've broken free and move about far apart. A particle moving fast enough can escape the liquid and join a gas.",
+                  "technical": "In a liquid, molecules are close-packed and bound; in a gas they're far apart and nearly free. Molecules with enough kinetic energy to overcome the attraction can leave the liquid."
                 },
-                "claims": ["k6", "k7"]
+                "claims": ["k11"],
+                "guess": {
+                  "question": "Where in the kettle do the water particles move fastest?",
+                  "options": [
+                    "At the top, near the lid",
+                    "At the bottom, next to the heater",
+                    "Everywhere the same"
+                  ],
+                  "answer": 1,
+                  "why": {
+                    "simple": "At the bottom. The heater is there, so that water is the hottest.",
+                    "plain": "At the bottom, touching the heating element. That's the hottest water in the kettle.",
+                    "technical": "At the element, where heat enters by conduction. Convection spreads it, but the boundary layer there is the hottest water."
+                  }
+                }
               },
-              "try-an-idea": {
+              {
+                "module": "how-parts-work",
+                "title": "Where the big bubbles come from",
+                "text": {
+                  "simple": "The big bubbles start right at the hot bottom. And if you boil a kettle for a long time, the water level goes down. The water is leaving!",
+                  "plain": "The big bubbles are born at the hot base, where particles move fastest. Boil a kettle long enough and the water level drops: water is leaving as those bubbles.",
+                  "technical": "Vapour bubbles nucleate at the element, where the water is hottest. Sustained boiling steadily lowers the water level, so the bubbles must be carrying water away."
+                },
+                "claims": ["k2", "k6"],
+                "guess": {
+                  "question": "So what are the big bubbles most likely filled with?",
+                  "options": ["Air", "Water that has turned into a gas", "Heat"],
+                  "answer": 1,
+                  "why": {
+                    "simple": "Water that has turned into a gas. Fast-moving water bits break free and make a pocket of gas.",
+                    "plain": "Water vapour. The fastest particles at the base break free and form a pocket of gas, and there's far too much of it to be air.",
+                    "technical": "Water vapour. The bubbles keep coming until the kettle is dry, which only makes sense if they're the water itself changing phase."
+                  }
+                }
+              },
+              {
+                "module": "how-parts-work",
+                "title": "And the tiny bubbles?",
+                "text": {
+                  "simple": "Tap water has a little air hidden in it, a bit like the fizz in a fizzy drink. Warm water can't hold as much, so the air comes out as tiny bubbles.",
+                  "plain": "Cold tap water has some air dissolved in it, the way fizzy drinks have gas dissolved. Warmer water holds less gas, so it comes out as tiny bubbles early on.",
+                  "technical": "Gas solubility in water falls as temperature rises, so dissolved air comes out of solution on the vessel walls well before boiling."
+                },
+                "claims": ["k3"],
+                "guess": {
+                  "question": "The tiny bubbles appear early and then stop. Why might they stop?",
+                  "options": [
+                    "The air in the water runs out",
+                    "The water gets too hot for bubbles",
+                    "The kettle switches off"
+                  ],
+                  "answer": 0,
+                  "why": {
+                    "simple": "The air runs out. There was only a little hidden in the water.",
+                    "plain": "The dissolved air runs out. There was only a small amount to start with.",
+                    "technical": "The dissolved gas is depleted; only a small amount was in solution."
+                  }
+                }
+              },
+              {
+                "module": "how-parts-work",
+                "title": "Why it stays at 100 °C",
+                "text": {
+                  "simple": "Breaking free takes energy. Once water is boiling, the heater's energy goes into making steam, not into making the water hotter.",
+                  "plain": "Every particle that breaks free carries energy away. So once water boils, extra heat goes into making more steam, and the water stays at about 100 °C.",
+                  "technical": "Vaporisation needs latent heat, about 2,260 kJ per kilogram, so at the boiling point the input power converts liquid to vapour instead of raising the temperature."
+                },
+                "claims": ["k5", "k4"],
+                "guess": {
+                  "question": "You turn the heat up on water that's already boiling. What happens to its temperature?",
+                  "options": [
+                    "It goes well above 100 °C",
+                    "It stays about the same, but it boils harder",
+                    "It drops"
+                  ],
+                  "answer": 1,
+                  "why": {
+                    "simple": "It stays about the same. You just get more bubbles, faster.",
+                    "plain": "It stays near 100 °C. The extra heat just makes steam faster.",
+                    "technical": "It stays at the boiling point; the vaporisation rate rises with power."
+                  }
+                }
+              },
+              {
+                "module": "how-parts-work",
+                "title": "Put it together",
+                "text": {
+                  "simple": "Heat makes water bits move faster. At the hot bottom, some move fast enough to break free and make a pocket of gas. That pocket is a big bubble, and it's made of water!",
+                  "plain": "Heating speeds up the water's particles. At the hot base, enough of them break free together to form a pocket of gas: water vapour. That's the big bubble. The tiny early bubbles were just dissolved air leaving.",
+                  "technical": "At the element, water reaches the temperature where its vapour pressure matches the surrounding pressure, so vapour bubbles can grow inside the liquid. They carry latent heat away, which holds the temperature at the boiling point."
+                },
+                "claims": ["k2", "k4"]
+              },
+              {
+                "module": "try-an-idea",
+                "title": "Test it yourself",
                 "text": {
                   "simple": "With a grown-up, watch water heat up in a see-through pan. Spot the tiny bubbles first, then the big ones. Boiling water burns, so look from a safe distance.",
-                  "plain": "With an adult, watch water heat in a clear pan or a see-through kettle. Notice when small bubbles cling to the sides (air) and when big bubbles rise from the bottom (steam). Keep your hands and face away from the steam.",
-                  "technical": "Heat water in a clear vessel and record its temperature every 30 seconds. Look for the plateau at boiling, and use the slope before it to estimate how much power reaches the water. Keep clear of steam."
+                  "plain": "With an adult, watch water heat in a clear pan or see-through kettle. Notice when small bubbles cling to the sides and when big bubbles rise from the bottom. Keep your hands and face away from the steam.",
+                  "technical": "Heat water in a clear vessel and record its temperature every 30 seconds. Look for the plateau at boiling, and use the slope before it to estimate the power reaching the water. Keep clear of steam."
                 },
                 "claims": []
               },
-              "history": {
+              {
+                "module": "check-thinking",
+                "title": "Use it on something new",
                 "text": {
-                  "simple": "Kettles that switch themselves off were invented in 1955. Before that, people had to watch them!",
-                  "plain": "The first automatic electric kettle, the Russell Hobbs K1, came out in 1955. Steam from the boiling water bent a strip of two metals, which switched the kettle off.",
-                  "technical": "The Russell Hobbs K1 (1955) is credited as the first automatic electric kettle, using a bimetallic strip heated by steam. Steam-sensing bimetallic cut-outs are still the basic design in most kettles."
+                  "simple": "On top of a very tall mountain there's less air pressing down on the water. Would water boil hotter or cooler than at the seaside?",
+                  "plain": "On top of a high mountain, less air presses down on the water. Does it boil at more or less than 100 °C?",
+                  "technical": "Near the summit of Everest, air pressure is about a third of sea level. Predict the boiling point."
                 },
-                "claims": ["k8", "k7"]
+                "claims": ["k9"],
+                "guess": {
+                  "question": "The boiling point up there is…",
+                  "options": ["Below 100 °C", "Exactly 100 °C", "Above 100 °C"],
+                  "answer": 0,
+                  "why": {
+                    "simple": "Cooler. With less air pressing down, water bits break free more easily. Near the top of Everest it boils at about 70 °C.",
+                    "plain": "Below 100 °C. With less pressure holding it in, water turns to vapour at a lower temperature: about 70 °C near the top of Everest, which makes cooking slow.",
+                    "technical": "Roughly 70 °C. Lower ambient pressure means vapour pressure matches it at a lower temperature."
+                  }
+                }
               },
-              "check-thinking": {
+              {
+                "module": "history",
+                "title": "How people figured it out",
                 "text": {
-                  "simple": "On top of a very tall mountain, would water boil when it is hotter or cooler than at the seaside?",
-                  "plain": "On top of a high mountain, does water boil at more or less than 100 °C? Why?",
-                  "technical": "Predict the boiling point near the summit of Everest, where air pressure is about a third of sea level. What does that mean for cooking pasta there?"
+                  "simple": "Long ago, an inventor called Denis Papin built a pot with a tight lid that trapped the steam. It was the first pressure cooker!",
+                  "plain": "Denis Papin built a 'steam digester': a sealed pot that trapped steam. It was the forerunner of the pressure cooker, which works because trapped steam lets water get hotter than 100 °C.",
+                  "technical": "Denis Papin's steam digester, the forerunner of the pressure cooker, used a sealed vessel to raise the pressure, and so the boiling point, of water."
                 },
-                "reveal": "Cooler. Higher up there's less air pressing down, so water can turn to vapour at a lower temperature: near the top of Everest it boils at roughly 70 °C, which makes cooking slow.",
-                "claims": ["k9"]
+                "claims": ["k12", "k4"]
               },
-              "go-further": {
+              {
+                "module": "go-further",
+                "title": "Go further",
                 "text": {
-                  "simple": "A pressure cooker does the opposite of a mountain: it squeezes the steam so water gets hotter than 100 °C.",
-                  "plain": "Pressure cookers trap steam to raise the pressure, so water boils above 100 °C and food cooks faster. Look up why steam engines worked the same way.",
-                  "technical": "Look up phase diagrams and the Clausius–Clapeyron relation, which link boiling temperature to pressure. Then see how pressure cookers and steam engines use them."
+                  "simple": "Why does a kettle switch itself off? Look inside the handle for a little metal disc that bends when steam hits it.",
+                  "plain": "Most kettles switch off with a bimetallic disc that bends when steam reaches it. Look up how steam engines used the same steam that makes the bubbles.",
+                  "technical": "Look up phase diagrams and the Clausius–Clapeyron relation, which link boiling temperature to pressure, and how kettle thermostats sense steam."
                 },
-                "claims": ["k4"]
+                "claims": ["k7"]
               }
-            },
+            ],
             "claims": {
               "k1": {
                 "text": "Electric kettles heat water with an electric heating element.",
@@ -969,13 +1220,21 @@
                 "text": "Many electric kettles switch off using a bimetallic thermostat that senses steam.",
                 "sources": ["wp-kettle"]
               },
-              "k8": {
-                "text": "The Russell Hobbs K1 of 1955 is credited as the first automatic electric kettle.",
-                "sources": ["wp-russell-hobbs"]
-              },
               "k9": {
                 "text": "Near the summit of Mount Everest, water boils at roughly 70 °C.",
                 "sources": ["wp-boiling-point"]
+              },
+              "k10": {
+                "text": "Temperature reflects the average kinetic energy of a substance's particles.",
+                "sources": ["wp-temperature"]
+              },
+              "k11": {
+                "text": "Liquids and gases are different states of matter.",
+                "sources": ["wp-state-of-matter"]
+              },
+              "k12": {
+                "text": "Denis Papin invented the steam digester, the forerunner of the pressure cooker.",
+                "sources": ["wp-denis-papin"]
               }
             },
             "sources": {
@@ -1009,10 +1268,20 @@
                 "publisher": "Wikipedia",
                 "url": "https://en.wikipedia.org/wiki/Convection"
               },
-              "wp-russell-hobbs": {
-                "title": "Russell Hobbs",
+              "wp-temperature": {
+                "title": "Temperature",
                 "publisher": "Wikipedia",
-                "url": "https://en.wikipedia.org/wiki/Russell_Hobbs"
+                "url": "https://en.wikipedia.org/wiki/Temperature"
+              },
+              "wp-state-of-matter": {
+                "title": "State of matter",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/State_of_matter"
+              },
+              "wp-denis-papin": {
+                "title": "Denis Papin",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Denis_Papin"
               }
             }
           },
@@ -1030,73 +1299,182 @@
               "answer": 2,
               "explain": "Most of the dry mass of wood is built from carbon that leaves take in from the air as carbon dioxide."
             },
-            "modules": {
-              "what-youre-seeing": {
+            "steps": [
+              {
+                "module": "what-youre-seeing",
+                "title": "What you're seeing",
                 "text": {
-                  "simple": "A green leaf. The lines on it are veins that carry water and food.",
-                  "plain": "A leaf works like a thin, flat solar panel for a plant. Its veins carry water in and sugar out, and tiny pores underneath, called stomata, let gases in and out.",
-                  "technical": "A broad leaf with a midrib and branching veins. The veins hold xylem (water in) and phloem (sugars out). Stomata, mostly on the underside, control how much CO₂ comes in and how much water escapes."
+                  "simple": "A green leaf. A tree starts as a seed you can hold in your fingers and grows into tonnes of wood, but it never eats anything. Where does it all come from?",
+                  "plain": "A leaf, with veins carrying water in and sugar out. A tree grows from a tiny seed into tonnes of wood without eating anything. Where does its food come from?",
+                  "technical": "A broad leaf: xylem and phloem in the veins, stomata underneath. Trees build tonnes of biomass without ingesting food. What are the inputs?"
                 },
-                "claims": ["l1", "l2"]
+                "claims": ["l1"]
               },
-              "short-answer": {
+              {
+                "module": "short-answer",
+                "title": "The short answer",
                 "text": {
                   "simple": "A leaf uses sunlight to turn air and water into sugar. That sugar is the plant's food.",
-                  "plain": "Leaves use the energy in sunlight to join carbon dioxide from the air with water, making sugar (food for the plant) and giving off oxygen. This is called photosynthesis.",
-                  "technical": "In photosynthesis, chlorophyll absorbs light and drives reactions that split water (releasing O₂) and fix CO₂ into sugars. Overall: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂."
+                  "plain": "Leaves use the energy in sunlight to join carbon dioxide from the air with water, making sugar and giving off oxygen. This is photosynthesis.",
+                  "technical": "Chlorophyll absorbs light and drives reactions that split water (releasing O₂) and fix CO₂ into sugar: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂."
                 },
                 "claims": ["l3", "l4"]
               },
-              "first-principles": {
+              {
+                "module": "first-principles",
+                "title": "Start from what's true",
                 "text": {
-                  "simple": "Light is a kind of energy. Plants catch it and keep it in sugar, a bit like charging a battery.",
-                  "plain": "Energy can't come from nothing. Sunlight carries energy, and the leaf stores some of it in the chemical bonds of sugar. Later the plant, or an animal that eats it, releases that energy.",
-                  "technical": "Photosynthesis turns light energy into chemical energy: glucose and O₂ hold more energy than CO₂ and water. The light-dependent reactions make ATP and NADPH, which the Calvin cycle spends to turn CO₂ into sugar."
+                  "simple": "Stuff can't appear from nothing. Everything a plant is made of must have come in from somewhere.",
+                  "plain": "Matter isn't created from nothing. Every atom in a leaf or a tree trunk had to come in from outside the plant.",
+                  "technical": "Mass is conserved in chemical reactions: every atom in the plant's biomass entered as part of some input."
                 },
-                "claims": ["l5"]
+                "claims": ["l10"]
               },
-              "how-parts-work": {
+              {
+                "module": "first-principles",
+                "title": "Energy can't appear from nothing either",
                 "text": {
-                  "simple": "Green stuff called chlorophyll catches the light. Tiny holes let air in. The roots send water up through the veins.",
-                  "plain": "Chlorophyll, packed into tiny parts of each cell called chloroplasts, absorbs red and blue light and reflects green, which is why leaves look green. Stomata let carbon dioxide in, and the veins bring water up from the roots.",
-                  "technical": "Chlorophylls a and b absorb strongly in the blue and red and weakly in the green, which is reflected. The light reactions run in the thylakoid membranes; the Calvin cycle, driven by the enzyme RuBisCO, runs in the stroma."
+                  "simple": "Making food takes energy, like charging a battery. A plant doesn't eat, so it needs to catch energy from somewhere.",
+                  "plain": "Building sugar takes energy, and that energy has to come from somewhere too. A plant doesn't eat, so where does it get it?",
+                  "technical": "Sugar stores chemical energy: glucose and O₂ hold more energy than CO₂ and water. Something must supply that energy."
                 },
-                "claims": ["l6", "l2"]
+                "claims": ["l5"],
+                "guess": {
+                  "question": "What could give a plant energy without it eating?",
+                  "options": ["The soil", "Sunlight", "Rain"],
+                  "answer": 1,
+                  "why": {
+                    "simple": "Sunlight. Light carries energy, and leaves are spread out flat to catch it.",
+                    "plain": "Sunlight. Light carries energy, and a leaf is a thin, flat panel for catching it.",
+                    "technical": "Light. Photosynthesis converts light energy to chemical energy."
+                  }
+                }
               },
-              "try-an-idea": {
+              {
+                "module": "how-parts-work",
+                "title": "Is it the soil?",
+                "text": {
+                  "simple": "A scientist once grew a willow tree in a pot for five years. The tree got about 74 kg heavier, but the soil lost only about 57 g, the weight of an egg.",
+                  "plain": "In the 1600s, Jan van Helmont grew a willow in a pot for five years. The tree gained about 74 kg while the soil lost only about 57 g.",
+                  "technical": "Van Helmont's willow gained about 74 kg over five years while the potting soil lost about 57 g."
+                },
+                "claims": ["l7"],
+                "guess": {
+                  "question": "So did the tree's mass come from the soil?",
+                  "options": ["Yes, mostly", "No, hardly any of it"],
+                  "answer": 1,
+                  "why": {
+                    "simple": "No. The soil hardly changed, so the tree's stuff came from somewhere else.",
+                    "plain": "No. 57 g can't make 74 kg of tree. It came from something else going in.",
+                    "technical": "No: under 0.1% of the gain is accounted for by the soil."
+                  }
+                }
+              },
+              {
+                "module": "how-parts-work",
+                "title": "What goes in",
+                "text": {
+                  "simple": "Only a few things go into a leaf: water from the roots, air through tiny holes, and light. Sugar is made of carbon, hydrogen and oxygen. Water has hydrogen and oxygen, but no carbon.",
+                  "plain": "A leaf takes in water from the roots, carbon dioxide from the air through tiny pores called stomata, and light. Sugar is made of carbon, hydrogen and oxygen, and water has no carbon.",
+                  "technical": "Inputs: water via xylem, CO₂ via stomata, and photons. Glucose is C₆H₁₂O₆; water supplies hydrogen, but there's no carbon in H₂O."
+                },
+                "claims": ["l2", "l4"],
+                "guess": {
+                  "question": "Where must the carbon in sugar come from?",
+                  "options": ["The soil", "Carbon dioxide in the air", "Sunlight"],
+                  "answer": 1,
+                  "why": {
+                    "simple": "The air! Carbon dioxide gas has carbon in it. So most of a tree is made from air.",
+                    "plain": "Carbon dioxide in the air. Light brings energy, not atoms. So most of a tree's dry mass is built from air.",
+                    "technical": "Atmospheric CO₂. Light supplies energy only, so most plant dry mass is carbon fixed from the air."
+                  }
+                }
+              },
+              {
+                "module": "how-parts-work",
+                "title": "How the leaf catches light",
+                "text": {
+                  "simple": "Leaves are full of a green stuff called chlorophyll that soaks up light. It soaks up red and blue light and bounces green light back.",
+                  "plain": "Chlorophyll, packed into chloroplasts in each cell, absorbs red and blue light and reflects green.",
+                  "technical": "Chlorophylls a and b absorb strongly in the blue and red and weakly in the green. The light reactions run in the thylakoids; the Calvin cycle in the stroma."
+                },
+                "claims": ["l6"],
+                "guess": {
+                  "question": "Leaves look green to us. Which colour of light are they using least?",
+                  "options": ["Red", "Blue", "Green"],
+                  "answer": 2,
+                  "why": {
+                    "simple": "Green. The green light bounces off into your eyes, so it's the colour the leaf isn't using.",
+                    "plain": "Green. We see the light a leaf reflects, which is the light it isn't absorbing.",
+                    "technical": "Green: reflected light is the part of the spectrum chlorophyll absorbs weakly."
+                  }
+                }
+              },
+              {
+                "module": "how-parts-work",
+                "title": "Put it together",
+                "text": {
+                  "simple": "A leaf takes carbon from the air and water from the roots, and uses light's energy to join them into sugar. The leftover oxygen goes back into the air.",
+                  "plain": "The atoms come from carbon dioxide and water; the energy comes from light. The leaf joins them into sugar and releases the spare oxygen.",
+                  "technical": "Atoms from CO₂ and H₂O, energy from light: the light reactions make ATP and NADPH, and the Calvin cycle spends them fixing CO₂ into sugar, releasing O₂."
+                },
+                "claims": ["l3", "l8"]
+              },
+              {
+                "module": "try-an-idea",
+                "title": "Test it yourself",
                 "text": {
                   "simple": "Put a leaf in a clear bowl of water in the sun. After an hour, look for tiny bubbles on it.",
-                  "plain": "Put a fresh leaf in a clear bowl of water in bright sunlight. After an hour, look for tiny bubbles on the leaf. Some of that gas is oxygen made by photosynthesis.",
-                  "technical": "Try the floating leaf-disc test: soak leaf discs in a weak baking-soda solution until they sink, then time how long they take to float under bright and dim light as oxygen builds up inside."
+                  "plain": "Put a fresh leaf in a clear bowl of water in bright sunlight. After an hour, look for tiny bubbles on it. Some of that gas is oxygen made by photosynthesis.",
+                  "technical": "Try the floating leaf-disc test: soak leaf discs in weak baking-soda solution until they sink, then time how long they take to float under bright and dim light."
                 },
                 "claims": []
               },
-              "history": {
+              {
+                "module": "check-thinking",
+                "title": "Use it on something new",
                 "text": {
-                  "simple": "Long ago, a scientist grew a willow tree in a pot for five years. The tree got much heavier, but the soil hardly changed!",
-                  "plain": "In the 1600s, Jan van Helmont grew a willow in a pot for five years. The tree gained about 74 kg while the soil lost only about 57 g, so the mass didn't come from the soil. He guessed it came from water; later scientists showed most of it comes from carbon dioxide in the air.",
-                  "technical": "Van Helmont's willow experiment (17th century) ruled out soil as the main source of plant mass. Joseph Priestley later showed plants 'restore' air that a candle had used up, and Jan Ingenhousz (1779) showed this needs light."
-                },
-                "claims": ["l7", "l8", "l9"]
-              },
-              "check-thinking": {
-                "text": {
-                  "simple": "Why might a plant kept in a dark cupboard slowly die, even if you water it?",
+                  "simple": "A plant is kept in a dark cupboard. You water it every day, but it slowly dies. Why?",
                   "plain": "A plant in a dark cupboard gets plenty of water but slowly dies. Why?",
-                  "technical": "A plant in the dark still respires. What happens to its stored sugar over a few weeks, and why does watering not help?"
+                  "technical": "A watered plant kept in the dark declines over a few weeks. Explain why."
                 },
-                "reveal": "Without light it can't make sugar, so it slowly uses up the food it has stored. Water is only one of the ingredients; light provides the energy.",
-                "claims": ["l3"]
+                "claims": ["l3"],
+                "guess": {
+                  "question": "Why does it die?",
+                  "options": [
+                    "It hasn't got enough water",
+                    "It can't make new sugar",
+                    "It has no air"
+                  ],
+                  "answer": 1,
+                  "why": {
+                    "simple": "Without light it can't make sugar, so it slowly uses up the food it has stored.",
+                    "plain": "Without light there's no energy to make sugar, so it slowly uses up its stored food. Water is only one ingredient.",
+                    "technical": "With no photosynthesis but continued respiration, it runs down its carbohydrate reserves."
+                  }
+                }
               },
-              "go-further": {
+              {
+                "module": "history",
+                "title": "How people figured it out",
+                "text": {
+                  "simple": "Van Helmont guessed the tree was made of water. Later, scientists found that plants 'fix' air that a candle has used up, but only in the light.",
+                  "plain": "Van Helmont thought the mass came from water. Later, Joseph Priestley found plants restore air that a candle had used up, and Jan Ingenhousz showed this only happens in light.",
+                  "technical": "Van Helmont attributed the mass to water. Priestley showed plants restore air exhausted by a candle, and Ingenhousz (1779) showed this needs light."
+                },
+                "claims": ["l9"]
+              },
+              {
+                "module": "go-further",
+                "title": "Go further",
                 "text": {
                   "simple": "Every breath you take has oxygen that plants and tiny sea creatures helped make.",
-                  "plain": "Photosynthesis is half of the carbon cycle: breathing and burning release the carbon dioxide that leaves capture. Look up why forests and ocean algae matter for the air we breathe.",
-                  "technical": "Look up C4 and CAM photosynthesis, which help maize and cacti photosynthesise in hot, dry conditions, and how scientists are trying to engineer RuBisCO to be faster."
+                  "plain": "Photosynthesis is half of the carbon cycle: breathing and burning release the carbon dioxide that leaves capture. Look up why forests and ocean algae matter for the air.",
+                  "technical": "Look up C4 and CAM photosynthesis, used by maize and cacti in hot, dry conditions, and efforts to engineer a faster RuBisCO."
                 },
                 "claims": ["l8"]
               }
-            },
+            ],
             "claims": {
               "l1": {
                 "text": "Leaf veins contain xylem, which carries water, and phloem, which carries sugars.",
@@ -1133,6 +1511,10 @@
               "l9": {
                 "text": "Priestley found plants restore air used up by a candle, and Ingenhousz (1779) found this needs light.",
                 "sources": ["wp-photosynthesis"]
+              },
+              "l10": {
+                "text": "In a closed system, mass stays constant: matter is not created or destroyed.",
+                "sources": ["wp-conservation-of-mass"]
               }
             },
             "sources": {
@@ -1165,6 +1547,11 @@
                 "title": "Jan Baptist van Helmont",
                 "publisher": "Wikipedia",
                 "url": "https://en.wikipedia.org/wiki/Jan_Baptist_van_Helmont"
+              },
+              "wp-conservation-of-mass": {
+                "title": "Conservation of mass",
+                "publisher": "Wikipedia",
+                "url": "https://en.wikipedia.org/wiki/Conservation_of_mass"
               }
             }
           }
@@ -1207,6 +1594,7 @@
         question: null,
         level: "plain",
         shown: 2,
+        guesses: {},
         pre: null,
         post: null,
         lessonStartedAt: 0,
@@ -1221,7 +1609,7 @@
           id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
           participant: "",
           segment: "",
-          moduleOrder: "A",
+          variant: "A",
           visualOrder: "auto",
           mode: "demo",
           model: "muse-spark-1.3",
@@ -1463,39 +1851,19 @@
           }`;
       };
 
-      const MODULE_ORDERS = {
-        A: [
-          "what-youre-seeing",
-          "short-answer",
-          "first-principles",
-          "how-parts-work",
-          "try-an-idea",
-          "history",
-          "check-thinking",
-          "go-further",
-        ],
-        // Variant B tests concrete-before-abstract: parts and a hands-on idea come before the big idea.
-        B: [
-          "what-youre-seeing",
-          "short-answer",
-          "how-parts-work",
-          "try-an-idea",
-          "first-principles",
-          "check-thinking",
-          "history",
-          "go-further",
-        ],
-      };
-      const MODULE_TITLES = {
-        "what-youre-seeing": "What you're seeing",
-        "short-answer": "The short answer",
-        "first-principles": "The big idea",
-        "how-parts-work": "How the parts work",
-        "try-an-idea": "Try it yourself",
-        history: "How we found out",
-        "check-thinking": "Check your thinking",
-        "go-further": "Go further",
-      };
+      // Each step is tagged with one of the 8 Lesson contract modules, so lessons still map onto it.
+      const MODULES = [
+        "what-youre-seeing",
+        "short-answer",
+        "first-principles",
+        "how-parts-work",
+        "try-an-idea",
+        "history",
+        "check-thinking",
+        "go-further",
+      ];
+      // Variant B tests whether predicting matters: the same steps, with each answer shown instead of asked.
+      const VARIANTS = { A: "A: guess at each step", B: "B: read without guessing" };
       const LEVELS = [
         ["simple", "Simply"],
         ["plain", "Normally"],
@@ -1503,7 +1871,7 @@
       ];
 
       const currentTopic = () => DEMO.topics[state.topic];
-      const moduleOrder = () => MODULE_ORDERS[session.moduleOrder] ?? MODULE_ORDERS.A;
+      const guessing = () => session.variant !== "B";
       const levelText = (text) =>
         typeof text === "string" ? text : (text[state.level] ?? text.plain);
 
@@ -1536,48 +1904,84 @@
 
       SCREENS.writing = () => `
         <h2>Writing your lesson…</h2>
-        <p class="lede">Checking facts and sources for “${esc(state.question)}”.</p>
+        <p class="lede">Working out “${esc(state.question)}” from the beginning.</p>
         <div class="photo">${photoMarkup()}<div class="scanline" aria-hidden="true"></div></div>`;
 
-      function sourcesFor(claimIds) {
+      // Evidence stays one tap away, so the lesson reads as reasoning rather than a list of citations.
+      function evidenceFor(claimIds, index) {
         const topic = currentTopic();
-        const ids = [...new Set(claimIds.flatMap((id) => topic.claims[id]?.sources ?? []))];
-        if (!ids.length) return "";
-        return `<p class="sources">Source${ids.length > 1 ? "s" : ""}: ${ids
-          .map((id) => topic.sources[id])
-          .filter(Boolean)
+        const claims = claimIds.map((id) => topic.claims[id]).filter(Boolean);
+        if (!claims.length) return "";
+        const link = (source) =>
+          `<a href="${esc(source.url)}" target="_blank" rel="noopener" data-source="${esc(source.title)}">${esc(source.title)}</a>`;
+        return `<details class="evidence" data-evidence="${index}"><summary>How do we know?</summary><ul>${claims
           .map(
-            (source) =>
-              `<a href="${esc(source.url)}" target="_blank" rel="noopener" data-source="${esc(source.title)}">${esc(source.title)}</a> (${esc(source.publisher)})`,
+            (claim) =>
+              `<li>${esc(claim.text)} <span class="sources">(${claim.sources
+                .map((id) => topic.sources[id])
+                .filter(Boolean)
+                .map(link)
+                .join(", ")})</span></li>`,
           )
-          .join(", ")}</p>`;
+          .join("")}</ul></details>`;
       }
 
-      function moduleMarkup(id, index) {
-        const module = currentTopic().modules[id];
-        const answer = id === "short-answer";
+      function guessMarkup(guess, index) {
+        const choice = state.guesses[index];
+        if (guessing() && choice === undefined) {
+          return `
+            <form class="guess stack" data-action="guess" data-index="${index}">
+              <fieldset class="options">
+                <legend>${esc(guess.question)}</legend>
+                ${[...guess.options, "I'm not sure"]
+                  .map(
+                    (option, value) =>
+                      `<label class="option"><input type="radio" name="choice" value="${
+                        value === guess.options.length ? -1 : value
+                      }" required /><span>${esc(option)}</span></label>`,
+                  )
+                  .join("")}
+              </fieldset>
+              <button class="btn secondary" type="submit">Check my guess</button>
+            </form>`;
+        }
+        const verdict =
+          choice === undefined || choice === -1
+            ? ""
+            : choice === guess.answer
+              ? "Yes. "
+              : "Not quite. ";
         return `
-          <li class="module${answer ? " answer" : ""}" id="m-${id}">
-            <h3>${MODULE_TITLES[id]}</h3>
-            <p>${answer ? `<mark>${esc(levelText(module.text))}</mark>` : esc(levelText(module.text))}</p>
+          <div class="why" id="why-${index}" tabindex="-1">
+            <p class="why-q">${esc(guess.question)}</p>
+            <p>${verdict ? `<strong>${verdict}</strong>` : ""}${esc(levelText(guess.why))}</p>
+          </div>`;
+      }
+
+      function stepMarkup(step, index) {
+        const answer = step.module === "short-answer";
+        const text = esc(levelText(step.text));
+        // Evidence can give the guess away, so it waits until the learner has committed.
+        const pending = step.guess && guessing() && state.guesses[index] === undefined;
+        return `
+          <li class="module${answer ? " answer" : ""}" id="s-${index}" data-module="${step.module}">
+            <h3>${esc(step.title)}</h3>
+            <p>${answer ? `<mark>${text}</mark>` : text}</p>
+            ${step.guess ? guessMarkup(step.guess, index) : ""}
             ${
-              module.reveal
-                ? `<details data-reveal="${id}"><summary>Show an answer</summary><p>${esc(module.reveal)}</p></details>`
-                : ""
-            }
-            ${
-              id === "how-parts-work" && currentTopic().visual && SCREENS.visuals
+              step.visual && currentTopic().visual && SCREENS.visuals
                 ? `<button class="btn secondary" type="button" data-action="visuals">See it in action</button>`
                 : ""
             }
-            ${sourcesFor(module.claims ?? [])}
+            ${pending ? "" : evidenceFor(step.claims ?? [], index)}
           </li>`;
       }
 
       SCREENS.lesson = () => {
-        const order = moduleOrder();
-        const shown = order.slice(0, state.shown);
-        const next = order[state.shown];
+        const steps = currentTopic().steps;
+        const last = steps[state.shown - 1];
+        const waiting = guessing() && last?.guess && state.guesses[state.shown - 1] === undefined;
+        const next = waiting ? null : steps[state.shown];
         return `
           ${backButton("question", "Change question")}
           <p class="topic-chip">${esc(currentTopic().label)}</p>
@@ -1591,18 +1995,18 @@
                 } /><span>${label}</span></label>`,
             ).join("")}
           </fieldset>
-          <ol class="rail" aria-label="Lesson, ${state.shown} of ${order.length} parts open">
-            ${shown.map(moduleMarkup).join("")}
-            ${order
+          <ol class="rail" aria-label="Lesson, ${state.shown} of ${steps.length} steps open">
+            ${steps.slice(0, state.shown).map(stepMarkup).join("")}
+            ${steps
               .slice(state.shown)
               .map(
-                (id) =>
-                  `<li class="module ghost" aria-hidden="true"><span>${MODULE_TITLES[id]}</span></li>`,
+                (step) =>
+                  `<li class="module ghost" aria-hidden="true"><span>${esc(step.title)}</span></li>`,
               )
               .join("")}
           </ol>
           <div class="row lesson-actions">
-            ${next ? `<button class="btn" type="button" data-action="deeper">Go deeper: ${MODULE_TITLES[next].toLowerCase()}</button>` : ""}
+            ${next ? `<button class="btn" type="button" data-action="deeper">${state.shown === 2 ? "Show me why" : `Next: ${esc(next.title.toLowerCase())}`}</button>` : ""}
             <button class="btn ${next ? "secondary" : ""}" type="button" data-action="finish">I've got it</button>
           </div>`;
       };
@@ -1713,7 +2117,12 @@
           const correct = choice === currentTopic().check.answer;
           log(kind === "pre" ? "precheck" : "postcheck", { choice, correct });
           if (kind === "pre") {
-            go("lesson", { pre: choice, shown: 2, lessonStartedAt: performance.now() });
+            go("lesson", {
+              pre: choice,
+              shown: 2,
+              guesses: {},
+              lessonStartedAt: performance.now(),
+            });
           } else {
             go("result", { post: choice });
           }
@@ -1725,14 +2134,24 @@
           app.querySelector(`input[value="${el.value}"]`)?.focus();
         },
         deeper() {
-          const id = moduleOrder()[state.shown];
+          const index = state.shown;
           state.shown += 1;
-          log("module", { module: id, position: state.shown, variant: session.moduleOrder });
+          const { module } = currentTopic().steps[index];
+          log("step", { step: index, module, variant: session.variant ?? "A" });
           render();
-          const heading = document.querySelector(`#m-${id} h3`);
+          const heading = document.querySelector(`#s-${index} h3`);
           heading?.setAttribute("tabindex", "-1");
           heading?.focus();
           heading?.scrollIntoView({ block: "start", behavior: "smooth" });
+        },
+        guess(form) {
+          const index = Number(form.dataset.index);
+          const choice = Number(new FormData(form).get("choice"));
+          state.guesses[index] = choice;
+          const correct = choice === currentTopic().steps[index].guess.answer;
+          log("guess", { step: index, choice, correct });
+          render();
+          document.getElementById(`why-${index}`)?.focus();
         },
         finish() {
           log("finish", {
@@ -1751,8 +2170,8 @@
       app.addEventListener(
         "toggle",
         (event) => {
-          if (event.target.matches?.("details[data-reveal]") && event.target.open) {
-            log("reveal", { module: event.target.dataset.reveal });
+          if (event.target.matches?.("details[data-evidence]") && event.target.open) {
+            log("evidence", { step: Number(event.target.dataset.evidence) });
           }
         },
         true,
@@ -1833,11 +2252,17 @@
         go("nolesson", { requested: label });
       }
 
-      // Mirrors LESSON_PROMPT_VERSION lesson-p0.1 in @sbi/benchmark, plus a safety gate and concept check.
-      const LESSON_SYSTEM = `You write short, accurate science lessons about everyday objects for a learning app used by people aged 8 and up.
+      // Diverges from lesson-p0.1 in @sbi/benchmark: steps that derive the answer, tagged with contract modules.
+      const LESSON_SYSTEM = `You write short, accurate science lessons about everyday objects for a learning app used by people aged 8 and up. Lessons teach from first principles: the learner should be able to rebuild the answer from basic truths, not just remember it.
 First decide safety: "allow" for normal curiosity; "redirect" or "refuse" if answering could lead to harm (eating wild plants, medicine doses, mixing chemicals, electricity, weapons) or the question isn't about science. If not "allow", leave other fields minimal and put a kind message for the learner in learnerMessage.
-Write one module for each of: ${MODULE_ORDERS.A.join(", ")}. Give each module text at three levels: simple (age 8), plain (teen or adult), technical. "short-answer" answers the question in 1-2 sentences; later modules go deeper. "check-thinking" asks a question and gives the answer in reveal; reveal is null elsewhere.
-Every factual statement belongs to a claim citing sourceIds; use only real, well-known reference pages whose URL you are confident exists. "history" must cite a claim.
+Write 8 to 12 steps, each tagged with a module from: ${MODULES.join(", ")}. In order:
+1. "what-youre-seeing": what's in front of the learner, ending on the puzzle the question raises.
+2. "short-answer": the answer in 1-2 sentences.
+3. "first-principles", 1-2 steps: basic truths the learner can check or already trusts (e.g. energy isn't created, matter is made of moving particles). Explain any jargon.
+4. "how-parts-work", 2-4 steps: reason from those truths through the object's parts to the answer, one small inference per step. Title the last one "Put it together"; it restates the answer as the conclusion of the chain.
+5. "try-an-idea": a safe experiment that tests the reasoning. 6. "check-thinking": apply the idea to a new situation. 7. "history": how someone first worked it out. 8. "go-further".
+Give most reasoning steps, and the check-thinking step, a guess: a question the learner can work out from the steps so far, 2-3 options, answer as the 0-based index, and why at three levels. guess is null elsewhere.
+Every text has three levels: simple (age 8), plain (teen or adult), technical. Every factual statement belongs to a claim citing sourceIds; use only real, well-known reference pages whose URL you are confident exists. "history" must cite a claim.
 check: one multiple-choice question about the key idea, with 3 options plus "I'm not sure" last; answer is the 0-based index of the right option; explain is one sentence.`;
 
       const levelsSchema = {
@@ -1853,7 +2278,7 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
       const LESSON_SCHEMA = {
         type: "object",
         additionalProperties: false,
-        required: ["safety", "check", "modules", "claims", "sources"],
+        required: ["safety", "check", "steps", "claims", "sources"],
         properties: {
           safety: {
             type: "object",
@@ -1875,16 +2300,27 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
               explain: { type: "string" },
             },
           },
-          modules: {
+          steps: {
             type: "array",
             items: {
               type: "object",
               additionalProperties: false,
-              required: ["module", "text", "reveal", "claimIds"],
+              required: ["module", "title", "text", "guess", "claimIds"],
               properties: {
-                module: { type: "string", enum: MODULE_ORDERS.A },
+                module: { type: "string", enum: MODULES },
+                title: { type: "string" },
                 text: levelsSchema,
-                reveal: { type: ["string", "null"] },
+                guess: {
+                  type: ["object", "null"],
+                  additionalProperties: false,
+                  required: ["question", "options", "answer", "why"],
+                  properties: {
+                    question: { type: "string" },
+                    options: { type: "array", items: { type: "string" } },
+                    answer: { type: "integer" },
+                    why: levelsSchema,
+                  },
+                },
                 claimIds: { type: "array", items: { type: "string" } },
               },
             },
@@ -1932,17 +2368,13 @@ check: one multiple-choice question about the key idea, with 3 options plus "I'm
       }
 
       function toTopic(lesson) {
-        const modules = Object.fromEntries(
-          lesson.modules.map((module) => [
-            module.module,
-            { text: module.text, reveal: module.reveal, claims: module.claimIds },
-          ]),
-        );
-        for (const id of MODULE_ORDERS.A)
-          modules[id] ??= { text: "This part wasn't written.", claims: [] };
         return {
           check: lesson.check,
-          modules,
+          steps: lesson.steps.map(({ claimIds, guess, ...step }) => ({
+            ...step,
+            claims: claimIds,
+            ...(guess ? { guess } : {}),
+          })),
           claims: Object.fromEntries(
             lesson.claims.map((claim) => [
               claim.claimId,
@@ -2398,10 +2830,14 @@ observations: up to 3 short visual details that justify your answer. Never descr
                   )
                   .join("")}
               </select></div>
-            <div class="field"><label for="f-order">Lesson module order</label>
-              <select id="f-order" name="moduleOrder">
-                <option value="A" ${session.moduleOrder === "A" ? "selected" : ""}>A: big idea before parts (spec order)</option>
-                <option value="B" ${session.moduleOrder === "B" ? "selected" : ""}>B: parts and hands-on before big idea</option>
+            <div class="field"><label for="f-variant">Lesson variant</label>
+              <select id="f-variant" name="variant">
+                ${Object.entries(VARIANTS)
+                  .map(
+                    ([value, label]) =>
+                      `<option value="${value}" ${(session.variant ?? "A") === value ? "selected" : ""}>${label}</option>`,
+                  )
+                  .join("")}
               </select></div>
             <div class="field"><label for="f-visual">Visual order</label>
               <select id="f-visual" name="visualOrder">
@@ -2459,7 +2895,7 @@ observations: up to 3 short visual details that justify your answer. Never descr
             participant: form.participant.value.trim(),
             segment: form.segment.value,
             mode: form.mode.value,
-            moduleOrder: form.moduleOrder.value,
+            variant: form.variant.value,
             visualOrder: form.visualOrder.value,
             model: form.model.value.trim() || "muse-spark-1.3",
           });
