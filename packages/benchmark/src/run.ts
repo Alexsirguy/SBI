@@ -9,6 +9,7 @@ import {
   scoreLesson,
   type LessonScore,
 } from "./tasks/lesson";
+import type { GuessJudgement } from "./tasks/guess-judge";
 import { scoreRecognition, type RecognitionScore } from "./tasks/recognition";
 import {
   classifySafety,
@@ -32,12 +33,15 @@ export interface RunRecord {
   costUsd: number;
   score?: RecognitionScore | LessonScore | SafetyScore;
   output?: unknown;
+  /** Added by the judge script, not by the run itself. */
+  judge?: GuessJudgement;
 }
 
 export interface BenchmarkRun {
   runAt: string;
   seedVersion: string;
   promptVersions: Record<TaskName, string>;
+  judgedWith?: { provider: string; model: string; promptVersion: string };
   providers: { id: string; vendor: string; model: string }[];
   records: RunRecord[];
 }

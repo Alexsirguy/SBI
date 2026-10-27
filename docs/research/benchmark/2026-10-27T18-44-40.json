@@ -236,6 +236,11 @@
             "url": "https://www.britannica.com/topic/bicycle-vehicle"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -466,6 +471,11 @@
             "url": "https://www.britannica.com/science/conservation-of-energy"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -726,6 +736,17 @@
             "url": "https://www.britannica.com/biography/Joseph-Black"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 4,
+        "problems": [
+          {
+            "step": "Why pasta makes it bubble wilder",
+            "question": "You boil pasta and drop in dry pasta. Bubbles furiously form on the pasta. Why?",
+            "problem": "The marked answer is not the correct explanation for why bubbles form on the pasta."
+          }
+        ]
       }
     },
     {
@@ -950,6 +971,11 @@
             "url": "https://www.usgs.gov/special-topics/water-science-school"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -1173,6 +1199,11 @@
             "url": "https://www.britannica.com/science/optics"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -1420,6 +1451,11 @@
             "url": "https://www.britannica.com/biography/Galileo-Galilei"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -1674,6 +1710,11 @@
             "url": "https://en.wikipedia.org/wiki/Magnet"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -1903,6 +1944,11 @@
             "url": "https://www.britannica.com/biography/Galileo-Galilei"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -2130,6 +2176,17 @@
             "sourceId": "s-conjecture",
             "title": "Honeycomb conjecture - Wikipedia",
             "url": "https://en.wikipedia.org/wiki/Honeycomb_conjecture"
+          }
+        ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 5,
+        "problems": [
+          {
+            "step": "Wax is bee money",
+            "question": "Bees sweat wax from their bodies. Do you think wax is cheap or costly for a bee?",
+            "problem": "The marked answer is wrong; wax is costly for a bee."
           }
         ]
       }
@@ -2379,6 +2436,11 @@
             "url": "https://en.wikipedia.org/wiki/Wilhelm_Hofmeister"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -2629,6 +2691,11 @@
             "url": "https://en.wikipedia.org/wiki/Conifer_cone"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -2846,6 +2913,11 @@
             "url": "https://www.britannica.com/sports/football-soccer"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -3086,6 +3158,11 @@
             "url": "https://en.wikipedia.org/wiki/Law_of_large_numbers"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -3323,6 +3400,11 @@
             "url": "https://en.wikipedia.org/wiki/Snowflake"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -3580,6 +3662,11 @@
             "url": "https://en.wikipedia.org/wiki/Jakob_Bernoulli"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -3812,6 +3899,11 @@
             "url": "https://www.britannica.com/science/chlorophyll-chemical-compound"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -4065,6 +4157,11 @@
             "url": "https://www.britannica.com/science/law-of-conservation-of-mass"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -4296,6 +4393,11 @@
             "url": "https://en.wikipedia.org/wiki/Waggle_dance"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -4556,6 +4658,17 @@
             "url": "https://en.wikipedia.org/wiki/Ripening"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 5,
+        "problems": [
+          {
+            "step": "Picked fruit still listens",
+            "question": "A picked banana still turns from green to yellow to brown. Which is it more like?",
+            "problem": "The marked answer is incorrect; a picked banana is more like a living thing that can change after picking."
+          }
+        ]
       }
     },
     {
@@ -4804,6 +4917,11 @@
             "url": "https://www.britannica.com/plant/succulent"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -5048,6 +5166,11 @@
             "url": "https://www.britannica.com/biography/William-Harvey"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -5281,6 +5404,11 @@
             "url": "https://www.britannica.com/science/oxygen"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -5517,6 +5645,11 @@
             "url": "https://www.gutenberg.org/files/14474/14474-h/14474-h.htm"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -5737,6 +5870,22 @@
             "sourceId": "s-archimedes",
             "title": "Britannica: Archimedes principle",
             "url": "https://www.britannica.com/science/Archimedes-principle"
+          }
+        ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 3,
+        "problems": [
+          {
+            "step": "Tiny water pieces",
+            "question": "What is a molecule like in water?",
+            "problem": "The marked answer is incorrect."
+          },
+          {
+            "step": "What if ice was heavy?",
+            "question": "Most things shrink and get heavier-for-size when frozen. If water acted like that, what would ice do?",
+            "problem": "The marked answer is incorrect."
           }
         ]
       }
@@ -5964,6 +6113,11 @@
             "url": "https://www.britannica.com/science/molecule"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -6216,6 +6370,11 @@
             "url": "https://www.britannica.com/science/Braggs-law"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -6449,6 +6608,11 @@
             "url": "https://www.britannica.com/science/enzyme"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -6712,6 +6876,11 @@
             "url": "https://en.wikipedia.org/wiki/Light"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -6952,6 +7121,11 @@
             "url": "https://www.physicsclassroom.com/class/newtlaws/Lesson-1/Newton-s-First-Law"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -7197,6 +7371,11 @@
             "url": "https://www.britannica.com/technology/glass"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -7428,6 +7607,11 @@
             "url": "https://en.wikipedia.org/wiki/Primary_color"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -7646,6 +7830,11 @@
             "url": "https://www.britannica.com/science/sound-physics"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -7877,6 +8066,11 @@
             "url": "https://en.wikipedia.org/wiki/Ceramic"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -8089,6 +8283,11 @@
             "url": "https://www.tate.org.uk/art/artists/wassily-kandinsky-1382"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -8365,6 +8564,11 @@
             "url": "https://openstax.org/books/college-physics/pages/9-introduction"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -8585,6 +8789,11 @@
             "url": "https://www.britannica.com/technology/bicycle"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -8851,6 +9060,11 @@
             "url": "https://www.britannica.com/biography/Joseph-Black"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -9185,6 +9399,11 @@
             "url": "https://www.britannica.com/technology/electric-kettle"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -9442,6 +9661,11 @@
             "url": "https://www.britannica.com/science/optics"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -9789,6 +10013,11 @@
             "url": "https://www.britannica.com/biography/Christiaan-Huygens"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -10081,6 +10310,11 @@
             "url": "https://www.ncei.noaa.gov/products/geomagnetic/magnetic-north"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -10344,6 +10578,11 @@
             "url": "https://www.britannica.com/biography/Galileo-Galilei"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -10636,6 +10875,11 @@
             "url": "https://mathworld.wolfram.com/HoneycombConjecture.html"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -10890,6 +11134,11 @@
             "url": "https://www.smithsonianmag.com/science-nature/why-do-sunflowers-have-spiral-patterns-1177349/"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -11263,6 +11512,11 @@
             "url": "https://www.britannica.com/biography/Alexander-Braun"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -11512,6 +11766,11 @@
             "url": "https://www.fifa.com/"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -11763,6 +12022,11 @@
             "url": "https://www.britannica.com/topic/gamblers-fallacy"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -12003,6 +12267,11 @@
             "url": "https://www.merriam-webster.com/dictionary/hexagonal"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -12248,6 +12517,11 @@
             "url": "https://www.britannica.com/biography/DArcy-Wentworth-Thompson"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -12551,6 +12825,11 @@
             "url": "https://www.britannica.com/biography/Jan-Ingenhousz"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -12916,6 +13195,11 @@
             "url": "https://www.britannica.com/science/photosynthesis"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -13239,6 +13523,11 @@
             "url": "https://www.britannica.com/biography/Karl-von-Frisch"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -13531,6 +13820,11 @@
             "url": "https://www.khanacademy.org/science/biology/chemistry--of-life/enzyme-regulation/a/intro-to-enzymes"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -13809,6 +14103,11 @@
             "url": "https://www.britannica.com/science/CAM-photosynthesis"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -14088,6 +14387,11 @@
             "url": "https://www.britannica.com/biography/William-Harvey"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -14417,6 +14721,11 @@
             "url": "https://www.britannica.com/science/tarnish"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -14683,6 +14992,11 @@
             "url": "https://www.gutenberg.org/ebooks/14474"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -15010,6 +15324,11 @@
             "url": "https://www.usgs.gov/special-topics/water-science-school/science/salinity-and-density"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -15285,6 +15604,11 @@
             "url": "https://www.britannica.com/science/water"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -15674,6 +15998,11 @@
             "url": "https://www.britannica.com/science/crystal-structure"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -16028,6 +16357,11 @@
             "url": "https://extension.oregonstate.edu/food/preservation/preventing-fruit-browning"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -16362,6 +16696,11 @@
             "url": "https://www.britannica.com/science/interference-of-light"
           }
         ]
+      },
+      "judge": {
+        "checked": 4,
+        "fits": 4,
+        "problems": []
       }
     },
     {
@@ -16629,6 +16968,11 @@
             "url": "https://openstax.org/books/college-physics/pages/17-1-sound-intensity-and-sound-level"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -16893,6 +17237,11 @@
             "url": "https://www.metmuseum.org/toah/hd/glas/hd_glas.htm"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -17159,6 +17508,11 @@
             "url": "https://www.britannica.com/science/visible-spectrum"
           }
         ]
+      },
+      "judge": {
+        "checked": 6,
+        "fits": 6,
+        "problems": []
       }
     },
     {
@@ -17470,6 +17824,11 @@
             "url": "https://www.britannica.com/biography/Lord-Rayleigh"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -17814,6 +18173,11 @@
             "url": "https://www.metmuseum.org/toah/hd/potw/hd_potw.htm"
           }
         ]
+      },
+      "judge": {
+        "checked": 5,
+        "fits": 5,
+        "problems": []
       }
     },
     {
@@ -18088,6 +18452,11 @@
             "url": "https://www.metmuseum.org/toah/hd/kand/hd_kand.htm"
           }
         ]
+      },
+      "judge": {
+        "checked": 3,
+        "fits": 3,
+        "problems": []
       }
     }
   ],
@@ -18102,6 +18471,7 @@
         "allEightModules": 1,
         "citationsResolve": 1,
         "derivesAnswer": 1,
+        "guessesFit": 0.974,
         "threePlusGuesses": 1
       },
       "latencyP50Ms": 16950,
@@ -18118,11 +18488,17 @@
         "allEightModules": 1,
         "citationsResolve": 1,
         "derivesAnswer": 0.941,
+        "guessesFit": 1,
         "threePlusGuesses": 1
       },
       "latencyP50Ms": 12933,
       "latencyP95Ms": 17057,
       "costUsd": 0.4061
     }
-  ]
+  ],
+  "judgedWith": {
+    "provider": "openai-mini",
+    "model": "gpt-5.4-mini",
+    "promptVersion": "guess-judge-p0.2"
+  }
 }

@@ -14,7 +14,8 @@
     "seed:fetch": "tsx scripts/fetch-images.ts",
     "bench": "tsx scripts/bench.ts",
     "spikes": "tsx scripts/spikes.ts",
-    "rescore": "tsx scripts/rescore.ts"
+    "rescore": "tsx scripts/rescore.ts",
+    "judge": "tsx scripts/judge.ts"
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",
