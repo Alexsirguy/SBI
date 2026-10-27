@@ -1,0 +1,97 @@
+{
+  "topics": [
+    {
+      "topic": "bicycle gearing",
+      "claims": [
+        {
+          "claimId": "b2",
+          "text": "The rear wheel turns (chainring teeth ÷ cog teeth) times per pedal revolution.",
+          "source": "Bicycle gearing",
+          "terms": ["ratio", "teeth"]
+        },
+        {
+          "claimId": "b5",
+          "text": "A derailleur moves the chain from one sprocket to another.",
+          "source": "Derailleur",
+          "terms": ["chain", "sprocket"]
+        },
+        {
+          "claimId": "b6",
+          "text": "Penny-farthings had their pedals attached directly to a large front wheel.",
+          "source": "Penny-farthing",
+          "terms": ["pedals", "front wheel"]
+        },
+        {
+          "claimId": "b7",
+          "text": "John Kemp Starley's Rover of 1885 is widely regarded as the first successful chain-driven safety bicycle.",
+          "source": "Safety bicycle",
+          "terms": ["Rover", "1885", "Starley"]
+        }
+      ]
+    },
+    {
+      "topic": "boiling water",
+      "claims": [
+        {
+          "claimId": "k4",
+          "text": "Near the summit of Mount Everest, water boils at roughly 70 °C.",
+          "source": "Boiling point",
+          "terms": ["Everest", "71"]
+        },
+        {
+          "claimId": "k5",
+          "text": "Turning water into vapour at its boiling point takes about 2,260 kJ of energy per kilogram.",
+          "source": "Enthalpy of vaporization",
+          "terms": ["2257"]
+        },
+        {
+          "claimId": "k7",
+          "text": "Many electric kettles switch off using a bimetallic thermostat that senses steam.",
+          "source": "Kettle",
+          "terms": ["bimetallic strip", "steam"]
+        },
+        {
+          "claimId": "k8",
+          "text": "The Russell Hobbs K1 of 1955 is credited as the first automatic electric kettle.",
+          "source": "Russell Hobbs",
+          "terms": ["K1", "1955"]
+        },
+        {
+          "claimId": "control-1",
+          "text": "Control (false): the first automatic kettle was released in 1925.",
+          "source": "Russell Hobbs",
+          "terms": ["first automatic kettle in 1925"]
+        }
+      ]
+    },
+    {
+      "topic": "photosynthesis",
+      "claims": [
+        {
+          "claimId": "l4",
+          "text": "Photosynthesis turns carbon dioxide and water into sugar and oxygen using light.",
+          "source": "Photosynthesis",
+          "terms": ["carbon dioxide", "oxygen", "glucose"]
+        },
+        {
+          "claimId": "l6",
+          "text": "Chlorophyll absorbs mainly blue and red light and reflects green light.",
+          "source": "Chlorophyll",
+          "terms": ["blue", "red", "green"]
+        },
+        {
+          "claimId": "l7",
+          "text": "In van Helmont's willow experiment the tree gained about 74 kg over five years while the soil lost about 57 g.",
+          "source": "Jan Baptist van Helmont",
+          "terms": ["willow", "74", "57 grams"]
+        },
+        {
+          "claimId": "l9",
+          "text": "Priestley (1771) found plants restore air used up by a candle, and Ingenhousz (1779) found this needs light.",
+          "source": "Photosynthesis",
+          "terms": ["Priestley", "1771", "Ingenhousz", "1779"]
+        }
+      ]
+    }
+  ]
+}
