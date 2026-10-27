@@ -41,6 +41,8 @@ If generation fails, the orchestrator returns a category-level cached lesson or 
 
 Rules 1 and 2 are enforced by `local/no-cross-package-internals`; package `exports` maps also block deep imports at resolution time.
 
+Contract changes follow [contracts-versioning.md](contracts-versioning.md).
+
 ## Decisions
 
 Significant decisions are recorded as ADRs in [`docs/adr`](adr). Copy `0000-template.md`, take the next number, and link the issue.

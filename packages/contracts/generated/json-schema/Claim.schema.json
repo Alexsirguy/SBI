@@ -1,0 +1,66 @@
+{
+  "$id": "Claim.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "claimId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "supported",
+        "qualified",
+        "disputed",
+        "unsupported"
+      ]
+    },
+    "sourceIds": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+      }
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "uncertainty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dependsOn": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+      }
+    }
+  },
+  "required": [
+    "claimId",
+    "text",
+    "status",
+    "sourceIds",
+    "scope",
+    "confidence",
+    "dependsOn"
+  ],
+  "additionalProperties": false
+}

@@ -38,6 +38,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm --filter @sbi/contracts generate:check
       - run: pnpm build
 
   e2e:

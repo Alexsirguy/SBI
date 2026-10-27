@@ -1,0 +1,130 @@
+{
+  "$id": "EvidenceSource.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "sourceId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authors": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "doi": {
+      "type": "string",
+      "pattern": "^10\\.\\d{4,9}\\/\\S+$"
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": [
+        "textbook",
+        "institution",
+        "standard",
+        "peer-reviewed",
+        "encyclopedia",
+        "reference",
+        "media",
+        "other"
+      ]
+    },
+    "publishedOn": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "accessedOn": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "excerpts": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "excerptId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "excerptId",
+          "location",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "claimIds": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+      }
+    },
+    "evidenceQuality": {
+      "type": "string",
+      "enum": [
+        "high",
+        "moderate",
+        "low"
+      ]
+    },
+    "rightsStatus": {
+      "type": "string",
+      "enum": [
+        "reusable",
+        "quote-only",
+        "link-only",
+        "restricted",
+        "unknown"
+      ]
+    },
+    "lastCheckedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    }
+  },
+  "required": [
+    "sourceId",
+    "title",
+    "authors",
+    "sourceType",
+    "accessedOn",
+    "excerpts",
+    "claimIds",
+    "evidenceQuality",
+    "rightsStatus",
+    "lastCheckedAt"
+  ],
+  "additionalProperties": false
+}
