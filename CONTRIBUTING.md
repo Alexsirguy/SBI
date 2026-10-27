@@ -45,3 +45,11 @@ Enforced by `local/max-comment-lines` in `@sbi/config`.
 ## Environment
 
 Node 22 (`nvm use`) and pnpm 10 (`corepack enable`).
+
+## Branch protection for `main`
+
+Configure in GitHub → Settings → Branches (rulesets require a paid plan on private repos):
+
+- Require a pull request before merging, with at least one approval.
+- Require the `Lint, typecheck, test, build` status check to pass, and branches to be up to date.
+- Block force pushes and deletion.
