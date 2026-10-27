@@ -1,0 +1,105 @@
+{
+  "lessonId": "kettle_heat_transfer_v1",
+  "version": 1,
+  "taxonomyId": "household.kitchen.kettle",
+  "title": "Why a kettle boils water",
+  "locale": "en",
+  "audience": ["general", "teen"],
+  "readingLevel": "plain",
+  "summary": "An electric kettle turns electrical energy into heat at its base; the heat spreads through the water by conduction and convection until it boils.",
+  "learningObjectives": ["Explain how heat moves from the element into the water"],
+  "assumptions": ["Typical electric kettle; internal design varies"],
+  "concepts": [
+    {
+      "conceptId": "energy-transfer",
+      "label": "Energy transfer"
+    },
+    {
+      "conceptId": "convection",
+      "label": "Convection",
+      "prerequisites": ["energy-transfer"]
+    }
+  ],
+  "misconceptionNotes": ["Bubbles before boiling are often dissolved air, not steam."],
+  "sections": [
+    {
+      "sectionId": "seeing",
+      "module": "what-youre-seeing",
+      "text": "A kettle with a base and a spout; we assume an electric element.",
+      "claimIds": ["c9"]
+    },
+    {
+      "sectionId": "principles",
+      "module": "first-principles",
+      "text": "Energy moves from hotter to cooler places.",
+      "claimIds": ["c1"]
+    },
+    {
+      "sectionId": "history",
+      "module": "history",
+      "text": "Electric kettles became common in the 20th century.",
+      "claimIds": ["c3"]
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "c1",
+      "text": "The element converts electrical energy into thermal energy.",
+      "status": "supported",
+      "sourceIds": ["s1"],
+      "scope": "typical electric kettle",
+      "confidence": "high"
+    },
+    {
+      "claimId": "c2",
+      "text": "Heated water rises, forming convection currents.",
+      "status": "supported",
+      "sourceIds": ["s1", "s2"],
+      "scope": "general",
+      "confidence": "high",
+      "dependsOn": ["c1"]
+    },
+    {
+      "claimId": "c3",
+      "text": "Electric kettles spread widely during the 20th century.",
+      "status": "qualified",
+      "sourceIds": ["s3"],
+      "scope": "varies by country",
+      "confidence": "medium"
+    },
+    {
+      "claimId": "c9",
+      "text": "The element type is not visible in the photo.",
+      "status": "unsupported",
+      "scope": "this photo",
+      "confidence": "low",
+      "uncertainty": "Concealed and exposed elements look similar from outside."
+    }
+  ],
+  "visuals": [
+    {
+      "visualId": "kettle_heat_v1",
+      "kind": "svg-diagram",
+      "manifestUri": "/visuals/kettle_heat_v1.json",
+      "alt": "Diagram of convection currents inside a kettle."
+    }
+  ],
+  "safetyClass": "low",
+  "reviewStatus": "approved",
+  "reviewedAt": "2026-10-01T10:00:00Z",
+  "reviewedBy": "science-editor",
+  "reuse": {
+    "intentSignature": "why-boil|household.kitchen.kettle|explore|en|low",
+    "matchDimensions": ["intent", "depth", "locale", "safety"],
+    "cacheScope": "shared",
+    "generatedAt": "2026-09-30T12:00:00Z",
+    "validatedAt": "2026-10-01T10:00:00Z",
+    "evidenceSnapshotId": "snap-2026-09-30",
+    "sourceFreshness": "fresh",
+    "modelVersion": "model-2026-09",
+    "promptVersion": "lesson-v3",
+    "policyVersion": "policy-v1",
+    "reuseCount": 4,
+    "contentHash": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}
