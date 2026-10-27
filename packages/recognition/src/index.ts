@@ -1,3 +1,4 @@
+export type { RecognitionResultRepository } from "./recognition-result-repository";
 export {
   createVisionLlmRecogniser,
   RawCandidate,

@@ -2,6 +2,7 @@ import {
   Lesson,
   LessonModule,
   lessonContentHash,
+  newId,
   type AudienceBand,
   type ReadingLevel,
 } from "@sbi/contracts";
@@ -123,8 +124,11 @@ export async function draftToLesson(
   prompt: SeedPrompt,
   meta: { provider: string; model: string; generatedAt: string },
 ): Promise<unknown> {
+  // Models write readable ids; the contract wants UUIDs, so map each one consistently.
+  const uuids = new Map<string, string>();
+  const uuidFor = (id: string) => uuids.get(id) ?? uuids.set(id, newId()).get(id) ?? "";
   const lesson = {
-    lessonId: `${prompt.id}-${meta.provider}`,
+    lessonId: newId(),
     version: 1,
     taxonomyId: prompt.taxonomyId,
     title: draft.title,
@@ -136,9 +140,15 @@ export async function draftToLesson(
     assumptions: [],
     concepts: draft.concepts.map((concept) => ({ ...concept, prerequisites: [] })),
     misconceptionNotes: draft.misconceptionNotes,
-    sections: draft.sections.map((section, index) => ({ sectionId: `s${index + 1}`, ...section })),
-    claims: draft.claims.map(({ uncertainty, ...claim }) => ({
+    sections: draft.sections.map((section, index) => ({
+      sectionId: `s${index + 1}`,
+      ...section,
+      claimIds: section.claimIds.map(uuidFor),
+    })),
+    claims: draft.claims.map(({ uncertainty, claimId, sourceIds, ...claim }) => ({
       ...claim,
+      claimId: uuidFor(claimId),
+      sourceIds: sourceIds.map((id) => uuidFor(`source:${id}`)),
       scope: prompt.label,
       dependsOn: [],
       ...(uncertainty ? { uncertainty } : {}),
@@ -150,7 +160,7 @@ export async function draftToLesson(
       intentSignature: `${prompt.taxonomyId}:${prompt.id}`,
       cacheScope: "private",
       generatedAt: meta.generatedAt,
-      evidenceSnapshotId: "benchmark",
+      evidenceSnapshotId: newId(),
       sourceFreshness: "unknown",
       modelVersion: meta.model,
       promptVersion: LESSON_PROMPT_VERSION,

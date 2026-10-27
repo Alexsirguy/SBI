@@ -1,4 +1,4 @@
-import { Claim, EvidenceSource } from "@sbi/contracts";
+import { Claim, EvidenceSource, newId } from "@sbi/contracts";
 import { z } from "zod";
 
 export const EvidenceFixture = z.object({
@@ -79,7 +79,8 @@ export async function runEvidenceSpike(
     for (const claim of topic.claims) {
       const text = await fetchArticle(claim.source);
       const excerpt = supportingExcerpt(text, claim.terms);
-      const sourceId = `wp-${claim.source.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+      const sourceId = newId();
+      const recordId = newId();
       const source = EvidenceSource.safeParse({
         sourceId,
         title: claim.source,
@@ -94,13 +95,13 @@ export async function runEvidenceSpike(
             text: excerpt ?? "(no supporting text found)",
           },
         ],
-        claimIds: [claim.claimId],
+        claimIds: [recordId],
         evidenceQuality: "moderate",
         rightsStatus: "quote-only",
         lastCheckedAt: now.toISOString(),
       });
       const record = Claim.safeParse({
-        claimId: claim.claimId,
+        claimId: recordId,
         text: claim.text,
         status: excerpt ? "supported" : "unsupported",
         sourceIds: excerpt ? [sourceId] : [],

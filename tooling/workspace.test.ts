@@ -9,6 +9,7 @@ const MODULES = [
   "benchmark",
   "config",
   "contracts",
+  "db",
   "env",
   "evidence",
   "llm",

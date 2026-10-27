@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, IsoDate, Sha256 } from "./common";
+import { IsoDate, Sha256, Uuid } from "./common";
 
 export const License = z.object({
   id: z.string().min(1),
@@ -12,7 +12,7 @@ export const VisualAssetKind = z.enum(["renderer", "model", "repository", "simul
 // Code licenses never grant rights to models or media, so the two are recorded separately.
 export const VisualAsset = z
   .object({
-    assetId: Id,
+    assetId: Uuid,
     kind: VisualAssetKind,
     sourceUrl: z.url(),
     creator: z.string().min(1),
@@ -28,7 +28,7 @@ export const VisualAsset = z
     accessibilityFallback: z.string().min(1),
     reviewOwner: z.string().min(1),
     reviewDueOn: IsoDate.optional(),
-    approvedLessonIds: z.array(Id).default([]),
+    approvedLessonIds: z.array(Uuid).default([]),
   })
   .refine((asset) => asset.softwareLicense !== undefined || asset.assetLicense !== undefined, {
     message: "Record a software or asset license",
@@ -53,18 +53,18 @@ export const VisualFallback = z.object({
 });
 
 export const VisualManifest = z.object({
-  visualId: Id,
+  visualId: Uuid,
   kind: VisualKind,
   alt: z.string().min(1),
   longDescription: z.string().min(1).optional(),
   fallback: VisualFallback,
-  assetIds: z.array(Id).default([]),
+  assetIds: z.array(Uuid).default([]),
   assumptions: z.array(z.string().min(1)).default([]),
   params: z.record(z.string(), z.unknown()).default({}),
 });
 
 export const VisualRef = z.object({
-  visualId: Id,
+  visualId: Uuid,
   kind: VisualKind,
   manifestUri: z.string().min(1),
   alt: z.string().min(1),
