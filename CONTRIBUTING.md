@@ -29,6 +29,13 @@ Enforced by `local/max-comment-lines` in `@sbi/config`.
 - New behaviour ships with tests next to the code (`*.test.ts`).
 - ⚙️ Before pushing: `pnpm lint && pnpm typecheck && pnpm test && pnpm format:check`.
 
+## Testing
+
+- Unit tests live next to the code as `src/**/*.test.ts`; every package runs them with the shared Vitest config (`@sbi/config/vitest`).
+- Contract fixtures: put `valid/*.json` and `invalid/*.json` in a fixture folder and call `describeContract(name, schema, dir)` from `@sbi/testing`.
+- End-to-end tests live in `apps/web/e2e` (Playwright) and include an axe accessibility check for each page.
+- `pnpm test:coverage` reports coverage; `pnpm test:e2e` builds the web app and runs Playwright.
+
 ## Product guardrails
 
 - Never log or send photos, faces, precise location or raw tutor text to logs or analytics.
