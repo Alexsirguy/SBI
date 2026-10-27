@@ -31,6 +31,8 @@ Each run writes three files here:
 - `<timestamp>.md`: summary tables
 - `<timestamp>-rubric.csv`: one row per lesson, to score accuracy, age fit and misconception handling by hand.
 
+After a scorer fix, `pnpm --filter @sbi/benchmark rescore <path to run>.json` re-scores the stored outputs without new API calls.
+
 Commit all three, then update [ADR 0006](../../adr/0006-recognition-llm-vendors.md).
 
 A full run makes 38 recognition, 34 lesson and 40 safety calls per provider, a few dollars in total at list prices.

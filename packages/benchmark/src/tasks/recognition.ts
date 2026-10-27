@@ -3,6 +3,8 @@ import { labelMatches } from "../match";
 import type { SeedPrompt } from "../seed-set";
 
 export interface RecognitionScore {
+  // Unsupported photos have no right label, so they count only towards status accuracy.
+  labelExpected: boolean;
   top1: boolean;
   top3: boolean;
   statusCorrect: boolean;
@@ -23,6 +25,7 @@ export function scoreRecognition(
         ? outcome.status === "ambiguous" || top?.certainty !== "likely"
         : outcome.status === "unsupported";
   return {
+    labelExpected: expected === "confident" || expected === "ambiguous",
     top1: labels.length > 0 && labelMatches(labels[0] ?? "", prompt),
     top3: labels.some((label) => labelMatches(label, prompt)),
     statusCorrect,
