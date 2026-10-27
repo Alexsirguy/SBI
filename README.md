@@ -4,15 +4,23 @@ Photo-to-learning app: photograph an everyday object, confirm what it is, and ex
 
 ## Quick start
 
-Requires Node 22 (`nvm use`) and pnpm 10 (`corepack enable`).
+Requires Node 22 (`nvm use`), pnpm 10 (`corepack enable`) and Docker.
 
 ```sh
 pnpm install
-pnpm dev        # web on :3000, api on :4000
-pnpm test       # package tests + workspace layout checks
-pnpm typecheck
-pnpm build
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
+docker compose up -d   # MariaDB :3306, S3-compatible storage :8333
+pnpm dev               # web :3000, api :4000
 ```
+
+Check everything before pushing:
+
+```sh
+pnpm lint && pnpm typecheck && pnpm test && pnpm format:check
+```
+
+Feature flags are comma lists in `FEATURE_FLAGS` (api) and `NEXT_PUBLIC_FEATURE_FLAGS` (web), e.g. `tutor,!visualLab`. Defaults live in `@sbi/env`.
 
 ## Layout
 
@@ -33,6 +41,7 @@ pnpm build
 | `packages/tutor`        | Lesson-grounded tutor                                                   |
 | `packages/analytics`    | Privacy-safe analytics events                                           |
 | `packages/ui`           | Shared accessible React components                                      |
+| `packages/env`          | Typed environment loading and feature flags                             |
 | `packages/config`       | Shared TypeScript/lint configuration                                    |
 
 Each package exposes one public entry, `src/index.ts`. Import packages only through `@sbi/<name>`, never their internals.

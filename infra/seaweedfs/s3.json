@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "sbi-local",
+      "credentials": [{ "accessKey": "sbi", "secretKey": "sbi-local-secret" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

@@ -25,6 +25,7 @@ Enforced by `local/max-comment-lines` in `@sbi/config`.
 
 - TypeScript strict mode; no `any`.
 - Pin exact dependency versions (no `^` or `~`).
+- Relative imports in TypeScript omit the file extension; all code is bundled (Next.js, tsup, Vitest).
 - New behaviour ships with tests next to the code (`*.test.ts`).
 - ⚙️ Before pushing: `pnpm lint && pnpm typecheck && pnpm test && pnpm format:check`.
 
