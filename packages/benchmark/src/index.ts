@@ -4,6 +4,7 @@ export * from "./providers";
 export * from "./report";
 export * from "./run";
 export * from "./seed-set";
+export * from "./tasks/guess-judge";
 export * from "./tasks/lesson";
 export * from "./tasks/recognition";
 export * from "./tasks/safety";

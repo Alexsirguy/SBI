@@ -12,7 +12,7 @@ import type { SeedPrompt } from "../seed-set";
 
 type ReadingLevelValue = z.infer<typeof ReadingLevel>;
 
-export const LESSON_PROMPT_VERSION = "lesson-p0.2";
+export const LESSON_PROMPT_VERSION = "lesson-p0.4";
 
 const DraftClaim = z.object({
   claimId: z.string(),
@@ -51,6 +51,25 @@ export const LessonDraft = z.object({
 
 export type LessonDraft = z.infer<typeof LessonDraft>;
 
+const ModelGuess = z.object({
+  question: z.string(),
+  why: z.string(),
+  correct: z.string(),
+  wrong: z.array(z.string()).min(1),
+});
+
+const ModelDraft = LessonDraft.extend({
+  steps: z.array(LessonDraft.shape.steps.element.extend({ guess: ModelGuess.nullable() })),
+});
+
+// The model names the right answer as text and code places it, because models misnumber indexes.
+export function placeGuess({ question, why, correct, wrong }: z.infer<typeof ModelGuess>) {
+  const answer = question.length % (wrong.length + 1);
+  const options = [...wrong];
+  options.splice(answer, 0, correct);
+  return { question, why, options, answer };
+}
+
 const strictObject = (properties: Record<string, unknown>) => ({
   type: "object",
   additionalProperties: false,
@@ -75,11 +94,12 @@ export const LESSON_DRAFT_SCHEMA = strictObject({
       title: { type: "string" },
       text: { type: "string" },
       guess: {
+        // why comes first so the model settles the answer before writing the choices.
         ...strictObject({
           question: { type: "string" },
-          options: strings,
-          answer: { type: "integer" },
           why: { type: "string" },
+          correct: { type: "string" },
+          wrong: strings,
         }),
         type: ["object", "null"],
       },
@@ -122,7 +142,11 @@ Write 8 to 12 steps, each tagged with a module from: ${LessonModule.options.join
 3. "first-principles", 1-2 steps: basic truths the learner can check or already trusts (e.g. energy isn't created, matter is made of moving particles). Explain any jargon.
 4. "how-parts-work", 2-4 steps: reason from those truths through the object's parts to the answer, one small inference per step. Title the last one "Put it together"; it restates the answer as the conclusion of the chain.
 5. "try-an-idea": a safe experiment that tests the reasoning. 6. "check-thinking": apply the idea to a new situation. 7. "history": how someone first worked it out. 8. "go-further".
-Give most reasoning steps, and the check-thinking step, a guess: a question the learner can work out from the steps so far, 2-3 options, answer as the 0-based index, and why. guess is null elsewhere.
+Give most reasoning steps, and the check-thinking step, a guess: a question the learner can work out from the steps so far. guess is null elsewhere. For each guess, in this order:
+- why: the correct answer and the reason, in one or two sentences.
+- correct: the right answer, as a short answer to that exact question, matching why.
+- wrong: 1-2 tempting wrong answers to the same question.
+Every answer must answer the question directly: if it asks what happens to the plunger, each one says what the plunger does.
 Every factual statement belongs to a claim. Each claim cites sourceIds from your sources list; use only real, well-known reference pages (encyclopedias, textbooks, institutions) whose URL you are confident exists.
 If you are not sure a claim is supported, mark it "qualified" or "unsupported" and explain in uncertainty; otherwise set uncertainty to null.
 The "history" step must cite at least one claim. If the question contains a misconception, correct it kindly and record it in misconceptionNotes.
@@ -144,7 +168,12 @@ export async function generateDraft(llm: LlmProvider, prompt: SeedPrompt) {
     jsonSchema: { name: "LessonDraft", schema: LESSON_DRAFT_SCHEMA },
     maxTokens: 8000,
   });
-  return { completion, draft: LessonDraft.parse(JSON.parse(completion.text)) };
+  const raw = ModelDraft.parse(JSON.parse(completion.text));
+  const draft: LessonDraft = {
+    ...raw,
+    steps: raw.steps.map((step) => ({ ...step, guess: step.guess && placeGuess(step.guess) })),
+  };
+  return { completion, draft };
 }
 
 type DraftStep = LessonDraft["steps"][number];
