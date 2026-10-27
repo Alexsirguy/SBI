@@ -19,6 +19,7 @@ Enforced by `local/max-comment-lines` in `@sbi/config`.
 - Import other packages only through `@sbi/<name>`. Each package's single public entry is `src/index.ts`; never import another package's internal files.
 - Shared data shapes live in `@sbi/contracts`. Packages depend on contracts and interfaces, not on each other's implementations.
 - External providers (recognition, LLM, renderers, storage) sit behind an adapter interface so they can be swapped.
+- SQL lives only in `@sbi/db`. Other packages define repository interfaces and receive implementations.
 - Keep files small and focused; prefer a new module over growing a large one.
 
 ## Code

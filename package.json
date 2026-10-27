@@ -15,7 +15,8 @@
     "test:coverage": "turbo run test -- --coverage",
     "test:e2e": "turbo run test:e2e",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:migrate": "pnpm --filter @sbi/db migrate"
   },
   "devDependencies": {
     "@sbi/config": "workspace:*",

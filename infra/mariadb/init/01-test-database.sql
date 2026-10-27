@@ -1,0 +1,2 @@
+CREATE DATABASE IF NOT EXISTS sbi_test;
+GRANT ALL PRIVILEGES ON sbi_test.* TO 'sbi'@'%';
