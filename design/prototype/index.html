@@ -12,6 +12,14 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='14' cy='14' r='9' fill='none' stroke='%230d6b67' stroke-width='4'/%3E%3Cpath d='M21 21l7 7' stroke='%230d6b67' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"
     />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -564,6 +572,51 @@
       .compare dd {
         margin: 0;
         font-weight: 600;
+      }
+      .visual {
+        border-radius: var(--radius-l);
+        border: 1px solid var(--rule);
+        background: var(--paper);
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+      }
+      .visual svg,
+      .visual canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        touch-action: pan-y;
+      }
+      .visual .legend {
+        margin: 0.5rem 0 0;
+      }
+      .sim-controls {
+        display: grid;
+        gap: 0.75rem;
+        margin: 0.75rem 0;
+      }
+      .sim-controls input[type="range"] {
+        min-height: 2.75rem;
+        padding: 0;
+        border: 0;
+        accent-color: var(--action);
+      }
+      .effort {
+        display: block;
+        height: 1.6rem;
+        border-radius: 999px;
+        background: var(--bench);
+        overflow: hidden;
+      }
+      .effort span {
+        display: block;
+        height: 100%;
+        min-width: 4rem;
+        padding: 0 0.6rem;
+        background: var(--ink);
+        color: var(--bench);
+        font-size: 0.85rem;
+        line-height: 1.6rem;
       }
       .compare small {
         font-weight: 400;
@@ -1223,6 +1276,8 @@
       }
 
       function go(screen, patch = {}) {
+        state.cleanup?.();
+        state.cleanup = null;
         Object.assign(state, patch, { screen });
         log("screen", { to: screen });
         render();
@@ -1250,6 +1305,8 @@
           .forEach((el) =>
             el.addEventListener("change", (event) => ACTIONS[el.dataset.change](el, event)),
           );
+        const stage = document.getElementById("visual-stage");
+        if (stage) MOUNTS[stage.dataset.format](stage, performance.now());
       }
 
       const backButton = (to, label = "Back") =>
@@ -1979,6 +2036,350 @@ observations: up to 3 short visual details that justify your answer. Never descr
         return { status: output.status, candidates };
       }
 
+      const THREE_URL = "three";
+      const ADDONS_URL = "three/addons/";
+      const FORMATS = {
+        svg: "A labelled diagram",
+        glb: "A 3D model you can turn",
+        sim: "A simulation you can change",
+      };
+      // Latin square: across every three participants each format appears once in each position.
+      const VISUAL_ORDERS = [
+        ["svg", "glb", "sim"],
+        ["glb", "sim", "svg"],
+        ["sim", "svg", "glb"],
+      ];
+      // Questions follow position, not format, so question difficulty is balanced across formats.
+      const VISUAL_QUESTIONS = [
+        {
+          question:
+            "The front ring has 34 teeth and the back cog has 17. How many times does the back wheel turn for one pedal turn?",
+          options: ["Half a turn", "Once", "Twice", "I'm not sure"],
+          answer: 2,
+        },
+        {
+          question: "Which turns faster: the big front ring or the small back cog?",
+          options: [
+            "The big front ring",
+            "The small back cog",
+            "They turn at the same speed",
+            "I'm not sure",
+          ],
+          answer: 1,
+        },
+        {
+          question: "You swap to a bigger back cog. What happens to pedalling?",
+          options: ["It gets harder", "It gets easier", "Nothing changes", "I'm not sure"],
+          answer: 1,
+        },
+      ];
+
+      function visualOrder() {
+        if (session.visualOrder !== "auto") return session.visualOrder.split(",");
+        const number = Number((session.participant.match(/\d+/) || ["0"])[0]);
+        return VISUAL_ORDERS[number % 3];
+      }
+
+      SCREENS.visuals = () => {
+        const order = visualOrder();
+        const format = order[state.visualStep];
+        const check = VISUAL_QUESTIONS[state.visualStep];
+        return `
+          ${backButton(state.returnTo || "lesson", "Back to the lesson")}
+          <p class="topic-chip">Bicycle gears, way ${state.visualStep + 1} of 3</p>
+          <h2>${FORMATS[format]}</h2>
+          <div class="visual" id="visual-stage" data-format="${format}"></div>
+          <p class="hint" id="visual-status" aria-live="polite">Loading…</p>
+          <form data-action="visualAnswer" class="stack">
+            <fieldset class="options">
+              <legend><strong>${esc(check.question)}</strong></legend>
+              ${check.options
+                .map(
+                  (
+                    option,
+                    index,
+                  ) => `<label class="option"><input type="radio" name="choice" value="${index}" required />
+                    <span>${esc(option)}</span></label>`,
+                )
+                .join("")}
+            </fieldset>
+            <button class="btn" type="submit">${state.visualStep < 2 ? "Next way" : "Finish"}</button>
+          </form>`;
+      };
+
+      SCREENS.visualPick = () => `
+        <h2>Which way helped you understand most?</h2>
+        <form data-action="visualPick" class="stack">
+          <fieldset class="options">
+            <legend class="sr-only">Which way helped you understand most?</legend>
+            ${[...Object.entries(FORMATS), ["same", "They were all about the same"]]
+              .map(
+                ([
+                  value,
+                  label,
+                ]) => `<label class="option"><input type="radio" name="choice" value="${value}" required />
+                  <span>${esc(label)}</span></label>`,
+              )
+              .join("")}
+          </fieldset>
+          <button class="btn" type="submit">Done</button>
+        </form>`;
+
+      Object.assign(ACTIONS, {
+        visuals() {
+          log("tap", { action: "visuals", order: visualOrder().join(",") });
+          go("visuals", { visualStep: 0, returnTo: state.screen });
+        },
+        visualAnswer(form) {
+          const choice = Number(new FormData(form).get("choice"));
+          const format = visualOrder()[state.visualStep];
+          log("visualCheck", {
+            format,
+            position: state.visualStep + 1,
+            choice,
+            correct: choice === VISUAL_QUESTIONS[state.visualStep].answer,
+          });
+          if (state.visualStep < 2) go("visuals", { visualStep: state.visualStep + 1 });
+          else go("visualPick");
+        },
+        visualPick(form) {
+          log("visualPreference", { format: new FormData(form).get("choice") });
+          go("done");
+        },
+      });
+
+      const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function visualReady(format, started, note = "") {
+        const ms = Math.round(performance.now() - started);
+        log("visualLoaded", { format, loadMs: ms });
+        const status = document.getElementById("visual-status");
+        if (status)
+          status.textContent = FACILITATOR ? `${note}Loaded in ${(ms / 1000).toFixed(2)} s.` : note;
+      }
+
+      function gearPath(cx, cy, teeth, pitch) {
+        const outer = pitch + 6;
+        const root = pitch - 6;
+        const step = (Math.PI * 2) / teeth;
+        let d = "";
+        for (let i = 0; i < teeth; i += 1) {
+          const a = i * step;
+          const pts = [
+            [root, a],
+            [outer, a + step * 0.2],
+            [outer, a + step * 0.45],
+            [root, a + step * 0.65],
+          ];
+          pts.forEach(([r, angle], index) => {
+            d += `${i === 0 && index === 0 ? "M" : "L"}${(cx + r * Math.cos(angle)).toFixed(1)} ${(cy + r * Math.sin(angle)).toFixed(1)} `;
+          });
+        }
+        return d + "Z";
+      }
+
+      function mountSvg(stage, started) {
+        stage.innerHTML = `
+          <svg viewBox="0 0 420 300" role="img" aria-labelledby="gear-svg-title">
+            <title id="gear-svg-title">Diagram: a 34-tooth front ring linked by a chain to a 17-tooth back cog. One pedal turn makes two wheel turns.</title>
+            <path d="M120 52 L310 94 M120 208 L310 166" stroke="var(--ink)" stroke-width="5" stroke-dasharray="2 5" stroke-linecap="round" fill="none"/>
+            <path d="${gearPath(120, 130, 34, 78)}" fill="var(--action)" opacity=".9"/>
+            <circle cx="120" cy="130" r="20" fill="var(--paper)"/>
+            <path d="${gearPath(310, 130, 17, 36)}" fill="var(--highlight)"/>
+            <circle cx="310" cy="130" r="10" fill="var(--paper)"/>
+            <path d="M58 70 A88 88 0 0 1 182 70" fill="none" stroke="var(--ink)" stroke-width="3" marker-end="url(#arrow)"/>
+            <path d="M280 82 A50 50 0 0 1 340 82" fill="none" stroke="var(--ink)" stroke-width="3" marker-end="url(#arrow)"/>
+            <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--ink)"/></marker></defs>
+            <g fill="var(--ink)" font-family="var(--body)" font-size="15">
+              <text x="120" y="248" text-anchor="middle" font-weight="700">Front ring</text>
+              <text x="120" y="268" text-anchor="middle">34 teeth, 1 pedal turn</text>
+              <text x="310" y="248" text-anchor="middle" font-weight="700">Back cog</text>
+              <text x="310" y="268" text-anchor="middle">17 teeth, 2 wheel turns</text>
+              <text x="215" y="292" text-anchor="middle" font-size="14">34 ÷ 17 = 2</text>
+            </g>
+          </svg>`;
+        requestAnimationFrame(() => visualReady("svg", started));
+      }
+
+      async function mountGlb(stage, started) {
+        stage.innerHTML = `<canvas aria-label="3D model of a front ring, chain and back cog. Drag to turn it." role="img"></canvas>
+          <p class="hint legend">Teal: front ring, 34 teeth. Yellow: back cog, 17 teeth. Drag to turn the model.</p>`;
+        const canvas = stage.querySelector("canvas");
+        let stopped = false;
+        state.cleanup = () => {
+          stopped = true;
+        };
+        try {
+          const [THREE, { GLTFLoader }, { OrbitControls }] = await Promise.all([
+            import(THREE_URL),
+            import(`${ADDONS_URL}loaders/GLTFLoader.js`),
+            import(`${ADDONS_URL}controls/OrbitControls.js`),
+          ]);
+          if (stopped) return;
+          const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+          renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+          const scene = new THREE.Scene();
+          scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 2.2));
+          const sun = new THREE.DirectionalLight(0xffffff, 2);
+          sun.position.set(3, 4, 6);
+          scene.add(sun);
+          const camera = new THREE.PerspectiveCamera(40, 4 / 3, 0.1, 100);
+          camera.position.set(0, 1.2, 7.5);
+          const controls = new OrbitControls(camera, canvas);
+          controls.enableZoom = false;
+          controls.enablePan = false;
+          const gltf = await new GLTFLoader().loadAsync("gears.glb");
+          if (stopped) return;
+          scene.add(gltf.scene);
+          const ring = gltf.scene.getObjectByName("chainring");
+          const cog = gltf.scene.getObjectByName("cog");
+          const ratio = (ring.userData.teeth ?? 34) / (cog.userData.teeth ?? 17);
+          const resize = () => {
+            const width = stage.clientWidth;
+            renderer.setSize(width, width * 0.75, false);
+          };
+          resize();
+          let first = true;
+          let last = performance.now();
+          const frame = (now) => {
+            if (stopped) return renderer.dispose();
+            const dt = (now - last) / 1000;
+            last = now;
+            if (!reducedMotion()) {
+              ring.rotation.z -= dt * 1.2;
+              cog.rotation.z -= dt * 1.2 * ratio;
+            }
+            controls.update();
+            renderer.render(scene, camera);
+            if (first) {
+              first = false;
+              visualReady("glb", started);
+            }
+            requestAnimationFrame(frame);
+          };
+          requestAnimationFrame(frame);
+        } catch (error) {
+          log("error", { where: "glb", message: String(error.message).slice(0, 120) });
+          stage.innerHTML = `<div class="notice"><p style="margin:0">The 3D model couldn't load on this device (${esc(error.message)}).</p></div>`;
+          visualReady("glb", started, "Failed. ");
+        }
+      }
+
+      function mountSim(stage, started) {
+        stage.innerHTML = `
+          <canvas width="640" height="320" aria-hidden="true"></canvas>
+          <div class="sim-controls">
+            <label class="field"><span>Front ring: <output id="sim-front">34</output> teeth</span>
+              <input type="range" min="22" max="52" value="34" id="sim-front-input" /></label>
+            <label class="field"><span>Back cog: <output id="sim-back">17</output> teeth</span>
+              <input type="range" min="11" max="36" value="17" id="sim-back-input" /></label>
+          </div>
+          <dl class="compare sim-readout" aria-live="polite">
+            <div><dt>One pedal turn</dt><dd id="sim-turns"></dd></div>
+            <div><dt>Speed at 60 pedal turns a minute</dt><dd id="sim-speed"></dd></div>
+            <div><dt>Effort per push</dt><dd><span class="effort"><span id="sim-effort"></span></span></dd></div>
+          </dl>`;
+        const canvas = stage.querySelector("canvas");
+        const ctx = canvas.getContext("2d");
+        const frontInput = stage.querySelector("#sim-front-input");
+        const backInput = stage.querySelector("#sim-back-input");
+        const css = getComputedStyle(document.documentElement);
+        let angle = 0;
+        let stopped = false;
+        let first = true;
+        let last = performance.now();
+        state.cleanup = () => {
+          stopped = true;
+        };
+
+        const values = () => ({ front: Number(frontInput.value), back: Number(backInput.value) });
+        function readouts() {
+          const { front, back } = values();
+          const ratio = front / back;
+          stage.querySelector("#sim-front").textContent = front;
+          stage.querySelector("#sim-back").textContent = back;
+          stage.querySelector("#sim-turns").textContent = `${ratio.toFixed(2)} wheel turns`;
+          // Wheel circumference about 2.1 m, as in the lesson's technical text.
+          stage.querySelector("#sim-speed").textContent =
+            `${((ratio * 2.1 * 60 * 60) / 1000).toFixed(1)} km/h`;
+          const effort = Math.min(100, Math.round((ratio / 4.7) * 100));
+          const bar = stage.querySelector("#sim-effort");
+          bar.style.width = `${effort}%`;
+          bar.textContent = ratio < 1.2 ? "Easy" : ratio < 2.4 ? "Medium" : "Hard";
+        }
+        function drawGear(x, y, teeth, scale, rotation, color) {
+          const pitch = teeth * scale;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(rotation);
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          for (let i = 0; i < teeth; i += 1) {
+            const a = (i / teeth) * Math.PI * 2;
+            const s = (Math.PI * 2) / teeth;
+            [
+              [pitch - 6, a],
+              [pitch + 6, a + s * 0.2],
+              [pitch + 6, a + s * 0.45],
+              [pitch - 6, a + s * 0.65],
+            ].forEach(([r, t], index) =>
+              ctx[i === 0 && index === 0 ? "moveTo" : "lineTo"](r * Math.cos(t), r * Math.sin(t)),
+            );
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = css.getPropertyValue("--paper");
+          ctx.beginPath();
+          ctx.arc(0, 0, pitch * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillRect(-2, -pitch * 0.85, 4, pitch * 0.55);
+          ctx.restore();
+        }
+        function frame(now) {
+          if (stopped) return;
+          const dt = Math.min(0.05, (now - last) / 1000);
+          last = now;
+          if (!reducedMotion()) angle += dt * Math.PI * 2;
+          const { front, back } = values();
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.strokeStyle = css.getPropertyValue("--ink");
+          ctx.lineWidth = 4;
+          ctx.setLineDash([3, 6]);
+          ctx.beginPath();
+          ctx.moveTo(190, 160 - front * 2.4);
+          ctx.lineTo(480, 160 - back * 2.4);
+          ctx.moveTo(190, 160 + front * 2.4);
+          ctx.lineTo(480, 160 + back * 2.4);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          drawGear(190, 160, front, 2.4, angle, css.getPropertyValue("--action"));
+          drawGear(
+            480,
+            160,
+            back,
+            2.4,
+            (angle * front) / back,
+            css.getPropertyValue("--highlight"),
+          );
+          if (first) {
+            first = false;
+            visualReady("sim", started);
+          }
+          requestAnimationFrame(frame);
+        }
+        [frontInput, backInput].forEach((input) =>
+          input.addEventListener("change", () => {
+            log("simChange", values());
+            readouts();
+          }),
+        );
+        [frontInput, backInput].forEach((input) => input.addEventListener("input", readouts));
+        readouts();
+        requestAnimationFrame(frame);
+      }
+
+      const MOUNTS = { svg: mountSvg, glb: mountGlb, sim: mountSim };
+
       function renderFacilitator() {
         const dialog = document.getElementById("facilitator");
         const hasKey = Boolean(metaKey());
@@ -2001,6 +2402,18 @@ observations: up to 3 short visual details that justify your answer. Never descr
               <select id="f-order" name="moduleOrder">
                 <option value="A" ${session.moduleOrder === "A" ? "selected" : ""}>A: big idea before parts (spec order)</option>
                 <option value="B" ${session.moduleOrder === "B" ? "selected" : ""}>B: parts and hands-on before big idea</option>
+              </select></div>
+            <div class="field"><label for="f-visual">Visual order</label>
+              <select id="f-visual" name="visualOrder">
+                ${[
+                  ["auto", "Auto from participant number"],
+                  ...VISUAL_ORDERS.map((order) => [order.join(","), order.join(", ")]),
+                ]
+                  .map(
+                    ([value, label]) =>
+                      `<option value="${value}" ${session.visualOrder === value ? "selected" : ""}>${label}</option>`,
+                  )
+                  .join("")}
               </select></div>
             <div class="field"><label for="f-mode">Mode</label>
               <select id="f-mode" name="mode">
@@ -2047,6 +2460,7 @@ observations: up to 3 short visual details that justify your answer. Never descr
             segment: form.segment.value,
             mode: form.mode.value,
             moduleOrder: form.moduleOrder.value,
+            visualOrder: form.visualOrder.value,
             model: form.model.value.trim() || "muse-spark-1.3",
           });
           if (form.key.value.trim()) {

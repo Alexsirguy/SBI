@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Generate gears.glb</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <p>
+      Builds the bicycle gear model and offers it as <code>gears.glb</code>. Re-run after changing
+      the geometry.
+    </p>
+    <button id="download" type="button" disabled>Download gears.glb</button>
+    <script type="module">
+      import * as THREE from "three";
+      import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+      // Tooth counts match the SVG diagram and lesson text: 34 front, 17 back, a 2:1 ratio.
+      const MODULE = 0.1;
+      const DEPTH = 0.18;
+
+      function gearShape(teeth) {
+        const pitch = (MODULE * teeth) / 2;
+        const outer = pitch + MODULE * 0.9;
+        const root = pitch - MODULE * 1.1;
+        const shape = new THREE.Shape();
+        const step = (Math.PI * 2) / teeth;
+        for (let i = 0; i < teeth; i += 1) {
+          const a = i * step;
+          const points = [
+            [root, a],
+            [outer, a + step * 0.2],
+            [outer, a + step * 0.45],
+            [root, a + step * 0.65],
+          ];
+          points.forEach(([r, angle], index) => {
+            const x = r * Math.cos(angle);
+            const y = r * Math.sin(angle);
+            if (i === 0 && index === 0) shape.moveTo(x, y);
+            else shape.lineTo(x, y);
+          });
+        }
+        shape.closePath();
+        const hole = new THREE.Path();
+        hole.absarc(0, 0, pitch * 0.28, 0, Math.PI * 2, true);
+        shape.holes.push(hole);
+        return { shape, pitch };
+      }
+
+      function gear(name, teeth, color, x) {
+        const { shape, pitch } = gearShape(teeth);
+        const geometry = new THREE.ExtrudeGeometry(shape, {
+          depth: DEPTH,
+          bevelEnabled: false,
+          curveSegments: 6,
+        });
+        geometry.translate(0, 0, -DEPTH / 2);
+        const mesh = new THREE.Mesh(
+          geometry,
+          new THREE.MeshStandardMaterial({ color, metalness: 0.6, roughness: 0.35 }),
+        );
+        mesh.name = name;
+        mesh.position.x = x;
+        mesh.userData = { teeth, pitchRadius: pitch };
+        return mesh;
+      }
+
+      const scene = new THREE.Scene();
+      const front = gear("chainring", 34, 0x0d6b67, -1.9);
+      const back = gear("cog", 17, 0xd3a21b, 1.9);
+      scene.add(front, back);
+
+      const r1 = front.userData.pitchRadius;
+      const r2 = back.userData.pitchRadius;
+      const points = [];
+      for (let i = 0; i <= 24; i += 1) {
+        const a = Math.PI / 2 + (i / 24) * Math.PI;
+        points.push(new THREE.Vector3(-1.9 + r1 * Math.cos(a), r1 * Math.sin(a), 0));
+      }
+      for (let i = 0; i <= 24; i += 1) {
+        const a = -Math.PI / 2 + (i / 24) * Math.PI;
+        points.push(new THREE.Vector3(1.9 + r2 * Math.cos(a), r2 * Math.sin(a), 0));
+      }
+      const chain = new THREE.Mesh(
+        new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points, true), 160, 0.035, 6, true),
+        new THREE.MeshStandardMaterial({ color: 0x2a3440, metalness: 0.4, roughness: 0.6 }),
+      );
+      chain.name = "chain";
+      scene.add(chain);
+
+      const button = document.getElementById("download");
+      new GLTFExporter().parse(
+        scene,
+        (glb) => {
+          const bytes = new Uint8Array(glb);
+          let binary = "";
+          for (let i = 0; i < bytes.length; i += 0x8000) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+          }
+          window.glbBase64 = btoa(binary);
+          button.disabled = false;
+          button.onclick = () => {
+            const url = URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }));
+            Object.assign(document.createElement("a"), {
+              href: url,
+              download: "gears.glb",
+            }).click();
+          };
+        },
+        (error) => {
+          document.body.append(String(error));
+        },
+        { binary: true },
+      );
+    </script>
+  </body>
+</html>
