@@ -1,8 +1,0 @@
-{
-  "claimId": "claim with spaces",
-  "text": "Text.",
-  "status": "supported",
-  "sourceIds": ["s1"],
-  "scope": "general",
-  "confidence": "high"
-}
