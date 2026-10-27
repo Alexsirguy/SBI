@@ -41,6 +41,7 @@ Feature flags are comma lists in `FEATURE_FLAGS` (api) and `NEXT_PUBLIC_FEATURE_
 | `packages/visuals`      | Visual registry and renderers                                           |
 | `packages/tutor`        | Lesson-grounded tutor                                                   |
 | `packages/analytics`    | Privacy-safe analytics events                                           |
+| `packages/benchmark`    | Research seed set, vendor benchmark and feasibility spikes              |
 | `packages/ui`           | Shared accessible React components                                      |
 | `packages/env`          | Typed environment loading and feature flags                             |
 | `packages/testing`      | Shared test utilities and contract fixture validation                   |
