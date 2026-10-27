@@ -5,8 +5,20 @@ import { describe, expect, it } from "vitest";
 const root = join(import.meta.dirname, "..");
 
 const MODULES = [
-  "analytics", "config", "contracts", "evidence", "llm", "media", "orchestrator",
-  "recognition", "rights", "safety", "taxonomy", "tutor", "ui", "visuals",
+  "analytics",
+  "config",
+  "contracts",
+  "evidence",
+  "llm",
+  "media",
+  "orchestrator",
+  "recognition",
+  "rights",
+  "safety",
+  "taxonomy",
+  "tutor",
+  "ui",
+  "visuals",
 ];
 
 function readManifest(dir: string) {
