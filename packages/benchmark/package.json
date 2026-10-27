@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed:fetch": "tsx scripts/fetch-images.ts",
-    "bench": "tsx scripts/bench.ts"
+    "bench": "tsx scripts/bench.ts",
+    "spikes": "tsx scripts/spikes.ts"
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",

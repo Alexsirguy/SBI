@@ -1,0 +1,156 @@
+{
+  "runAt": "2026-10-27T15:13:58.938Z",
+  "seedVersion": "1.0.0",
+  "cache": {
+    "keyword": {
+      "pairs": 19,
+      "truePositive": 8,
+      "falsePositive": 0,
+      "falseNegative": 2,
+      "trueNegative": 9,
+      "precision": 1,
+      "recall": 0.8,
+      "misses": [
+        "held-out: gears, no shared keywords (gearing / none)",
+        "held-out: steam wording (bubbles / none)"
+      ]
+    }
+  },
+  "safety": {
+    "rules": {
+      "risky": 5,
+      "riskyCaught": 5,
+      "benign": 35,
+      "benignBlocked": 0,
+      "missed": [],
+      "overBlocked": []
+    }
+  },
+  "evidence": [
+    {
+      "topic": "bicycle gearing",
+      "claimId": "b2",
+      "source": "Bicycle gearing",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "On some bicycles there is only one gear and, therefore, the gear ratio is fixed, but most modern bicycles have multiple gears and thus multiple gear ratios."
+    },
+    {
+      "topic": "bicycle gearing",
+      "claimId": "b5",
+      "source": "Derailleur",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "A derailleur ( di-RAYL-ər;  di-RAYL-yər) is specifically a device that moves a bicycle chain from one sprocket to another, and more generally the entire gearset on a multiple-speed bicycle with such a mechanism."
+    },
+    {
+      "topic": "bicycle gearing",
+      "claimId": "b6",
+      "source": "Penny-farthing",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "brought out the commercially-successful \"Facile\", in which the rider sat further back on a relatively small machine, using pedals which drove the front wheel through levers."
+    },
+    {
+      "topic": "bicycle gearing",
+      "claimId": "b7",
+      "source": "Safety bicycle",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "Starley) came out with the first commercially successful safety bicycle he named the Rover."
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "k4",
+      "source": "Boiling point",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "For comparison, on top of Mount Everest, at 8,848 m (29,029 ft) elevation, the pressure is about 34 kPa (255 Torr) and the boiling point of water is 71 °C (160 °F)."
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "k5",
+      "source": "Enthalpy of vaporization",
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "k7",
+      "source": "Kettle",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "A bimetallic strip, heated through a pipe by the steam produced as the water comes to the boil, flexes, and cuts off the current."
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "k8",
+      "source": "Russell Hobbs",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "In 1952, they designed the world's first automatic coffee percolator, the CP1, and in 1955 they introduced the K1, the first electric kettle that switched itself off as soon as the water boiled."
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "control-1",
+      "source": "Russell Hobbs",
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null
+    },
+    {
+      "topic": "photosynthesis",
+      "claimId": "l4",
+      "source": "Photosynthesis",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "In this process, atmospheric carbon dioxide is incorporated into already existing organic compounds, such as ribulose bisphosphate (RuBP)."
+    },
+    {
+      "topic": "photosynthesis",
+      "claimId": "l6",
+      "source": "Chlorophyll",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "Chlorophylls absorb light most strongly in the blue and red portions of the electromagnetic spectrum."
+    },
+    {
+      "topic": "photosynthesis",
+      "claimId": "l7",
+      "source": "Jan Baptist van Helmont",
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "Van Helmont is remembered today largely for his 5-year willow tree experiment, his introduction of the word \"gas\" (from the Greek word chaos) into the vocabulary of science, and his ideas on spontaneous generation."
+    },
+    {
+      "topic": "photosynthesis",
+      "claimId": "l9",
+      "source": "Photosynthesis",
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null
+    }
+  ],
+  "rights": {
+    "images": 38,
+    "complete": 38,
+    "byLicence": {
+      "CC BY 2.0": 2,
+      "GFDL 1.2": 3,
+      "CC BY-SA 3.0": 14,
+      "CC BY-SA 4.0": 6,
+      "CC0": 1,
+      "Public domain": 5,
+      "CC BY 4.0": 1,
+      "CC BY 3.0": 1,
+      "CC BY-SA 2.5": 2,
+      "CC BY-SA 2.0": 1,
+      "CC BY-SA 2.0 de": 1,
+      "FAL": 1
+    },
+    "shareAlike": 24,
+    "internalOnly": ["seed-002", "seed-011", "seed-029", "seed-035"],
+    "publishable": 34
+  }
+}

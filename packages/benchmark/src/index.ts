@@ -7,3 +7,7 @@ export * from "./seed-set";
 export * from "./tasks/lesson";
 export * from "./tasks/recognition";
 export * from "./tasks/safety";
+export * from "./spikes/evidence";
+export * from "./spikes/intent-cache";
+export * from "./spikes/rights";
+export * from "./spikes/safety-rules";
