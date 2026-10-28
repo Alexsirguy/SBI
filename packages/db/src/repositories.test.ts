@@ -31,6 +31,8 @@ const TABLES = [
   "visual_assets",
   "recognition_results",
   "tutor_turns",
+  "media_objects",
+  "deletion_audit_log",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -156,6 +158,99 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         second.turnId,
       ]);
       expect(await repos.tutorTurns.deleteBySession(turn.sessionId)).toBe(2);
+    });
+  });
+
+  describe("media retention", () => {
+    const now = new Date("2026-02-01T00:00:00Z");
+    const at = (offsetMs: number) => new Date(now.getTime() + offsetMs);
+    const original = (key: string, expiresAt: Date | null) => ({
+      createdAt: at(-7 * 86_400_000),
+      expiresAt,
+      key,
+      kind: "original" as const,
+    });
+
+    it("lists unsaved objects whose expiry has arrived, oldest first", async () => {
+      await repos.mediaRegistry.register(original("photos/on-time.jpg", now));
+      await repos.mediaRegistry.register(original("photos/late.jpg", at(-1000)));
+      await repos.mediaRegistry.register(original("photos/fresh.jpg", at(1)));
+      await repos.mediaRegistry.register(original("photos/kept.jpg", at(-1000)));
+      expect(await repos.mediaRegistry.keep("photos/kept.jpg")).toBe(true);
+
+      const expired = await repos.mediaRegistry.listExpired(now, 10);
+      expect(expired.map((item) => item.key)).toEqual(["photos/late.jpg", "photos/on-time.jpg"]);
+      expect(await repos.mediaRegistry.listExpired(now, 1)).toHaveLength(1);
+    });
+
+    it("lets a keep win before the claim and lose after it", async () => {
+      await repos.mediaRegistry.register(original("photos/a.jpg", now));
+      await repos.mediaRegistry.register(original("photos/b.jpg", now));
+
+      expect(await repos.mediaRegistry.keep("photos/a.jpg")).toBe(true);
+      expect(await repos.mediaRegistry.keep("photos/a.jpg")).toBe(true);
+      expect(await repos.mediaRegistry.claimForDeletion("photos/a.jpg", now)).toBe(false);
+
+      expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", now)).toBe(true);
+      expect(await repos.mediaRegistry.keep("photos/b.jpg")).toBe(false);
+      expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", at(60_000))).toBe(true);
+      await repos.mediaRegistry.forget("photos/b.jpg");
+      expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", now)).toBe(false);
+    });
+
+    it("only brings expiry forward, and never for a kept photo", async () => {
+      await repos.mediaRegistry.register(original("photos/a.jpg", at(86_400_000)));
+      await repos.mediaRegistry.register(original("photos/kept.jpg", at(86_400_000)));
+      await repos.mediaRegistry.keep("photos/kept.jpg");
+
+      await repos.mediaRegistry.expireSooner("photos/a.jpg", at(3_600_000));
+      await repos.mediaRegistry.expireSooner("photos/a.jpg", at(2 * 86_400_000));
+      await repos.mediaRegistry.expireSooner("photos/kept.jpg", at(-1));
+
+      expect(
+        (await repos.mediaRegistry.listExpired(at(3_600_000), 10)).map((item) => item.key),
+      ).toEqual(["photos/a.jpg"]);
+    });
+
+    it("ages out audit entries older than the cutoff", async () => {
+      for (const deletedAt of [at(-2000), at(-1000), now]) {
+        await repos.deletionAudit.record({
+          deletedAt,
+          key: "photos/a.jpg",
+          kind: "original",
+          reason: "test",
+        });
+      }
+      expect(await repos.deletionAudit.purgeOlderThan(at(-500))).toBe(2);
+      expect(await repos.deletionAudit.purgeOlderThan(at(-500))).toBe(0);
+    });
+  });
+
+  describe("withLock", () => {
+    it("lets only one holder run at a time and releases afterwards", async () => {
+      let release: (() => void) | undefined;
+      const blocked = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const first = handle.withLock("sbi-test-lock", async () => {
+        await blocked;
+        return "first";
+      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const second = createDatabase(url ?? "");
+      try {
+        await expect(second.withLock("sbi-test-lock", async () => "second")).resolves.toEqual({
+          acquired: false,
+        });
+        release?.();
+        await expect(first).resolves.toEqual({ acquired: true, value: "first" });
+        await expect(second.withLock("sbi-test-lock", async () => "second")).resolves.toEqual({
+          acquired: true,
+          value: "second",
+        });
+      } finally {
+        await second.close();
+      }
     });
   });
 });
