@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectNoAxeViolations } from "./a11y";
 import { expect, test } from "@playwright/test";
 
 // 1x1 transparent PNG; content is irrelevant, only name/size/type are validated.
@@ -63,8 +63,7 @@ test("capture page validates the selected photo", async ({ page }) => {
 test("capture page has no detectable accessibility violations", async ({ page }) => {
   await page.goto("/capture");
 
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
+  await expectNoAxeViolations(page);
 });
 
 test("upload reports honestly when private storage is unavailable", async ({ page }) => {
