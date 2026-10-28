@@ -14,6 +14,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@sbi/contracts": "workspace:*",
+    "@sbi/db": "workspace:*",
     "@sbi/env": "workspace:*",
     "@sbi/media": "workspace:*",
     "next": "16.4.3",

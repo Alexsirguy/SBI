@@ -35,9 +35,15 @@ importers:
 
   apps/api:
     dependencies:
+      '@sbi/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@sbi/env':
         specifier: workspace:*
         version: link:../../packages/env
+      '@sbi/media':
+        specifier: workspace:*
+        version: link:../../packages/media
       fastify:
         specifier: 5.12.7
         version: 5.12.7
@@ -57,6 +63,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@sbi/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@sbi/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@sbi/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -171,6 +183,9 @@ importers:
       '@sbi/evidence':
         specifier: workspace:*
         version: link:../evidence
+      '@sbi/media':
+        specifier: workspace:*
+        version: link:../media
       '@sbi/orchestrator':
         specifier: workspace:*
         version: link:../orchestrator
