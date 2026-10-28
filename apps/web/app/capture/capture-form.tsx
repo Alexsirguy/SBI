@@ -60,6 +60,8 @@ export function CaptureForm() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [quality, setQuality] = useState<QualityReport | null>(null);
+  const [stage, setStage] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState(false);
 
   // Guidance only: a failed check never blocks uploading.
   async function assess(image: ProcessedImage) {
@@ -93,6 +95,8 @@ export function CaptureForm() {
     setPreviewUrl(null);
     setCrop(null);
     setQuality(null);
+    setStage(null);
+    setUploaded(false);
   }
 
   function retake() {
@@ -169,18 +173,93 @@ export function CaptureForm() {
     setCrop((current) => (current ? { ...current, [key]: value } : current));
   }
 
+  async function postJson(
+    url: string,
+    payload: unknown,
+  ): Promise<{ ok: boolean; body: Record<string, unknown> }> {
+    const response = await fetch(url, {
+      body: JSON.stringify(payload),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    const parsed: unknown = await response.json().catch(() => ({}));
+    const body = typeof parsed === "object" && parsed !== null ? parsed : {};
+    return { body: body as Record<string, unknown>, ok: response.ok };
+  }
+
+  async function upload() {
+    if (!prepared || !fileName) {
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    setUploaded(false);
+    try {
+      setStage("Requesting a private upload…");
+      const issued = await postJson("/api/uploads", {
+        declaredType: prepared.blob.type || "image/jpeg",
+        filename: fileName,
+        sizeBytes: prepared.size,
+      });
+      if (
+        !issued.ok ||
+        typeof issued.body.uploadUrl !== "string" ||
+        typeof issued.body.key !== "string"
+      ) {
+        throw new Error(
+          typeof issued.body.error === "string" ? issued.body.error : "Uploads are unavailable.",
+        );
+      }
+      setStage("Uploading your photo…");
+      const put = await fetch(issued.body.uploadUrl, {
+        body: prepared.blob,
+        headers: { "content-type": prepared.blob.type || "image/jpeg" },
+        method: "PUT",
+      });
+      if (!put.ok) {
+        throw new Error("The upload failed. Check your connection and try again.");
+      }
+      setStage("Checking privacy…");
+      const confirmed = await postJson("/api/uploads/confirm", { key: issued.body.key });
+      if (!confirmed.ok) {
+        throw new Error(
+          typeof confirmed.body.error === "string"
+            ? confirmed.body.error
+            : "The photo could not be verified.",
+        );
+      }
+      setStage(null);
+      setUploaded(true);
+    } catch (error) {
+      setStage(null);
+      setProblem(error instanceof Error ? error.message : "The upload failed. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const status = problem
     ? null
-    : busy
-      ? "Preparing your photo…"
-      : prepared
-        ? `Ready: ${describe(prepared)}.`
-        : fileName
-          ? `Selected ${fileName}.`
-          : null;
+    : stage
+      ? stage
+      : busy
+        ? "Preparing your photo…"
+        : uploaded
+          ? "Uploaded and privacy-checked. Your lesson can begin."
+          : prepared
+            ? `Ready: ${describe(prepared)}.`
+            : fileName
+              ? `Selected ${fileName}.`
+              : null;
 
   return (
-    <form aria-label="Photo capture" onSubmit={(event) => event.preventDefault()}>
+    <form
+      aria-label="Photo capture"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void upload();
+      }}
+    >
       <div>
         <label htmlFor={cameraId}>Take a photo</label>
         <input
