@@ -85,22 +85,28 @@ export const tutorTurns = mysqlTable(
   (table) => [primaryKey({ columns: [table.sessionId, table.turnId] })],
 );
 
-// Upload registry for TTL deletion; the object bytes live in private R2 storage.
+// Registry of stored photos and their deletion dates; the bytes live in private object storage.
 export const mediaObjects = mysqlTable(
   "media_objects",
   {
     objectKey: varchar("object_key", { length: 300 }).primaryKey(),
     kind: varchar("kind", { length: 16 }).notNull(),
     createdAt: timestamp("created_at").notNull(),
+    expiresAt: timestamp("expires_at"),
     savedByUser: boolean("saved_by_user").notNull().default(false),
+    deletingAt: timestamp("deleting_at"),
   },
-  (table) => [index("media_objects_created_idx").on(table.createdAt)],
+  (table) => [index("media_objects_expires_idx").on(table.expiresAt)],
 );
 
-export const deletionAuditLog = mysqlTable("deletion_audit_log", {
-  auditId: uuid("audit_id").primaryKey(),
-  objectKey: varchar("object_key", { length: 300 }).notNull(),
-  kind: varchar("kind", { length: 16 }).notNull(),
-  deletedAt: timestamp("deleted_at").notNull(),
-  reason: varchar("reason", { length: 200 }).notNull(),
-});
+export const deletionAuditLog = mysqlTable(
+  "deletion_audit_log",
+  {
+    auditId: uuid("audit_id").primaryKey(),
+    objectKey: varchar("object_key", { length: 300 }).notNull(),
+    kind: varchar("kind", { length: 16 }).notNull(),
+    deletedAt: timestamp("deleted_at").notNull(),
+    reason: varchar("reason", { length: 200 }).notNull(),
+  },
+  (table) => [index("deletion_audit_log_deleted_idx").on(table.deletedAt)],
+);

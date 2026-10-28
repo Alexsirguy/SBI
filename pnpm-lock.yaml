@@ -35,9 +35,15 @@ importers:
 
   apps/api:
     dependencies:
+      '@sbi/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@sbi/env':
         specifier: workspace:*
         version: link:../../packages/env
+      '@sbi/media':
+        specifier: workspace:*
+        version: link:../../packages/media
       fastify:
         specifier: 5.12.7
         version: 5.12.7

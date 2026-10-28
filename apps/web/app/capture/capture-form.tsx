@@ -62,6 +62,8 @@ export function CaptureForm() {
   const [quality, setQuality] = useState<QualityReport | null>(null);
   const [stage, setStage] = useState<string | null>(null);
   const [uploaded, setUploaded] = useState(false);
+  const [photoKey, setPhotoKey] = useState<string | null>(null);
+  const [kept, setKept] = useState(false);
 
   // Guidance only: a failed check never blocks uploading.
   async function assess(image: ProcessedImage) {
@@ -97,6 +99,8 @@ export function CaptureForm() {
     setQuality(null);
     setStage(null);
     setUploaded(false);
+    setPhotoKey(null);
+    setKept(false);
   }
 
   function retake() {
@@ -228,10 +232,34 @@ export function CaptureForm() {
         );
       }
       setStage(null);
+      setPhotoKey(typeof confirmed.body.key === "string" ? confirmed.body.key : null);
       setUploaded(true);
     } catch (error) {
       setStage(null);
       setProblem(error instanceof Error ? error.message : "The upload failed. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function keepPhoto() {
+    if (!photoKey) {
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    try {
+      const response = await postJson("/api/photos/keep", { key: photoKey });
+      if (!response.ok) {
+        throw new Error(
+          typeof response.body.error === "string"
+            ? response.body.error
+            : "The photo could not be kept. Try again.",
+        );
+      }
+      setKept(true);
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : "The photo could not be kept.");
     } finally {
       setBusy(false);
     }
@@ -243,13 +271,15 @@ export function CaptureForm() {
       ? stage
       : busy
         ? "Preparing your photo…"
-        : uploaded
-          ? "Uploaded and privacy-checked. Your lesson can begin."
-          : prepared
-            ? `Ready: ${describe(prepared)}.`
-            : fileName
-              ? `Selected ${fileName}.`
-              : null;
+        : kept
+          ? "Kept. This photo will not be deleted automatically."
+          : uploaded
+            ? "Uploaded and privacy-checked. Your lesson can begin."
+            : prepared
+              ? `Ready: ${describe(prepared)}.`
+              : fileName
+                ? `Selected ${fileName}.`
+                : null;
 
   return (
     <form
@@ -349,6 +379,11 @@ export function CaptureForm() {
           </section>
         ) : null}
       </div>
+      {uploaded && photoKey && !kept ? (
+        <button type="button" onClick={() => void keepPhoto()} disabled={busy}>
+          Keep this photo
+        </button>
+      ) : null}
       <button type="submit" disabled={!prepared || busy}>
         Upload photo
       </button>

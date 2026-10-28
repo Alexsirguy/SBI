@@ -1,13 +1,11 @@
 import { newId } from "@sbi/contracts";
 import type {
-  DeletionAuditEntry,
   DeletionAuditLog,
   MediaObjectKind,
   MediaObjectRecord,
   MediaRegistry,
-  RetentionPolicy,
 } from "@sbi/media";
-import { and, eq, inArray, lte, or } from "drizzle-orm";
+import { and, asc, eq, gt, isNotNull, isNull, lt, lte, or, type SQL } from "drizzle-orm";
 import type { Database } from "../client";
 import { deletionAuditLog, mediaObjects } from "../schema";
 
@@ -18,77 +16,115 @@ function toRecord(row: typeof mediaObjects.$inferSelect): MediaObjectRecord {
   if (!KINDS.includes(kind)) {
     throw new Error(`Unknown media kind: ${row.kind}.`);
   }
+  return { createdAt: row.createdAt, expiresAt: row.expiresAt, key: row.objectKey, kind };
+}
+
+function affected(result: unknown): number {
+  const [header] = result as [{ affectedRows?: number }];
+  return header.affectedRows ?? 0;
+}
+
+// MariaDB counts changed rows, so an update that matches but changes nothing is re-checked.
+async function matches(db: Database, key: string, condition: SQL | undefined): Promise<boolean> {
+  const rows = await db
+    .select({ key: mediaObjects.objectKey })
+    .from(mediaObjects)
+    .where(and(eq(mediaObjects.objectKey, key), condition));
+  return rows.length === 1;
+}
+
+const expiredUnsaved = (now: Date) =>
+  and(
+    eq(mediaObjects.savedByUser, false),
+    isNotNull(mediaObjects.expiresAt),
+    lte(mediaObjects.expiresAt, now),
+  );
+
+export function createMediaRegistry(db: Database): MediaRegistry {
   return {
-    createdAt: row.createdAt,
-    key: row.objectKey,
-    kind,
-    savedByUser: row.savedByUser,
+    async claimForDeletion(key, now) {
+      const result = await db
+        .update(mediaObjects)
+        .set({ deletingAt: now })
+        .where(
+          and(
+            eq(mediaObjects.objectKey, key),
+            expiredUnsaved(now),
+            isNull(mediaObjects.deletingAt),
+          ),
+        );
+      return (
+        affected(result) === 1 ||
+        matches(db, key, and(expiredUnsaved(now), isNotNull(mediaObjects.deletingAt)))
+      );
+    },
+
+    async expireSooner(key, expiresAt) {
+      await db
+        .update(mediaObjects)
+        .set({ expiresAt })
+        .where(
+          and(
+            eq(mediaObjects.objectKey, key),
+            eq(mediaObjects.savedByUser, false),
+            isNull(mediaObjects.deletingAt),
+            or(isNull(mediaObjects.expiresAt), gt(mediaObjects.expiresAt, expiresAt)),
+          ),
+        );
+    },
+
+    async forget(key) {
+      await db.delete(mediaObjects).where(eq(mediaObjects.objectKey, key));
+    },
+
+    // A claimed row is mid-deletion, so keeping it now would promise something already lost.
+    async keep(key) {
+      const result = await db
+        .update(mediaObjects)
+        .set({ expiresAt: null, savedByUser: true })
+        .where(and(eq(mediaObjects.objectKey, key), isNull(mediaObjects.deletingAt)));
+      return (
+        affected(result) === 1 ||
+        matches(db, key, and(isNull(mediaObjects.deletingAt), eq(mediaObjects.savedByUser, true)))
+      );
+    },
+
+    async listExpired(now, limit) {
+      const rows = await db
+        .select()
+        .from(mediaObjects)
+        .where(expiredUnsaved(now))
+        .orderBy(asc(mediaObjects.expiresAt))
+        .limit(limit);
+      return rows.map(toRecord);
+    },
+
+    async register(record) {
+      await db.insert(mediaObjects).values({
+        createdAt: record.createdAt,
+        expiresAt: record.expiresAt,
+        kind: record.kind,
+        objectKey: record.key,
+      });
+    },
   };
 }
 
-function expired(kind: MediaObjectKind, now: Date, policy: RetentionPolicy) {
-  const days =
-    kind === "original"
-      ? policy.originalTtlDays
-      : kind === "derivative"
-        ? policy.derivativeTtlDays
-        : policy.logTtlDays;
-  const clauses = [
-    eq(mediaObjects.kind, kind),
-    lte(mediaObjects.createdAt, new Date(now.getTime() - days * 86_400_000)),
-  ];
-  // Saved originals survive until the learner deletes them.
-  return kind === "original"
-    ? and(...clauses, eq(mediaObjects.savedByUser, false))
-    : and(...clauses);
-}
-
-export interface MediaStores {
-  registry: MediaRegistry & { save(record: MediaObjectRecord): Promise<void> };
-  audit: DeletionAuditLog;
-}
-
-export function createMediaStores(db: Database): MediaStores {
+export function createDeletionAuditLog(db: Database): DeletionAuditLog {
   return {
-    audit: {
-      async record(entry: DeletionAuditEntry) {
-        await db.insert(deletionAuditLog).values({
-          auditId: newId(),
-          deletedAt: entry.deletedAt,
-          kind: entry.kind,
-          objectKey: entry.key,
-          reason: entry.reason,
-        });
-      },
+    async purgeOlderThan(cutoff) {
+      return affected(
+        await db.delete(deletionAuditLog).where(lt(deletionAuditLog.deletedAt, cutoff)),
+      );
     },
-    registry: {
-      async listExpired(now, policy) {
-        const rows = await db
-          .select()
-          .from(mediaObjects)
-          .where(
-            or(
-              expired("original", now, policy),
-              expired("derivative", now, policy),
-              expired("log", now, policy),
-            ),
-          );
-        return rows.map(toRecord);
-      },
-      async remove(keys) {
-        if (keys.length > 0) {
-          await db.delete(mediaObjects).where(inArray(mediaObjects.objectKey, keys));
-        }
-      },
-      async save(record) {
-        const row = {
-          createdAt: record.createdAt,
-          kind: record.kind,
-          objectKey: record.key,
-          savedByUser: record.savedByUser,
-        };
-        await db.insert(mediaObjects).values(row).onDuplicateKeyUpdate({ set: row });
-      },
+    async record(entry) {
+      await db.insert(deletionAuditLog).values({
+        auditId: newId(),
+        deletedAt: entry.deletedAt,
+        kind: entry.kind,
+        objectKey: entry.key,
+        reason: entry.reason,
+      });
     },
   };
 }

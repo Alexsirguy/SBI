@@ -1,5 +1,11 @@
 import { sanitiseImage } from "./exif";
 import { detectImageType, type UploadableImageType } from "./image-type";
+import {
+  DEFAULT_RETENTION_POLICY,
+  expiryFor,
+  type MediaRegistry,
+  type RetentionPolicy,
+} from "./retention";
 import type { MalwareScanner } from "./scanner";
 import { ObjectMissingError, ObjectTooLargeError, type ObjectStorage } from "./storage";
 import { createObjectKey, PHOTO_PREFIX } from "./uploads";
@@ -18,8 +24,11 @@ export class ScanUnavailableError extends Error {}
 export interface ConfirmUploadInput {
   storage: ObjectStorage;
   scanner: MalwareScanner;
+  registry: Pick<MediaRegistry, "register">;
   stagingKey: string;
   maxBytes: number;
+  policy?: RetentionPolicy;
+  now?: Date;
 }
 
 async function readStaged(storage: ObjectStorage, key: string, maxBytes: number) {
@@ -58,6 +67,14 @@ async function verify(input: ConfirmUploadInput, bytes: Uint8Array): Promise<Con
     throw new UploadRejectedError("The photo is damaged. Take or choose it again.");
   }
   const key = createObjectKey(PHOTO_PREFIX, sanitised.type);
+  const createdAt = input.now ?? new Date();
+  // Registered first so a stored photo always has a deletion date, even if the write fails.
+  await input.registry.register({
+    createdAt,
+    expiresAt: expiryFor("original", createdAt, input.policy ?? DEFAULT_RETENTION_POLICY),
+    key,
+    kind: "original",
+  });
   await input.storage.write(key, sanitised.bytes, sanitised.type);
   return { contentType: sanitised.type, key };
 }

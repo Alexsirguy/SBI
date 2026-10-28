@@ -79,3 +79,30 @@ test("upload reports honestly when private storage is unavailable", async ({ pag
     { timeout: 15000 },
   );
 });
+
+test("after upload the learner can choose to keep the photo", async ({ page }) => {
+  const kept: unknown[] = [];
+  await page.route("**/api/uploads", (route) =>
+    route.fulfill({ json: { expiresInSeconds: 300, token: "t", uploadUrl: "/fake-put" } }),
+  );
+  await page.route("**/fake-put", (route) => route.fulfill({ status: 200 }));
+  await page.route("**/api/uploads/confirm", (route) =>
+    route.fulfill({ json: { contentType: "image/jpeg", key: "photos/a.jpg" } }),
+  );
+  await page.route("**/api/photos/keep", async (route) => {
+    kept.push(route.request().postDataJSON());
+    await route.fulfill({ json: { kept: true } });
+  });
+  await page.goto("/capture");
+  await page
+    .locator('input[name="upload"]')
+    .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
+  await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
+  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
+  await expect(status).toContainText("Uploaded and privacy-checked");
+
+  await page.getByRole("button", { name: "Keep this photo" }).click();
+  await expect(status).toContainText("will not be deleted automatically");
+  expect(kept).toEqual([{ key: "photos/a.jpg" }]);
+  await expect(page.getByRole("button", { name: "Keep this photo" })).toHaveCount(0);
+});
