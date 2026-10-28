@@ -1,3 +1,4 @@
+export * from "./api-routes";
 export * from "./common";
 export * from "./content-hash";
 export * from "./evidence";
@@ -6,5 +7,6 @@ export * from "./lesson";
 export * from "./media-api";
 export * from "./recognition";
 export * from "./registry";
+export * from "./taxonomy-api";
 export * from "./tutor";
 export * from "./visual";

@@ -28,13 +28,23 @@ export function createApiClient(baseUrl: string, fetcher: typeof fetch = fetch):
   const root = baseUrl.replace(/\/+$/, "");
   return async (name, body) => {
     const route = API_ROUTES[name];
+    const request = route.request.parse(body);
     let response: Response;
     try {
-      response = await fetcher(`${root}${route.path}`, {
-        body: JSON.stringify(route.request.parse(body)),
-        headers: { "content-type": "application/json" },
-        method: route.method.toUpperCase(),
-      });
+      // GETs carry no body or content type, so browsers send them without a CORS preflight.
+      response =
+        route.method === "get"
+          ? await fetcher(
+              `${root}${route.path}?${new URLSearchParams(request as Record<string, string>)}`,
+              {
+                method: "GET",
+              },
+            )
+          : await fetcher(`${root}${route.path}`, {
+              body: JSON.stringify(request),
+              headers: { "content-type": "application/json" },
+              method: "POST",
+            });
     } catch {
       throw new ApiRequestError(UNREACHABLE, 0);
     }

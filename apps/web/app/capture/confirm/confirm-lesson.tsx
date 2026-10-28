@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { MIN_QUERY_LENGTH, searchTaxonomy, type CandidateChoice } from "../taxonomy";
+import { TAXONOMY_QUERY_MIN_LENGTH, type TaxonomyMatch } from "@sbi/contracts";
+import { useTaxonomySearch } from "../use-taxonomy-search";
 
 interface ConfirmLessonProps {
   /** Level of the "Start this lesson?" heading, so it nests under the caller's section. */
   headingLevel: 2 | 3;
-  initialCandidates?: CandidateChoice[];
+  initialCandidates?: TaxonomyMatch[];
   initialMessage?: string;
-  search?: (query: string) => CandidateChoice[];
 }
 
 function matchesMessage(count: number, query: string): string {
@@ -22,7 +22,6 @@ export function ConfirmLesson({
   headingLevel,
   initialCandidates = [],
   initialMessage = "",
-  search = searchTaxonomy,
 }: ConfirmLessonProps) {
   const inputId = useId();
   const confirmHeadingId = useId();
@@ -33,9 +32,19 @@ export function ConfirmLesson({
   const startedRef = useRef<HTMLParagraphElement>(null);
   const returnFocus = useRef(false);
   const [query, setQuery] = useState("");
-  const [candidates, setCandidates] = useState(initialCandidates);
+  const [submitted, setSubmitted] = useState<string | null>(null);
   const [message, setMessage] = useState(initialMessage);
-  const [selected, setSelected] = useState<CandidateChoice | null>(null);
+  const [selected, setSelected] = useState<TaxonomyMatch | null>(null);
+  const search = useTaxonomySearch(submitted);
+  const candidates = submitted === null ? initialCandidates : (search.data?.results ?? []);
+  const searchMessage =
+    submitted === null
+      ? null
+      : search.isPending
+        ? "Searching…"
+        : search.isError
+          ? search.error.message
+          : matchesMessage(candidates.length, submitted);
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
@@ -51,14 +60,12 @@ export function ConfirmLesson({
 
   function runSearch() {
     const trimmed = query.trim();
-    if (trimmed.length < MIN_QUERY_LENGTH) {
-      setCandidates([]);
-      setMessage(`Type at least ${MIN_QUERY_LENGTH} letters to search.`);
+    if (trimmed.length < TAXONOMY_QUERY_MIN_LENGTH) {
+      setSubmitted(null);
+      setMessage(`Type at least ${TAXONOMY_QUERY_MIN_LENGTH} letters to search.`);
       return;
     }
-    const found = search(trimmed);
-    setCandidates(found);
-    setMessage(matchesMessage(found.length, trimmed));
+    setSubmitted(trimmed);
   }
 
   function chooseAgain() {
@@ -115,7 +122,7 @@ export function ConfirmLesson({
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
-              setCandidates(initialCandidates);
+              setSubmitted(null);
               setMessage("");
             }}
             onKeyDown={(event) => {
@@ -130,7 +137,7 @@ export function ConfirmLesson({
           </button>
         </>
       )}
-      <p role="status">{message}</p>
+      <p role="status">{searchMessage ?? message}</p>
     </div>
   );
 }
