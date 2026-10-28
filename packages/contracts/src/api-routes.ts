@@ -7,7 +7,12 @@ import {
   UploadRequest,
   UploadTicket,
 } from "./media-api";
-import { RecognisedPhoto, RecognisePhotoRequest } from "./recognition-api";
+import {
+  RecognisedPhoto,
+  RecognisePhotoRequest,
+  RecordedSelection,
+  RecordSelectionRequest,
+} from "./recognition-api";
 import { TaxonomySearchRequest, TaxonomySearchResults } from "./taxonomy-api";
 
 // GET routes take their request as query parameters, so their request schemas hold strings only.
@@ -36,6 +41,14 @@ export const API_ROUTES = {
     request: RecognisePhotoRequest,
     response: RecognisedPhoto,
     errors: [400, 404, 503],
+  },
+  recordSelection: {
+    method: "post",
+    path: "/recognitions/selection",
+    summary: "Record the object the learner confirmed, or their own words for it.",
+    request: RecordSelectionRequest,
+    response: RecordedSelection,
+    errors: [400, 404],
   },
   searchTaxonomy: {
     method: "get",

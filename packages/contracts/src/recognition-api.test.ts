@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { LearnerCandidate, NextStep, RecognisedPhoto } from "./recognition-api";
+import {
+  LearnerCandidate,
+  NextStep,
+  RecognisedPhoto,
+  RecordSelectionRequest,
+} from "./recognition-api";
 
 const RESULT = "0192f1a0-0000-7000-9000-000000000005";
 const SESSION = "0192f1a0-0000-7000-8000-000000000011";
@@ -15,6 +20,27 @@ describe("recognition API contracts", () => {
     });
 
     expect(candidate).not.toHaveProperty("calibratedConfidence");
+    expect(candidate.parts).toEqual([]);
+  });
+
+  it("accepts an object choice or trimmed free text, nothing else", () => {
+    const resultId = RESULT;
+    expect(
+      RecordSelectionRequest.parse({
+        resultId,
+        selection: { kind: "free-text", text: " a trike " },
+      }).selection,
+    ).toEqual({ kind: "free-text", text: "a trike" });
+    expect(
+      RecordSelectionRequest.safeParse({ resultId, selection: { kind: "free-text", text: "  " } })
+        .success,
+    ).toBe(false);
+    expect(
+      RecordSelectionRequest.safeParse({
+        resultId,
+        selection: { kind: "object", taxonomyId: "bad id" },
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts each next step", () => {
