@@ -1,41 +1,40 @@
 import { NextResponse } from "next/server";
-import { presignR2Url, readR2Env, validateUploadIntent } from "@sbi/media";
-import { expiryWithinLimit, parseUploadRequest } from "./request";
+import { DEFAULT_UPLOAD_POLICY, issueUploadToken, validateUploadIntent } from "@sbi/media";
+import { mediaServer, UNAVAILABLE } from "./media-server";
+import { parseUploadRequest } from "./request";
+
+// Gives a slow connection time to finish the PUT before confirming.
+const CONFIRM_GRACE_SECONDS = 600;
 
 export async function POST(request: Request) {
-  let env;
+  const media = await mediaServer().catch(() => null);
+  if (!media) {
+    return NextResponse.json(UNAVAILABLE, { status: 503 });
+  }
+  // TODO(#120): rate-limit upload requests per client before signing URLs.
+  let accepted;
   try {
-    env = readR2Env(process.env);
-  } catch {
-    // Configuration state is not the learner's problem to diagnose.
-    return NextResponse.json(
-      { error: "Photo uploads are unavailable right now." },
-      { status: 503 },
+    accepted = validateUploadIntent(
+      parseUploadRequest(await request.json()),
+      DEFAULT_UPLOAD_POLICY,
     );
-  }
-  let intent;
-  try {
-    intent = parseUploadRequest(await request.json());
-  } catch {
-    return NextResponse.json({ error: "That upload request was malformed." }, { status: 400 });
-  }
-  try {
-    const accepted = validateUploadIntent(intent);
-    if (!expiryWithinLimit(accepted.expiresInSeconds)) {
-      throw new Error("Upload window out of bounds.");
-    }
-    const uploadUrl = await presignR2Url(env, {
-      expiresInSeconds: accepted.expiresInSeconds,
-      key: accepted.key,
-      method: "PUT",
-    });
-    return NextResponse.json({
-      expiresInSeconds: accepted.expiresInSeconds,
-      key: accepted.key,
-      uploadUrl,
-    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Uploads accept photos only.";
+    const message = error instanceof Error ? error.message : "Upload a JPG or PNG photo.";
     return NextResponse.json({ error: message }, { status: 400 });
+  }
+  try {
+    const uploadUrl = await media.storage.presignPut({
+      contentLength: accepted.sizeBytes,
+      contentType: accepted.contentType,
+      expiresInSeconds: accepted.expiresInSeconds,
+      key: accepted.stagingKey,
+    });
+    const expiresAt = new Date(
+      Date.now() + (accepted.expiresInSeconds + CONFIRM_GRACE_SECONDS) * 1000,
+    );
+    const token = await issueUploadToken(media.uploadTokenSecret, accepted.stagingKey, expiresAt);
+    return NextResponse.json({ expiresInSeconds: accepted.expiresInSeconds, token, uploadUrl });
+  } catch {
+    return NextResponse.json(UNAVAILABLE, { status: 503 });
   }
 }

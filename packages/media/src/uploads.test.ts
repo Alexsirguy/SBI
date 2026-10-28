@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { detectImageType } from "./image-type";
-import {
-  createObjectKey,
-  loggingMalwareScanHook,
-  readR2Env,
-  sniffImageType,
-  validateUploadIntent,
-} from "./uploads";
+import { createObjectKey, STAGING_PREFIX, validateUploadIntent } from "./uploads";
 
 describe("detectImageType", () => {
   it("recognises JPEG, PNG, and HEIC magic bytes", () => {
@@ -24,69 +18,38 @@ describe("detectImageType", () => {
 });
 
 describe("validateUploadIntent", () => {
-  it("accepts a supported declaration and issues a server-side key", () => {
-    const accepted = validateUploadIntent({
-      declaredType: "image/jpeg",
-      filename: "leaf.jpg",
-      sizeBytes: 1024,
-    });
+  it("issues a short-lived staging key that carries no learner data", () => {
+    const accepted = validateUploadIntent({ declaredType: "image/jpeg", sizeBytes: 1024 });
     expect(accepted.contentType).toBe("image/jpeg");
-    expect(accepted.key).toMatch(/^uploads\/\d{4}-\d{2}-\d{2}\/.+-leaf\.jpg$/);
-    expect(accepted.expiresInSeconds).toBeLessThanOrEqual(900);
+    expect(accepted.stagingKey).toMatch(/^staging\/[0-9a-f-]{36}\.jpg$/);
+    expect(accepted.expiresInSeconds).toBe(300);
   });
 
-  it("rejects unsupported types and oversized uploads", () => {
+  it("rejects HEIC, other types and out-of-range sizes", () => {
+    expect(() => validateUploadIntent({ declaredType: "image/heic", sizeBytes: 10 })).toThrow(
+      "JPG or PNG",
+    );
+    expect(() => validateUploadIntent({ declaredType: "image/gif", sizeBytes: 10 })).toThrow();
     expect(() =>
-      validateUploadIntent({ declaredType: "image/gif", filename: "a.gif", sizeBytes: 10 }),
-    ).toThrow("accept");
-    expect(() =>
-      validateUploadIntent({
-        declaredType: "image/png",
-        filename: "a.png",
-        sizeBytes: 100 * 1024 * 1024,
-      }),
+      validateUploadIntent({ declaredType: "image/png", sizeBytes: 100 * 1024 * 1024 }),
     ).toThrow("bytes");
+    expect(() => validateUploadIntent({ declaredType: "image/png", sizeBytes: 0 })).toThrow(
+      "bytes",
+    );
+  });
+
+  it("refuses an upload window longer than fifteen minutes", () => {
     expect(() =>
-      validateUploadIntent({ declaredType: "image/png", filename: "a.png", sizeBytes: 0 }),
-    ).toThrow("bytes");
+      validateUploadIntent(
+        { declaredType: "image/png", sizeBytes: 10 },
+        { allowedTypes: ["image/png"], expiresInSeconds: 3600, maxBytes: 100 },
+      ),
+    ).toThrow("900 seconds");
   });
 });
 
 describe("createObjectKey", () => {
-  it("neutralises directory traversal and odd characters", () => {
-    expect(createObjectKey("uploads", "../../etc/passwd", "id")).toMatch(
-      /^uploads\/\d{4}-\d{2}-\d{2}\/id-passwd$/,
-    );
-    expect(createObjectKey("uploads", "my photo (1).PNG", "id")).toMatch(/my_photo_1_.PNG$/);
-  });
-});
-
-describe("readR2Env", () => {
-  it("fails closed when storage is unconfigured", () => {
-    expect(() => readR2Env({})).toThrow("not configured");
-    expect(
-      readR2Env({
-        R2_ACCESS_KEY_ID: "a",
-        R2_ACCOUNT_ID: "b",
-        R2_BUCKET: "c",
-        R2_SECRET_ACCESS_KEY: "d",
-      }),
-    ).toEqual({ accessKeyId: "a", accountId: "b", bucket: "c", secretAccessKey: "d" });
-  });
-});
-
-describe("malware scan hook", () => {
-  it("records scan requests for the external scanner", async () => {
-    const messages: string[] = [];
-    await loggingMalwareScanHook((message) => messages.push(message)).requestScan("uploads/a.jpg");
-    expect(messages).toEqual(["Malware scan requested for uploads/a.jpg."]);
-  });
-});
-
-describe("sniffImageType", () => {
-  it("throws when stored bytes are not a photo", () => {
-    expect(() => sniffImageType(new Uint8Array([0x47, 0x49, 0x46]))).toThrow(
-      "not a supported photo",
-    );
+  it("builds keys from a random id and the verified type only", () => {
+    expect(createObjectKey(STAGING_PREFIX, "image/png", "abc")).toBe("staging/abc.png");
   });
 });

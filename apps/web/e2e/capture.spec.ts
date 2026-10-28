@@ -74,5 +74,8 @@ test("upload reports honestly when private storage is unavailable", async ({ pag
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled({ timeout: 15000 });
   await page.getByRole("button", { name: "Upload photo" }).click();
 
-  await expect(page.getByRole("status")).toContainText("unavailable", { timeout: 15000 });
+  await expect(page.getByRole("form", { name: "Photo capture" }).getByRole("alert")).toContainText(
+    "unavailable",
+    { timeout: 15000 },
+  );
 });

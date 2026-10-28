@@ -1,30 +1,15 @@
-import { MAX_PRESIGN_EXPIRY_SECONDS } from "@sbi/media";
+import type { UploadIntent } from "@sbi/media";
 
-export interface UploadRequestBody {
-  declaredType: unknown;
-  sizeBytes: unknown;
-  filename: unknown;
-}
+const MALFORMED = "Describe the photo to upload: type and size.";
 
 // Rejects malformed intents before any storage credential is touched.
-export function parseUploadRequest(body: unknown): {
-  declaredType: string;
-  sizeBytes: number;
-  filename: string;
-} {
+export function parseUploadRequest(body: unknown): UploadIntent {
   if (typeof body !== "object" || body === null) {
-    throw new Error("Describe the photo to upload: type, size, and filename.");
+    throw new Error(MALFORMED);
   }
-  const { declaredType, filename, sizeBytes } = body as UploadRequestBody;
-  if (typeof declaredType !== "string" || typeof filename !== "string") {
-    throw new Error("Describe the photo to upload: type, size, and filename.");
+  const { declaredType, sizeBytes } = body as Record<string, unknown>;
+  if (typeof declaredType !== "string" || typeof sizeBytes !== "number") {
+    throw new Error(MALFORMED);
   }
-  if (typeof sizeBytes !== "number") {
-    throw new Error("Describe the photo to upload: type, size, and filename.");
-  }
-  return { declaredType, filename, sizeBytes };
-}
-
-export function expiryWithinLimit(seconds: number): boolean {
-  return Number.isInteger(seconds) && seconds >= 1 && seconds <= MAX_PRESIGN_EXPIRY_SECONDS;
+  return { declaredType, sizeBytes };
 }

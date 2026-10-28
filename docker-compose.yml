@@ -27,6 +27,18 @@ services:
       - storage-data:/data
       - ./infra/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
 
+  clamav:
+    image: clamav/clamav-debian:1.4
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 10s
+      retries: 30
+
 volumes:
+  clamav-data:
   mariadb-data:
   storage-data:
