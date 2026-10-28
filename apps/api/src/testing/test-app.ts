@@ -10,10 +10,12 @@ import {
 } from "@sbi/media";
 import type { RecognitionResult } from "@sbi/contracts";
 import type { FallbackRecogniser, RecognitionResultRepository } from "@sbi/recognition";
+import type { CatalogGapRepository } from "@sbi/taxonomy";
 import { AppModule, configureApp } from "../app.module";
 import { loadEnv } from "../env";
 import {
   API_ENV,
+  CATALOG_GAPS,
   DATABASE,
   MALWARE_SCANNER,
   MEDIA_REGISTRY,
@@ -81,6 +83,15 @@ export function fakeRecognition(recogniser: FallbackRecogniser | null = null) {
   return { recogniser, results, saved };
 }
 
+export function fakeGaps() {
+  const recorded: { term: string; source: string }[] = [];
+  const repository: CatalogGapRepository = {
+    record: async (term, source) => void recorded.push({ source, term }),
+    top: async () => [],
+  };
+  return { recorded, repository };
+}
+
 export interface TestApp {
   app: NestFastifyApplication;
   post(path: string, body: unknown, headers?: Record<string, string>): Promise<Response>;
@@ -91,6 +102,7 @@ export interface TestApp {
 export async function startTestApp(
   media = fakeMedia(),
   recognition = fakeRecognition(),
+  gaps = fakeGaps(),
 ): Promise<TestApp> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(API_ENV)
@@ -107,6 +119,8 @@ export async function startTestApp(
     .useValue(recognition.recogniser)
     .overrideProvider(RECOGNITION_RESULTS)
     .useValue(recognition.results)
+    .overrideProvider(CATALOG_GAPS)
+    .useValue(gaps.repository)
     .overrideProvider(PURGE_PASS)
     .useValue(async () => ({ acquired: false }))
     .compile();
