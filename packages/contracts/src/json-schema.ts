@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { API_ROUTES, ApiError } from "./media-api";
 import { CONTRACT_SCHEMAS, CONTRACTS_VERSION } from "./registry";
 
 type JsonObject = Record<string, unknown>;
@@ -13,6 +14,37 @@ export function contractJsonSchemas(): Record<string, JsonObject> {
   );
 }
 
+function inlineSchema(schema: z.ZodType, io: "input" | "output"): JsonObject {
+  const inline: JsonObject = { ...z.toJSONSchema(schema, { io, target: "draft-2020-12" }) };
+  delete inline.$schema;
+  return inline;
+}
+
+function json(schema: JsonObject) {
+  return { content: { "application/json": { schema } } };
+}
+
+function apiPaths(): JsonObject {
+  const error = json(inlineSchema(ApiError, "output"));
+  const paths: Record<string, JsonObject> = {};
+  for (const [operationId, route] of Object.entries(API_ROUTES)) {
+    paths[route.path] = {
+      [route.method]: {
+        operationId,
+        summary: route.summary,
+        requestBody: { required: true, ...json(inlineSchema(route.request, "input")) },
+        responses: {
+          200: { description: "OK", ...json(inlineSchema(route.response, "output")) },
+          ...Object.fromEntries(
+            route.errors.map((status) => [status, { description: "Error", ...error }]),
+          ),
+        },
+      },
+    };
+  }
+  return paths;
+}
+
 export function contractOpenApi(): JsonObject {
   const schemas = Object.fromEntries(
     Object.entries(contractJsonSchemas()).map(
@@ -22,7 +54,7 @@ export function contractOpenApi(): JsonObject {
   return {
     openapi: "3.1.0",
     info: { title: "Science Behind It contracts", version: CONTRACTS_VERSION },
-    paths: {},
+    paths: apiPaths(),
     components: { schemas },
   };
 }

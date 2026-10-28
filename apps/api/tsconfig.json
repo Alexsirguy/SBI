@@ -1,7 +1,8 @@
 {
   "extends": "@sbi/config/tsconfig/base.json",
   "compilerOptions": {
-    "types": ["node"]
+    "types": ["node"],
+    "experimentalDecorators": true
   },
   "include": ["src", "tsup.config.ts"]
 }

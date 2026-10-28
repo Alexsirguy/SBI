@@ -1,4 +1,5 @@
 import { createEnv, FEATURE_DEFAULTS, parseFlags, type EnvSource } from "@sbi/env";
+import { parseRetentionPolicy } from "@sbi/media";
 import { z } from "zod";
 
 const schema = z.object({
@@ -10,12 +11,25 @@ const schema = z.object({
   S3_BUCKET: z.string().min(1),
   S3_ACCESS_KEY_ID: z.string().min(1),
   S3_SECRET_ACCESS_KEY: z.string().min(1),
+  S3_FORCE_PATH_STYLE: z.stringbool().default(false),
+  CLAMAV_HOST: z.string().min(1),
+  CLAMAV_PORT: z.coerce.number().int().positive().default(3310),
+  UPLOAD_TOKEN_SECRET: z.string().min(32),
+  WEB_ORIGINS: z.string().min(1),
+  MEDIA_PURGE_INTERVAL_MINUTES: z.coerce.number().int().positive().default(15),
   FEATURE_FLAGS: z.string().optional(),
 });
 
 export function loadEnv(source: EnvSource = process.env) {
   const env = createEnv(schema, source);
-  return { ...env, features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS) };
+  return {
+    ...env,
+    features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS),
+    retention: parseRetentionPolicy(source),
+    webOrigins: env.WEB_ORIGINS.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  };
 }
 
 export type ApiEnv = ReturnType<typeof loadEnv>;
