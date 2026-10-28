@@ -8,6 +8,14 @@ import { API_ENV, RECOGNISER, RECOGNITION_RESULTS, REPOSITORIES } from "../token
 import { RecognitionController } from "./recognition.controller";
 import { RecognitionService } from "./recognition.service";
 
+// Without the flag or a provider key the API still serves uploads and search; recognition answers 503.
+export function recogniserFor(env: Pick<ApiEnv, "features" | "recognitionSource">) {
+  const { META_MODEL_API_KEY, OPENAI_API_KEY } = env.recognitionSource;
+  return env.features.photoRecognition && (META_MODEL_API_KEY || OPENAI_API_KEY)
+    ? createRecognitionProvider(env.recognitionSource)
+    : null;
+}
+
 @Module({
   imports: [MediaModule, TaxonomyModule],
   controllers: [RecognitionController],
@@ -16,11 +24,7 @@ import { RecognitionService } from "./recognition.service";
     {
       provide: RECOGNISER,
       inject: [API_ENV],
-      // Without provider keys the API still serves uploads and search; recognition answers 503.
-      useFactory: (env: ApiEnv) =>
-        env.recognitionSource.META_MODEL_API_KEY || env.recognitionSource.OPENAI_API_KEY
-          ? createRecognitionProvider(env.recognitionSource)
-          : null,
+      useFactory: recogniserFor,
     },
     {
       provide: RECOGNITION_RESULTS,
