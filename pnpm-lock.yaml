@@ -327,6 +327,9 @@ importers:
       '@sbi/config':
         specifier: workspace:*
         version: link:../config
+      '@sbi/taxonomy':
+        specifier: workspace:*
+        version: link:../taxonomy
 
   packages/rights:
     dependencies:
