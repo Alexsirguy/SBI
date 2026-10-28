@@ -1,4 +1,4 @@
-import { stripMetadata } from "@sbi/media";
+import { stripMetadata } from "@sbi/media/browser";
 
 export interface NormaliseOptions {
   maxDimension?: number;
