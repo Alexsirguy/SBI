@@ -11,6 +11,9 @@ import {
   validateSelection,
 } from "./limits";
 import { cropImage, normaliseImage, type CropRect, type ProcessedImage } from "./processing";
+import { assessQuality, readImageData, type QualityReport } from "./quality";
+
+const CHECK_LABELS = { exposure: "Exposure", sharpness: "Sharpness", subject: "Object size" };
 
 const CROP_FIELDS = [
   { key: "x", label: "Left (px)" },
@@ -44,6 +47,21 @@ export function CaptureForm() {
   const [prepared, setPrepared] = useState<ProcessedImage | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState<CropRect | null>(null);
+  const [quality, setQuality] = useState<QualityReport | null>(null);
+
+  // Guidance only: a failed check never blocks uploading.
+  async function assess(image: ProcessedImage) {
+    try {
+      const bitmap = await createImageBitmap(image.blob);
+      try {
+        setQuality(assessQuality(readImageData(bitmap)));
+      } finally {
+        bitmap.close();
+      }
+    } catch {
+      setQuality(null);
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -62,6 +80,7 @@ export function CaptureForm() {
     setPrepared(null);
     setPreviewUrl(null);
     setCrop(null);
+    setQuality(null);
   }
 
   function retake() {
@@ -93,6 +112,7 @@ export function CaptureForm() {
       if (run !== runRef.current) {
         return;
       }
+      await assess(image);
       setOriginal(image);
       setPrepared(image);
       setPreviewUrl(URL.createObjectURL(image.blob));
@@ -120,6 +140,7 @@ export function CaptureForm() {
       const image = await cropImage(original.blob, crop, limits);
       if (run === runRef.current) {
         setPrepared(image);
+        await assess(image);
       }
     } catch (error) {
       if (run === runRef.current) {
@@ -216,6 +237,24 @@ export function CaptureForm() {
             Retake or choose another
           </button>
         </fieldset>
+      ) : null}
+      {prepared && !busy ? (
+        <section aria-label="Photo check">
+          <h2>Photo check</h2>
+          {quality ? (
+            <ul>
+              {quality.checks.map((check) => (
+                <li key={check.id}>
+                  {check.passed
+                    ? `${CHECK_LABELS[check.id]}: good`
+                    : (check.guidance ?? "Retake the photo.")}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Photo checks could not run — you can still upload.</p>
+          )}
+        </section>
       ) : null}
       <button type="submit" disabled={!prepared || busy}>
         Upload photo
