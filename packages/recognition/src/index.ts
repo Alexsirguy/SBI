@@ -10,6 +10,18 @@ export {
   RECOGNITION_PROVIDERS,
   type RecognitionProviderConfig,
 } from "./providers";
+export {
+  DEFAULT_RANKING_CONFIG,
+  gateLesson,
+  parseRankingConfig,
+  rankCandidates,
+  UNCALIBRATED,
+  type Calibration,
+  type LabelResolver,
+  type LessonGate,
+  type RankedRecognition,
+  type RankingConfig,
+} from "./ranking";
 export type { RecognitionResultRepository } from "./recognition-result-repository";
 export {
   createVisionLlmRecogniser,
