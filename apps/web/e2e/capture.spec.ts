@@ -1,4 +1,5 @@
 import { expectNoAxeViolations } from "./a11y";
+import { mockApi, mockUploads, PHOTO_KEY } from "./mock-api";
 import { expect, test } from "@playwright/test";
 
 // 1x1 transparent PNG; content is irrelevant, only name/size/type are validated.
@@ -67,6 +68,10 @@ test("capture page has no detectable accessibility violations", async ({ page })
 });
 
 test("upload reports honestly when private storage is unavailable", async ({ page }) => {
+  await mockApi(page, "/uploads", () => ({
+    json: { error: "Photo uploads are unavailable right now." },
+    status: 503,
+  }));
   await page.goto("/capture");
   await page
     .locator('input[name="upload"]')
@@ -82,16 +87,10 @@ test("upload reports honestly when private storage is unavailable", async ({ pag
 
 test("after upload the learner can choose to keep the photo", async ({ page }) => {
   const kept: unknown[] = [];
-  await page.route("**/api/uploads", (route) =>
-    route.fulfill({ json: { expiresInSeconds: 300, token: "t", uploadUrl: "/fake-put" } }),
-  );
-  await page.route("**/fake-put", (route) => route.fulfill({ status: 200 }));
-  await page.route("**/api/uploads/confirm", (route) =>
-    route.fulfill({ json: { contentType: "image/jpeg", key: "photos/a.jpg" } }),
-  );
-  await page.route("**/api/photos/keep", async (route) => {
-    kept.push(route.request().postDataJSON());
-    await route.fulfill({ json: { kept: true } });
+  await mockUploads(page);
+  await mockApi(page, "/photos/keep", (body) => {
+    kept.push(body);
+    return { json: { kept: true } };
   });
   await page.goto("/capture");
   await page
@@ -103,6 +102,6 @@ test("after upload the learner can choose to keep the photo", async ({ page }) =
 
   await page.getByRole("button", { name: "Keep this photo" }).click();
   await expect(status).toContainText("will not be deleted automatically");
-  expect(kept).toEqual([{ key: "photos/a.jpg" }]);
+  expect(kept).toEqual([{ key: PHOTO_KEY }]);
   await expect(page.getByRole("button", { name: "Keep this photo" })).toHaveCount(0);
 });

@@ -9,6 +9,9 @@ const valid = {
   S3_BUCKET: "sbi-media",
   S3_ACCESS_KEY_ID: "sbi",
   S3_SECRET_ACCESS_KEY: "secret",
+  CLAMAV_HOST: "127.0.0.1",
+  UPLOAD_TOKEN_SECRET: "x".repeat(32),
+  WEB_ORIGINS: "http://localhost:3000, https://sbi.example",
 };
 
 describe("loadEnv", () => {
@@ -29,6 +32,17 @@ describe("loadEnv", () => {
     expect(env.MEDIA_PURGE_INTERVAL_MINUTES).toBe(5);
     expect(env.retention.originalTtlDays).toBe(3);
     expect(env.retention.derivativeTtlDays).toBe(30);
+  });
+
+  it("reads the scanner and the web origins allowed to call the API", () => {
+    const env = loadEnv(valid);
+
+    expect(env.CLAMAV_PORT).toBe(3310);
+    expect(env.webOrigins).toEqual(["http://localhost:3000", "https://sbi.example"]);
+  });
+
+  it("refuses a short upload token secret", () => {
+    expect(() => loadEnv({ ...valid, UPLOAD_TOKEN_SECRET: "short" })).toThrow(EnvError);
   });
 
   it("fails fast when required variables are missing", () => {
