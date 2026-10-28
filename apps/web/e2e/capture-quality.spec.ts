@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectNoAxeViolations } from "./a11y";
 import { expect, type Page, test } from "@playwright/test";
 
 type Pattern = "black" | "checker" | "flat" | "white";
@@ -85,8 +85,7 @@ test("guidance sits in a live region so screen readers announce it", async ({ pa
 
   await expect(check).toContainText("Hold the camera still", { timeout: 15000 });
   await expect(page.locator('[aria-live="polite"]')).toContainText("Hold the camera still");
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
+  await expectNoAxeViolations(page);
 });
 
 test("cropping re-runs the checks on the cropped photo", async ({ page }) => {
