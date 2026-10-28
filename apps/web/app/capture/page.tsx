@@ -1,6 +1,6 @@
 import { CaptureForm } from "./capture-form";
 import { PHOTO_RETENTION_DAYS } from "./limits";
-import { TextEntry } from "./text-entry";
+import { ConfirmLesson } from "./confirm/confirm-lesson";
 
 export default function CapturePage() {
   return (
@@ -24,7 +24,7 @@ export default function CapturePage() {
       <CaptureForm />
       <section aria-labelledby="text-entry">
         <h2 id="text-entry">No camera? Describe it instead</h2>
-        <TextEntry />
+        <ConfirmLesson headingLevel={3} />
       </section>
     </main>
   );
