@@ -36,7 +36,7 @@ export async function mockUploads(page: Page) {
   await mockApi(page, "/uploads/confirm", () => ({
     json: { contentType: "image/jpeg", key: PHOTO_KEY },
   }));
-  // Recognition is off by default (ADR 0006), so specs see the describe fallback unless they opt in.
+  // Specs see the describe fallback, as when recognition is switched off, unless they opt in.
   await mockApi(page, "/recognitions", () => ({ json: { error: RECOGNITION_OFF }, status: 503 }));
 }
 
