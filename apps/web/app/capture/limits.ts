@@ -17,7 +17,11 @@ export const ACCEPTED_FORMATS_LABEL = "JPG, PNG, HEIC";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-export const MAX_UPLOAD_LABEL = "10 MB";
+export function uploadLimitLabel(bytes: number): string {
+  return `${Math.round((bytes / (1024 * 1024)) * 10) / 10} MB`;
+}
+
+export const MAX_UPLOAD_LABEL = uploadLimitLabel(MAX_UPLOAD_BYTES);
 
 export const PHOTO_RETENTION_DAYS = 7;
 
@@ -28,7 +32,10 @@ export interface SelectableFile {
 }
 
 // Browsers may report an empty MIME type (notably for HEIC), so fall back to extension.
-export function validateSelection(file: SelectableFile): string | null {
+export function validateSelection(
+  file: SelectableFile,
+  maxBytes = MAX_UPLOAD_BYTES,
+): string | null {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   const knownType = (ACCEPTED_IMAGE_TYPES as readonly string[]).includes(file.type);
   if (!knownType && !(KNOWN_EXTENSIONS as readonly string[]).includes(extension)) {
@@ -37,8 +44,8 @@ export function validateSelection(file: SelectableFile): string | null {
   if (file.size === 0) {
     return `“${file.name}” is empty. Choose another photo.`;
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return `“${file.name}” is too large. Photos can be up to ${MAX_UPLOAD_LABEL}.`;
+  if (file.size > maxBytes) {
+    return `“${file.name}” is too large. Photos can be up to ${uploadLimitLabel(maxBytes)}.`;
   }
   return null;
 }

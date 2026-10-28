@@ -4,6 +4,7 @@ import {
   MAX_UPLOAD_BYTES,
   MAX_UPLOAD_LABEL,
   formatBytes,
+  uploadLimitLabel,
   validateSelection,
 } from "./limits";
 
@@ -51,5 +52,13 @@ describe("formatBytes", () => {
     [MAX_UPLOAD_BYTES, "10.0 MB"],
   ])("formats %d as %s", (bytes, label) => {
     expect(formatBytes(bytes)).toBe(label);
+  });
+});
+
+describe("configurable upload limit", () => {
+  it("applies a smaller configured limit and names it in the message", () => {
+    const file = { name: "a.jpg", size: 3 * 1024 * 1024, type: "image/jpeg" };
+    expect(validateSelection(file, 2 * 1024 * 1024)).toMatch(/up to 2 MB/);
+    expect(uploadLimitLabel(2 * 1024 * 1024)).toBe("2 MB");
   });
 });

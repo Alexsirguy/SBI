@@ -1,0 +1,37 @@
+:root {
+  --focus-ring: #1d4ed8;
+  --focus-ring-halo: #ffffff;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --focus-ring: #93c5fd;
+    --focus-ring-halo: #0b1220;
+  }
+}
+
+/* The halo keeps the ring visible on both light and dark photo previews. */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--focus-ring-halo);
+}
+
+/* Comfortable touch targets (WCAG 2.5.8); the crop area is sized by the selection instead. */
+button:not(.crop-area),
+input,
+select {
+  min-height: 2.75rem;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+  font: inherit;
+}
+
+button:not(.crop-area) {
+  min-width: 2.75rem;
+  padding: 0 1rem;
+}
+
+input[type="number"] {
+  width: 6rem;
+}
