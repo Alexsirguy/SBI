@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "22312725-3fa4-422b-b052-096315ed703e",
+  "id": "692b796e-10d4-473d-9f6e-3138d7e9f77d",
   "prevId": "4e87ac06-3045-45fb-abd6-774e781c39da",
   "tables": {
     "claims": {
@@ -34,9 +34,7 @@
       "compositePrimaryKeys": {
         "claims_claim_id": {
           "name": "claims_claim_id",
-          "columns": [
-            "claim_id"
-          ]
+          "columns": ["claim_id"]
         }
       },
       "uniqueConstraints": {},
@@ -81,14 +79,18 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "deletion_audit_log_deleted_idx": {
+          "name": "deletion_audit_log_deleted_idx",
+          "columns": ["deleted_at"],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "deletion_audit_log_audit_id": {
           "name": "deletion_audit_log_audit_id",
-          "columns": [
-            "audit_id"
-          ]
+          "columns": ["audit_id"]
         }
       },
       "uniqueConstraints": {},
@@ -131,9 +133,7 @@
       "compositePrimaryKeys": {
         "evidence_sources_source_id": {
           "name": "evidence_sources_source_id",
-          "columns": [
-            "source_id"
-          ]
+          "columns": ["source_id"]
         }
       },
       "uniqueConstraints": {},
@@ -216,16 +216,12 @@
       "indexes": {
         "lessons_intent_idx": {
           "name": "lessons_intent_idx",
-          "columns": [
-            "intent_signature"
-          ],
+          "columns": ["intent_signature"],
           "isUnique": false
         },
         "lessons_content_hash_idx": {
           "name": "lessons_content_hash_idx",
-          "columns": [
-            "content_hash"
-          ],
+          "columns": ["content_hash"],
           "isUnique": false
         }
       },
@@ -233,10 +229,7 @@
       "compositePrimaryKeys": {
         "lessons_lesson_id_version_pk": {
           "name": "lessons_lesson_id_version_pk",
-          "columns": [
-            "lesson_id",
-            "version"
-          ]
+          "columns": ["lesson_id", "version"]
         }
       },
       "uniqueConstraints": {},
@@ -266,6 +259,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "saved_by_user": {
           "name": "saved_by_user",
           "type": "boolean",
@@ -273,14 +273,19 @@
           "notNull": true,
           "autoincrement": false,
           "default": false
+        },
+        "deleting_at": {
+          "name": "deleting_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
-        "media_objects_created_idx": {
-          "name": "media_objects_created_idx",
-          "columns": [
-            "created_at"
-          ],
+        "media_objects_expires_idx": {
+          "name": "media_objects_expires_idx",
+          "columns": ["expires_at"],
           "isUnique": false
         }
       },
@@ -288,9 +293,7 @@
       "compositePrimaryKeys": {
         "media_objects_object_key": {
           "name": "media_objects_object_key",
-          "columns": [
-            "object_key"
-          ]
+          "columns": ["object_key"]
         }
       },
       "uniqueConstraints": {},
@@ -345,16 +348,12 @@
       "indexes": {
         "recognition_session_idx": {
           "name": "recognition_session_idx",
-          "columns": [
-            "session_id"
-          ],
+          "columns": ["session_id"],
           "isUnique": false
         },
         "recognition_delete_by_idx": {
           "name": "recognition_delete_by_idx",
-          "columns": [
-            "delete_by"
-          ],
+          "columns": ["delete_by"],
           "isUnique": false
         }
       },
@@ -362,9 +361,7 @@
       "compositePrimaryKeys": {
         "recognition_results_result_id": {
           "name": "recognition_results_result_id",
-          "columns": [
-            "result_id"
-          ]
+          "columns": ["result_id"]
         }
       },
       "uniqueConstraints": {},
@@ -428,10 +425,7 @@
       "compositePrimaryKeys": {
         "tutor_turns_session_id_turn_id_pk": {
           "name": "tutor_turns_session_id_turn_id_pk",
-          "columns": [
-            "session_id",
-            "turn_id"
-          ]
+          "columns": ["session_id", "turn_id"]
         }
       },
       "uniqueConstraints": {},
@@ -474,9 +468,7 @@
       "compositePrimaryKeys": {
         "visual_assets_asset_id": {
           "name": "visual_assets_asset_id",
-          "columns": [
-            "asset_id"
-          ]
+          "columns": ["asset_id"]
         }
       },
       "uniqueConstraints": {},

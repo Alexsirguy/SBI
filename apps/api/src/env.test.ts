@@ -19,6 +19,18 @@ describe("loadEnv", () => {
     expect(env.features).toEqual({ visualLab: false, tutor: true });
   });
 
+  it("reads the purge schedule and retention TTLs", () => {
+    const env = loadEnv({
+      ...valid,
+      MEDIA_PURGE_INTERVAL_MINUTES: "5",
+      MEDIA_TTL_ORIGINAL_DAYS: "3",
+    });
+
+    expect(env.MEDIA_PURGE_INTERVAL_MINUTES).toBe(5);
+    expect(env.retention.originalTtlDays).toBe(3);
+    expect(env.retention.derivativeTtlDays).toBe(30);
+  });
+
   it("fails fast when required variables are missing", () => {
     expect(() => loadEnv({})).toThrow(EnvError);
   });

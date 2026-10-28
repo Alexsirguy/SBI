@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "generate": "drizzle-kit generate",
+    "generate": "drizzle-kit generate && prettier --write migrations",
     "migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts"
   },
   "dependencies": {

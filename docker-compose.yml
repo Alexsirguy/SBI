@@ -20,7 +20,8 @@ services:
 
   storage:
     image: chrislusf/seaweedfs:4.51
-    command: server -dir=/data -s3 -s3.config=/etc/seaweedfs/s3.json
+    # Auto-sized slots and small volumes let each bucket get its own volumes on a laptop disk.
+    command: server -dir=/data -volume.max=0 -master.volumeSizeLimitMB=128 -s3 -s3.config=/etc/seaweedfs/s3.json
     ports:
       - "8333:8333"
     volumes:
