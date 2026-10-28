@@ -10,8 +10,8 @@
     "start": "next start --port 3000",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "playwright test",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@sbi/env": "workspace:*",

@@ -65,3 +65,14 @@ test("capture page has no detectable accessibility violations", async ({ page })
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });
+
+test("upload reports honestly when private storage is unavailable", async ({ page }) => {
+  await page.goto("/capture");
+  await page
+    .locator('input[name="upload"]')
+    .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
+  await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled({ timeout: 15000 });
+  await page.getByRole("button", { name: "Upload photo" }).click();
+
+  await expect(page.getByRole("status")).toContainText("unavailable", { timeout: 15000 });
+});
