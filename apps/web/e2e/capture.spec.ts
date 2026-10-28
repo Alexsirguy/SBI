@@ -34,8 +34,9 @@ test("capture page offers camera and upload entries with limits and privacy cue"
 test("capture page validates the selected photo", async ({ page }) => {
   await page.goto("/capture");
   const upload = page.locator('input[name="upload"]');
-  const status = page.getByRole("status");
-  const alert = page.getByRole("form", { name: "Photo capture" }).getByRole("alert");
+  const form = page.getByRole("form", { name: "Photo capture" });
+  const status = form.getByRole("status");
+  const alert = form.getByRole("alert");
 
   await upload.setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
   await expect(status).toContainText("Ready: 1 by 1 pixels, JPEG", { timeout: 15000 });
