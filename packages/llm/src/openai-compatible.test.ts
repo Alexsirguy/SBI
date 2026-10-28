@@ -92,6 +92,32 @@ describe("createOpenAiCompatibleProvider", () => {
     vi.useRealTimers();
   });
 
+  it("passes the abort signal to fetch", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => ok("hi"));
+    const controller = new AbortController();
+    await provider(fetchImpl).complete({
+      messages: [{ role: "user", content: "hi" }],
+      signal: controller.signal,
+    });
+
+    expect(fetchImpl.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
+  });
+
+  it("stops retrying once aborted", async () => {
+    const controller = new AbortController();
+    const fetchImpl = vi.fn<typeof fetch>(async () => {
+      controller.abort(new Error("timed out"));
+      return new Response("busy", { status: 503 });
+    });
+    await expect(
+      provider(fetchImpl, { retries: 3 }).complete({
+        messages: [{ role: "user", content: "hi" }],
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow("timed out");
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
   it("does not retry client errors", async () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => new Response("bad", { status: 400 }));
     await expect(
