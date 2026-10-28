@@ -1,5 +1,5 @@
 import { expectNoAxeViolations } from "./a11y";
-import { mockUploads } from "./mock-api";
+import { mockApi, mockTaxonomy, mockUploads } from "./mock-api";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const tinyPng = Buffer.from(
@@ -12,20 +12,24 @@ async function confirmKettle(page: Page, scope: Locator) {
   await scope.getByLabel("Describe the object").fill("kettles");
   await scope.getByLabel("Describe the object").press("Enter");
   await expect(scope.getByRole("status").last()).toHaveText("1 match for “kettles”.");
-  await scope.getByRole("button", { name: "Kettle" }).click();
+  await scope.getByRole("button", { name: "Electric kettle" }).click();
 
   const heading = scope.getByRole("heading", { name: "Start this lesson?" });
   await expect(heading).toBeFocused();
-  await expect(scope).toContainText("Lesson about: Kettle.");
+  await expect(scope).toContainText("Lesson about: Electric kettle.");
   await expectNoAxeViolations(page);
 
   await scope.getByRole("button", { name: "Choose again" }).click();
-  await expect(scope.getByRole("button", { name: "Kettle" })).toBeFocused();
-  await scope.getByRole("button", { name: "Kettle" }).click();
+  await expect(scope.getByRole("button", { name: "Electric kettle" })).toBeFocused();
+  await scope.getByRole("button", { name: "Electric kettle" }).click();
   await scope.getByRole("button", { name: "Start lesson" }).click();
-  await expect(scope.getByText("Starting lesson: Kettle.")).toBeFocused();
+  await expect(scope.getByText("Starting lesson: Electric kettle.")).toBeFocused();
   await expectNoAxeViolations(page);
 }
+
+test.beforeEach(async ({ page }) => {
+  await mockTaxonomy(page);
+});
 
 test("text entry resolves candidates and confirms the lesson", async ({ page }) => {
   await page.goto("/capture");
@@ -81,4 +85,19 @@ test("text entry guides on short, unmatched and edited queries", async ({ page }
   await expect(section.getByLabel("Matching objects")).toHaveCount(0);
   await expect(status).toHaveText("");
   await expectNoAxeViolations(page);
+});
+
+test("text entry explains when search is unavailable", async ({ page }) => {
+  await mockApi(page, "/taxonomy/search?*", () => ({
+    json: { error: "Search is down." },
+    status: 503,
+  }));
+  await page.goto("/capture");
+  const section = page.getByRole("region", { name: "No camera? Describe it instead" });
+
+  await section.getByLabel("Describe the object").fill("bike");
+  await section.getByRole("button", { name: "Search objects" }).click();
+
+  await expect(section.getByRole("status")).toHaveText("Search is down.");
+  await expect(section.getByLabel("Matching objects")).toHaveCount(0);
 });

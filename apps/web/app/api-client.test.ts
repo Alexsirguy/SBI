@@ -21,6 +21,20 @@ describe("createApiClient", () => {
     expect(init).toMatchObject({ body: '{"token":"t"}', method: "POST" });
   });
 
+  it("sends GET requests as a query string without a body", async () => {
+    const fetcher = replying(200, {
+      results: [{ label: "Bicycle", taxonomyId: "object.bicycle" }],
+    });
+    const api = createApiClient("http://api.test", fetcher);
+
+    await expect(api("searchTaxonomy", { q: " bike & co " })).resolves.toEqual({
+      results: [{ label: "Bicycle", taxonomyId: "object.bicycle" }],
+    });
+    const [url, init] = fetcher.mock.calls[0] ?? [];
+    expect(url).toBe("http://api.test/taxonomy/search?q=bike+%26+co");
+    expect(init).toEqual({ method: "GET" });
+  });
+
   it("surfaces the API's error message with its status", async () => {
     const api = createApiClient("http://api.test", replying(409, { error: "Already deleted." }));
 

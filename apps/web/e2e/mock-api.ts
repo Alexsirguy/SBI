@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { createTaxonomy, SEED_TAXONOMY } from "@sbi/taxonomy";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/+$/, "");
 const STORAGE_PUT = "https://storage.test/fake-put";
@@ -35,4 +36,13 @@ export async function mockUploads(page: Page) {
   await mockApi(page, "/uploads/confirm", () => ({
     json: { contentType: "image/jpeg", key: PHOTO_KEY },
   }));
+}
+
+// Answers search from the real taxonomy package, so specs exercise the shipped seed and ranking.
+export async function mockTaxonomy(page: Page) {
+  const taxonomy = createTaxonomy(SEED_TAXONOMY);
+  await page.route(`${API_URL}/taxonomy/search?*`, (route) => {
+    const query = new URL(route.request().url()).searchParams.get("q") ?? "";
+    return route.fulfill({ headers: CORS, json: { results: taxonomy.search(query) } });
+  });
 }
