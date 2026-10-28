@@ -87,3 +87,4 @@ Notes:
 - Switching vendor is a config change, because both sit behind `LlmProvider`.
 - Before production, Meta's Standard-mode retention terms must be confirmed in writing. Until then, photos sent to either vendor are evaluation data only, never learner photos.
 - Self-hosting the open-weight Muse Spark Open stays an option if retention or region terms turn out unacceptable.
+- `createRecognitionProvider` in `@sbi/recognition` applies this decision: Spark then GPT-5.4-mini, each with its own timeout (`RECOGNITION_TIMEOUT_MS`, default 20 s). It refuses contributor models and `store: true`, and sends `store: false` to OpenAI.

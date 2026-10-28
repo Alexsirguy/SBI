@@ -15,6 +15,7 @@ export interface CompletionRequest {
   messages: ChatMessage[];
   jsonSchema?: JsonSchemaFormat;
   maxTokens?: number;
+  signal?: AbortSignal;
 }
 
 export interface Usage {

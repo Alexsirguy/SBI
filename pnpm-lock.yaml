@@ -308,6 +308,9 @@ importers:
       '@sbi/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@sbi/env':
+        specifier: workspace:*
+        version: link:../env
       '@sbi/llm':
         specifier: workspace:*
         version: link:../llm
