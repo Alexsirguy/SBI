@@ -23,10 +23,13 @@ export async function POST(request: Request) {
   try {
     const confirmed = await confirmUpload({
       maxBytes: DEFAULT_UPLOAD_POLICY.maxBytes,
+      policy: media.retention,
+      registry: media.registry,
       scanner: media.scanner,
       stagingKey,
       storage: media.storage,
     });
+    // TODO(#34): once recognition succeeds, call registry.expireSooner with recognisedExpiry.
     return NextResponse.json({ contentType: confirmed.contentType, key: confirmed.key });
   } catch (error) {
     if (error instanceof UploadRejectedError) {

@@ -11,12 +11,13 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "generate": "drizzle-kit generate",
+    "generate": "drizzle-kit generate && prettier --write migrations",
     "migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts"
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",
     "@sbi/evidence": "workspace:*",
+    "@sbi/media": "workspace:*",
     "@sbi/orchestrator": "workspace:*",
     "@sbi/recognition": "workspace:*",
     "@sbi/rights": "workspace:*",
