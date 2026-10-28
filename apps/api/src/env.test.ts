@@ -19,7 +19,7 @@ describe("loadEnv", () => {
     const env = loadEnv({ ...valid, FEATURE_FLAGS: "tutor" });
 
     expect(env.PORT).toBe(4000);
-    expect(env.features).toEqual({ photoRecognition: false, tutor: true, visualLab: false });
+    expect(env.features).toEqual({ photoRecognition: true, tutor: true, visualLab: false });
   });
 
   it("reads the purge schedule and retention TTLs", () => {

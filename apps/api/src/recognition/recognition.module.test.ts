@@ -16,13 +16,21 @@ const base = {
 };
 
 describe("recogniserFor", () => {
-  it("stays off by default even with a provider key", () => {
-    expect(recogniserFor(loadEnv({ ...base, META_MODEL_API_KEY: "k" }))).toBeNull();
-    expect(testEnv.features.photoRecognition).toBe(false);
+  it("is on by default once a provider key is set", () => {
+    expect(testEnv.features.photoRecognition).toBe(true);
+    expect(recogniserFor(loadEnv({ ...base, META_MODEL_API_KEY: "k" }))?.id).toBe("meta-spark");
   });
 
-  it("stays off when the flag is on but no key is set", () => {
-    expect(recogniserFor(loadEnv({ ...base, FEATURE_FLAGS: "photoRecognition" }))).toBeNull();
+  it("stays off without a provider key", () => {
+    expect(recogniserFor(loadEnv(base))).toBeNull();
+  });
+
+  it("can be switched off so no photo reaches a vendor", () => {
+    expect(
+      recogniserFor(
+        loadEnv({ ...base, FEATURE_FLAGS: "!photoRecognition", META_MODEL_API_KEY: "k" }),
+      ),
+    ).toBeNull();
   });
 
   it("builds the provider chain when the flag and a key are set", () => {
