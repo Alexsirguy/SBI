@@ -96,6 +96,7 @@ export function CropBox({ src, imageWidth, imageHeight, rect, onChange }: CropBo
       />
       <button
         type="button"
+        className="crop-area"
         aria-label={`Crop area, ${rect.width} by ${rect.height} pixels from ${rect.x}, ${rect.y}. Arrow keys move it; Shift and arrow keys resize it.`}
         onKeyDown={onKeyDown}
         onPointerDown={(event) => startDrag(event, "move")}
