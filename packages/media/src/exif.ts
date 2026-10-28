@@ -4,7 +4,22 @@ function view(bytes: Uint8Array): DataView {
   return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 }
 
-// JPEG metadata lives in APPn/COM segments; image data after SOS is copied verbatim.
+// Keep only segments needed to render colours; any other APPn or COM can identify the capture.
+const KEPT_APP_SEGMENTS: Record<number, string> = {
+  0xe0: "JFIF\0",
+  0xe2: "ICC_PROFILE\0",
+  0xee: "Adobe",
+};
+
+function isKeptAppSegment(marker: number, segment: Uint8Array): boolean {
+  const prefix = KEPT_APP_SEGMENTS[marker];
+  if (prefix === undefined) {
+    return false;
+  }
+  const label = String.fromCharCode(...segment.subarray(4, 4 + prefix.length));
+  return label === prefix;
+}
+
 export function stripJpegMetadata(bytes: Uint8Array): Uint8Array {
   const data = view(bytes);
   if (bytes.length < 4 || data.getUint16(0) !== 0xffd8) {
@@ -47,32 +62,29 @@ export function stripJpegMetadata(bytes: Uint8Array): Uint8Array {
       throw new Error("Corrupt JPEG segment.");
     }
     const segment = bytes.subarray(offset, offset + 2 + length);
-    const droppable = (marker >= 0xe0 && marker <= 0xef) || marker === 0xfe;
-    if (!droppable) {
+    const isApp = marker >= 0xe0 && marker <= 0xef;
+    if (!(isApp && !isKeptAppSegment(marker, segment)) && marker !== 0xfe) {
       kept.push(segment);
     }
     offset += 2 + length;
     if (marker === 0xda) {
-      // Entropy-coded data follows; only EOI can still matter.
-      const rest = bytes.subarray(offset);
-      const end = findEoi(rest);
-      if (end === -1) {
-        throw new Error("Truncated JPEG data.");
-      }
-      kept.push(rest.subarray(0, end + 2));
-      return concat(kept);
+      // Progressive files interleave more segments between scans, so resume parsing after the data.
+      const end = endOfEntropyData(bytes, offset);
+      kept.push(bytes.subarray(offset, end));
+      offset = end;
     }
   }
   throw new Error("Truncated JPEG data.");
 }
 
-function findEoi(bytes: Uint8Array): number {
-  for (let i = 0; i + 1 < bytes.length; i += 1) {
-    if (bytes[i] === 0xff && bytes[i + 1] === 0xd9) {
+function endOfEntropyData(bytes: Uint8Array, start: number): number {
+  for (let i = start; i + 1 < bytes.length; i += 1) {
+    const next = bytes[i + 1] ?? 0;
+    if (bytes[i] === 0xff && next !== 0x00 && next !== 0xff && (next < 0xd0 || next > 0xd7)) {
       return i;
     }
   }
-  return -1;
+  throw new Error("Truncated JPEG data.");
 }
 
 // PNG text/exif chunks identify the capture; image and color chunks are kept.
@@ -114,6 +126,23 @@ export function stripPngMetadata(bytes: Uint8Array): Uint8Array {
 
 export function stripMetadata(bytes: Uint8Array, type: StrippableImageType): Uint8Array {
   return type === "image/jpeg" ? stripJpegMetadata(bytes) : stripPngMetadata(bytes);
+}
+
+function sniffStrippableType(bytes: Uint8Array): StrippableImageType | null {
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  const png = [137, 80, 78, 71, 13, 10, 26, 10];
+  return png.every((byte, i) => bytes[i] === byte) ? "image/png" : null;
+}
+
+// Server entry point: the client's declared type is never trusted, so the bytes decide.
+export function sanitiseImage(bytes: Uint8Array): { type: StrippableImageType; bytes: Uint8Array } {
+  const type = sniffStrippableType(bytes);
+  if (!type) {
+    throw new Error("Unsupported image type.");
+  }
+  return { bytes: stripMetadata(bytes, type), type };
 }
 
 function concat(parts: Uint8Array[]): Uint8Array {
