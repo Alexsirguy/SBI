@@ -60,6 +60,9 @@ importers:
       '@sbi/env':
         specifier: workspace:*
         version: link:../../packages/env
+      '@sbi/media':
+        specifier: workspace:*
+        version: link:../../packages/media
       next:
         specifier: 16.4.3
         version: 16.4.3(@playwright/test@1.64.1)(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
