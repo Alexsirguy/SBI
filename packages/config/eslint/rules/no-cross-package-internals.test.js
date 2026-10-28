@@ -20,6 +20,7 @@ tester.run("no-cross-package-internals", rule, {
     { code: 'import { x } from "@sbi/orchestrator";', filename: inApi },
     { code: 'import { x } from "../app.js";', filename: inApi },
     { code: 'import { z } from "zod/mini";', filename: inLlm },
+    { code: 'import { stripMetadata } from "@sbi/media/browser";', filename: inApi },
   ],
   invalid: [
     {
@@ -29,6 +30,11 @@ tester.run("no-cross-package-internals", rule, {
     },
     {
       code: 'export * from "@sbi/evidence/src/claims.js";',
+      filename: inApi,
+      errors: [{ messageId: "internal" }],
+    },
+    {
+      code: 'import { x } from "@sbi/media/src/exif";',
       filename: inApi,
       errors: [{ messageId: "internal" }],
     },

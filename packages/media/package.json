@@ -5,7 +5,8 @@
   "description": "Photo sanitisation (EXIF stripping, type checks), private storage and TTL deletion.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts"
   },
   "scripts": {
     "lint": "eslint .",
