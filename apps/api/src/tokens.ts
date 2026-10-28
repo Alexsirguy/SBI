@@ -9,3 +9,5 @@ export const RETENTION_POLICY = Symbol("RETENTION_POLICY");
 export const UPLOAD_POLICY = Symbol("UPLOAD_POLICY");
 export const PURGE_PASS = Symbol("PURGE_PASS");
 export const TAXONOMY = Symbol("TAXONOMY");
+export const RECOGNISER = Symbol("RECOGNISER");
+export const RECOGNITION_RESULTS = Symbol("RECOGNITION_RESULTS");

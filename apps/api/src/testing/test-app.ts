@@ -8,6 +8,8 @@ import {
   type ObjectStorage,
   type ScanVerdict,
 } from "@sbi/media";
+import type { RecognitionResult } from "@sbi/contracts";
+import type { FallbackRecogniser, RecognitionResultRepository } from "@sbi/recognition";
 import { AppModule, configureApp } from "../app.module";
 import { loadEnv } from "../env";
 import {
@@ -17,6 +19,8 @@ import {
   MEDIA_REGISTRY,
   OBJECT_STORAGE,
   PURGE_PASS,
+  RECOGNISER,
+  RECOGNITION_RESULTS,
 } from "../tokens";
 
 export const WEB_ORIGIN = "http://localhost:3000";
@@ -38,6 +42,7 @@ export function fakeMedia(verdict: ScanVerdict = { status: "clean" }) {
   const objects = new Map<string, Uint8Array>();
   const records: MediaObjectRecord[] = [];
   const kept = new Set<string>();
+  const expiredSooner = new Map<string, Date>();
   const storage: ObjectStorage = {
     ensurePrivateBucket: async () => undefined,
     list: async () => [],
@@ -55,11 +60,25 @@ export function fakeMedia(verdict: ScanVerdict = { status: "clean" }) {
   };
   const scanner: MalwareScanner = { scan: async () => verdict };
   const registry = {
+    expireSooner: async (key: string, at: Date) => void expiredSooner.set(key, at),
     keep: async (key: string) =>
       records.some((record) => record.key === key) && kept.add(key).has(key),
     register: async (record: MediaObjectRecord) => void records.push(record),
   };
-  return { kept, objects, records, registry, scanner, storage };
+  return { expiredSooner, kept, objects, records, registry, scanner, storage };
+}
+
+export function fakeRecognition(recogniser: FallbackRecogniser | null = null) {
+  const saved = new Map<string, RecognitionResult>();
+  const results: RecognitionResultRepository = {
+    deleteExpired: async () => 0,
+    get: async (resultId) => saved.get(resultId),
+    listBySession: async (sessionId) =>
+      [...saved.values()].filter((r) => r.sessionId === sessionId),
+    save: async (result) => void saved.set(result.resultId, result),
+    update: async (result) => saved.has(result.resultId) && !!saved.set(result.resultId, result),
+  };
+  return { recogniser, results, saved };
 }
 
 export interface TestApp {
@@ -69,7 +88,10 @@ export interface TestApp {
 }
 
 // Real HTTP on a random port, so CORS and body parsing run exactly as in production.
-export async function startTestApp(media = fakeMedia()): Promise<TestApp> {
+export async function startTestApp(
+  media = fakeMedia(),
+  recognition = fakeRecognition(),
+): Promise<TestApp> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(API_ENV)
     .useValue(testEnv)
@@ -81,6 +103,10 @@ export async function startTestApp(media = fakeMedia()): Promise<TestApp> {
     .useValue(media.scanner)
     .overrideProvider(MEDIA_REGISTRY)
     .useValue(media.registry)
+    .overrideProvider(RECOGNISER)
+    .useValue(recognition.recogniser)
+    .overrideProvider(RECOGNITION_RESULTS)
+    .useValue(recognition.results)
     .overrideProvider(PURGE_PASS)
     .useValue(async () => ({ acquired: false }))
     .compile();

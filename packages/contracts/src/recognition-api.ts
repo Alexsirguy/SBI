@@ -1,0 +1,42 @@
+import { z } from "zod";
+import { Id, Uuid } from "./common";
+import { PhotoKey } from "./media-api";
+import { RecognitionCandidate } from "./recognition";
+import { TaxonomyMatch } from "./taxonomy-api";
+
+export const RecognisePhotoRequest = z.object({
+  key: PhotoKey,
+  /** Groups a learner's results until accounts exist; the API issues one when absent. */
+  sessionId: Uuid.optional(),
+});
+
+// The calibrated number stays server-side; learners see only the band and the reasons.
+export const LearnerCandidate = RecognitionCandidate.omit({ calibratedConfidence: true });
+
+export const CategoryFallback = z.object({
+  taxonomyId: Id,
+  label: z.string().min(1),
+  alternatives: z.array(z.string().min(1)).min(2),
+  assumption: z.string().min(1),
+});
+
+export const NextStep = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("proceed"), taxonomyId: Id }),
+  z.object({
+    kind: z.literal("ask"),
+    question: z.string().min(1),
+    options: z.array(TaxonomyMatch).min(1).max(3),
+    fallback: CategoryFallback.optional(),
+  }),
+  z.object({ kind: z.literal("assume-category"), fallback: CategoryFallback }),
+  z.object({ kind: z.literal("describe") }),
+]);
+
+export const RecognisedPhoto = z.object({
+  resultId: Uuid,
+  sessionId: Uuid,
+  candidates: z.array(LearnerCandidate).max(3),
+  next: NextStep,
+});
+
+export type NextStep = z.infer<typeof NextStep>;
