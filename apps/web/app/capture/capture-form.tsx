@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { webEnv } from "../../env";
+import { ConfirmLesson } from "./confirm/confirm-lesson";
 import { CropBox } from "./crop-box";
 import {
   ACCEPTED_EXTENSIONS,
@@ -10,7 +11,14 @@ import {
   uploadLimitLabel,
   validateSelection,
 } from "./limits";
-import { cropImage, normaliseImage, type CropRect, type ProcessedImage } from "./processing";
+import {
+  cropImage,
+  normaliseImage,
+  stripUploadMetadata,
+  type CropRect,
+  type ProcessedImage,
+} from "./processing";
+import { recognisedCandidates } from "./recognition";
 import { assessQuality, readImageData, type QualityReport } from "./quality";
 
 const CHECK_LABELS = {
@@ -42,6 +50,8 @@ export function CaptureForm() {
   const uploadId = useId();
   const problemId = useId();
   const checkId = useId();
+  const confirmId = useId();
+  const uploadHintId = useId();
   const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
   // Bumped on every new selection so a slow earlier decode cannot overwrite a newer photo.
@@ -54,6 +64,10 @@ export function CaptureForm() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState<CropRect | null>(null);
   const [quality, setQuality] = useState<QualityReport | null>(null);
+  const [stage, setStage] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState(false);
+  const [photoKey, setPhotoKey] = useState<string | null>(null);
+  const [kept, setKept] = useState(false);
 
   // Guidance only: a failed check never blocks uploading.
   async function assess(image: ProcessedImage) {
@@ -87,6 +101,10 @@ export function CaptureForm() {
     setPreviewUrl(null);
     setCrop(null);
     setQuality(null);
+    setStage(null);
+    setUploaded(false);
+    setPhotoKey(null);
+    setKept(false);
   }
 
   function retake() {
@@ -114,7 +132,7 @@ export function CaptureForm() {
     }
     setBusy(true);
     try {
-      const image = await normaliseImage(selected, limits);
+      const image = await stripUploadMetadata(await normaliseImage(selected, limits));
       if (run !== runRef.current) {
         return;
       }
@@ -143,7 +161,7 @@ export function CaptureForm() {
     setProblem(null);
     try {
       // Always crop the normalised original so repeated crops do not recompress the JPEG.
-      const image = await cropImage(original.blob, crop, limits);
+      const image = await stripUploadMetadata(await cropImage(original.blob, crop, limits));
       if (run === runRef.current) {
         setPrepared(image);
         await assess(image);
@@ -163,111 +181,244 @@ export function CaptureForm() {
     setCrop((current) => (current ? { ...current, [key]: value } : current));
   }
 
+  async function postJson(
+    url: string,
+    payload: unknown,
+  ): Promise<{ ok: boolean; body: Record<string, unknown> }> {
+    const response = await fetch(url, {
+      body: JSON.stringify(payload),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+    const parsed: unknown = await response.json().catch(() => ({}));
+    const body = typeof parsed === "object" && parsed !== null ? parsed : {};
+    return { body: body as Record<string, unknown>, ok: response.ok };
+  }
+
+  async function upload() {
+    if (!prepared) {
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    setUploaded(false);
+    try {
+      setStage("Requesting a private upload…");
+      const issued = await postJson("/api/uploads", {
+        declaredType: prepared.blob.type || "image/jpeg",
+        sizeBytes: prepared.size,
+      });
+      if (
+        !issued.ok ||
+        typeof issued.body.uploadUrl !== "string" ||
+        typeof issued.body.token !== "string"
+      ) {
+        throw new Error(
+          typeof issued.body.error === "string" ? issued.body.error : "Uploads are unavailable.",
+        );
+      }
+      setStage("Uploading your photo…");
+      const put = await fetch(issued.body.uploadUrl, {
+        body: prepared.blob,
+        headers: { "content-type": prepared.blob.type || "image/jpeg" },
+        method: "PUT",
+      });
+      if (!put.ok) {
+        throw new Error("The upload failed. Check your connection and try again.");
+      }
+      setStage("Checking privacy…");
+      const confirmed = await postJson("/api/uploads/confirm", { token: issued.body.token });
+      if (!confirmed.ok) {
+        throw new Error(
+          typeof confirmed.body.error === "string"
+            ? confirmed.body.error
+            : "The photo could not be verified.",
+        );
+      }
+      setStage(null);
+      setPhotoKey(typeof confirmed.body.key === "string" ? confirmed.body.key : null);
+      setUploaded(true);
+    } catch (error) {
+      setStage(null);
+      setProblem(error instanceof Error ? error.message : "The upload failed. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function keepPhoto() {
+    if (!photoKey) {
+      return;
+    }
+    setBusy(true);
+    setProblem(null);
+    try {
+      const response = await postJson("/api/photos/keep", { key: photoKey });
+      if (!response.ok) {
+        throw new Error(
+          typeof response.body.error === "string"
+            ? response.body.error
+            : "The photo could not be kept. Try again.",
+        );
+      }
+      setKept(true);
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : "The photo could not be kept.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const status = problem
     ? null
-    : busy
-      ? "Preparing your photo…"
-      : prepared
-        ? `Ready: ${describe(prepared)}.`
-        : fileName
-          ? `Selected ${fileName}.`
-          : null;
+    : stage
+      ? stage
+      : busy
+        ? "Preparing your photo…"
+        : kept
+          ? "Kept. This photo will not be deleted automatically."
+          : uploaded
+            ? "Uploaded and privacy-checked. Your lesson can begin."
+            : prepared
+              ? `Ready: ${describe(prepared)}.`
+              : fileName
+                ? `Selected ${fileName}.`
+                : null;
+
+  const recognised = uploaded ? recognisedCandidates() : [];
 
   return (
-    <form aria-label="Photo capture" onSubmit={(event) => event.preventDefault()}>
-      <div>
-        <label htmlFor={cameraId}>Take a photo</label>
-        <input
-          id={cameraId}
-          ref={cameraRef}
-          name="camera"
-          type="file"
-          aria-invalid={problem ? true : undefined}
-          aria-describedby={problem ? problemId : undefined}
-          accept="image/*"
-          capture="environment"
-          onChange={(event) => void choose(event.currentTarget)}
-        />
-      </div>
-      <div>
-        <label htmlFor={uploadId}>Upload a photo</label>
-        <input
-          id={uploadId}
-          ref={uploadRef}
-          name="upload"
-          type="file"
-          aria-invalid={problem ? true : undefined}
-          aria-describedby={problem ? problemId : undefined}
-          accept={ACCEPTED_EXTENSIONS}
-          onChange={(event) => void choose(event.currentTarget)}
-        />
-      </div>
-      <p>
-        Accepted formats: {ACCEPTED_FORMATS_LABEL}. Maximum size:{" "}
-        {uploadLimitLabel(limits.maxUploadBytes)}.
-      </p>
-      <div role="alert" id={problemId}>
-        {problem}
-      </div>
-      <div role="status">{status ? <p>{status}</p> : null}</div>
-      {original && previewUrl && crop ? (
-        <fieldset>
-          <legend>Crop (optional)</legend>
-          <CropBox
-            src={previewUrl}
-            imageWidth={original.width}
-            imageHeight={original.height}
-            rect={crop}
-            onChange={setCrop}
+    <>
+      <form
+        aria-label="Photo capture"
+        aria-busy={busy}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void upload();
+        }}
+      >
+        <div>
+          <label htmlFor={cameraId}>Take a photo</label>
+          <input
+            id={cameraId}
+            ref={cameraRef}
+            name="camera"
+            type="file"
+            aria-invalid={problem ? true : undefined}
+            aria-describedby={problem ? problemId : undefined}
+            accept="image/*"
+            capture="environment"
+            onChange={(event) => void choose(event.currentTarget)}
           />
-          {CROP_FIELDS.map(({ key, label }) => (
-            <div key={key}>
-              <label htmlFor={`${uploadId}-crop-${key}`}>{label}</label>
-              <input
-                id={`${uploadId}-crop-${key}`}
-                type="number"
-                min={key === "width" || key === "height" ? 1 : 0}
-                max={key === "x" || key === "width" ? original.width : original.height}
-                value={crop[key]}
-                onChange={(event) => setField(key, event.currentTarget.valueAsNumber)}
-              />
-            </div>
-          ))}
-          <button type="button" onClick={() => setCrop(fullFrame(original))} disabled={busy}>
-            Reset crop
-          </button>
-          <button type="button" onClick={() => void applyCrop()} disabled={busy}>
-            Apply crop
-          </button>
-          <button type="button" onClick={retake}>
-            Retake or choose another
-          </button>
-        </fieldset>
-      ) : null}
-      {/* Kept mounted so screen readers announce guidance when it appears. */}
-      <div aria-live="polite">
-        {prepared && !busy ? (
-          <section aria-labelledby={checkId}>
-            <h2 id={checkId}>Photo check</h2>
-            {quality ? (
-              <ul>
-                {quality.checks.map((check) => (
-                  <li key={check.id}>
-                    {check.passed
-                      ? `${CHECK_LABELS[check.id]}: good`
-                      : (check.guidance ?? "Retake the photo.")}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>Photo checks could not run — you can still upload.</p>
-            )}
-          </section>
+        </div>
+        <div>
+          <label htmlFor={uploadId}>Upload a photo</label>
+          <input
+            id={uploadId}
+            ref={uploadRef}
+            name="upload"
+            type="file"
+            aria-invalid={problem ? true : undefined}
+            aria-describedby={problem ? problemId : undefined}
+            accept={ACCEPTED_EXTENSIONS}
+            onChange={(event) => void choose(event.currentTarget)}
+          />
+        </div>
+        <p>
+          Accepted formats: {ACCEPTED_FORMATS_LABEL}. Maximum size:{" "}
+          {uploadLimitLabel(limits.maxUploadBytes)}.
+        </p>
+        <div role="alert" id={problemId}>
+          {problem}
+        </div>
+        <div role="status">{status ? <p>{status}</p> : null}</div>
+        {original && previewUrl && crop ? (
+          <fieldset>
+            <legend>Crop (optional)</legend>
+            <CropBox
+              src={previewUrl}
+              imageWidth={original.width}
+              imageHeight={original.height}
+              rect={crop}
+              onChange={setCrop}
+            />
+            {CROP_FIELDS.map(({ key, label }) => (
+              <div key={key}>
+                <label htmlFor={`${uploadId}-crop-${key}`}>{label}</label>
+                <input
+                  id={`${uploadId}-crop-${key}`}
+                  type="number"
+                  min={key === "width" || key === "height" ? 1 : 0}
+                  max={key === "x" || key === "width" ? original.width : original.height}
+                  value={crop[key]}
+                  onChange={(event) => setField(key, event.currentTarget.valueAsNumber)}
+                />
+              </div>
+            ))}
+            <button type="button" onClick={() => setCrop(fullFrame(original))} disabled={busy}>
+              Reset crop
+            </button>
+            <button type="button" onClick={() => void applyCrop()} disabled={busy}>
+              Apply crop
+            </button>
+            <button type="button" onClick={retake}>
+              Retake or choose another
+            </button>
+          </fieldset>
         ) : null}
-      </div>
-      <button type="submit" disabled={!prepared || busy}>
-        Upload photo
-      </button>
-    </form>
+        {/* Kept mounted so screen readers announce guidance when it appears. */}
+        <div aria-live="polite">
+          {prepared && !busy ? (
+            <section aria-labelledby={checkId}>
+              <h2 id={checkId}>Photo check</h2>
+              {quality ? (
+                <ul>
+                  {quality.checks.map((check) => (
+                    <li key={check.id}>
+                      {check.passed
+                        ? `${CHECK_LABELS[check.id]}: good`
+                        : (check.guidance ?? "Retake the photo.")}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Photo checks could not run — you can still upload.</p>
+              )}
+            </section>
+          ) : null}
+        </div>
+        {uploaded && photoKey && !kept ? (
+          <button type="button" onClick={() => void keepPhoto()} disabled={busy}>
+            Keep this photo
+          </button>
+        ) : null}
+        <button
+          type="submit"
+          disabled={!prepared || busy}
+          aria-describedby={!prepared || busy ? uploadHintId : undefined}
+        >
+          Upload photo
+        </button>
+        {!prepared || busy ? (
+          <p id={uploadHintId}>
+            {busy ? "Wait until your photo is ready." : "Take or choose a photo first."}
+          </p>
+        ) : null}
+      </form>
+      {uploaded ? (
+        <section aria-labelledby={confirmId}>
+          <h2 id={confirmId}>What is in your photo?</h2>
+          <ConfirmLesson
+            headingLevel={3}
+            initialCandidates={recognised}
+            initialMessage={
+              recognised.length > 0
+                ? "Pick the object in your photo, or describe it."
+                : "We could not recognise the object yet. Describe it to start your lesson."
+            }
+          />
+        </section>
+      ) : null}
+    </>
   );
 }
