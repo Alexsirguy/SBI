@@ -3,6 +3,8 @@ import { EnvError } from "./env-error";
 export const FEATURE_DEFAULTS = {
   visualLab: false,
   tutor: false,
+  // Off until Meta confirms Standard-mode retention in writing (ADR 0006).
+  photoRecognition: false,
 };
 
 export type FeatureFlags = Readonly<Record<keyof typeof FEATURE_DEFAULTS, boolean>>;
