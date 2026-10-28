@@ -38,7 +38,7 @@ test("capture page validates the selected photo", async ({ page }) => {
   const alert = page.getByRole("form", { name: "Photo capture" }).getByRole("alert");
 
   await upload.setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
-  await expect(status).toContainText("Ready: 1 by 1 pixels, image/jpeg", { timeout: 15000 });
+  await expect(status).toContainText("Ready: 1 by 1 pixels, JPEG", { timeout: 15000 });
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
 
   await upload.setInputFiles({ buffer: tinyPng, mimeType: "text/plain", name: "notes.txt" });
