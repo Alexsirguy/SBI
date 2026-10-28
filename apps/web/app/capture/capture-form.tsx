@@ -1,11 +1,18 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ACCEPTED_EXTENSIONS, formatBytes, validateSelection } from "./limits";
+import {
+  ACCEPTED_EXTENSIONS,
+  ACCEPTED_FORMATS_LABEL,
+  MAX_UPLOAD_LABEL,
+  formatBytes,
+  validateSelection,
+} from "./limits";
 
 export function CaptureForm() {
   const cameraId = useId();
   const uploadId = useId();
+  const problemId = useId();
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -31,6 +38,8 @@ export function CaptureForm() {
           id={cameraId}
           name="camera"
           type="file"
+          aria-invalid={problem ? true : undefined}
+          aria-describedby={problem ? problemId : undefined}
           accept="image/*"
           capture="environment"
           onChange={(event) => choose(event.currentTarget)}
@@ -42,13 +51,19 @@ export function CaptureForm() {
           id={uploadId}
           name="upload"
           type="file"
+          aria-invalid={problem ? true : undefined}
+          aria-describedby={problem ? problemId : undefined}
           accept={ACCEPTED_EXTENSIONS}
           onChange={(event) => choose(event.currentTarget)}
         />
       </div>
-      <p>Accepted formats: JPG, PNG, HEIC. Maximum size: 10 MB.</p>
+      <p>
+        Accepted formats: {ACCEPTED_FORMATS_LABEL}. Maximum size: {MAX_UPLOAD_LABEL}.
+      </p>
+      <div role="alert" id={problemId}>
+        {problem}
+      </div>
       <div role="status">
-        {problem ? <p>{problem}</p> : null}
         {!problem && fileName ? (
           <p>
             Selected {fileName}
