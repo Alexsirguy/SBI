@@ -1,5 +1,6 @@
 import { createEnv, FEATURE_DEFAULTS, parseFlags } from "@sbi/env";
 import { z } from "zod";
+import { parseCaptureLimits } from "./app/capture/config";
 
 const schema = z.object({
   NEXT_PUBLIC_API_URL: z.url(),
@@ -15,4 +16,9 @@ const env = createEnv(schema, {
 export const webEnv = {
   apiUrl: env.NEXT_PUBLIC_API_URL,
   features: parseFlags(FEATURE_DEFAULTS, env.NEXT_PUBLIC_FEATURE_FLAGS),
+  capture: parseCaptureLimits({
+    NEXT_PUBLIC_CAPTURE_JPEG_QUALITY: process.env.NEXT_PUBLIC_CAPTURE_JPEG_QUALITY,
+    NEXT_PUBLIC_CAPTURE_MAX_DIMENSION: process.env.NEXT_PUBLIC_CAPTURE_MAX_DIMENSION,
+    NEXT_PUBLIC_CAPTURE_MAX_UPLOAD_MB: process.env.NEXT_PUBLIC_CAPTURE_MAX_UPLOAD_MB,
+  }),
 };

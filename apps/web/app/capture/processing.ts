@@ -21,9 +21,48 @@ export interface CropRect {
 export const DEFAULT_MAX_DIMENSION = 1600;
 export const DEFAULT_JPEG_QUALITY = 0.85;
 
+export function fitWithin(width: number, height: number, maxDimension: number) {
+  const scale = Math.min(1, maxDimension / Math.max(width, height));
+  return {
+    height: Math.max(1, Math.round(height * scale)),
+    width: Math.max(1, Math.round(width * scale)),
+  };
+}
+
+// Clamping keeps a partially-outside selection usable instead of rejecting it.
+export function clampCrop(rect: CropRect, imageWidth: number, imageHeight: number): CropRect {
+  const x = Math.min(Math.max(0, Math.round(rect.x)), imageWidth - 1);
+  const y = Math.min(Math.max(0, Math.round(rect.y)), imageHeight - 1);
+  return {
+    height: Math.max(1, Math.min(Math.round(rect.height), imageHeight - y)),
+    width: Math.max(1, Math.min(Math.round(rect.width), imageWidth - x)),
+    x,
+    y,
+  };
+}
+
+export function moveCrop(
+  rect: CropRect,
+  dx: number,
+  dy: number,
+  imageWidth: number,
+  imageHeight: number,
+): CropRect {
+  return clampCrop(
+    {
+      ...rect,
+      x: Math.min(Math.max(0, rect.x + dx), imageWidth - rect.width),
+      y: Math.min(Math.max(0, rect.y + dy), imageHeight - rect.height),
+    },
+    imageWidth,
+    imageHeight,
+  );
+}
+
 async function readBitmap(source: Blob): Promise<ImageBitmap> {
   try {
-    return await createImageBitmap(source);
+    // Explicit so phone photos stored sideways with an EXIF rotation come out upright.
+    return await createImageBitmap(source, { imageOrientation: "from-image" });
   } catch {
     // Most often an HEIC file the browser cannot decode.
     throw new Error("This photo format cannot be read in your browser. Try JPG or PNG.");
@@ -59,9 +98,7 @@ export async function normaliseImage(
   const quality = opts.quality ?? DEFAULT_JPEG_QUALITY;
   const bitmap = await readBitmap(source);
   try {
-    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const { width, height } = fitWithin(bitmap.width, bitmap.height, maxDimension);
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -76,7 +113,6 @@ export async function normaliseImage(
   }
 }
 
-// Clamping keeps a partially-outside selection usable instead of rejecting it.
 export async function cropImage(
   source: Blob,
   rect: CropRect,
@@ -91,10 +127,7 @@ export async function cropImage(
   const quality = opts.quality ?? DEFAULT_JPEG_QUALITY;
   const bitmap = await readBitmap(source);
   try {
-    const x = Math.min(Math.max(0, Math.round(rect.x)), bitmap.width - 1);
-    const y = Math.min(Math.max(0, Math.round(rect.y)), bitmap.height - 1);
-    const width = Math.max(1, Math.min(Math.round(rect.width), bitmap.width - x));
-    const height = Math.max(1, Math.min(Math.round(rect.height), bitmap.height - y));
+    const { x, y, width, height } = clampCrop(rect, bitmap.width, bitmap.height);
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
