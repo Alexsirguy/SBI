@@ -63,6 +63,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@sbi/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@sbi/db':
         specifier: workspace:*
         version: link:../../packages/db
