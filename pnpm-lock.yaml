@@ -56,6 +56,9 @@ importers:
       '@sbi/media':
         specifier: workspace:*
         version: link:../../packages/media
+      '@sbi/recognition':
+        specifier: workspace:*
+        version: link:../../packages/recognition
       '@sbi/taxonomy':
         specifier: workspace:*
         version: link:../../packages/taxonomy

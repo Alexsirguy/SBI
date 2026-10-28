@@ -134,6 +134,30 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.recognitionResults.listBySession(result.sessionId)).toEqual([result]);
     });
 
+    it("reads and updates a result by id", async () => {
+      await repos.recognitionResults.save(result);
+      const corrected = {
+        ...result,
+        selectedTaxonomyId: "household.kitchen.coffee-pot",
+        userCorrection: {
+          kind: "selected-alternative" as const,
+          taxonomyId: "household.kitchen.coffee-pot",
+        },
+      };
+
+      expect(await repos.recognitionResults.update(corrected)).toBe(true);
+      expect(await repos.recognitionResults.get(result.resultId)).toEqual(corrected);
+      expect(await repos.recognitionResults.get("0192f1a0-0000-7000-9000-0000000000ff")).toBe(
+        undefined,
+      );
+      expect(
+        await repos.recognitionResults.update({
+          ...result,
+          resultId: "0192f1a0-0000-7000-9000-0000000000ff",
+        }),
+      ).toBe(false);
+    });
+
     it("deletes only results past their deadline", async () => {
       await repos.recognitionResults.save(result);
       expect(await repos.recognitionResults.deleteExpired(new Date("2026-10-28T09:59:59Z"))).toBe(

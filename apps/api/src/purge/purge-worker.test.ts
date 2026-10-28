@@ -1,8 +1,12 @@
-import type { DeletionPassResult } from "@sbi/media";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { startPurgeWorker } from "./purge-worker";
+import { startPurgeWorker, type PurgePassResult } from "./purge-worker";
 
-const RESULT: DeletionPassResult = { auditPurged: 1, deleted: ["photos/a.jpg"], stagingDeleted: 2 };
+const RESULT: PurgePassResult = {
+  auditPurged: 1,
+  deleted: ["photos/a.jpg"],
+  recognitionPurged: 3,
+  stagingDeleted: 2,
+};
 
 function logger() {
   return { error: vi.fn(), info: vi.fn() };
@@ -25,7 +29,7 @@ describe("startPurgeWorker", () => {
 
     expect(runPass).toHaveBeenCalledTimes(3);
     expect(log.info).toHaveBeenCalledWith(
-      { auditPurged: 1, deleted: 1, stagingDeleted: 2 },
+      { auditPurged: 1, deleted: 1, recognitionPurged: 3, stagingDeleted: 2 },
       "media purge pass",
     );
   });
