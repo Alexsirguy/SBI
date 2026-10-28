@@ -33,6 +33,7 @@ const TABLES = [
   "tutor_turns",
   "media_objects",
   "deletion_audit_log",
+  "catalog_gaps",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -167,6 +168,33 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         1,
       );
       expect(await repos.recognitionResults.listBySession(result.sessionId)).toEqual([]);
+    });
+  });
+
+  describe("catalog gaps", () => {
+    it("counts repeat terms per source and lists the most common first", async () => {
+      const first = new Date("2026-10-28T10:00:00.000Z");
+      const later = new Date("2026-10-28T11:00:00.000Z");
+      await repos.catalogGaps.record("penny farthing", "observation", first);
+      await repos.catalogGaps.record("penny farthing", "observation", later);
+      await repos.catalogGaps.record("lava lamp", "recognition-label", first);
+
+      expect(await repos.catalogGaps.top(5)).toEqual([
+        {
+          count: 2,
+          firstSeen: first,
+          lastSeen: later,
+          source: "observation",
+          term: "penny farthing",
+        },
+        {
+          count: 1,
+          firstSeen: first,
+          lastSeen: first,
+          source: "recognition-label",
+          term: "lava lamp",
+        },
+      ]);
     });
   });
 

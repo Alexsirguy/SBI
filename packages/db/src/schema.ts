@@ -110,3 +110,19 @@ export const deletionAuditLog = mysqlTable(
   },
   (table) => [index("deletion_audit_log_deleted_idx").on(table.deletedAt)],
 );
+
+// Aggregated catalog gaps: one row per normalised term, never linked to a learner or photo.
+export const catalogGaps = mysqlTable(
+  "catalog_gaps",
+  {
+    term: varchar("term", { length: 60 }).notNull(),
+    source: varchar("source", { length: 32 }).notNull(),
+    count: int("count").notNull(),
+    firstSeen: timestamp("first_seen").notNull(),
+    lastSeen: timestamp("last_seen").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.term, table.source] }),
+    index("catalog_gaps_count_idx").on(table.count),
+  ],
+);

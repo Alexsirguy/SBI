@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "paths": {
     "/uploads": {
@@ -669,6 +669,100 @@
             }
           },
           "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observations": {
+      "post": {
+        "operationId": "noticeObject",
+        "summary": "Match what a learner noticed to objects, and note the gap when nothing fits.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "shape": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "material": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "use": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "guess": {
+                    "type": "string",
+                    "maxLength": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "taxonomyId": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "taxonomyId",
+                          "label"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "results"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
             "description": "Error",
             "content": {
               "application/json": {
