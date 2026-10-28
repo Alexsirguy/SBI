@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { webEnv } from "../../env";
-import { ConfirmLesson } from "./confirm/confirm-lesson";
 import { CropBox } from "./crop-box";
 import {
   ACCEPTED_EXTENSIONS,
@@ -18,9 +17,10 @@ import {
   type CropRect,
   type ProcessedImage,
 } from "./processing";
-import { recognisedCandidates } from "./recognition";
 import { assessQuality, readImageData, type QualityReport } from "./quality";
 import { useKeepPhoto, usePhotoUpload } from "./use-photo-upload";
+import { useRecognisePhoto, useRecordSelection } from "./use-recognition";
+import { RecognitionStep } from "./confirm/recognition-step";
 
 const CHECK_LABELS = {
   exposure: "Exposure",
@@ -67,6 +67,10 @@ export function CaptureForm() {
   const [quality, setQuality] = useState<QualityReport | null>(null);
   const photoUpload = usePhotoUpload();
   const keep = useKeepPhoto();
+  const recognition = useRecognisePhoto();
+  const selection = useRecordSelection();
+  // One session per visit groups retakes; accounts will replace it (#102).
+  const sessionRef = useRef<string | undefined>(undefined);
   const busy = processing || photoUpload.isPending || keep.isPending;
   const problem = processingProblem ?? photoUpload.error?.message ?? keep.error?.message ?? null;
   const stage = photoUpload.stage;
@@ -108,6 +112,8 @@ export function CaptureForm() {
     setQuality(null);
     photoUpload.reset();
     keep.reset();
+    recognition.reset();
+    selection.reset();
   }
 
   function retake() {
@@ -190,7 +196,18 @@ export function CaptureForm() {
     }
     setProblem(null);
     keep.reset();
-    photoUpload.mutate(prepared);
+    recognition.reset();
+    photoUpload.mutate(prepared, {
+      onSuccess: (photo) =>
+        recognition.mutate(
+          { key: photo.key, sessionId: sessionRef.current },
+          {
+            onSuccess: (reply) => {
+              sessionRef.current = reply.sessionId;
+            },
+          },
+        ),
+    });
   }
 
   function keepPhoto() {
@@ -214,8 +231,6 @@ export function CaptureForm() {
               : fileName
                 ? `Selected ${fileName}.`
                 : null;
-
-  const recognised = uploaded ? recognisedCandidates() : [];
 
   return (
     <>
@@ -338,14 +353,9 @@ export function CaptureForm() {
       {uploaded ? (
         <section aria-labelledby={confirmId}>
           <h2 id={confirmId}>What is in your photo?</h2>
-          <ConfirmLesson
-            headingLevel={3}
-            initialCandidates={recognised}
-            initialMessage={
-              recognised.length > 0
-                ? "Pick the object in your photo, or describe it."
-                : "We could not recognise the object yet. Describe it to start your lesson."
-            }
+          <RecognitionStep
+            recognition={recognition}
+            onSelect={(request) => selection.mutate(request)}
           />
         </section>
       ) : null}

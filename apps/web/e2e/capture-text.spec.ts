@@ -45,7 +45,7 @@ test("photo entry reaches the same confirmation step after upload", async ({ pag
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
 
   const photo = page.getByRole("region", { name: "What is in your photo?" });
-  await expect(photo).toContainText("Describe it to start your lesson.");
+  await expect(photo).toContainText("Describe the object instead.");
   await confirmKettle(page, photo);
 });
 

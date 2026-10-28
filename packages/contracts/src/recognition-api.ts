@@ -11,7 +11,10 @@ export const RecognisePhotoRequest = z.object({
 });
 
 // The calibrated number stays server-side; learners see only the band and the reasons.
-export const LearnerCandidate = RecognitionCandidate.omit({ calibratedConfidence: true });
+export const LearnerCandidate = RecognitionCandidate.omit({ calibratedConfidence: true }).extend({
+  /** Parts the learner can tap when the photo shows only part of the object. */
+  parts: z.array(TaxonomyMatch).default([]),
+});
 
 export const CategoryFallback = z.object({
   taxonomyId: Id,
@@ -39,4 +42,15 @@ export const RecognisedPhoto = z.object({
   next: NextStep,
 });
 
+export const RecordSelectionRequest = z.object({
+  resultId: Uuid,
+  selection: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("object"), taxonomyId: Id }),
+    z.object({ kind: z.literal("free-text"), text: z.string().trim().min(1).max(200) }),
+  ]),
+});
+
+export const RecordedSelection = z.object({ recorded: z.literal(true) });
+
+export type LearnerCandidate = z.output<typeof LearnerCandidate>;
 export type NextStep = z.infer<typeof NextStep>;

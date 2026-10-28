@@ -36,6 +36,28 @@ export async function mockUploads(page: Page) {
   await mockApi(page, "/uploads/confirm", () => ({
     json: { contentType: "image/jpeg", key: PHOTO_KEY },
   }));
+  // Recognition is off by default (ADR 0006), so specs see the describe fallback unless they opt in.
+  await mockApi(page, "/recognitions", () => ({ json: { error: RECOGNITION_OFF }, status: 503 }));
+}
+
+export const RECOGNITION_OFF =
+  "We could not recognise the photo right now. Describe the object instead.";
+export const RESULT_ID = "0192f1a0-0000-7000-9000-000000000005";
+export const SESSION_ID = "0192f1a0-0000-7000-8000-000000000011";
+
+/** Answers recognition with `reply` and returns the selections the page records. */
+export async function mockRecognition(page: Page, reply: { candidates: unknown[]; next: unknown }) {
+  const selections: unknown[] = [];
+  const requests: unknown[] = [];
+  await mockApi(page, "/recognitions", (body) => {
+    requests.push(body);
+    return { json: { resultId: RESULT_ID, sessionId: SESSION_ID, ...reply } };
+  });
+  await mockApi(page, "/recognitions/selection", (body) => {
+    selections.push(body);
+    return { json: { recorded: true } };
+  });
+  return { requests, selections };
 }
 
 // Answers search from the real taxonomy package, so specs exercise the shipped seed and ranking.
