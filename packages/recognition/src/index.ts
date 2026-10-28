@@ -1,4 +1,13 @@
 export {
+  answerClarification,
+  NOT_SURE,
+  planClarification,
+  type CategoryFallback,
+  type Clarification,
+  type ClarificationAnswer,
+  type ClarifyTaxonomy,
+} from "./clarify";
+export {
   createFallbackRecogniser,
   RecognitionUnavailableError,
   type FallbackOutcome,
