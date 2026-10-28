@@ -10,7 +10,13 @@ import {
   uploadLimitLabel,
   validateSelection,
 } from "./limits";
-import { cropImage, normaliseImage, type CropRect, type ProcessedImage } from "./processing";
+import {
+  cropImage,
+  normaliseImage,
+  stripUploadMetadata,
+  type CropRect,
+  type ProcessedImage,
+} from "./processing";
 import { assessQuality, readImageData, type QualityReport } from "./quality";
 
 const CHECK_LABELS = {
@@ -114,7 +120,7 @@ export function CaptureForm() {
     }
     setBusy(true);
     try {
-      const image = await normaliseImage(selected, limits);
+      const image = await stripUploadMetadata(await normaliseImage(selected, limits));
       if (run !== runRef.current) {
         return;
       }
@@ -143,7 +149,7 @@ export function CaptureForm() {
     setProblem(null);
     try {
       // Always crop the normalised original so repeated crops do not recompress the JPEG.
-      const image = await cropImage(original.blob, crop, limits);
+      const image = await stripUploadMetadata(await cropImage(original.blob, crop, limits));
       if (run === runRef.current) {
         setPrepared(image);
         await assess(image);

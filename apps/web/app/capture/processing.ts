@@ -1,3 +1,5 @@
+import { stripMetadata } from "@sbi/media";
+
 export interface NormaliseOptions {
   maxDimension?: number;
   quality?: number;
@@ -20,6 +22,14 @@ export interface CropRect {
 
 export const DEFAULT_MAX_DIMENSION = 1600;
 export const DEFAULT_JPEG_QUALITY = 0.85;
+
+// Re-encoding already drops most metadata; this removes any that survives.
+export async function stripUploadMetadata(image: ProcessedImage): Promise<ProcessedImage> {
+  const bytes = new Uint8Array(await image.blob.arrayBuffer());
+  const stripped = stripMetadata(bytes, "image/jpeg");
+  const blob = new Blob([stripped.buffer as ArrayBuffer], { type: "image/jpeg" });
+  return { blob, height: image.height, size: blob.size, type: blob.type, width: image.width };
+}
 
 export function fitWithin(width: number, height: number, maxDimension: number) {
   const scale = Math.min(1, maxDimension / Math.max(width, height));
