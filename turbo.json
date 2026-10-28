@@ -15,7 +15,7 @@
     "typecheck": {},
     "test": {
       "outputs": ["coverage/**"],
-      "env": ["TEST_DATABASE_URL"]
+      "env": ["TEST_DATABASE_URL", "TEST_S3_ENDPOINT", "TEST_CLAMAV_HOST"]
     },
     "test:e2e": {
       "dependsOn": ["build"],

@@ -188,7 +188,7 @@ export function CaptureForm() {
   }
 
   async function upload() {
-    if (!prepared || !fileName) {
+    if (!prepared) {
       return;
     }
     setBusy(true);
@@ -198,13 +198,12 @@ export function CaptureForm() {
       setStage("Requesting a private upload…");
       const issued = await postJson("/api/uploads", {
         declaredType: prepared.blob.type || "image/jpeg",
-        filename: fileName,
         sizeBytes: prepared.size,
       });
       if (
         !issued.ok ||
         typeof issued.body.uploadUrl !== "string" ||
-        typeof issued.body.key !== "string"
+        typeof issued.body.token !== "string"
       ) {
         throw new Error(
           typeof issued.body.error === "string" ? issued.body.error : "Uploads are unavailable.",
@@ -220,7 +219,7 @@ export function CaptureForm() {
         throw new Error("The upload failed. Check your connection and try again.");
       }
       setStage("Checking privacy…");
-      const confirmed = await postJson("/api/uploads/confirm", { key: issued.body.key });
+      const confirmed = await postJson("/api/uploads/confirm", { token: issued.body.token });
       if (!confirmed.ok) {
         throw new Error(
           typeof confirmed.body.error === "string"

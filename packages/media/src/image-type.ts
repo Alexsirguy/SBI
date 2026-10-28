@@ -1,4 +1,7 @@
-export type UploadableImageType = "image/jpeg" | "image/png" | "image/heic";
+export type DetectedImageType = "image/jpeg" | "image/png" | "image/heic";
+
+// HEIC is detected only to explain the rejection; the client converts photos to JPEG first.
+export type UploadableImageType = "image/jpeg" | "image/png";
 
 const HEIC_BRANDS = new Set([
   "heic",
@@ -14,7 +17,7 @@ const HEIC_BRANDS = new Set([
 ]);
 
 // Magic bytes beat declared MIME types, which any client can lie about.
-export function detectImageType(bytes: Uint8Array): UploadableImageType | null {
+export function detectImageType(bytes: Uint8Array): DetectedImageType | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
     return "image/jpeg";
   }
