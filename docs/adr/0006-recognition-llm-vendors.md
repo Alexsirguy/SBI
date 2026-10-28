@@ -1,6 +1,6 @@
 # 0006. Recognition and LLM vendors
 
-- Status: accepted for Phase 0 (production use depends on Meta confirming its retention terms)
+- Status: accepted; learner photos enabled 2026-10-28 by product decision, with Meta's written retention terms still pending
 - Date: 2026-10-27
 - Issue: #15
 
@@ -85,6 +85,18 @@ Notes:
 ## Consequences
 
 - Switching vendor is a config change, because both sit behind `LlmProvider`.
-- Before production, Meta's Standard-mode retention terms must be confirmed in writing. Until then, photos sent to either vendor are evaluation data only, never learner photos.
+- Meta's Standard-mode retention terms are still to be confirmed in writing. Follow up and record the answer here.
+
+## Update 2026-10-28: recognition on for learner photos
+
+The product owner chose to send learner photos for recognition before Meta's written retention terms arrive, rather than keep photo capture limited to describing the object. Recognition is on by default (`photoRecognition` flag) wherever a provider key is set. The risk is limited by:
+
+- **Standard mode only.** Contributor models and `store: true` are refused in code, and OpenAI calls send `store: false`.
+- **Short retention on our side.** The photo is deleted about an hour after recognition, unless the learner keeps it. Recognition metadata keeps only the photo's SHA-256 and is deleted after 30 days.
+- **Disclosure.** The capture page names Meta and the OpenAI fallback and says neither may train on the photo.
+- **Kill switch.** `FEATURE_FLAGS=!photoRecognition` stops photos reaching any vendor with a config change and a restart; learners then describe the object instead.
+
+Revisit if Meta's terms allow retention or review of content beyond abuse monitoring, or if a region's rules require data residency.
+
 - Self-hosting the open-weight Muse Spark Open stays an option if retention or region terms turn out unacceptable.
 - `createRecognitionProvider` in `@sbi/recognition` applies this decision: Spark then GPT-5.4-mini, each with its own timeout (`RECOGNITION_TIMEOUT_MS`, default 20 s). It refuses contributor models and `store: true`, and sends `store: false` to OpenAI.
