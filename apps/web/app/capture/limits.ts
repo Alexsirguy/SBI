@@ -1,10 +1,25 @@
-export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/heic"] as const;
+export const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/heic",
+  "image/heif",
+] as const;
 
-export const ACCEPTED_EXTENSIONS = ".jpg,.jpeg,.png,.heic";
+const KNOWN_EXTENSIONS = ["jpg", "jpeg", "png", "heic", "heif"] as const;
+
+// Some pickers filter only on extensions and others only on MIME types, so list both.
+export const ACCEPTED_EXTENSIONS = [
+  ...KNOWN_EXTENSIONS.map((extension) => `.${extension}`),
+  ...ACCEPTED_IMAGE_TYPES,
+].join(",");
+
+export const ACCEPTED_FORMATS_LABEL = "JPG, PNG, HEIC";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 export const MAX_UPLOAD_LABEL = "10 MB";
+
+export const PHOTO_RETENTION_DAYS = 7;
 
 export interface SelectableFile {
   name: string;
@@ -12,20 +27,18 @@ export interface SelectableFile {
   type: string;
 }
 
-const KNOWN_EXTENSIONS = new Set(["jpg", "jpeg", "png", "heic"]);
-
 // Browsers may report an empty MIME type (notably for HEIC), so fall back to extension.
 export function validateSelection(file: SelectableFile): string | null {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   const knownType = (ACCEPTED_IMAGE_TYPES as readonly string[]).includes(file.type);
-  if (!knownType && !KNOWN_EXTENSIONS.has(extension)) {
-    return `“${file.name}” is not a photo. Choose a JPG, PNG, or HEIC file.`;
+  if (!knownType && !(KNOWN_EXTENSIONS as readonly string[]).includes(extension)) {
+    return `“${file.name}” is not a photo. Choose a ${ACCEPTED_FORMATS_LABEL} file.`;
   }
   if (file.size === 0) {
     return `“${file.name}” is empty. Choose another photo.`;
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return `“${file.name}” is too large. Photos must be under ${MAX_UPLOAD_LABEL}.`;
+    return `“${file.name}” is too large. Photos can be up to ${MAX_UPLOAD_LABEL}.`;
   }
   return null;
 }
