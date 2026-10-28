@@ -1,4 +1,4 @@
-export type QualityCheckId = "sharpness" | "exposure" | "subject";
+export type QualityCheckId = "resolution" | "sharpness" | "exposure" | "subject";
 
 export interface QualityCheck {
   id: QualityCheckId;
@@ -10,10 +10,17 @@ export interface QualityReport {
   checks: QualityCheck[];
 }
 
+export interface PixelData {
+  data: Uint8ClampedArray;
+  width: number;
+  height: number;
+}
+
 export interface QualityThresholds {
   blurVarianceMinimum?: number;
   luminanceMaximum?: number;
   luminanceMinimum?: number;
+  shortSideMinimum?: number;
   subjectFractionMinimum?: number;
 }
 
@@ -22,6 +29,10 @@ const LUMINANCE_MINIMUM = 40;
 const LUMINANCE_MAXIMUM = 215;
 const SUBJECT_FRACTION_MINIMUM = 0.15;
 const SUBJECT_DEVIATION = 30;
+// Below roughly this many pixels on the short side, recognition misses fine detail.
+const SHORT_SIDE_MINIMUM = 240;
+// Sampling at this size keeps fine edges that a smaller sample would blur away.
+const SAMPLE_DIMENSION = 640;
 
 function luminance(data: Uint8ClampedArray, i: number): number {
   return 0.2126 * (data[i] ?? 0) + 0.7152 * (data[i + 1] ?? 0) + 0.0722 * (data[i + 2] ?? 0);
@@ -32,7 +43,11 @@ function at(grid: Float64Array, i: number): number {
 }
 
 // Heuristics run fully on-device; they advise the learner, never block uploading.
-export function assessQuality(image: ImageData, thresholds: QualityThresholds = {}): QualityReport {
+export function assessQuality(
+  image: PixelData,
+  thresholds: QualityThresholds = {},
+  source: { width: number; height: number } = image,
+): QualityReport {
   const { height, width } = image;
   const lum = new Float64Array(width * height);
   let mean = 0;
@@ -86,8 +101,18 @@ export function assessQuality(image: ImageData, thresholds: QualityThresholds = 
   const low = thresholds.luminanceMinimum ?? LUMINANCE_MINIMUM;
   const high = thresholds.luminanceMaximum ?? LUMINANCE_MAXIMUM;
   const subjectMinimum = thresholds.subjectFractionMinimum ?? SUBJECT_FRACTION_MINIMUM;
+  const shortSide = Math.min(source.width, source.height);
+  const shortSideMinimum = thresholds.shortSideMinimum ?? SHORT_SIDE_MINIMUM;
 
   const checks: QualityCheck[] = [
+    {
+      guidance:
+        shortSide < shortSideMinimum
+          ? "The photo is too small to recognise the object. Retake it closer or use a larger photo."
+          : null,
+      id: "resolution",
+      passed: shortSide >= shortSideMinimum,
+    },
     {
       guidance:
         variance < blurMinimum
@@ -118,11 +143,7 @@ export function assessQuality(image: ImageData, thresholds: QualityThresholds = 
   return { checks };
 }
 
-export function qualityGuidance(report: QualityReport): string[] {
-  return report.checks.flatMap((check) => (check.guidance ? [check.guidance] : []));
-}
-
-export function readImageData(source: ImageBitmap, maxDimension = 240): ImageData {
+export function readImageData(source: ImageBitmap, maxDimension = SAMPLE_DIMENSION): ImageData {
   const canvas = document.createElement("canvas");
   const scale = Math.min(1, maxDimension / Math.max(source.width, source.height, 1));
   canvas.width = Math.max(1, Math.round(source.width * scale));

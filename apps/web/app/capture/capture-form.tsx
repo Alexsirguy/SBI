@@ -13,7 +13,12 @@ import {
 import { cropImage, normaliseImage, type CropRect, type ProcessedImage } from "./processing";
 import { assessQuality, readImageData, type QualityReport } from "./quality";
 
-const CHECK_LABELS = { exposure: "Exposure", sharpness: "Sharpness", subject: "Object size" };
+const CHECK_LABELS = {
+  exposure: "Exposure",
+  resolution: "Resolution",
+  sharpness: "Sharpness",
+  subject: "Object size",
+};
 
 const CROP_FIELDS = [
   { key: "x", label: "Left (px)" },
@@ -36,6 +41,7 @@ export function CaptureForm() {
   const cameraId = useId();
   const uploadId = useId();
   const problemId = useId();
+  const checkId = useId();
   const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
   // Bumped on every new selection so a slow earlier decode cannot overwrite a newer photo.
@@ -54,7 +60,7 @@ export function CaptureForm() {
     try {
       const bitmap = await createImageBitmap(image.blob);
       try {
-        setQuality(assessQuality(readImageData(bitmap)));
+        setQuality(assessQuality(readImageData(bitmap), {}, image));
       } finally {
         bitmap.close();
       }
@@ -238,24 +244,27 @@ export function CaptureForm() {
           </button>
         </fieldset>
       ) : null}
-      {prepared && !busy ? (
-        <section aria-label="Photo check">
-          <h2>Photo check</h2>
-          {quality ? (
-            <ul>
-              {quality.checks.map((check) => (
-                <li key={check.id}>
-                  {check.passed
-                    ? `${CHECK_LABELS[check.id]}: good`
-                    : (check.guidance ?? "Retake the photo.")}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Photo checks could not run — you can still upload.</p>
-          )}
-        </section>
-      ) : null}
+      {/* Kept mounted so screen readers announce guidance when it appears. */}
+      <div aria-live="polite">
+        {prepared && !busy ? (
+          <section aria-labelledby={checkId}>
+            <h2 id={checkId}>Photo check</h2>
+            {quality ? (
+              <ul>
+                {quality.checks.map((check) => (
+                  <li key={check.id}>
+                    {check.passed
+                      ? `${CHECK_LABELS[check.id]}: good`
+                      : (check.guidance ?? "Retake the photo.")}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Photo checks could not run — you can still upload.</p>
+            )}
+          </section>
+        ) : null}
+      </div>
       <button type="submit" disabled={!prepared || busy}>
         Upload photo
       </button>
