@@ -1,4 +1,5 @@
 import {
+  boolean,
   char,
   datetime,
   index,
@@ -83,3 +84,23 @@ export const tutorTurns = mysqlTable(
   },
   (table) => [primaryKey({ columns: [table.sessionId, table.turnId] })],
 );
+
+// Upload registry for TTL deletion; the object bytes live in private R2 storage.
+export const mediaObjects = mysqlTable(
+  "media_objects",
+  {
+    objectKey: varchar("object_key", { length: 300 }).primaryKey(),
+    kind: varchar("kind", { length: 16 }).notNull(),
+    createdAt: timestamp("created_at").notNull(),
+    savedByUser: boolean("saved_by_user").notNull().default(false),
+  },
+  (table) => [index("media_objects_created_idx").on(table.createdAt)],
+);
+
+export const deletionAuditLog = mysqlTable("deletion_audit_log", {
+  auditId: uuid("audit_id").primaryKey(),
+  objectKey: varchar("object_key", { length: 300 }).notNull(),
+  kind: varchar("kind", { length: 16 }).notNull(),
+  deletedAt: timestamp("deleted_at").notNull(),
+  reason: varchar("reason", { length: 200 }).notNull(),
+});

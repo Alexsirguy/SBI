@@ -31,6 +31,8 @@ const TABLES = [
   "visual_assets",
   "recognition_results",
   "tutor_turns",
+  "media_objects",
+  "deletion_audit_log",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -156,6 +158,44 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         second.turnId,
       ]);
       expect(await repos.tutorTurns.deleteBySession(turn.sessionId)).toBe(2);
+    });
+  });
+
+  describe("media retention", () => {
+    const now = new Date("2026-02-01T00:00:00Z");
+    const policy = { derivativeTtlDays: 30, logTtlDays: 90, originalTtlDays: 7 };
+
+    it("lists expired objects per kind and skips saved originals", async () => {
+      await repos.mediaRegistry.save({
+        createdAt: new Date("2026-01-20T00:00:00Z"),
+        key: "uploads/old.jpg",
+        kind: "original",
+        savedByUser: false,
+      });
+      await repos.mediaRegistry.save({
+        createdAt: new Date("2026-01-20T00:00:00Z"),
+        key: "uploads/kept.jpg",
+        kind: "original",
+        savedByUser: true,
+      });
+      await repos.mediaRegistry.save({
+        createdAt: new Date("2026-01-31T00:00:00Z"),
+        key: "uploads/fresh.jpg",
+        kind: "original",
+        savedByUser: false,
+      });
+
+      const expired = await repos.mediaRegistry.listExpired(now, policy);
+      expect(expired.map((item) => item.key)).toEqual(["uploads/old.jpg"]);
+
+      await repos.mediaRegistry.remove(["uploads/old.jpg"]);
+      await repos.deletionAudit.record({
+        deletedAt: now,
+        key: "uploads/old.jpg",
+        kind: "original",
+        reason: "original older than 7 days",
+      });
+      expect(await repos.mediaRegistry.listExpired(now, policy)).toEqual([]);
     });
   });
 });

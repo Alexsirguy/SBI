@@ -17,6 +17,7 @@
   "dependencies": {
     "@sbi/contracts": "workspace:*",
     "@sbi/evidence": "workspace:*",
+    "@sbi/media": "workspace:*",
     "@sbi/orchestrator": "workspace:*",
     "@sbi/recognition": "workspace:*",
     "@sbi/rights": "workspace:*",
