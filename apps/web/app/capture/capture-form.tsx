@@ -51,6 +51,7 @@ export function CaptureForm() {
   const problemId = useId();
   const checkId = useId();
   const confirmId = useId();
+  const uploadHintId = useId();
   const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
   // Bumped on every new selection so a slow earlier decode cannot overwrite a newer photo.
@@ -290,6 +291,7 @@ export function CaptureForm() {
     <>
       <form
         aria-label="Photo capture"
+        aria-busy={busy}
         onSubmit={(event) => {
           event.preventDefault();
           void upload();
@@ -390,9 +392,18 @@ export function CaptureForm() {
             Keep this photo
           </button>
         ) : null}
-        <button type="submit" disabled={!prepared || busy}>
+        <button
+          type="submit"
+          disabled={!prepared || busy}
+          aria-describedby={!prepared || busy ? uploadHintId : undefined}
+        >
           Upload photo
         </button>
+        {!prepared || busy ? (
+          <p id={uploadHintId}>
+            {busy ? "Wait until your photo is ready." : "Take or choose a photo first."}
+          </p>
+        ) : null}
       </form>
       {uploaded ? (
         <section aria-labelledby={confirmId}>

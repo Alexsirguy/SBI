@@ -1,15 +1,10 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectNoAxeViolations } from "./a11y";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const tinyPng = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   "base64",
 );
-
-async function expectNoAxeViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
-}
 
 // Runs the shared confirmation step inside `scope`, the same way for either entry path.
 async function confirmKettle(page: Page, scope: Locator) {
