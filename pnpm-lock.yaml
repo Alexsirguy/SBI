@@ -57,6 +57,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@sbi/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@sbi/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -171,6 +174,9 @@ importers:
       '@sbi/evidence':
         specifier: workspace:*
         version: link:../evidence
+      '@sbi/media':
+        specifier: workspace:*
+        version: link:../media
       '@sbi/orchestrator':
         specifier: workspace:*
         version: link:../orchestrator

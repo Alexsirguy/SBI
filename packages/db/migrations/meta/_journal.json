@@ -8,6 +8,13 @@
       "when": 1793110903896,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1793182935159,
+      "tag": "0001_acoustic_ghost_rider",
+      "breakpoints": true
     }
   ]
 }
