@@ -30,7 +30,7 @@ Feature flags are comma lists in `FEATURE_FLAGS` (api) and `NEXT_PUBLIC_FEATURE_
 | Path                    | Responsibility                                                          |
 | ----------------------- | ----------------------------------------------------------------------- |
 | `apps/web`              | Next.js client: capture, confirmation, lesson reader, visuals, tutor UI |
-| `apps/api`              | Fastify gateway; composes packages into routes                          |
+| `apps/api`              | NestJS gateway on Fastify; composes packages into routes                |
 | `packages/contracts`    | Versioned schemas shared by every module                                |
 | `packages/media`        | Photo sanitisation, private storage, TTL deletion                       |
 | `packages/recognition`  | Provider-neutral recognition adapter                                    |

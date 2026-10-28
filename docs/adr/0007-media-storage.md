@@ -10,17 +10,18 @@ Learner photos (§10, §12) must reach private storage only after type checks, m
 
 ## Decision
 
-- **Adapter.** `@sbi/media` exposes an `ObjectStorage` interface with one S3-compatible implementation on the AWS SDK. Production uses Cloudflare R2; local development and CI use SeaweedFS. Only `MEDIA_S3_*` configuration differs.
-- **Staging, then promotion.** `/api/uploads` signs a PUT to `staging/<uuid>.<ext>`, valid for 5 minutes and bound to the declared `Content-Type` and `Content-Length`. It also returns an HMAC upload token for that key.
-- **Confirm.** `/api/uploads/confirm` accepts only that token. It then:
+- **Adapter.** `@sbi/media` exposes an `ObjectStorage` interface with one S3-compatible implementation on the AWS SDK. Production uses Cloudflare R2; local development and CI use SeaweedFS. Only the API's `S3_*` configuration differs.
+- **API owns the flow.** `apps/api` serves the routes and alone holds storage, scanner and database credentials; the web app is a client of the `@sbi/contracts` route table (ADR 0008).
+- **Staging, then promotion.** `POST /uploads` signs a PUT to `staging/<uuid>.<ext>`, valid for 5 minutes and bound to the declared `Content-Type` and `Content-Length`. It also returns an HMAC upload token for that key.
+- **Confirm.** `POST /uploads/confirm` accepts only that token. It then:
   - reads the staged object, refusing anything larger than the policy limit;
   - checks magic bytes and asks ClamAV;
   - re-strips metadata and writes the result to `photos/<uuid>.<ext>`, a key no client can write to;
   - always deletes the staged object.
 - **Scanning fails closed.** An infected file is rejected. A scanner error or timeout refuses the upload with 503, and the learner can retry.
 - **No learner data in keys or logs.** Keys are random UUIDs plus an extension; filenames are never sent to the server.
-- **Privacy is checked, not assumed.** On first use, `ensurePrivateBucket` writes a probe object and fails if an unauthenticated GET can read it.
-- **CORS.** The same call limits cross-origin `PUT` to `MEDIA_UPLOAD_ORIGINS`, the app's own origins.
+- **Privacy is checked, not assumed.** At API startup, `ensurePrivateBucket` writes a probe object and fails if an unauthenticated GET can read it.
+- **CORS.** The same call limits cross-origin `PUT` to `WEB_ORIGINS`, the web app's own origins.
 
 ## Production bucket configuration (R2)
 

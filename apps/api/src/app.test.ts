@@ -1,17 +1,31 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { buildApp } from "./app";
+import { startTestApp, type TestApp } from "./testing/test-app";
 
 describe("api app", () => {
-  const app = buildApp();
+  let test: TestApp | undefined;
 
   afterEach(async () => {
-    await app.close();
+    await test?.app.close();
   });
 
   it("reports healthy", async () => {
-    const response = await app.inject({ method: "GET", url: "/health" });
+    test = await startTestApp();
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ status: "ok" });
+    const response = await fetch(`${test.url}/health`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ status: "ok" });
+  });
+
+  it("answers unknown routes and unreadable bodies in the error contract", async () => {
+    test = await startTestApp();
+
+    const missing = await test.post("/nope", {});
+    expect(missing.status).toBe(404);
+    expect(await missing.json()).toHaveProperty("error");
+
+    const broken = await test.post("/uploads", "{");
+    expect(broken.status).toBe(400);
+    expect(await broken.json()).toEqual({ error: "The request could not be read." });
   });
 });

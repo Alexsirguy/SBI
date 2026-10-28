@@ -12,6 +12,10 @@ const schema = z.object({
   S3_ACCESS_KEY_ID: z.string().min(1),
   S3_SECRET_ACCESS_KEY: z.string().min(1),
   S3_FORCE_PATH_STYLE: z.stringbool().default(false),
+  CLAMAV_HOST: z.string().min(1),
+  CLAMAV_PORT: z.coerce.number().int().positive().default(3310),
+  UPLOAD_TOKEN_SECRET: z.string().min(32),
+  WEB_ORIGINS: z.string().min(1),
   MEDIA_PURGE_INTERVAL_MINUTES: z.coerce.number().int().positive().default(15),
   FEATURE_FLAGS: z.string().optional(),
 });
@@ -22,6 +26,9 @@ export function loadEnv(source: EnvSource = process.env) {
     ...env,
     features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS),
     retention: parseRetentionPolicy(source),
+    webOrigins: env.WEB_ORIGINS.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
   };
 }
 

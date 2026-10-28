@@ -1,6 +1,6 @@
 import type { DeletionPassResult } from "@sbi/media";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { startPurgeWorker } from "./purge";
+import { startPurgeWorker } from "./purge-worker";
 
 const RESULT: DeletionPassResult = { auditPurged: 1, deleted: ["photos/a.jpg"], stagingDeleted: 2 };
 

@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { expectNoAxeViolations } from "./a11y";
+import { mockUploads } from "./mock-api";
 
 async function selectPhoto(page: Page) {
   await page.evaluate(
@@ -30,16 +31,6 @@ async function selectPhoto(page: Page) {
           resolve();
         }, "image/png");
       }),
-  );
-}
-
-async function mockUploads(page: Page) {
-  await page.route("**/api/uploads", (route) =>
-    route.fulfill({ json: { expiresInSeconds: 300, token: "t", uploadUrl: "/fake-put" } }),
-  );
-  await page.route("**/fake-put", (route) => route.fulfill({ status: 200 }));
-  await page.route("**/api/uploads/confirm", (route) =>
-    route.fulfill({ json: { contentType: "image/jpeg", key: "photos/a.jpg" } }),
   );
 }
 

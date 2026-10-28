@@ -1,4 +1,5 @@
 import { expectNoAxeViolations } from "./a11y";
+import { mockUploads } from "./mock-api";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const tinyPng = Buffer.from(
@@ -32,13 +33,7 @@ test("text entry resolves candidates and confirms the lesson", async ({ page }) 
 });
 
 test("photo entry reaches the same confirmation step after upload", async ({ page }) => {
-  await page.route("**/api/uploads", (route) =>
-    route.fulfill({ json: { expiresInSeconds: 300, token: "t", uploadUrl: "/fake-put" } }),
-  );
-  await page.route("**/fake-put", (route) => route.fulfill({ status: 200 }));
-  await page.route("**/api/uploads/confirm", (route) =>
-    route.fulfill({ json: { contentType: "image/jpeg", key: "photos/a.jpg" } }),
-  );
+  await mockUploads(page);
   await page.goto("/capture");
   await page
     .locator('input[name="upload"]')
