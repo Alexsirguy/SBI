@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectNoAxeViolations } from "./a11y";
 import { expect, type Page, test } from "@playwright/test";
 
 // Draws a photo in the page and selects it, since the repo keeps no binary fixtures.
@@ -214,8 +214,7 @@ test("prepared capture page has no detectable accessibility violations", async (
     { timeout: 15000 },
   );
 
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
+  await expectNoAxeViolations(page);
 });
 
 test("crop area can be resized by dragging its corner handle", async ({ page }) => {

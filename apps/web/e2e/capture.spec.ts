@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { expectNoAxeViolations } from "./a11y";
 import { expect, test } from "@playwright/test";
 
 // 1x1 transparent PNG; content is irrelevant, only name/size/type are validated.
@@ -34,8 +34,9 @@ test("capture page offers camera and upload entries with limits and privacy cue"
 test("capture page validates the selected photo", async ({ page }) => {
   await page.goto("/capture");
   const upload = page.locator('input[name="upload"]');
-  const status = page.getByRole("status");
-  const alert = page.getByRole("form", { name: "Photo capture" }).getByRole("alert");
+  const form = page.getByRole("form", { name: "Photo capture" });
+  const status = form.getByRole("status");
+  const alert = form.getByRole("alert");
 
   await upload.setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
   await expect(status).toContainText("Ready: 1 by 1 pixels, JPEG", { timeout: 15000 });
@@ -62,8 +63,7 @@ test("capture page validates the selected photo", async ({ page }) => {
 test("capture page has no detectable accessibility violations", async ({ page }) => {
   await page.goto("/capture");
 
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
+  await expectNoAxeViolations(page);
 });
 
 test("upload reports honestly when private storage is unavailable", async ({ page }) => {
