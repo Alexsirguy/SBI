@@ -17,6 +17,8 @@ jobs:
     env:
       NEXT_PUBLIC_API_URL: http://localhost:4000
       TEST_DATABASE_URL: mysql://sbi:sbi@127.0.0.1:3306/sbi_test
+      TEST_S3_ENDPOINT: http://127.0.0.1:8333
+      TEST_CLAMAV_HOST: 127.0.0.1
     services:
       mariadb:
         image: mariadb:11.8
@@ -47,6 +49,10 @@ jobs:
           path: .turbo/cache
           key: turbo-${{ runner.os }}-${{ github.sha }}
           restore-keys: turbo-${{ runner.os }}-
+
+      # Service containers cannot take a command, so SeaweedFS and ClamAV come from compose.
+      - name: Start object storage and malware scanner
+        run: docker compose up -d --wait storage clamav
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
