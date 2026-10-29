@@ -118,6 +118,7 @@ export function toEvidenceSource(fetched: FetchedSource, choice: ExcerptChoice):
     url: fetched.url,
     doi: fetched.doi,
     sourceType: fetched.sourceType,
+    studyDesign: fetched.studyDesign,
     publishedOn: fetched.publishedOn,
     accessedOn: fetchedAt.slice(0, 10),
     excerpts: choice.passages.map((passage, index) => ({

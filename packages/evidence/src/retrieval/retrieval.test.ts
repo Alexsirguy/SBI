@@ -101,6 +101,18 @@ describe("Europe PMC connector", () => {
     ]);
     expect(source.rightsStatus).toBe("reusable");
     expect(source.retrieval).toMatchObject({ connector: "europe-pmc", license: "cc by" });
+    expect(source.studyDesign).toBe("primary-study");
+  });
+
+  it("reads a review as a review, not a single study", async () => {
+    const body = JSON.parse(fixture("europe-pmc-search.json"));
+    body.resultList.result[0].pubTypeList.pubType = ["Review", "Journal Article"];
+    const connector = createEuropePmcConnector(
+      http(fakeFetch([[/europepmc/, () => new Response(JSON.stringify(body))]])),
+    );
+    expect((await connector.fetch({ doi: "10.1371/journal.pone.0000217" })).studyDesign).toBe(
+      "review",
+    );
   });
 
   it("reports a missing record as a 404", async () => {
@@ -125,6 +137,7 @@ describe("US government connector", () => {
 
     expect(source.title).toBe("Water Density");
     expect(source.publisher).toBe("U.S. Geological Survey");
+    expect(source.studyDesign).toBe("not-research");
     expect(source.rightsStatus).toBe("reusable");
     expect(source.retrieval.access).toBe("full-text");
     const text = source.passages.map((passage) => passage.text).join("\n");
