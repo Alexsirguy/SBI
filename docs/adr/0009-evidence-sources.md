@@ -78,4 +78,4 @@ Sources follow the spec's §7 list (textbooks, public science institutions, stan
   - disallowed paths are never fetched;
   - each host's `Crawl-delay` is respected, with at least 1 s between requests otherwise;
   - an unreachable robots.txt means staying out, per RFC 9309.
-- **User-Agent contact:** set `EVIDENCE_CONTACT` to a project URL or role mailbox, never a person's own email. Wikimedia asks for a contact.
+- **User-Agent contact:** every request names the owner-chosen contact `alex@moonsatech.com`, because Wikimedia's User-Agent policy asks automated clients for one. `EVIDENCE_CONTACT` overrides it.
