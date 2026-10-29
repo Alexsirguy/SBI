@@ -1,4 +1,5 @@
 import type { DatabaseHandle, LockResult, Repositories } from "@sbi/db";
+import type { LessonRepository } from "@sbi/orchestrator";
 import { runFreshnessPass, type FreshnessPassResult, type Retriever } from "@sbi/evidence";
 import { createLessonInvalidator } from "@sbi/orchestrator";
 
@@ -10,7 +11,8 @@ export type FreshnessPass = () => Promise<LockResult<FreshnessPassSummary>>;
 
 export interface FreshnessPassDeps {
   database: Pick<DatabaseHandle, "withLock">;
-  repositories: Pick<Repositories, "claims" | "evidenceSources" | "lessons">;
+  // Narrower than Repositories["lessons"]: invalidation needs no category lookup.
+  repositories: Pick<Repositories, "claims" | "evidenceSources"> & { lessons: LessonRepository };
   retriever: Retriever;
   maxAgeDays: number;
   batch: number;

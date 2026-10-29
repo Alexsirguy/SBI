@@ -33,7 +33,24 @@ export const lessons = mysqlTable(
     primaryKey({ columns: [table.lessonId, table.version] }),
     index("lessons_intent_idx").on(table.intentSignature),
     index("lessons_content_hash_idx").on(table.contentHash),
+    index("lessons_taxonomy_idx").on(table.taxonomyId),
   ],
+);
+
+// Append-only review trail (#55): who moved a lesson version between review states, and when.
+export const lessonReviewEvents = mysqlTable(
+  "lesson_review_events",
+  {
+    eventId: uuid("event_id").primaryKey(),
+    lessonId: uuid("lesson_id").notNull(),
+    version: int("version").notNull(),
+    fromStatus: varchar("from_status", { length: 32 }).notNull(),
+    toStatus: varchar("to_status", { length: 32 }).notNull(),
+    reviewedBy: varchar("reviewed_by", { length: 200 }).notNull(),
+    at: timestamp("at").notNull(),
+    reason: varchar("reason", { length: 2000 }),
+  },
+  (table) => [index("lesson_review_events_lesson_idx").on(table.lessonId, table.version, table.at)],
 );
 
 // Which claims each lesson version shows, so an invalidated claim finds its lessons by index.

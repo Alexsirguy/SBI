@@ -1,6 +1,8 @@
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { describe, expect, it, vi, type Mock } from "vitest";
-import { createOpenAiCompatibleProvider } from "./openai-compatible";
-import { LlmError } from "./provider";
+import { createOpenAiCompatibleProvider, type OpenAiCompatibleOptions } from "./openai-compatible";
+import { LlmError, type LlmEvent } from "./provider";
 
 const ok = (content: string) =>
   new Response(
@@ -15,7 +17,7 @@ const ok = (content: string) =>
     }),
   );
 
-function provider(fetchImpl: typeof fetch, extra: object = {}) {
+function provider(fetchImpl: typeof fetch, extra: Partial<OpenAiCompatibleOptions> = {}) {
   return createOpenAiCompatibleProvider({
     id: "meta",
     baseUrl: "https://api.meta.ai/v1",
@@ -92,15 +94,22 @@ describe("createOpenAiCompatibleProvider", () => {
     vi.useRealTimers();
   });
 
-  it("passes the abort signal to fetch", async () => {
+  it("links the caller's abort signal to the request", async () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => ok("hi"));
     const controller = new AbortController();
     await provider(fetchImpl).complete({
       messages: [{ role: "user", content: "hi" }],
       signal: controller.signal,
     });
+    const sent = fetchImpl.mock.calls[0]?.[1]?.signal;
+    expect(sent?.aborted).toBe(false);
 
-    expect(fetchImpl.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
+    const pending = provider(
+      vi.fn<typeof fetch>(() => new Promise<Response>(() => undefined)),
+      { retries: 0 },
+    ).complete({ messages: [{ role: "user", content: "hi" }], signal: controller.signal });
+    controller.abort(new Error("learner left"));
+    await expect(pending).rejects.toThrow("learner left");
   });
 
   it("stops retrying once aborted", async () => {
@@ -124,5 +133,116 @@ describe("createOpenAiCompatibleProvider", () => {
       provider(fetchImpl).complete({ messages: [{ role: "user", content: "hi" }] }),
     ).rejects.toBeInstanceOf(LlmError);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("times out a hung request", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(() => new Promise<Response>(() => undefined));
+    await expect(
+      provider(fetchImpl, { timeoutMs: 20, retries: 0 }).complete({
+        messages: [{ role: "user", content: "hi" }],
+      }),
+    ).rejects.toThrow("meta: timed out after 20ms");
+  });
+
+  it("echoes the prompt ref and reports versions and usage, never content", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => ok("hi"));
+    const events: LlmEvent[] = [];
+    const result = await provider(fetchImpl, { onEvent: (event) => events.push(event) }).complete({
+      messages: [{ role: "user", content: "secret question" }],
+      prompt: { id: "lesson-draft", version: "2" },
+    });
+
+    expect(result.prompt).toEqual({ id: "lesson-draft", version: "2" });
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      providerId: "meta",
+      model: "muse-spark-1.3",
+      prompt: { id: "lesson-draft", version: "2" },
+      usage: { inputTokens: 10, cachedInputTokens: 2, outputTokens: 5 },
+      outcome: "ok",
+    });
+    expect(JSON.stringify(events[0])).not.toContain("secret question");
+  });
+
+  it("reports terminal failures once", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => new Response("bad", { status: 400 }));
+    const events: LlmEvent[] = [];
+    await expect(
+      provider(fetchImpl, { onEvent: (event) => events.push(event) }).complete({
+        messages: [{ role: "user", content: "hi" }],
+      }),
+    ).rejects.toBeInstanceOf(LlmError);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ outcome: "error", providerId: "meta" });
+  });
+});
+
+// Real sockets: mocked Responses ignore the abort signal, which once hid a cancelled body read.
+describe("createOpenAiCompatibleProvider over HTTP", () => {
+  async function serve(handler: Parameters<typeof createServer>[1]) {
+    const server = createServer(handler);
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const { port } = server.address() as AddressInfo;
+    return { baseUrl: `http://127.0.0.1:${port}`, close: () => server.close() };
+  }
+  const answer = '{"model":"m","choices":[{"message":{"content":"hello"}}],"usage":{}}';
+
+  it("reads a streamed body to the end when a timeout is set", async () => {
+    const server = await serve((_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.write(answer.slice(0, 20));
+      setTimeout(() => res.end(answer.slice(20)), 30);
+    });
+    try {
+      const llm = provider(fetch, { baseUrl: server.baseUrl, timeoutMs: 2000, retries: 0 });
+      expect((await llm.complete({ messages: [{ role: "user", content: "hi" }] })).text).toBe(
+        "hello",
+      );
+    } finally {
+      server.close();
+    }
+  });
+
+  it("times out a body that stalls after the headers", async () => {
+    const server = await serve((_req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.write(answer.slice(0, 20));
+    });
+    try {
+      const llm = provider(fetch, { baseUrl: server.baseUrl, timeoutMs: 50, retries: 0 });
+      await expect(llm.complete({ messages: [{ role: "user", content: "hi" }] })).rejects.toThrow(
+        "meta: timed out after 50ms",
+      );
+    } finally {
+      server.close();
+    }
+  });
+
+  it("turns a refused connection into a provider error", async () => {
+    const server = await serve(() => undefined);
+    server.close();
+    const llm = provider(fetch, { baseUrl: server.baseUrl, retries: 0 });
+    await expect(
+      llm.complete({ messages: [{ role: "user", content: "hi" }] }),
+    ).rejects.toBeInstanceOf(LlmError);
+  });
+});
+
+describe("retries after a network failure", () => {
+  it("tries again and succeeds", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi
+        .fn<typeof fetch>()
+        .mockRejectedValueOnce(new TypeError("fetch failed"))
+        .mockResolvedValueOnce(ok("second time"));
+      const pending = provider(fetchImpl, { retries: 1 }).complete({
+        messages: [{ role: "user", content: "hi" }],
+      });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect((await pending).text).toBe("second time");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
