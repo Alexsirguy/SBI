@@ -112,20 +112,35 @@ const CONTRADICTS = JSON.stringify({ verdict: "contradicts", reason: "Section fl
 const AGREE = JSON.stringify({ contradiction: false, reason: "", claimIds: [] });
 
 // Routes by prompt shape so parallel judge calls cannot steal each other's verdicts.
-function scriptedProvider(options: { entailment?: string } = {}): LlmProvider {
-  const calls: CompletionRequest[] = [];
-  const provider: LlmProvider & { calls: CompletionRequest[] } = {
+interface Script {
+  entailment?: string;
+  /** Verdict for the quick answer only; the lesson's sections use `entailment`. */
+  quickEntailment?: string;
+  /** Held open until the test releases it, to prove the answer streams first. */
+  draftGate?: Promise<void>;
+}
+
+const QUICK = "A warm metal strip bends and flips the switch off.";
+
+// Routes by prompt id and shape so parallel calls cannot steal each other's answers.
+function scriptedProvider(options: Script = {}): LlmProvider {
+  return {
     id: "stub",
     model: "stub-1",
-    calls,
     async complete(request: CompletionRequest): Promise<Completion> {
-      calls.push(request);
       const text = JSON.stringify(request.messages);
-      const payload = text.includes("<question-")
-        ? JSON.stringify(FRAGMENT)
-        : text.includes("<section-")
-          ? (options.entailment ?? SUPPORTS)
-          : AGREE;
+      let payload: string;
+      if (request.prompt?.id === "quick-answer") {
+        payload = JSON.stringify({ text: QUICK, claimIds: [CLAIM_A] });
+      } else if (request.prompt?.id === "lesson-draft") {
+        await options.draftGate;
+        payload = JSON.stringify(FRAGMENT);
+      } else if (text.includes("<section-")) {
+        const quick = text.includes(QUICK) && options.quickEntailment;
+        payload = quick ? (options.quickEntailment ?? SUPPORTS) : (options.entailment ?? SUPPORTS);
+      } else {
+        payload = AGREE;
+      }
       return {
         text: payload,
         model: "stub-1",
@@ -135,7 +150,6 @@ function scriptedProvider(options: { entailment?: string } = {}): LlmProvider {
       };
     },
   };
-  return provider;
 }
 
 function throwingProvider(error: Error): LlmProvider {
@@ -219,8 +233,8 @@ describe("LessonService", () => {
     if (answer?.type !== "quick-answer") throw new Error("First event must answer first");
     expect(answer.data).toMatchObject({
       kind: "fresh",
-      title: "Why kettles click off",
-      shortAnswer: "Heat snaps a small switch.",
+      shortAnswer: QUICK,
+      claimIds: [CLAIM_A],
       reviewStatus: "auto-validated",
     });
     expect(answer.data.note).toBeUndefined();
@@ -229,6 +243,58 @@ describe("LessonService", () => {
     expect(full.data.reuse.policyVersion).toBe(LESSON_POLICY_VERSION);
     expect(visuals).toMatchObject({ type: "visuals", data: { visuals: [] } });
     expect(lessons).toHaveLength(1);
+  });
+
+  it("streams the checked short answer while the full draft is still being written", async () => {
+    let release: () => void = () => undefined;
+    const draftGate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { service } = setup(scriptedProvider({ draftGate }));
+    const stream = service.streamLesson(REQUEST);
+
+    const first = await stream.next();
+    expect(first.value).toMatchObject({
+      type: "quick-answer",
+      data: {
+        kind: "fresh",
+        shortAnswer: QUICK,
+        claimIds: [CLAIM_A],
+        reviewStatus: "auto-validated",
+      },
+    });
+    if (first.value?.type !== "quick-answer") throw new Error("expected the answer first");
+    expect(first.value.data.title).toBeUndefined();
+
+    release();
+    const rest: LessonStreamEvent[] = [];
+    for await (const event of stream) rest.push(event);
+    expect(rest.map((event) => event.type)).toEqual(["lesson", "visuals"]);
+    const lesson = rest[0]?.type === "lesson" ? rest[0].data : undefined;
+    expect(lesson?.lessonId).toBe(first.value.data.lessonId);
+    expect(lesson?.sections.find((section) => section.module === "short-answer")?.text).toBe(QUICK);
+  });
+
+  it("falls back to the lesson's own short answer when the quick one fails its gate", async () => {
+    const { service } = setup(scriptedProvider({ quickEntailment: CONTRADICTS }));
+    const events = await collect(service);
+    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    if (events[0]?.type !== "quick-answer") throw new Error("expected the answer first");
+    expect(events[0].data).toMatchObject({
+      shortAnswer: "Heat snaps a small switch.",
+      title: "Why kettles click off",
+    });
+  });
+
+  it("ends the stream with a clear message when the lesson is held after the answer", async () => {
+    const { service } = setup(
+      scriptedProvider({ entailment: CONTRADICTS, quickEntailment: SUPPORTS }),
+    );
+    const stream = service.streamLesson(REQUEST);
+    expect((await stream.next()).value?.type).toBe("quick-answer");
+    const failure = await userFacing(() => stream.next());
+    expect(failure.message).toContain("short answer above is checked");
+    expect(failure.message).toContain("reviewer");
   });
 
   it("stores the review trail for served and held lessons", async () => {

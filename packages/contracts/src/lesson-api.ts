@@ -21,9 +21,12 @@ export const QuickAnswer = z.object({
   kind: LessonKind,
   lessonId: Uuid,
   version: z.int().positive(),
-  title: z.string().min(1),
-  summary: z.string().min(1),
+  // Absent when the answer streams before the lesson that will carry it exists.
+  title: z.string().min(1).optional(),
+  summary: z.string().min(1).optional(),
   shortAnswer: z.string().min(1),
+  /** The stored claims the answer rests on. */
+  claimIds: z.array(Uuid).default([]),
   reviewStatus: ReviewStatus,
   /** Why a fallback stands in; absent for fresh and cached lessons. */
   note: z.string().min(1).optional(),

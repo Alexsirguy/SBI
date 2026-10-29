@@ -32,6 +32,8 @@ export interface DraftInput {
   cacheScope?: Lesson["reuse"]["cacheScope"];
   /** Pinned prompt version; latest when omitted. */
   promptVersion?: string;
+  /** Set when the id must be known before the draft exists, e.g. for a streamed quick answer. */
+  lessonId?: string;
 }
 
 export interface DraftDeps {
@@ -160,7 +162,7 @@ async function assemble(
   promptVersion: string,
 ): Promise<Lesson> {
   const draft = {
-    lessonId: newId(),
+    lessonId: input.lessonId ?? newId(),
     version: 1,
     taxonomyId: input.taxonomyId,
     title: fragment.title,

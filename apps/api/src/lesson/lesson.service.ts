@@ -8,7 +8,7 @@ import {
   type LessonRequest,
 } from "@sbi/contracts";
 import { createCitationResolver, type EvidenceRepositories } from "@sbi/evidence";
-import { type LlmProvider } from "@sbi/llm";
+import { LlmError, type LlmProvider } from "@sbi/llm";
 import {
   buildIntentSignature,
   citationCheck,
@@ -17,14 +17,20 @@ import {
   createEvidenceCheck,
   createPublisher,
   createReuseMatcher,
+  gateQuickAnswer,
+  generateQuickAnswer,
   generateDraft,
   misconceptionCheck,
   readingLevelCheck,
   runLessonChecks,
   runWithFallback,
   schemaCheck,
+  withShortAnswer,
   type CheckReport,
   type PublishAudit,
+  type QuickAnswerDraft,
+  type QuickAnswerInput,
+  type QuickGateDeps,
   type LessonRepository,
   type ReviewAuditLog,
   type RightsGate,
@@ -38,6 +44,10 @@ const UNAVAILABLE = "Lesson generation is unavailable right now. Try again later
 const UNKNOWN_CATEGORY = "Unknown category.";
 const NO_COVERAGE = "No lesson coverage for this category yet.";
 const HELD = "A reviewer needs to check this lesson before we can show it. Try again later.";
+const HELD_AFTER_ANSWER =
+  "The short answer above is checked, but the full lesson needs a reviewer before we can show it.";
+const LESSON_LATER =
+  "The short answer above is checked, but the full lesson is not ready. Try again later.";
 
 // Policy versions come from E8; one stable value keeps reuse matching exact until then.
 export const LESSON_POLICY_VERSION = "1";
@@ -85,6 +95,21 @@ function slug(label: string, taken: Set<string>): string {
   for (let suffix = 2; taken.has(candidate); suffix += 1) candidate = `${base}-${suffix}`;
   taken.add(candidate);
   return candidate;
+}
+
+// A short answer that fails generation or its gate is skipped; the lesson's own one follows.
+async function earlyAnswer(
+  provider: LlmProvider,
+  input: QuickAnswerInput & Omit<QuickGateDeps, "provider">,
+): Promise<QuickAnswerDraft | undefined> {
+  try {
+    const answer = await generateQuickAnswer(input, { provider });
+    const gate = await gateQuickAnswer(answer, { ...input, provider });
+    return gate.passed ? answer : undefined;
+  } catch (error) {
+    if (error instanceof LlmError) return undefined;
+    throw error;
+  }
 }
 
 // A held lesson is not served; the failure path then offers a fallback or a retry.
@@ -148,31 +173,63 @@ export class LessonService {
     const intentSignature = buildIntentSignature(intent);
     let lesson: Lesson;
     let kind: QuickAnswer["kind"];
+    let answered = false;
     if (hit) {
       lesson = hit.lesson;
       kind = "cached";
     } else {
       let held = false;
       const record = (audit: PublishAudit) => this.reviewAudit.record(audit);
+      const lessonId = newId();
+      const resolver = createCitationResolver(this.evidence);
+      // The full draft starts now and runs while the short answer is written and checked.
+      const pendingDraft = generateDraft(
+        {
+          lessonId,
+          intentSignature,
+          question: request.question,
+          taxonomyId: request.taxonomyId,
+          locale: request.locale,
+          audience: [request.audience],
+          readingLevel: request.readingLevel,
+          safetyClass,
+          concepts,
+          claims: usable,
+          evidenceSnapshotId: newId(),
+          policyVersion: LESSON_POLICY_VERSION,
+        },
+        { provider },
+      );
+      // Awaited inside the attempt below; this only stops an early exit raising it unhandled.
+      pendingDraft.catch(() => undefined);
+      const early = await earlyAnswer(provider, {
+        question: request.question,
+        audience: [request.audience],
+        readingLevel: request.readingLevel,
+        locale: request.locale,
+        claims: usable,
+        resolver,
+        safetyClass,
+      });
+      if (early) {
+        answered = true;
+        yield {
+          type: "quick-answer",
+          data: QuickAnswer.parse({
+            kind: "fresh",
+            lessonId,
+            version: 1,
+            shortAnswer: early.text,
+            claimIds: early.claimIds,
+            reviewStatus: "auto-validated",
+          }),
+        };
+      }
       const outcome = await runWithFallback(
         this.lessons,
         async () => {
-          const draft = await generateDraft(
-            {
-              intentSignature,
-              question: request.question,
-              taxonomyId: request.taxonomyId,
-              locale: request.locale,
-              audience: [request.audience],
-              readingLevel: request.readingLevel,
-              safetyClass,
-              concepts,
-              claims: usable,
-              evidenceSnapshotId: newId(),
-              policyVersion: LESSON_POLICY_VERSION,
-            },
-            { provider },
-          );
+          const generated = await pendingDraft;
+          const draft = early ? await withShortAnswer(generated, early) : generated;
           const { lesson: checked, report } = await runLessonChecks(
             draft,
             [
@@ -181,7 +238,7 @@ export class LessonService {
               misconceptionCheck,
               readingLevelCheck,
               createEvidenceCheck({
-                resolver: createCitationResolver(this.evidence),
+                resolver,
                 sources: (ids) => this.evidence.sources.getMany(ids),
               }),
               createEntailmentCheck(provider),
@@ -207,6 +264,13 @@ export class LessonService {
           policyVersion: LESSON_POLICY_VERSION,
         },
       );
+      // A different cached lesson must not follow a fresh answer, so the stream ends instead.
+      if (answered && outcome.kind !== "fresh") {
+        throw new UserFacingException(
+          held ? HELD_AFTER_ANSWER : LESSON_LATER,
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
       if (outcome.kind === "retry") {
         throw new UserFacingException(held ? HELD : outcome.reason, HttpStatus.SERVICE_UNAVAILABLE);
       }
@@ -216,22 +280,25 @@ export class LessonService {
 
     const validated = Lesson.parse(lesson);
     const short = validated.sections.find((section) => section.module === "short-answer");
-    yield {
-      type: "quick-answer",
-      data: QuickAnswer.parse({
-        kind,
-        lessonId: validated.lessonId,
-        version: validated.version,
-        title: validated.title,
-        summary: validated.summary,
-        shortAnswer: short?.text ?? validated.summary,
-        reviewStatus: validated.reviewStatus,
-        note:
-          kind === "fallback"
-            ? "Fresh generation failed; showing a related cached lesson."
-            : undefined,
-      }),
-    };
+    if (!answered) {
+      yield {
+        type: "quick-answer",
+        data: QuickAnswer.parse({
+          kind,
+          lessonId: validated.lessonId,
+          version: validated.version,
+          title: validated.title,
+          summary: validated.summary,
+          shortAnswer: short?.text ?? validated.summary,
+          claimIds: short?.claimIds ?? [],
+          reviewStatus: validated.reviewStatus,
+          note:
+            kind === "fallback"
+              ? "Fresh generation failed; showing a related cached lesson."
+              : undefined,
+        }),
+      };
+    }
     yield { type: "lesson", data: validated };
     yield {
       type: "visuals",
