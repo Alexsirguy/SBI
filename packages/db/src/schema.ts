@@ -54,6 +54,35 @@ export const claims = mysqlTable("claims", {
   document: jsonDocument("document").notNull(),
 });
 
+// Edges copied out of the claim document so dependents and citing claims are indexed lookups.
+export const claimDependencies = mysqlTable(
+  "claim_dependencies",
+  {
+    claimId: uuid("claim_id")
+      .notNull()
+      .references(() => claims.claimId, { onDelete: "cascade" }),
+    dependsOn: uuid("depends_on").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.claimId, table.dependsOn] }),
+    index("claim_dependencies_depends_on_idx").on(table.dependsOn),
+  ],
+);
+
+export const claimSources = mysqlTable(
+  "claim_sources",
+  {
+    claimId: uuid("claim_id")
+      .notNull()
+      .references(() => claims.claimId, { onDelete: "cascade" }),
+    sourceId: uuid("source_id").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.claimId, table.sourceId] }),
+    index("claim_sources_source_idx").on(table.sourceId),
+  ],
+);
+
 export const visualAssets = mysqlTable("visual_assets", {
   assetId: uuid("asset_id").primaryKey(),
   kind: varchar("kind", { length: 32 }).notNull(),

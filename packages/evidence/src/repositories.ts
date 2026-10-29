@@ -19,6 +19,10 @@ export interface ClaimRepository {
   get(claimId: string): Promise<Claim | undefined>;
   getMany(claimIds: string[]): Promise<Claim[]>;
   delete(claimId: string): Promise<boolean>;
+  /** Claims that list this one in `dependsOn`. */
+  findDependents(claimId: string): Promise<Claim[]>;
+  /** Claims that cite this source, so a changed source can invalidate them. */
+  findBySource(sourceId: string): Promise<Claim[]>;
 }
 
 /** One key per source: the DOI when there is one, since the same paper has many URLs. */

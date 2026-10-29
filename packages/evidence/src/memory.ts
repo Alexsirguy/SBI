@@ -52,6 +52,16 @@ export function createMemoryEvidenceRepositories(): MemoryEvidenceRepositories {
       async delete(claimId) {
         return claims.delete(claimId);
       },
+      async findDependents(claimId) {
+        return [...claims.values()]
+          .filter((claim) => claim.dependsOn.includes(claimId))
+          .map((claim) => structuredClone(claim));
+      },
+      async findBySource(sourceId) {
+        return [...claims.values()]
+          .filter((claim) => claim.sourceIds.includes(sourceId))
+          .map((claim) => structuredClone(claim));
+      },
     },
   };
 }

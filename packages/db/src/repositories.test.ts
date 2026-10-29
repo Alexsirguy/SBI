@@ -34,6 +34,8 @@ const TABLES = [
   "media_objects",
   "deletion_audit_log",
   "catalog_gaps",
+  "claim_dependencies",
+  "claim_sources",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -139,6 +141,22 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       const unlicensed: Partial<EvidenceSource> = { ...page, rightsStatus: undefined };
       await expect(repos.evidenceSources.save(unlicensed as EvidenceSource)).rejects.toThrow();
       expect(await repos.evidenceSources.get(page.sourceId)).toBeUndefined();
+    });
+
+    it("finds dependents and citing claims through the edge tables", async () => {
+      const base = fixture(Claim, "claim", "supported");
+      const dependent = fixture(Claim, "claim", "qualified-with-dependency");
+      await repos.claims.save(base);
+      await repos.claims.save(dependent);
+
+      expect(await repos.claims.findDependents(base.claimId)).toEqual([dependent]);
+      const cited = await repos.claims.findBySource(base.sourceIds[1] ?? "");
+      expect(cited).toEqual([base]);
+
+      await repos.claims.save({ ...dependent, dependsOn: [] });
+      expect(await repos.claims.findDependents(base.claimId)).toEqual([]);
+      await repos.claims.delete(base.claimId);
+      expect(await repos.claims.findBySource(base.sourceIds[0] ?? "")).toHaveLength(1);
     });
 
     it("deletes a claim", async () => {

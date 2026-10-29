@@ -36,6 +36,13 @@
       "when": 1793284408726,
       "tag": "0004_evidence_source_locator",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1793285066739,
+      "tag": "0005_claim_edges",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,26 @@
+export {
+  buildClaims,
+  type BuildOptions,
+  type BuiltClaims,
+  type ClaimDraft,
+  type RemovedClaim,
+} from "./claims/builder";
+export {
+  ClaimGraphError,
+  collectDependents,
+  createClaimGraph,
+  orderByDependencies,
+  type ClaimGraph,
+} from "./claims/graph";
+export {
+  createLlmSupportJudge,
+  SUPPORT_PROMPT_VERSION,
+  SupportVerdict,
+  type SupportJudge,
+  type SupportQuestion,
+} from "./claims/judge";
+export { saveClaimGraph, type EvidenceRepositories } from "./claims/persist";
+export { claimTerms, matchTerms, type TermMatch, type TermProfile } from "./claims/terms";
 export { createMemoryEvidenceRepositories, type MemoryEvidenceRepositories } from "./memory";
 export {
   sourceLocatorKey,

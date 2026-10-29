@@ -269,6 +269,12 @@ importers:
       '@sbi/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@sbi/llm':
+        specifier: workspace:*
+        version: link:../llm
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@sbi/config':
         specifier: workspace:*
