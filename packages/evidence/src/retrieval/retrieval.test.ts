@@ -13,7 +13,7 @@ import {
 } from "./retriever";
 import { rightsFromLicense } from "./rights";
 import { abstractPassages, htmlParagraphs, htmlTablePassages, jatsPassages } from "./text";
-import { createUsGovConnector, usGovDomain } from "./us-gov";
+import { createInstitutionConnector, institutionFor } from "./institutions";
 import { discoverReferences, refFromLink } from "./wikipedia";
 
 const fixture = (name: string) => readFileSync(join(import.meta.dirname, "fixtures", name), "utf8");
@@ -180,18 +180,20 @@ describe("Europe PMC connector", () => {
 
 describe("US government connector", () => {
   it("accepts only https pages on allowlisted federal science domains", () => {
-    expect(usGovDomain(USGS)).toBe("usgs.gov");
-    expect(usGovDomain("https://science.nasa.gov/sun")).toBe("nasa.gov");
-    expect(usGovDomain("https://home.nps.gov/romo/learn/nature/fall.htm")).toBe("nps.gov");
-    expect(usGovDomain("https://www.energy.gov/energysaver/heating")).toBe("energy.gov");
-    expect(usGovDomain("http://www.usgs.gov/page")).toBeUndefined();
-    expect(usGovDomain("https://usgs.gov.example.com/page")).toBeUndefined();
-    expect(usGovDomain("https://pubmed.ncbi.nlm.nih.gov/10066724")).toBeUndefined();
-    expect(usGovDomain("https://www.whitehouse.gov/")).toBeUndefined();
+    expect(institutionFor(USGS)?.domain).toBe("usgs.gov");
+    expect(institutionFor("https://science.nasa.gov/sun")?.domain).toBe("nasa.gov");
+    expect(institutionFor("https://home.nps.gov/romo/learn/nature/fall.htm")?.domain).toBe(
+      "nps.gov",
+    );
+    expect(institutionFor("https://www.energy.gov/energysaver/heating")?.domain).toBe("energy.gov");
+    expect(institutionFor("http://www.usgs.gov/page")).toBeUndefined();
+    expect(institutionFor("https://usgs.gov.example.com/page")).toBeUndefined();
+    expect(institutionFor("https://pubmed.ncbi.nlm.nih.gov/10066724")).toBeUndefined();
+    expect(institutionFor("https://www.whitehouse.gov/")).toBeUndefined();
   });
 
   it("keeps body paragraphs and drops site chrome and scripts", async () => {
-    const connector = createUsGovConnector(http(fakeFetch(ROUTES)));
+    const connector = createInstitutionConnector(http(fakeFetch(ROUTES)));
     const source = await connector.fetch({ url: USGS });
 
     expect(source.title).toBe("Water Density");
@@ -214,7 +216,7 @@ describe("US government connector", () => {
       Object.defineProperty(response, "url", { value: "https://example.com/landing" });
       return response;
     });
-    const connector = createUsGovConnector(http(fetchImpl));
+    const connector = createInstitutionConnector(http(fetchImpl));
     await expect(connector.fetch({ url: USGS })).rejects.toThrow(/outside the allowlist/);
   });
 });
@@ -286,7 +288,7 @@ describe("retriever", () => {
 
 describe("toEvidenceSource", () => {
   it("stores the chosen passages with the fetch record", async () => {
-    const fetched = await createUsGovConnector(http(fakeFetch(ROUTES))).fetch({ url: USGS });
+    const fetched = await createInstitutionConnector(http(fakeFetch(ROUTES))).fetch({ url: USGS });
     const source = toEvidenceSource(fetched, { passages: fetched.passages.slice(0, 1) });
 
     expect(EvidenceSource.parse(source)).toEqual(source);
@@ -295,7 +297,7 @@ describe("toEvidenceSource", () => {
       lastCheckedAt: "2026-10-29T09:00:00.000Z",
       evidenceQuality: "high",
       excerpts: [{ excerptId: "x1", location: "paragraph 1" }],
-      retrieval: { connector: "us-gov", access: "full-text" },
+      retrieval: { connector: "institution", access: "full-text" },
     });
   });
 });

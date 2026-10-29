@@ -99,10 +99,22 @@ export type {
   SourceRef,
 } from "./retrieval/types";
 export {
-  createUsGovConnector,
+  createInstitutionConnector,
+  GRANTS,
+  institutionFor,
+  INSTITUTIONS,
   US_GOV_LICENSE,
-  US_GOV_PUBLISHERS,
-  usGovDomain,
-} from "./retrieval/us-gov";
+  type Institution,
+  type ReuseGrant,
+} from "./retrieval/institutions";
 export { discoverReferences, refFromLink } from "./retrieval/wikipedia";
 export { EvidenceSnapshot, loadSnapshot, snapshotRepositories } from "./snapshot";
+export {
+  createOpenTextbookConnector,
+  libreTextsLicence,
+  OPENSTAX_RELICENSED_AT,
+  TEXTBOOK_HOSTS,
+  textbookHostFor,
+  wikisourceLicence,
+  type TextbookConnectorOptions,
+} from "./retrieval/open-textbooks";

@@ -5,7 +5,7 @@ import type { SupportJudge } from "../claims/judge";
 import { saveClaimGraph } from "../claims/persist";
 import { createMemoryEvidenceRepositories } from "../memory";
 import type { FetchedSource } from "../retrieval/types";
-import { US_GOV_LICENSE } from "../retrieval/us-gov";
+import { US_GOV_LICENSE } from "../retrieval/institutions";
 import { creditLine, excerptDisplay, licenseInfo, QUOTE_LIMIT_CHARS } from "./display";
 import { createCitationResolver } from "./resolver";
 
