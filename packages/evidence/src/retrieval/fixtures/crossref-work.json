@@ -1,0 +1,53 @@
+{
+  "status": "ok",
+  "message": {
+    "DOI": "10.1371/journal.pone.0000217",
+    "URL": "https://doi.org/10.1371/journal.pone.0000217",
+    "title": ["Quantifying Organismal Complexity using a Population Genetic Approach"],
+    "publisher": "Public Library of Science (PLoS)",
+    "type": "journal-article",
+    "license": [
+      {
+        "start": {
+          "date-parts": [[2007, 2, 14]],
+          "date-time": "2007-02-14T00:00:00Z",
+          "timestamp": 1171411200000
+        },
+        "content-version": "unspecified",
+        "delay-in-days": 0,
+        "URL": "http://creativecommons.org/licenses/by/4.0/"
+      }
+    ],
+    "issued": {
+      "date-parts": [[2007, 2, 14]]
+    },
+    "author": [
+      {
+        "given": "Olivier",
+        "family": "Tenaillon",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Olin K.",
+        "family": "Silander",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "container-title": ["PLoS ONE"],
+    "abstract": "<jats:p>Various definitions of biological complexity have been proposed: the number of genes, cell types, or metabolic processes within an organism.</jats:p>"
+  }
+}

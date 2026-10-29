@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Confidence, Id, IsoDate, IsoDateTime, Uuid } from "./common";
+import { Confidence, Id, IsoDate, IsoDateTime, Sha256, Uuid } from "./common";
 
 export const SourceType = z.enum([
   "textbook",
@@ -19,6 +19,18 @@ export const RightsStatus = z.enum([
   "restricted",
   "unknown",
 ]);
+
+export const SourceAccess = z.enum(["full-text", "abstract", "metadata-only"]);
+
+/** How and when a connector fetched the source, so rights and freshness can be audited later. */
+export const SourceRetrieval = z.object({
+  connector: Id,
+  fetchedAt: IsoDateTime,
+  access: SourceAccess,
+  // The licence as the publisher states it; rightsStatus is our reading of it.
+  license: z.string().min(1).max(300).optional(),
+  contentSha256: Sha256,
+});
 
 export const Excerpt = z.object({
   excerptId: Id,
@@ -47,6 +59,7 @@ export const EvidenceSource = z
     evidenceQuality: z.enum(["high", "moderate", "low"]),
     rightsStatus: RightsStatus,
     lastCheckedAt: IsoDateTime,
+    retrieval: SourceRetrieval.optional(),
   })
   .refine((source) => source.url !== undefined || source.doi !== undefined, {
     message: "A source needs a url or a doi",
@@ -77,5 +90,9 @@ export const Claim = z
   });
 
 export type EvidenceSource = z.infer<typeof EvidenceSource>;
+export type SourceAccess = z.infer<typeof SourceAccess>;
+export type SourceRetrieval = z.infer<typeof SourceRetrieval>;
+export type RightsStatus = z.infer<typeof RightsStatus>;
+export type SourceType = z.infer<typeof SourceType>;
 export type Claim = z.infer<typeof Claim>;
 export type ClaimStatus = z.infer<typeof ClaimStatus>;

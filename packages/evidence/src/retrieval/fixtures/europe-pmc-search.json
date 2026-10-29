@@ -1,0 +1,34 @@
+{
+  "hitCount": 1,
+  "resultList": {
+    "result": [
+      {
+        "id": "17299597",
+        "source": "MED",
+        "pmid": "17299597",
+        "pmcid": "PMC1790863",
+        "doi": "10.1371/journal.pone.0000217",
+        "title": "Quantifying organismal complexity using a population genetic approach.",
+        "authorString": "Tenaillon O, Silander OK, Uzan JP, Chao L.",
+        "pubYear": "2007",
+        "firstPublicationDate": "2007-02-14",
+        "isOpenAccess": "Y",
+        "license": "cc by",
+        "abstractText": "<h4>Background</h4>Various definitions of biological complexity have been proposed: the number of genes, cell types, or metabolic processes within an organism. As knowledge of biological systems has increased, it has become apparent that these metrics are often incongruent.<h4>Methodology</h4>Here we propose an alternative complexity metric based on the number of genetically uncorrelated phenotypic traits contributing to an organism's fitness. This metric, phenotypic complexity, is more objective than previous suggestions, as complexity is measured from a fundamental biological perspective, that of natural selection. We utilize a model linking the equilibrium fitness (drift load) of a population to phenotypic complexity. We then use results from viral evolution experiments to compare the phenotypic complexities of two viruses, the bacteriophage X174 and vesicular stomatitis virus, and to illustrate the consistency of our approach and its applicability.<h4>Conclusions/significance</h4>Because Darwinian evolution through natural selection is the fundamental element unifying all biological organisms, we propose that our metric of complexity is potentially a more relevant metric than others, based on the count of artificially defined set of objects.",
+        "pubTypeList": {
+          "pubType": [
+            "Research Support, Non-U.S. Gov't",
+            "research-article",
+            "Journal Article",
+            "Research Support, N.I.H., Extramural"
+          ]
+        },
+        "journalInfo": {
+          "journal": {
+            "title": "PloS one"
+          }
+        }
+      }
+    ]
+  }
+}
