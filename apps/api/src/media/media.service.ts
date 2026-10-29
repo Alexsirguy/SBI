@@ -96,7 +96,6 @@ export class MediaService {
         stagingKey,
         storage: this.storage,
       });
-      // TODO(#34): once recognition succeeds, call registry.expireSooner with recognisedExpiry.
       return { contentType: confirmed.contentType, key: confirmed.key };
     } catch (error) {
       if (error instanceof UploadRejectedError) {

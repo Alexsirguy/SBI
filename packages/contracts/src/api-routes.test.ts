@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { API_ROUTES } from "./api-routes";
 import { contractOpenApi } from "./json-schema";
-import { TaxonomySearchRequest } from "./taxonomy-api";
+import { ObservationRequest, TaxonomySearchRequest } from "./taxonomy-api";
 
 interface Operation {
   requestBody?: unknown;
@@ -28,5 +28,14 @@ describe("API_ROUTES", () => {
   it("trims search queries and rejects ones too short to match", () => {
     expect(TaxonomySearchRequest.parse({ q: "  bike " })).toEqual({ q: "bike" });
     expect(TaxonomySearchRequest.safeParse({ q: " b " }).success).toBe(false);
+  });
+
+  it("needs at least one observation", () => {
+    expect(ObservationRequest.safeParse({}).success).toBe(false);
+    expect(ObservationRequest.safeParse({ shape: "  " }).success).toBe(false);
+    expect(ObservationRequest.parse({ shape: " round ", use: "" })).toEqual({
+      shape: "round",
+      use: "",
+    });
   });
 });

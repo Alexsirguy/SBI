@@ -31,6 +31,15 @@ export {
   type RankedRecognition,
   type RankingConfig,
 } from "./ranking";
+export {
+  buildRecognitionResult,
+  parseRecognitionRetention,
+  sha256Hex,
+  withSelection,
+  type BuildRecognitionResultInput,
+  type RecognitionRetention,
+  type Selection,
+} from "./result";
 export type { RecognitionResultRepository } from "./recognition-result-repository";
 export {
   createVisionLlmRecogniser,
