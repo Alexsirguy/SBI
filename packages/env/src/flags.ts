@@ -3,6 +3,8 @@ import { EnvError } from "./env-error";
 export const FEATURE_DEFAULTS = {
   visualLab: false,
   tutor: false,
+  // On by product decision (ADR 0006); `!photoRecognition` stops photos reaching any vendor.
+  photoRecognition: true,
 };
 
 export type FeatureFlags = Readonly<Record<keyof typeof FEATURE_DEFAULTS, boolean>>;

@@ -56,6 +56,12 @@ importers:
       '@sbi/media':
         specifier: workspace:*
         version: link:../../packages/media
+      '@sbi/recognition':
+        specifier: workspace:*
+        version: link:../../packages/recognition
+      '@sbi/taxonomy':
+        specifier: workspace:*
+        version: link:../../packages/taxonomy
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -115,6 +121,9 @@ importers:
       '@sbi/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@sbi/taxonomy':
+        specifier: workspace:*
+        version: link:../../packages/taxonomy
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
@@ -213,6 +222,9 @@ importers:
       '@sbi/rights':
         specifier: workspace:*
         version: link:../rights
+      '@sbi/taxonomy':
+        specifier: workspace:*
+        version: link:../taxonomy
       '@sbi/tutor':
         specifier: workspace:*
         version: link:../tutor
@@ -321,6 +333,9 @@ importers:
       '@sbi/config':
         specifier: workspace:*
         version: link:../config
+      '@sbi/taxonomy':
+        specifier: workspace:*
+        version: link:../taxonomy
 
   packages/rights:
     dependencies:
@@ -339,6 +354,13 @@ importers:
         version: link:../config
 
   packages/taxonomy:
+    dependencies:
+      '@sbi/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@sbi/config':
         specifier: workspace:*

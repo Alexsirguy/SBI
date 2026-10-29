@@ -33,6 +33,7 @@ const TABLES = [
   "tutor_turns",
   "media_objects",
   "deletion_audit_log",
+  "catalog_gaps",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -134,6 +135,30 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.recognitionResults.listBySession(result.sessionId)).toEqual([result]);
     });
 
+    it("reads and updates a result by id", async () => {
+      await repos.recognitionResults.save(result);
+      const corrected = {
+        ...result,
+        selectedTaxonomyId: "household.kitchen.coffee-pot",
+        userCorrection: {
+          kind: "selected-alternative" as const,
+          taxonomyId: "household.kitchen.coffee-pot",
+        },
+      };
+
+      expect(await repos.recognitionResults.update(corrected)).toBe(true);
+      expect(await repos.recognitionResults.get(result.resultId)).toEqual(corrected);
+      expect(await repos.recognitionResults.get("0192f1a0-0000-7000-9000-0000000000ff")).toBe(
+        undefined,
+      );
+      expect(
+        await repos.recognitionResults.update({
+          ...result,
+          resultId: "0192f1a0-0000-7000-9000-0000000000ff",
+        }),
+      ).toBe(false);
+    });
+
     it("deletes only results past their deadline", async () => {
       await repos.recognitionResults.save(result);
       expect(await repos.recognitionResults.deleteExpired(new Date("2026-10-28T09:59:59Z"))).toBe(
@@ -143,6 +168,33 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         1,
       );
       expect(await repos.recognitionResults.listBySession(result.sessionId)).toEqual([]);
+    });
+  });
+
+  describe("catalog gaps", () => {
+    it("counts repeat terms per source and lists the most common first", async () => {
+      const first = new Date("2026-10-28T10:00:00.000Z");
+      const later = new Date("2026-10-28T11:00:00.000Z");
+      await repos.catalogGaps.record("penny farthing", "observation", first);
+      await repos.catalogGaps.record("penny farthing", "observation", later);
+      await repos.catalogGaps.record("lava lamp", "recognition-label", first);
+
+      expect(await repos.catalogGaps.top(5)).toEqual([
+        {
+          count: 2,
+          firstSeen: first,
+          lastSeen: later,
+          source: "observation",
+          term: "penny farthing",
+        },
+        {
+          count: 1,
+          firstSeen: first,
+          lastSeen: first,
+          source: "recognition-label",
+          term: "lava lamp",
+        },
+      ]);
     });
   });
 
