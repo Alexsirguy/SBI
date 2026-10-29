@@ -5,7 +5,7 @@ import { licenseInfo } from "../citations/display";
 import { describe, expect, it, vi } from "vitest";
 import { createCrossrefConnector, fullDate } from "./crossref";
 import { createEuropePmcConnector } from "./europe-pmc";
-import { getText, SourceFetchError } from "./http";
+import { getText, SourceFetchError, USER_AGENT, userAgentWith } from "./http";
 import {
   createDefaultRetriever,
   createRetriever,
@@ -422,5 +422,24 @@ describe("getText", () => {
     await expect(
       getText("https://api.example/x", { fetchImpl, maxBytes: 10 }),
     ).rejects.toBeInstanceOf(SourceFetchError);
+  });
+});
+
+describe("User-Agent", () => {
+  it("names a contact by default and lets EVIDENCE_CONTACT override it", () => {
+    expect(USER_AGENT).toBe("SBI-evidence/0.1 (alex@moonsatech.com)");
+    expect(userAgentWith("https://example.org/contact")).toBe(
+      "SBI-evidence/0.1 (https://example.org/contact)",
+    );
+    expect(userAgentWith("")).toBe(USER_AGENT);
+  });
+
+  it("sends it on every request", async () => {
+    const fetchImpl = vi.fn(
+      async (_url: string | URL | Request, _init?: RequestInit) => new Response("ok"),
+    );
+    await getText("https://api.example/x", { fetchImpl });
+    const headers = fetchImpl.mock.calls[0]?.[1]?.headers as Record<string, string>;
+    expect(headers["User-Agent"]).toBe(USER_AGENT);
   });
 });
