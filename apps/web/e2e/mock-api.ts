@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { createTaxonomy, SEED_TAXONOMY } from "@sbi/taxonomy";
+import { createTaxonomy, SEED_TAXONOMY, searchObservations } from "@sbi/taxonomy";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/+$/, "");
 const STORAGE_PUT = "https://storage.test/fake-put";
@@ -67,4 +67,16 @@ export async function mockTaxonomy(page: Page) {
     const query = new URL(route.request().url()).searchParams.get("q") ?? "";
     return route.fulfill({ headers: CORS, json: { results: taxonomy.search(query) } });
   });
+}
+
+/** Answers observations from the real taxonomy and returns the bodies the page sent. */
+export async function mockObservations(page: Page) {
+  const taxonomy = createTaxonomy(SEED_TAXONOMY);
+  const sent: Record<string, string>[] = [];
+  await mockApi(page, "/observations", (body) => {
+    const notes = body as Record<string, string>;
+    sent.push(notes);
+    return { json: { results: searchObservations(taxonomy, Object.values(notes)) } };
+  });
+  return sent;
 }

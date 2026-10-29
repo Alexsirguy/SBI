@@ -15,3 +15,9 @@ export function useRecordSelection() {
     mutationFn: (request: ApiRequest<"recordSelection">) => api("recordSelection", request),
   });
 }
+
+export function useNoticeObject() {
+  return useMutation({
+    mutationFn: (request: ApiRequest<"noticeObject">) => api("noticeObject", request),
+  });
+}

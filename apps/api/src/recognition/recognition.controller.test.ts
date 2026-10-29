@@ -1,7 +1,13 @@
 import { RecognisedPhoto, RecognitionResult } from "@sbi/contracts";
 import type { FallbackOutcome, FallbackRecogniser, RecognitionImage } from "@sbi/recognition";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fakeMedia, fakeRecognition, startTestApp, type TestApp } from "../testing/test-app";
+import {
+  fakeGaps,
+  fakeMedia,
+  fakeRecognition,
+  startTestApp,
+  type TestApp,
+} from "../testing/test-app";
 
 const KEY = "photos/0192f1a0-0000-7000-8000-000000000001.png";
 const SESSION = "0192f1a0-0000-7000-8000-0000000000aa";
@@ -74,6 +80,27 @@ describe("recognition routes", () => {
     expect(stored).toMatchObject({ provider: "meta-spark", imageSha256: expect.any(String) });
     expect(JSON.stringify(stored)).not.toContain(Buffer.from(PNG).toString("base64"));
     expect(media.expiredSooner.has(KEY)).toBe(true);
+  });
+
+  it("records labels the taxonomy does not know as catalog gaps", async () => {
+    const gaps = fakeGaps();
+    test = await startTestApp(
+      storedPhoto(),
+      fakeRecognition(
+        answering({
+          status: "ambiguous",
+          candidates: [
+            { label: "lava lamp", certainty: "possible", calibratedConfidence: 0.6, reasons: [] },
+            { label: "bicycle", certainty: "possible", calibratedConfidence: 0.5, reasons: [] },
+          ],
+        }),
+      ),
+      gaps,
+    );
+
+    await test.post("/recognitions", { key: KEY });
+
+    expect(gaps.recorded).toEqual([{ source: "recognition-label", term: "lava lamp" }]);
   });
 
   it("issues a session id when none is sent", async () => {

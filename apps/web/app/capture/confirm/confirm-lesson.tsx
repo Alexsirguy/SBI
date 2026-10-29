@@ -10,6 +10,7 @@ import {
 } from "@sbi/contracts";
 import type { z } from "zod";
 import { useTaxonomySearch } from "../use-taxonomy-search";
+import { NoticeForm } from "./notice-form";
 
 export type Suggestion = TaxonomyMatch &
   Partial<Pick<LearnerCandidate, "certainty" | "reasons" | "parts">>;
@@ -69,18 +70,22 @@ export function ConfirmLesson({
   const [message, setMessage] = useState(initialMessage);
   const [selected, setSelected] = useState<TaxonomyMatch | null>(null);
   const [started, setStarted] = useState(false);
+  const [noticing, setNoticing] = useState(false);
+  const [noticed, setNoticed] = useState<TaxonomyMatch[] | null>(null);
   const search = useTaxonomySearch(submitted);
-  const suggesting = submitted === null;
-  const candidates: Suggestion[] = suggesting ? initialCandidates : (search.data?.results ?? []);
+  const suggesting = submitted === null && noticed === null;
+  const candidates: Suggestion[] =
+    noticed ?? (submitted === null ? initialCandidates : (search.data?.results ?? []));
   const [primary] = candidates;
   const parts = suggesting ? (primary?.parts ?? []) : [];
-  const searchMessage = suggesting
-    ? null
-    : search.isPending
-      ? "Searching…"
-      : search.isError
-        ? search.error.message
-        : matchesMessage(candidates.length, submitted);
+  const searchMessage =
+    submitted === null
+      ? null
+      : search.isPending
+        ? "Searching…"
+        : search.isError
+          ? search.error.message
+          : matchesMessage(candidates.length, submitted);
   const assumed = selected && fallback?.taxonomyId === selected.taxonomyId ? fallback : null;
 
   useEffect(() => {
@@ -92,7 +97,7 @@ export function ConfirmLesson({
       returnFocus.current = false;
       (listRef.current?.querySelector("button") ?? inputRef.current)?.focus();
     }
-  }, [selected, started]);
+  }, [selected, started, noticed]);
 
   function runSearch() {
     const trimmed = query.trim();
@@ -105,6 +110,25 @@ export function ConfirmLesson({
       onCorrection?.(trimmed);
     }
     setSubmitted(trimmed);
+  }
+
+  function showNoticed(results: TaxonomyMatch[], guess: string) {
+    setNoticing(false);
+    setNoticed(results);
+    setSubmitted(null);
+    if (results.length > 0) {
+      setMessage(
+        `${results.length} ${results.length === 1 ? "object matches" : "objects match"} what you noticed.`,
+      );
+      returnFocus.current = true;
+    } else {
+      // Nothing fits yet: hand the learner back to search, starting from their own guess.
+      setQuery(guess);
+      setMessage(
+        "Thanks. We have noted this so we can add it. Try other words, or pick the closest object.",
+      );
+      inputRef.current?.focus();
+    }
   }
 
   function chooseAgain() {
@@ -214,6 +238,7 @@ export function ConfirmLesson({
             onChange={(event) => {
               setQuery(event.target.value);
               setSubmitted(null);
+              setNoticed(null);
               setMessage("");
             }}
             onKeyDown={(event) => {
@@ -226,6 +251,13 @@ export function ConfirmLesson({
           <button type="button" onClick={runSearch}>
             Search objects
           </button>
+          {noticing ? (
+            <NoticeForm onResults={showNoticed} />
+          ) : candidates.length === 0 && !search.isFetching ? (
+            <button type="button" onClick={() => setNoticing(true)}>
+              Can&apos;t find it? Tell us what you notice
+            </button>
+          ) : null}
         </>
       )}
       <p role="status">{searchMessage ?? message}</p>
