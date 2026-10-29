@@ -22,6 +22,7 @@ import {
 import type { Taxonomy } from "@sbi/taxonomy";
 import { UserFacingException } from "../common/user-facing.exception";
 import type { ApiEnv } from "../env";
+import { ObservationsService } from "../taxonomy/observations.service";
 import {
   API_ENV,
   MEDIA_REGISTRY,
@@ -65,6 +66,7 @@ export class RecognitionService {
     @Inject(RETENTION_POLICY) private readonly retention: RetentionPolicy,
     @Inject(UPLOAD_POLICY) private readonly uploadPolicy: UploadPolicy,
     @Inject(API_ENV) private readonly env: Pick<ApiEnv, "ranking" | "recognitionRetention">,
+    @Inject(ObservationsService) private readonly observations: ObservationsService,
   ) {}
 
   async recognise({
@@ -97,6 +99,9 @@ export class RecognitionService {
       sessionId,
     });
     await this.results.save(result);
+    for (const label of ranked.unmapped) {
+      await this.observations.recordGap(label, "recognition-label");
+    }
     // Recognition was the photo's only purpose, so the original need not wait out its full TTL.
     await this.registry.expireSooner(key, recognisedExpiry(now, this.retention));
     return {
