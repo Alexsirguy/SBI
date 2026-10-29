@@ -31,7 +31,11 @@ export function canonicalJson(value: unknown): string {
 
 /** SHA-256 of a lesson's learner-facing content; equal content gives equal hashes. */
 export async function lessonContentHash(lesson: Lesson): Promise<string> {
-  const content = Object.fromEntries(CONTENT_FIELDS.map((field) => [field, lesson[field]]));
+  const content: Record<string, unknown> = Object.fromEntries(
+    CONTENT_FIELDS.map((field) => [field, lesson[field]]),
+  );
+  // Re-verifying a claim changes its audit trail, not what the learner reads.
+  content.claims = lesson.claims.map(({ verification: _verification, ...claim }) => claim);
   const digest = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(canonicalJson(content)),
