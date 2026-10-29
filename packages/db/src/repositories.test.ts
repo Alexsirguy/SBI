@@ -38,6 +38,7 @@ const TABLES = [
   "claim_dependencies",
   "claim_sources",
   "lesson_claims",
+  "lesson_review_events",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -126,9 +127,42 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.lessons.findByIntent("no-match")).toEqual([]);
     });
 
+    it("finds lessons by taxonomy category", async () => {
+      await repos.lessons.save(lesson);
+      expect(await repos.lessons.findByTaxonomy(lesson.taxonomyId)).toHaveLength(1);
+      expect(await repos.lessons.findByTaxonomy("no-match")).toEqual([]);
+    });
+
     it("rejects invalid lessons before writing", async () => {
       await expect(repos.lessons.save({ ...lesson, sections: [] })).rejects.toThrow();
       expect(await repos.lessons.get(lesson.lessonId, lesson.version)).toBeUndefined();
+    });
+  });
+
+  describe("review audit", () => {
+    it("stores each move in order, per version, with reviewer and time", async () => {
+      const lessonId = newId();
+      const move = (version: number, from: string, to: string, by: string, at: string) =>
+        repos.reviewAudit.record({
+          lessonId,
+          version,
+          from: from as never,
+          to: to as never,
+          by,
+          at,
+          ...(to === "needs-review" ? { reason: "x".repeat(3000) } : {}),
+        });
+      await move(1, "generated", "needs-review", "system", "2026-10-29T10:00:00.000Z");
+      await move(1, "needs-review", "approved", "editor-7", "2026-10-29T11:00:00.000Z");
+      await move(2, "generated", "auto-validated", "system", "2026-10-30T09:00:00.000Z");
+
+      const first = await repos.reviewAudit.history(lessonId, 1);
+      expect(first.map(({ to, by, at }) => ({ to, by, at }))).toEqual([
+        { to: "needs-review", by: "system", at: "2026-10-29T10:00:00.000Z" },
+        { to: "approved", by: "editor-7", at: "2026-10-29T11:00:00.000Z" },
+      ]);
+      expect(first[0]?.reason).toHaveLength(2000);
+      expect(await repos.reviewAudit.history(lessonId)).toHaveLength(3);
     });
   });
 

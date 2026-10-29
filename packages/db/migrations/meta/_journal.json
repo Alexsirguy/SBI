@@ -64,6 +64,20 @@
       "when": 1793290664726,
       "tag": "0008_unique_source_locator",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1793304288005,
+      "tag": "0009_lessons_taxonomy_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1793305751606,
+      "tag": "0010_lesson_review_events",
+      "breakpoints": true
     }
   ]
 }
