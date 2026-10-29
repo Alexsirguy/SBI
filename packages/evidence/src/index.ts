@@ -78,6 +78,7 @@ export {
 export { createCrossrefConnector, fullDate, type ConnectorOptions } from "./retrieval/crossref";
 export { createEuropePmcConnector } from "./retrieval/europe-pmc";
 export {
+  DEFAULT_EVIDENCE_CONTACT,
   getText,
   SourceFetchError,
   USER_AGENT,
