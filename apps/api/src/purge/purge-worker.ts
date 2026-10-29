@@ -1,9 +1,13 @@
 import type { LockResult } from "@sbi/db";
 import type { DeletionPassResult } from "@sbi/media";
 
+export interface PurgePassResult extends DeletionPassResult {
+  recognitionPurged: number;
+}
+
 export interface PurgeWorkerOptions {
   intervalMs: number;
-  runPass: () => Promise<LockResult<DeletionPassResult>>;
+  runPass: () => Promise<LockResult<PurgePassResult>>;
   log: {
     info(details: object, message: string): void;
     error(details: object, message: string): void;
@@ -26,9 +30,9 @@ export function startPurgeWorker(options: PurgeWorkerOptions): PurgeWorker {
     try {
       const result = await options.runPass();
       if (result.acquired) {
-        const { auditPurged, deleted, stagingDeleted } = result.value;
+        const { auditPurged, deleted, recognitionPurged, stagingDeleted } = result.value;
         options.log.info(
-          { auditPurged, deleted: deleted.length, stagingDeleted },
+          { auditPurged, deleted: deleted.length, recognitionPurged, stagingDeleted },
           "media purge pass",
         );
       }

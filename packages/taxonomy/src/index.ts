@@ -14,3 +14,19 @@ export {
   type ResolvedLabel,
   type Taxonomy,
 } from "./taxonomy";
+export {
+  routeVisual,
+  UnroutableError,
+  VISUAL_ROUTES,
+  type Interaction,
+  type VisualFamily,
+  type VisualRoute,
+} from "./visual-routing";
+export {
+  MAX_GAP_TERM_LENGTH,
+  normaliseGapTerm,
+  searchObservations,
+  type CatalogGap,
+  type CatalogGapRepository,
+  type GapSource,
+} from "./gaps";

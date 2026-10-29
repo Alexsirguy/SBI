@@ -56,6 +56,9 @@ importers:
       '@sbi/media':
         specifier: workspace:*
         version: link:../../packages/media
+      '@sbi/recognition':
+        specifier: workspace:*
+        version: link:../../packages/recognition
       '@sbi/taxonomy':
         specifier: workspace:*
         version: link:../../packages/taxonomy
@@ -219,6 +222,9 @@ importers:
       '@sbi/rights':
         specifier: workspace:*
         version: link:../rights
+      '@sbi/taxonomy':
+        specifier: workspace:*
+        version: link:../taxonomy
       '@sbi/tutor':
         specifier: workspace:*
         version: link:../tutor
@@ -327,6 +333,9 @@ importers:
       '@sbi/config':
         specifier: workspace:*
         version: link:../config
+      '@sbi/taxonomy':
+        specifier: workspace:*
+        version: link:../taxonomy
 
   packages/rights:
     dependencies:

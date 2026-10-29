@@ -21,6 +21,7 @@
     "@sbi/orchestrator": "workspace:*",
     "@sbi/recognition": "workspace:*",
     "@sbi/rights": "workspace:*",
+    "@sbi/taxonomy": "workspace:*",
     "@sbi/tutor": "workspace:*",
     "drizzle-orm": "0.45.4",
     "mysql2": "3.24.6"
