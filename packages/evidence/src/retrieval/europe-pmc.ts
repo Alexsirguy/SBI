@@ -34,6 +34,7 @@ export function createEuropePmcConnector(options: ConnectorOptions = {}): Source
         throw new SourceFetchError(`Europe PMC has no record for ${query}`, 404);
       }
       const passages = record.abstractText ? abstractPassages(record.abstractText) : [];
+      const pubTypes = record.pubTypeList?.pubType ?? [];
       return {
         title: stripTags(record.title ?? query).replace(/\.$/, ""),
         publisher: record.journalInfo?.journal?.title,
@@ -43,6 +44,10 @@ export function createEuropePmcConnector(options: ConnectorOptions = {}): Source
           : `https://europepmc.org/article/MED/${record.pmid}`,
         doi: record.doi,
         sourceType: "peer-reviewed",
+        // Reviews pool many studies; anything else in a journal is read as one study.
+        studyDesign: pubTypes.some((type) => /review|meta-analysis/i.test(type))
+          ? "review"
+          : "primary-study",
         publishedOn: record.firstPublicationDate,
         passages,
         rightsStatus: passages.length > 0 ? rightsFromLicense(record.license) : "link-only",

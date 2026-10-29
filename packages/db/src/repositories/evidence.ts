@@ -6,7 +6,7 @@ import {
   sourceLocatorKey,
   type SourceLocator,
 } from "@sbi/evidence";
-import { desc, eq, inArray } from "drizzle-orm";
+import { asc, desc, eq, inArray, lt } from "drizzle-orm";
 import type { Database } from "../client";
 import { claimDependencies, claims, claimSources, evidenceSources } from "../schema";
 import { parseDocuments } from "./document";
@@ -54,6 +54,13 @@ export function createEvidenceSourceRepository(db: Database): EvidenceSourceRepo
         .delete(evidenceSources)
         .where(eq(evidenceSources.sourceId, sourceId));
       return result.affectedRows > 0;
+    },
+    async listDueForCheck(checkedBefore, limit) {
+      const rows = await select()
+        .where(lt(evidenceSources.lastCheckedAt, checkedBefore))
+        .orderBy(asc(evidenceSources.lastCheckedAt))
+        .limit(limit);
+      return parseDocuments(EvidenceSource, rows);
     },
   };
 }
