@@ -425,8 +425,20 @@ describe("createLlmSupportJudge", () => {
     expect(await judge.judge(question)).toEqual({
       verdict: "supports",
       reason: "States it directly.",
+      quote,
     });
     expect(judge.version).toBe("fake-model+evidence-judge-p0.2");
+  });
+
+  it("returns the excerpt's own words when the model tidies the spacing", async () => {
+    const judge = createLlmSupportJudge(
+      llm({
+        verdict: "supports",
+        quote: "At  sea level,\npure water boils at 100 °C.",
+        reason: "ok",
+      }),
+    );
+    expect((await judge.judge(question)).quote).toBe(quote);
   });
 
   it("fences the excerpt with a per-call tag the excerpt cannot close", async () => {
