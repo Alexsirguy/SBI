@@ -100,6 +100,16 @@ describe("createContradictionCheck", () => {
 });
 
 describe("prompt versions", () => {
+  it("sends each judge's prompt version with its request, for the logs", async () => {
+    const seen: CompletionRequest[] = [];
+    const agree = JSON.stringify({ contradiction: false, reason: "", claimIds: [] });
+    await createContradictionCheck(scriptedProvider([agree], seen)).run(makeLesson());
+    expect(seen[0]?.prompt).toEqual({
+      id: "orchestrator-contradiction",
+      version: CONTRADICTION_PROMPT_VERSION,
+    });
+  });
+
   it("pins judge prompt versions", () => {
     expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.2");
     expect(CONTRADICTION_PROMPT_VERSION).toBe("orchestrator-contradiction-p0.1");
