@@ -163,3 +163,14 @@ export {
   type CandidatePassage,
   type ExtractOptions,
 } from "./extract/extract";
+export {
+  createMemoryEvidencePackRepository,
+  EvidencePack,
+  evidencePackKey,
+  gatherEvidence,
+  type EvidencePackRepository,
+  type GatherDeps,
+  type GatheredEvidence,
+  type GatherEvent,
+  type GatherOptions,
+} from "./pack/pack";
