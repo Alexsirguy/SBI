@@ -159,6 +159,34 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       ).toBe(false);
     });
 
+    it("finds the newest unexpired result for a photo", async () => {
+      const newer = {
+        ...result,
+        resultId: "0192f1a0-0000-7000-9000-0000000000aa",
+        createdAt: "2026-10-27T11:00:00Z",
+      };
+      await repos.recognitionResults.save(result);
+      await repos.recognitionResults.save(newer);
+
+      const found = await repos.recognitionResults.findByImage(
+        result.imageSha256,
+        new Date("2026-10-28T09:00:00Z"),
+      );
+      expect(found?.resultId).toBe(newer.resultId);
+      expect(
+        await repos.recognitionResults.findByImage(
+          result.imageSha256,
+          new Date("2026-10-28T10:00:00Z"),
+        ),
+      ).toBeUndefined();
+      expect(
+        await repos.recognitionResults.findByImage(
+          "c".repeat(64),
+          new Date("2026-10-27T00:00:00Z"),
+        ),
+      ).toBeUndefined();
+    });
+
     it("deletes only results past their deadline", async () => {
       await repos.recognitionResults.save(result);
       expect(await repos.recognitionResults.deleteExpired(new Date("2026-10-28T09:59:59Z"))).toBe(
