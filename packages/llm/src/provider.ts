@@ -11,11 +11,18 @@ export interface JsonSchemaFormat {
   schema: Record<string, unknown>;
 }
 
+/** Version pointer for the prompt that produced a completion. */
+export interface PromptRef {
+  id: string;
+  version: string;
+}
+
 export interface CompletionRequest {
   messages: ChatMessage[];
   jsonSchema?: JsonSchemaFormat;
   maxTokens?: number;
   signal?: AbortSignal;
+  prompt?: PromptRef;
 }
 
 export interface Usage {
@@ -29,7 +36,21 @@ export interface Completion {
   model: string;
   usage: Usage;
   latencyMs: number;
+  prompt?: PromptRef;
 }
+
+/** Telemetry for one provider call; carries versions and usage, never message text. */
+export interface LlmEvent {
+  providerId: string;
+  model: string;
+  prompt?: PromptRef;
+  usage?: Usage;
+  latencyMs: number;
+  outcome: "ok" | "error";
+  error?: string;
+}
+
+export type LlmEventSink = (event: LlmEvent) => void;
 
 /** Provider-neutral text and vision completion. */
 export interface LlmProvider {

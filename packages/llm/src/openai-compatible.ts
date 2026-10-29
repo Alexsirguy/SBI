@@ -3,6 +3,7 @@ import {
   type ChatMessage,
   type Completion,
   type CompletionRequest,
+  type LlmEventSink,
   type LlmProvider,
 } from "./provider";
 
@@ -19,6 +20,10 @@ export interface OpenAiCompatibleOptions {
   extraBody?: Record<string, unknown>;
   retries?: number;
   fetchImpl?: typeof fetch;
+  // Per-attempt deadline; each retry gets a fresh budget. Use the request signal for a total deadline.
+  timeoutMs?: number;
+  /** Called once per complete() call with versions and usage, never message text. */
+  onEvent?: LlmEventSink;
 }
 
 interface ChatCompletionResponse {
@@ -62,9 +67,30 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
   const fetchImpl = options.fetchImpl ?? fetch;
   const retries = options.retries ?? 3;
 
-  async function post(body: unknown, signal?: AbortSignal): Promise<ChatCompletionResponse> {
-    for (let attempt = 0; ; attempt += 1) {
-      signal?.throwIfAborted();
+  // Fetches and reads the body under one deadline; aborting earlier would cancel the body read.
+  async function attempt(body: unknown, caller: AbortSignal | undefined) {
+    caller?.throwIfAborted();
+    const controller = new AbortController();
+    const onCallerAbort = () => controller.abort(caller?.reason);
+    caller?.addEventListener("abort", onCallerAbort, { once: true });
+    const timer =
+      options.timeoutMs === undefined
+        ? undefined
+        : setTimeout(
+            () =>
+              controller.abort(
+                new LlmError(`${options.id}: timed out after ${options.timeoutMs}ms`),
+              ),
+            options.timeoutMs,
+          );
+    // A fetch that ignores its signal must still lose the race.
+    const stopped = new Promise<never>((_, reject) => {
+      controller.signal.addEventListener("abort", () => reject(controller.signal.reason), {
+        once: true,
+      });
+    });
+    stopped.catch(() => undefined);
+    const exchange = (async () => {
       const response = await fetchImpl(`${options.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
@@ -72,18 +98,46 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
           Authorization: `Bearer ${options.apiKey}`,
         },
         body: JSON.stringify(body),
-        signal,
+        signal: controller.signal,
       });
-      signal?.throwIfAborted();
-      if (response.ok) return (await response.json()) as ChatCompletionResponse;
-      const retryable = response.status === 429 || response.status >= 500;
-      if (!retryable || attempt >= retries) {
-        throw new LlmError(
-          `${options.id}: HTTP ${response.status} ${await response.text()}`,
-          response.status,
-        );
+      return { ok: response.ok, status: response.status, text: await response.text() };
+    })();
+    exchange.catch(() => undefined);
+    try {
+      return await Promise.race([exchange, stopped]);
+    } catch (error) {
+      if (caller?.aborted || error instanceof LlmError) throw error;
+      // Network failures are provider failures, so callers can fall back instead of crashing.
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new LlmError(`${options.id}: request failed (${detail})`);
+    } finally {
+      clearTimeout(timer);
+      caller?.removeEventListener("abort", onCallerAbort);
+    }
+  }
+
+  async function post(body: unknown, signal?: AbortSignal): Promise<ChatCompletionResponse> {
+    for (let tries = 0; ; tries += 1) {
+      let result: { ok: boolean; status: number; text: string };
+      try {
+        result = await attempt(body, signal);
+      } catch (error) {
+        if (signal?.aborted || !(error instanceof LlmError) || tries >= retries) throw error;
+        await sleep(1000 * 2 ** tries, signal);
+        continue;
       }
-      await sleep(1000 * 2 ** attempt, signal);
+      if (result.ok) {
+        try {
+          return JSON.parse(result.text) as ChatCompletionResponse;
+        } catch {
+          throw new LlmError(`${options.id}: response was not JSON`);
+        }
+      }
+      const retryable = result.status === 429 || result.status >= 500;
+      if (!retryable || tries >= retries) {
+        throw new LlmError(`${options.id}: HTTP ${result.status} ${result.text}`, result.status);
+      }
+      await sleep(1000 * 2 ** tries, signal);
     }
   }
 
@@ -108,19 +162,41 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
         ...options.extraBody,
       };
       const started = performance.now();
-      const data = await post(body, request.signal);
-      const text = data.choices?.[0]?.message?.content;
-      if (!text) throw new LlmError(`${options.id}: empty completion`);
-      return {
-        text,
-        model: data.model ?? options.model,
-        latencyMs: Math.round(performance.now() - started),
-        usage: {
-          inputTokens: data.usage?.prompt_tokens ?? 0,
-          cachedInputTokens: data.usage?.prompt_tokens_details?.cached_tokens ?? 0,
-          outputTokens: data.usage?.completion_tokens ?? 0,
-        },
-      };
+      try {
+        const data = await post(body, request.signal);
+        const text = data.choices?.[0]?.message?.content;
+        if (!text) throw new LlmError(`${options.id}: empty completion`);
+        const completion: Completion = {
+          text,
+          model: data.model ?? options.model,
+          latencyMs: Math.round(performance.now() - started),
+          usage: {
+            inputTokens: data.usage?.prompt_tokens ?? 0,
+            cachedInputTokens: data.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+            outputTokens: data.usage?.completion_tokens ?? 0,
+          },
+          prompt: request.prompt,
+        };
+        options.onEvent?.({
+          providerId: options.id,
+          model: completion.model,
+          prompt: request.prompt,
+          usage: completion.usage,
+          latencyMs: completion.latencyMs,
+          outcome: "ok",
+        });
+        return completion;
+      } catch (error) {
+        options.onEvent?.({
+          providerId: options.id,
+          model: options.model,
+          prompt: request.prompt,
+          latencyMs: Math.round(performance.now() - started),
+          outcome: "error",
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
     },
   };
 }
