@@ -58,6 +58,7 @@ export function createUsGovConnector(options: ConnectorOptions = {}): SourceConn
         authors: [],
         url: response.url,
         sourceType: "institution",
+        studyDesign: "not-research",
         passages,
         rightsStatus: "reusable",
         retrieval: {

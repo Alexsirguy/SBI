@@ -17,6 +17,7 @@ import {
   API_ENV,
   CATALOG_GAPS,
   DATABASE,
+  FRESHNESS_PASS,
   MALWARE_SCANNER,
   MEDIA_REGISTRY,
   OBJECT_STORAGE,
@@ -126,6 +127,8 @@ export async function startTestApp(
     .overrideProvider(CATALOG_GAPS)
     .useValue(gaps.repository)
     .overrideProvider(PURGE_PASS)
+    .useValue(async () => ({ acquired: false }))
+    .overrideProvider(FRESHNESS_PASS)
     .useValue(async () => ({ acquired: false }))
     .compile();
   const app = configureApp(

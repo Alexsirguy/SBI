@@ -1,3 +1,56 @@
+export {
+  CitationError,
+  createCitationResolver,
+  type CitationProblem,
+  type CitationResolver,
+  type QuotedRef,
+  type ResolvedClaim,
+  type ResolvedExcerpt,
+} from "./citations/resolver";
+export {
+  buildClaims,
+  type BuildOptions,
+  type BuiltClaims,
+  type ClaimDraft,
+  type RemovedClaim,
+} from "./claims/builder";
+export {
+  ClaimGraphError,
+  collectDependents,
+  createClaimGraph,
+  orderByDependencies,
+  type ClaimGraph,
+} from "./claims/graph";
+export {
+  createLlmSupportJudge,
+  SUPPORT_PROMPT_VERSION,
+  SupportVerdict,
+  type SupportJudge,
+  type SupportQuestion,
+} from "./claims/judge";
+export {
+  checkSource,
+  runFreshnessPass,
+  type CheckOutcome,
+  type FreshnessPassOptions,
+  type FreshnessPassResult,
+  type InvalidationSink,
+} from "./freshness/freshness";
+export {
+  applySourcePolicy,
+  assessClaim,
+  checkSourcePolicy,
+  independentSourceCount,
+  isPrimaryStudy,
+  sameOrigin,
+  SINGLE_SOURCE_NOTE,
+  SINGLE_STUDY_LIMITATION,
+  STUDIES_LIMITATION,
+  type PolicyAssessment,
+  type PolicyIssue,
+} from "./policy/two-source";
+export { saveClaimGraph, type EvidenceRepositories } from "./claims/persist";
+export { claimTerms, matchTerms, type TermMatch, type TermProfile } from "./claims/terms";
 export { createMemoryEvidenceRepositories, type MemoryEvidenceRepositories } from "./memory";
 export {
   sourceLocatorKey,
@@ -16,10 +69,11 @@ export {
   type ExcerptChoice,
   type RetrievalFailure,
   type Retriever,
+  type RetrieveOptions,
   type RetrieverOptions,
 } from "./retrieval/retriever";
 export { rightsFromLicense } from "./retrieval/rights";
-export { contentSha256 } from "./retrieval/text";
+export { comparableText, contentSha256 } from "./retrieval/text";
 export type {
   FetchedSource,
   FetchOptions,
