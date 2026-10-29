@@ -1,5 +1,14 @@
 export { createLessonInvalidator, isReusable, type LessonInvalidator } from "./invalidation";
 export type { LessonRepository, TaxonomyLessonLookup } from "./lesson-repository";
+export { buildIntentSignature, type IntentInput } from "./intent";
+export {
+  createReuseMatcher,
+  type ReuseAudit,
+  type ReuseAuditSink,
+  type ReuseHit,
+  type ReuseMatcher,
+  type ReuseQuery,
+} from "./reuse";
 export {
   createDraftPromptRegistry,
   generateDraft,
