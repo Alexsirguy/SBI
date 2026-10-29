@@ -7,12 +7,7 @@ import {
   type OnApplicationShutdown,
 } from "@nestjs/common";
 import type { DatabaseHandle, LockResult, Repositories } from "@sbi/db";
-import {
-  runDeletionPass,
-  type DeletionPassResult,
-  type ObjectStorage,
-  type RetentionPolicy,
-} from "@sbi/media";
+import { runDeletionPass, type ObjectStorage, type RetentionPolicy } from "@sbi/media";
 import type { ApiEnv } from "../env";
 import { MediaModule } from "../media/media.module";
 import {
@@ -23,9 +18,9 @@ import {
   REPOSITORIES,
   RETENTION_POLICY,
 } from "../tokens";
-import { startPurgeWorker, type PurgeWorker } from "./purge-worker";
+import { startPurgeWorker, type PurgePassResult, type PurgeWorker } from "./purge-worker";
 
-export type PurgePass = () => Promise<LockResult<DeletionPassResult>>;
+export type PurgePass = () => Promise<LockResult<PurgePassResult>>;
 
 @Injectable()
 export class PurgeService implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -72,13 +67,16 @@ export class PurgeService implements OnApplicationBootstrap, OnApplicationShutdo
           retention: RetentionPolicy,
         ): PurgePass =>
         () =>
-          database.withLock("media-purge", () =>
-            runDeletionPass(
+          database.withLock("media-purge", async () => {
+            const now = new Date();
+            const media = await runDeletionPass(
               { audit: repos.deletionAudit, registry: repos.mediaRegistry, storage },
-              new Date(),
+              now,
               retention,
-            ),
-          ),
+            );
+            const recognitionPurged = await repos.recognitionResults.deleteExpired(now);
+            return { ...media, recognitionPurged };
+          }),
     },
   ],
 })
