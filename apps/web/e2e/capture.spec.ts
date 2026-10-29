@@ -21,6 +21,8 @@ test("capture page offers camera and upload entries with limits and privacy cue"
   await expect(privacy).toContainText("deleted within 7 days");
   await expect(privacy).toContainText("Cloudflare R2");
   await expect(privacy).toContainText("Meta");
+  await expect(privacy).toContainText("OpenAI");
+  await expect(privacy).toContainText("neither may train on it");
 
   const camera = page.locator('input[name="camera"]');
   await expect(camera).toHaveAttribute("accept", "image/*");

@@ -22,3 +22,11 @@ export {
   type VisualFamily,
   type VisualRoute,
 } from "./visual-routing";
+export {
+  MAX_GAP_TERM_LENGTH,
+  normaliseGapTerm,
+  searchObservations,
+  type CatalogGap,
+  type CatalogGapRepository,
+  type GapSource,
+} from "./gaps";
