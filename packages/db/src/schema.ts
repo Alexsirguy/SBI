@@ -68,6 +68,7 @@ export const recognitionResults = mysqlTable(
   (table) => [
     index("recognition_session_idx").on(table.sessionId),
     index("recognition_delete_by_idx").on(table.deleteBy),
+    index("recognition_image_idx").on(table.imageSha256),
   ],
 );
 

@@ -33,6 +33,7 @@ export {
 } from "./ranking";
 export {
   buildRecognitionResult,
+  copyRecognitionResult,
   parseRecognitionRetention,
   sha256Hex,
   withSelection,
