@@ -6,6 +6,7 @@ import {
   type Lesson,
 } from "@sbi/contracts";
 import type { EvidenceRepositories } from "../claims/persist";
+import { comparableText as comparable } from "../retrieval/text";
 
 export type CitationProblem =
   | { kind: "unknown-claim"; claimId: string }
@@ -14,7 +15,8 @@ export type CitationProblem =
   | { kind: "unknown-excerpt"; sourceId: string; excerptId: string; claimId?: string }
   | { kind: "source-not-linked"; sourceId: string; claimId: string }
   | { kind: "no-excerpt"; claimId: string }
-  | { kind: "quote-not-in-excerpt"; sourceId: string; excerptId: string };
+  | { kind: "quote-not-in-excerpt"; sourceId: string; excerptId: string }
+  | { kind: "stale-excerpt"; sourceId: string; excerptId: string; claimId?: string };
 
 export class CitationError extends Error {
   constructor(readonly problems: CitationProblem[]) {
@@ -51,14 +53,10 @@ export interface CitationResolver {
   checkLesson(lesson: Pick<Lesson, "claims">): Promise<CitationProblem[]>;
 }
 
-const comparable = (text: string) =>
-  text
-    .normalize("NFKC")
-    .toLowerCase()
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[\u201c\u201d]/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
+// The freshness check found the source gone or no longer saying these words.
+const isStale = (source: EvidenceSource, excerptId: string) =>
+  source.freshness?.status === "gone" ||
+  (source.freshness?.missingExcerptIds.includes(excerptId) ?? false);
 
 /** Resolves citations only through stored ids, so nothing from model memory can pass as a source. */
 export function createCitationResolver(repositories: EvidenceRepositories): CitationResolver {
@@ -99,8 +97,10 @@ export function createCitationResolver(repositories: EvidenceRepositories): Cita
       const source = sources.get(sourceId);
       if (!source) continue;
       const resolved = toResolved(source, excerptId);
-      if (resolved) excerpts.push(resolved);
-      else problems.push({ kind: "unknown-excerpt", sourceId, excerptId, claimId });
+      if (!resolved) problems.push({ kind: "unknown-excerpt", sourceId, excerptId, claimId });
+      else if (isStale(source, excerptId)) {
+        problems.push({ kind: "stale-excerpt", sourceId, excerptId, claimId });
+      } else excerpts.push(resolved);
     }
     // Anything shown as fact must rest on at least one excerpt we hold, word for word.
     if (claim.status !== "unsupported" && excerpts.length === 0) {
@@ -115,6 +115,9 @@ export function createCitationResolver(repositories: EvidenceRepositories): Cita
       if (!source) throw new CitationError([{ kind: "unknown-source", sourceId }]);
       const resolved = toResolved(source, excerptId);
       if (!resolved) throw new CitationError([{ kind: "unknown-excerpt", sourceId, excerptId }]);
+      if (isStale(source, excerptId)) {
+        throw new CitationError([{ kind: "stale-excerpt", sourceId, excerptId }]);
+      }
       if (quote !== undefined && !comparable(resolved.text).includes(comparable(quote))) {
         throw new CitationError([{ kind: "quote-not-in-excerpt", sourceId, excerptId }]);
       }

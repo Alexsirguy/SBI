@@ -1,12 +1,17 @@
 import { join } from "node:path";
 import { describeContract } from "@sbi/testing";
 import { describe, expect, it } from "vitest";
-import { Claim, EvidenceSource } from "./evidence";
+import { Claim, EvidenceInvalidated, EvidenceSource } from "./evidence";
 
 const fixtures = join(import.meta.dirname, "fixtures");
 
 describeContract("EvidenceSource", EvidenceSource, join(fixtures, "evidence-source"));
 describeContract("Claim", Claim, join(fixtures, "claim"));
+describeContract(
+  "EvidenceInvalidated",
+  EvidenceInvalidated,
+  join(fixtures, "evidence-invalidated"),
+);
 
 describe("Claim defaults", () => {
   it("defaults dependsOn to an empty list", () => {

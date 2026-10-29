@@ -18,6 +18,10 @@ const schema = z.object({
   UPLOAD_TOKEN_SECRET: z.string().min(32),
   WEB_ORIGINS: z.string().min(1),
   MEDIA_PURGE_INTERVAL_MINUTES: z.coerce.number().int().positive().default(15),
+  // Sources change slowly; a monthly re-check, a few at a time, stays polite to free public APIs.
+  EVIDENCE_RECHECK_INTERVAL_MINUTES: z.coerce.number().int().positive().default(360),
+  EVIDENCE_MAX_AGE_DAYS: z.coerce.number().int().positive().default(30),
+  EVIDENCE_RECHECK_BATCH: z.coerce.number().int().positive().max(200).default(20),
   FEATURE_FLAGS: z.string().optional(),
 });
 
