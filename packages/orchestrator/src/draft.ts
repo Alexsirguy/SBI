@@ -128,7 +128,15 @@ const FRAGMENT_SCHEMA: Record<string, unknown> = {
       },
     },
   },
-  required: ["title", "summary", "learningObjectives", "sections"],
+  // Strict structured output (Meta, OpenAI) needs every property listed; empty arrays stand in.
+  required: [
+    "title",
+    "summary",
+    "learningObjectives",
+    "assumptions",
+    "misconceptionNotes",
+    "sections",
+  ],
   additionalProperties: false,
 };
 

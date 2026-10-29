@@ -152,6 +152,20 @@ describe("generateDraft", () => {
     expect(String(user?.content)).toMatch(/Optional modules: .*history/);
   });
 
+  it("lists every schema property as required, as strict structured output demands", async () => {
+    const seen: CompletionRequest[] = [];
+    await generateDraft(base, { provider: stubProvider(JSON.stringify(fragment), seen) });
+    const schema = seen[0]?.jsonSchema?.schema as {
+      properties: Record<string, { items?: { properties?: object; required?: string[] } }>;
+      required: string[];
+    };
+    expect([...schema.required].sort()).toEqual(Object.keys(schema.properties).sort());
+    const section = schema.properties.sections?.items;
+    expect([...(section?.required ?? [])].sort()).toEqual(
+      Object.keys(section?.properties ?? {}).sort(),
+    );
+  });
+
   it("honours a pinned prompt version", async () => {
     const lesson = await generateDraft(
       { ...base, promptVersion: "1" },
