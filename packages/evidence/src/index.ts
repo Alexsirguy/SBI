@@ -1,4 +1,13 @@
 export {
+  CitationError,
+  createCitationResolver,
+  type CitationProblem,
+  type CitationResolver,
+  type QuotedRef,
+  type ResolvedClaim,
+  type ResolvedExcerpt,
+} from "./citations/resolver";
+export {
   buildClaims,
   type BuildOptions,
   type BuiltClaims,
