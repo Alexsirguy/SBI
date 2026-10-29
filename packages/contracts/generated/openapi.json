@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.15.0"
+    "version": "0.16.0"
   },
   "paths": {
     "/uploads": {
@@ -1004,7 +1004,7 @@
     "/lessons": {
       "post": {
         "operationId": "requestLesson",
-        "summary": "Generate or reuse a lesson, streaming the quick answer before the full lesson.",
+        "summary": "Generate or reuse a lesson, streaming progress, a checked quick answer, then the full lesson and its visuals.",
         "requestBody": {
           "required": true,
           "content": {

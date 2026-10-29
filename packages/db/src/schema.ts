@@ -37,6 +37,18 @@ export const lessons = mysqlTable(
   ],
 );
 
+// Evidence gathered for one object and question, reused while its claims stay fresh (#210).
+export const evidencePacks = mysqlTable(
+  "evidence_packs",
+  {
+    packKey: char("pack_key", { length: 64 }).primaryKey(),
+    taxonomyId: id("taxonomy_id").notNull(),
+    createdAt: timestamp("created_at").notNull(),
+    document: jsonDocument("document").notNull(),
+  },
+  (table) => [index("evidence_packs_taxonomy_idx").on(table.taxonomyId)],
+);
+
 // Append-only review trail (#55): who moved a lesson version between review states, and when.
 export const lessonReviewEvents = mysqlTable(
   "lesson_review_events",

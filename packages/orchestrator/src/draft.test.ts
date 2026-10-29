@@ -99,19 +99,20 @@ describe("generateDraft", () => {
     expect(lesson.reuse.contentHash).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("rejects fragments citing claims outside the graph", async () => {
+  it("never lets a claim id outside the graph into the lesson", async () => {
     const bad = {
       ...fragment,
       sections: [
         section("what-youre-seeing", [CLAIM_A]),
-        section("short-answer", [UNKNOWN]),
+        section("short-answer", [UNKNOWN, CLAIM_B]),
         section("first-principles", [CLAIM_B]),
       ],
     };
 
-    await expect(
-      generateDraft(base, { provider: stubProvider(JSON.stringify(bad)) }),
-    ).rejects.toThrow(/does not conform.*Unknown claim/s);
+    const lesson = await generateDraft(base, { provider: stubProvider(JSON.stringify(bad)) });
+    const cited = lesson.sections.flatMap((item) => item.claimIds);
+    expect(cited).not.toContain(UNKNOWN);
+    expect(lesson.claims.map((claim) => claim.claimId)).not.toContain(UNKNOWN);
   });
 
   it("rejects malformed model output", async () => {
@@ -163,6 +164,26 @@ describe("generateDraft", () => {
     const section = schema.properties.sections?.items;
     expect([...(section?.required ?? [])].sort()).toEqual(
       Object.keys(section?.properties ?? {}).sort(),
+    );
+  });
+
+  it("keeps only the claims the sections cite, plus what those depend on", async () => {
+    const CLAIM_C = "0192f1a0-0000-7000-8000-0000000000c3";
+    const CLAIM_D = "0192f1a0-0000-7000-8000-0000000000c4";
+    const lesson = await generateDraft(
+      {
+        ...base,
+        claims: [
+          claim(CLAIM_A, "Bimetallic thermostats snap open when hot."),
+          { ...claim(CLAIM_B, "Water boils at 100C at sea level."), dependsOn: [CLAIM_C] },
+          claim(CLAIM_C, "Heat raises the temperature of water."),
+          claim(CLAIM_D, "Gears trade force for distance."),
+        ],
+      },
+      { provider: stubProvider(JSON.stringify(fragment)) },
+    );
+    expect(lesson.claims.map((item) => item.claimId).sort()).toEqual(
+      [CLAIM_A, CLAIM_B, CLAIM_C].sort(),
     );
   });
 

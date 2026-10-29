@@ -111,7 +111,20 @@ describe("prompt versions", () => {
   });
 
   it("pins judge prompt versions", () => {
-    expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.2");
+    expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.3");
     expect(CONTRADICTION_PROMPT_VERSION).toBe("orchestrator-contradiction-p0.1");
+  });
+
+  it("tells the judge which object and module it is checking", async () => {
+    const seen: CompletionRequest[] = [];
+    const supports = JSON.stringify({ verdict: "supports", reason: "ok" });
+    await createEntailmentCheck(scriptedProvider([supports, supports, supports], seen), {
+      objectLabel: "Electric kettle",
+    }).run(makeLesson());
+    const user = String(seen[0]?.messages[1]?.content);
+    expect(user).toMatch(/^Object: Electric kettle\nModule: [a-z-]+/);
+    expect(String(seen[0]?.messages[0]?.content)).toContain(
+      "applying a cited general principle to the object",
+    );
   });
 });

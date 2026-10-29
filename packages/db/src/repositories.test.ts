@@ -39,6 +39,7 @@ const TABLES = [
   "claim_sources",
   "lesson_claims",
   "lesson_review_events",
+  "evidence_packs",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -136,6 +137,34 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
     it("rejects invalid lessons before writing", async () => {
       await expect(repos.lessons.save({ ...lesson, sections: [] })).rejects.toThrow();
       expect(await repos.lessons.get(lesson.lessonId, lesson.version)).toBeUndefined();
+    });
+  });
+
+  describe("evidence packs", () => {
+    it("stores a pack by key and replaces it on regather", async () => {
+      const pack = {
+        packKey: "a".repeat(64),
+        taxonomyId: "object.electric-kettle",
+        planVersion: "muse-spark-1.3+inquiry-plan-p0.1",
+        createdAt: "2026-10-29T09:00:00.000Z",
+        questions: [
+          {
+            key: "q1",
+            discipline: "physics" as const,
+            question: "How does current heat a wire?",
+            claimIds: [newId()],
+            sources: 3,
+            failures: [],
+            completed: true,
+          },
+        ],
+      };
+      await repos.evidencePacks.save(pack);
+      expect(await repos.evidencePacks.get(pack.packKey)).toEqual(pack);
+      const regathered = { ...pack, createdAt: "2026-11-02T09:00:00.000Z" };
+      await repos.evidencePacks.save(regathered);
+      expect((await repos.evidencePacks.get(pack.packKey))?.createdAt).toBe(regathered.createdAt);
+      expect(await repos.evidencePacks.get("b".repeat(64))).toBeUndefined();
     });
   });
 

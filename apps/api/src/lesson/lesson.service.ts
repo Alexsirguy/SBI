@@ -1,13 +1,21 @@
-import { HttpStatus, Inject, Injectable } from "@nestjs/common";
+import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
 import {
   Lesson,
+  LessonProgress,
   LessonVisuals,
   QuickAnswer,
   newId,
   type Claim,
   type LessonRequest,
 } from "@sbi/contracts";
-import { createCitationResolver, type EvidenceRepositories } from "@sbi/evidence";
+import {
+  createCitationResolver,
+  type EvidenceRepositories,
+  type GatheredEvidence,
+  type GatherEvent,
+  type GatherOptions,
+  type InquiryInput,
+} from "@sbi/evidence";
 import { LlmError, type LlmProvider } from "@sbi/llm";
 import {
   buildIntentSignature,
@@ -22,6 +30,8 @@ import {
   generateDraft,
   misconceptionCheck,
   readingLevelCheck,
+  repairable,
+  reviseSections,
   runLessonChecks,
   runWithFallback,
   schemaCheck,
@@ -37,12 +47,24 @@ import {
   type TaxonomyLessonLookup,
 } from "@sbi/orchestrator";
 import { sourcedFacts, type Taxonomy } from "@sbi/taxonomy";
-import { LESSON_EVIDENCE, LESSON_LLM, LESSON_REVIEW_AUDIT, LESSONS, TAXONOMY } from "../tokens";
+import {
+  LESSON_EVIDENCE,
+  LESSON_GATHERER,
+  LESSON_LLM,
+  LESSON_REVIEW_AUDIT,
+  LESSONS,
+  TAXONOMY,
+} from "../tokens";
+import { createEventQueue } from "./event-queue";
 import { UserFacingException } from "../common/user-facing.exception";
 
 const UNAVAILABLE = "Lesson generation is unavailable right now. Try again later.";
 const UNKNOWN_CATEGORY = "Unknown category.";
 const NO_COVERAGE = "No lesson coverage for this category yet.";
+const NO_EVIDENCE =
+  "We could not find trusted sources for this question yet. Try asking it another way.";
+// Enough to teach from first principles without an unbounded draft prompt.
+const MAX_LESSON_CLAIMS = 30;
 const HELD = "A reviewer needs to check this lesson before we can show it. Try again later.";
 const HELD_AFTER_ANSWER =
   "The short answer above is checked, but the full lesson needs a reviewer before we can show it.";
@@ -80,7 +102,14 @@ const VISUAL_RIGHTS: RightsGate = {
       : { cleared: false, reason: "visual rights are not checked yet" },
 };
 
+/** Gathers (or reuses) request-time evidence for a lesson; see gatherEvidence in @sbi/evidence. */
+export type EvidenceGatherer = (
+  input: InquiryInput & { taxonomyId: string },
+  options: GatherOptions,
+) => Promise<GatheredEvidence>;
+
 export type LessonStreamEvent =
+  | { type: "progress"; data: LessonProgress }
   | { type: "quick-answer"; data: QuickAnswer }
   | { type: "lesson"; data: Lesson }
   | { type: "visuals"; data: LessonVisuals };
@@ -112,6 +141,51 @@ async function earlyAnswer(
   }
 }
 
+const isTeachable = (claim: Claim) => claim.status === "supported" || claim.status === "qualified";
+
+// Sourced taxonomy facts first, then gathered claims; disputed or open ones would hold the lesson.
+function lessonClaims(facts: Claim[], gathered: Claim[]): Claim[] {
+  const byId = new Map<string, Claim>();
+  for (const claim of [...facts, ...gathered]) {
+    if (isTeachable(claim) && !byId.has(claim.claimId)) byId.set(claim.claimId, claim);
+  }
+  return [...byId.values()].slice(0, MAX_LESSON_CLAIMS);
+}
+
+function freshAnswer(lessonId: string, answer: QuickAnswerDraft): QuickAnswer {
+  return QuickAnswer.parse({
+    kind: "fresh",
+    lessonId,
+    version: 1,
+    shortAnswer: answer.text,
+    claimIds: answer.claimIds,
+    reviewStatus: "auto-validated",
+  });
+}
+
+function progressOf(event: GatherEvent): LessonProgress {
+  if (event.type === "planned") {
+    return LessonProgress.parse({
+      stage: "researching",
+      message: `Researching ${event.questions.length} questions: ${event.questions
+        .map((question) => question.question)
+        .join(" ")}`.slice(0, 300),
+    });
+  }
+  if (event.type === "reused") {
+    return LessonProgress.parse({
+      stage: "verified",
+      message: "Using evidence checked for an earlier question.",
+      claims: event.claims.length,
+    });
+  }
+  return LessonProgress.parse({
+    stage: "verified",
+    message: `Checked ${event.claims.length} claims from trusted sources.`,
+    claims: event.claims.length,
+  });
+}
+
 // A held lesson is not served; the failure path then offers a fallback or a retry.
 function heldForReview(report: CheckReport, reasons: string[]): CheckReport {
   return {
@@ -123,12 +197,15 @@ function heldForReview(report: CheckReport, reasons: string[]): CheckReport {
 
 @Injectable()
 export class LessonService {
+  private readonly logger = new Logger("LessonService");
+
   constructor(
     @Inject(LESSON_LLM) private readonly provider: LlmProvider | null,
     @Inject(TAXONOMY) private readonly taxonomy: Taxonomy,
     @Inject(LESSONS) private readonly lessons: LessonRepository & TaxonomyLessonLookup,
     @Inject(LESSON_EVIDENCE) private readonly evidence: EvidenceRepositories,
     @Inject(LESSON_REVIEW_AUDIT) private readonly reviewAudit: ReviewAuditLog,
+    @Inject(LESSON_GATHERER) private readonly gather: EvidenceGatherer,
   ) {}
 
   // Events leave as their stage completes, so the answer streams before the heavier payloads.
@@ -141,7 +218,10 @@ export class LessonService {
     const concepts = this.taxonomy
       .concepts(request.taxonomyId)
       .map((label) => ({ conceptId: slug(label, taken), label, prerequisites: [] as string[] }));
-    if (concepts.length === 0) throw new UserFacingException(NO_COVERAGE, HttpStatus.NOT_FOUND);
+    // Entries without taxonomy concepts are still teachable; the plan supplies the principles.
+    if (concepts.length === 0) {
+      concepts.push({ conceptId: slug(entry.label, taken), label: entry.label, prerequisites: [] });
+    }
     const safetyClass = effectiveSafetyClass(request.safetyClass, entry);
     const stored = await this.evidence.claims.getMany(
       entry.facts.flatMap((fact) => (fact.claimId ? [fact.claimId] : [])),
@@ -152,7 +232,6 @@ export class LessonService {
       const claim = fact.claimId ? byId.get(fact.claimId) : undefined;
       if (claim) usable.push(claim);
     }
-    if (usable.length === 0) throw new UserFacingException(NO_COVERAGE, HttpStatus.NOT_FOUND);
 
     const conceptIds = concepts.map((concept) => concept.conceptId);
     const intent = {
@@ -182,7 +261,76 @@ export class LessonService {
       const record = (audit: PublishAudit) => this.reviewAudit.record(audit);
       const lessonId = newId();
       const resolver = createCitationResolver(this.evidence);
-      // The full draft starts now and runs while the short answer is written and checked.
+      const answerInput = {
+        objectLabel: entry.label,
+        question: request.question,
+        audience: [request.audience],
+        readingLevel: request.readingLevel,
+        locale: request.locale,
+        resolver,
+        safetyClass,
+      };
+
+      // Evidence is gathered now; progress and the first checked answer stream as it arrives.
+      const events = createEventQueue<LessonStreamEvent>();
+      let early: QuickAnswerDraft | undefined;
+      let answering: Promise<void> | undefined;
+      const tryEarlyAnswer = (claims: Claim[]) => {
+        const ready = [...usable, ...claims].filter(isTeachable);
+        if (answering || ready.length === 0) return;
+        answering = earlyAnswer(provider, { ...answerInput, claims: ready }).then((answer) => {
+          if (!answer) return;
+          early = answer;
+          events.push({ type: "quick-answer", data: freshAnswer(lessonId, answer) });
+        });
+      };
+      const gathering = this.gather(
+        {
+          taxonomyId: request.taxonomyId,
+          objectLabel: entry.label,
+          question: request.question,
+          concepts: concepts.map((concept) => concept.label),
+          audience: request.audience,
+          readingLevel: request.readingLevel,
+          safetyClass,
+        },
+        {
+          onEvent: (event) => {
+            events.push({ type: "progress", data: progressOf(event) });
+            if (event.type !== "planned") tryEarlyAnswer(event.claims);
+          },
+        },
+      )
+        .catch((error: unknown): GatheredEvidence | undefined => {
+          // Sourced taxonomy facts can still carry a lesson when gathering fails outright.
+          if (error instanceof LlmError && usable.length > 0) return undefined;
+          throw error;
+        })
+        .finally(async () => {
+          await answering;
+          events.close();
+        });
+      for await (const event of events) {
+        if (event.type === "quick-answer") answered = true;
+        yield event;
+      }
+      const gathered = await gathering;
+      const claims = lessonClaims(usable, gathered?.claims ?? []);
+      if (claims.length === 0) {
+        throw new UserFacingException(
+          usable.length === 0 ? NO_EVIDENCE : NO_COVERAGE,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      yield {
+        type: "progress",
+        data: LessonProgress.parse({
+          stage: "drafting",
+          message: `Writing the lesson from ${claims.length} checked claims.`,
+          claims: claims.length,
+        }),
+      };
+
       const pendingDraft = generateDraft(
         {
           lessonId,
@@ -194,7 +342,7 @@ export class LessonService {
           readingLevel: request.readingLevel,
           safetyClass,
           concepts,
-          claims: usable,
+          claims,
           evidenceSnapshotId: newId(),
           policyVersion: LESSON_POLICY_VERSION,
         },
@@ -202,50 +350,50 @@ export class LessonService {
       );
       // Awaited inside the attempt below; this only stops an early exit raising it unhandled.
       pendingDraft.catch(() => undefined);
-      const early = await earlyAnswer(provider, {
-        question: request.question,
-        audience: [request.audience],
-        readingLevel: request.readingLevel,
-        locale: request.locale,
-        claims: usable,
-        resolver,
-        safetyClass,
-      });
-      if (early) {
-        answered = true;
-        yield {
-          type: "quick-answer",
-          data: QuickAnswer.parse({
-            kind: "fresh",
-            lessonId,
-            version: 1,
-            shortAnswer: early.text,
-            claimIds: early.claimIds,
-            reviewStatus: "auto-validated",
-          }),
-        };
+      // No claims arrived early enough to answer during gathering; answer alongside the draft.
+      if (!early) {
+        early = await earlyAnswer(provider, { ...answerInput, claims });
+        if (early) {
+          answered = true;
+          yield { type: "quick-answer", data: freshAnswer(lessonId, early) };
+        }
       }
-      const outcome = await runWithFallback(
+      let checkingStarted: (() => void) | undefined;
+      const checking = new Promise<void>((resolve) => {
+        checkingStarted = resolve;
+      });
+      const outcomePending = runWithFallback(
         this.lessons,
         async () => {
           const generated = await pendingDraft;
-          const draft = early ? await withShortAnswer(generated, early) : generated;
-          const { lesson: checked, report } = await runLessonChecks(
-            draft,
-            [
-              schemaCheck,
-              citationCheck,
-              misconceptionCheck,
-              readingLevelCheck,
-              createEvidenceCheck({
-                resolver,
-                sources: (ids) => this.evidence.sources.getMany(ids),
-              }),
-              createEntailmentCheck(provider),
-              createContradictionCheck(provider),
-            ],
-            { onAudit: record },
-          );
+          const draft = early ? await withShortAnswer(generated, early, claims) : generated;
+          checkingStarted?.();
+          const checks = [
+            schemaCheck,
+            citationCheck,
+            misconceptionCheck,
+            readingLevelCheck,
+            createEvidenceCheck({
+              resolver,
+              sources: (ids) => this.evidence.sources.getMany(ids),
+            }),
+            createEntailmentCheck(provider, { objectLabel: entry.label }),
+            createContradictionCheck(provider),
+          ];
+          let { lesson: checked, report } = await runLessonChecks(draft, checks, {
+            onAudit: record,
+          });
+          // Drafts often add true but uncited detail; one rewrite of just those sections, then
+          // every check again, so a repair can never slip past the gate.
+          if (!report.passed && repairable(report)) {
+            const revised = await reviseSections(checked, report, {
+              provider,
+              objectLabel: entry.label,
+            });
+            ({ lesson: checked, report } = await runLessonChecks(revised, checks, {
+              onAudit: record,
+            }));
+          }
           // High-risk, low-confidence, failed or rights-blocked lessons wait for a reviewer.
           const routed = await createPublisher({ rights: VISUAL_RIGHTS, onAudit: record }).route(
             checked,
@@ -264,6 +412,23 @@ export class LessonService {
           policyVersion: LESSON_POLICY_VERSION,
         },
       );
+      const firstDone = await Promise.race([checking.then(() => "checking"), outcomePending]);
+      if (firstDone === "checking") {
+        yield {
+          type: "progress",
+          data: LessonProgress.parse({
+            stage: "checking",
+            message: "Checking every section against its sources.",
+          }),
+        };
+      }
+      const outcome = await outcomePending;
+      if (outcome.kind !== "fresh") {
+        // Reasons name checks, fields and ids, never the learner's words.
+        this.logger.warn(
+          `Fresh lesson not served (${outcome.kind}): ${outcome.reason}${outcome.detail ? ` | ${outcome.detail.slice(0, 1500)}` : ""}`,
+        );
+      }
       // A different cached lesson must not follow a fresh answer, so the stream ends instead.
       if (answered && outcome.kind !== "fresh") {
         throw new UserFacingException(

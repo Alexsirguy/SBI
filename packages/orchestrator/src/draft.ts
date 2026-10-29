@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { withoutInlineIds } from "./quick-answer";
 import {
   Lesson,
   LessonModule,
@@ -153,6 +154,21 @@ function renderClaims(claims: Claim[]): string {
   return claims.map((claim) => `- ${claim.claimId} [${claim.status}]: ${claim.text}`).join("\n");
 }
 
+// A lesson carries only the claims its sections cite, plus what those build on;
+// a large evidence pack would otherwise fail the "every claim is cited" check.
+function citedClaims(fragment: DraftFragment, claims: Claim[]): Claim[] {
+  const byId = new Map(claims.map((claim) => [claim.claimId, claim]));
+  const keep = new Set<string>();
+  const visit = (id: string) => {
+    if (keep.has(id) || !byId.has(id)) return;
+    keep.add(id);
+    for (const dependency of byId.get(id)?.dependsOn ?? []) visit(dependency);
+  };
+  for (const section of fragment.sections) for (const id of section.claimIds) visit(id);
+  // Nothing cited means nothing to show, and Lesson.parse rejects the draft as it should.
+  return claims.filter((claim) => keep.has(claim.claimId));
+}
+
 // IDs are assigned, not generated, so one fewer model output can break validation.
 async function assemble(
   providerId: string,
@@ -161,6 +177,7 @@ async function assemble(
   modelVersion: string,
   promptVersion: string,
 ): Promise<Lesson> {
+  const known = new Set(input.claims.map((claim) => claim.claimId));
   const draft = {
     lessonId: input.lessonId ?? newId(),
     version: 1,
@@ -177,8 +194,12 @@ async function assemble(
     sections: fragment.sections.map((section, index) => ({
       sectionId: `${section.module}-${index + 1}`,
       ...section,
+      text: withoutInlineIds(section.text),
+      // Models sometimes mangle an id; an unknown citation is dropped, never trusted, and a
+      // section left uncited then fails the citation check.
+      claimIds: section.claimIds.filter((id) => known.has(id)),
     })),
-    claims: input.claims,
+    claims: citedClaims(fragment, input.claims),
     visuals: [],
     safetyClass: input.safetyClass,
     reviewStatus: "generated",

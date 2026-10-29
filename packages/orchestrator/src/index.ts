@@ -24,6 +24,7 @@ export {
   schemaCheck,
   type CheckReport,
   type CheckResult,
+  type SectionFinding,
   type LessonCheck,
 } from "./checks";
 export { readingEase, readingLevelCheck } from "./reading";
@@ -67,3 +68,4 @@ export {
   type QuickAnswerInput,
   type QuickGateDeps,
 } from "./quick-answer";
+export { repairable, REVISE_PROMPT_VERSION, reviseSections } from "./repair";
