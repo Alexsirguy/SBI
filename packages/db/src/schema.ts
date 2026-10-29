@@ -35,12 +35,18 @@ export const lessons = mysqlTable(
   ],
 );
 
-export const evidenceSources = mysqlTable("evidence_sources", {
-  sourceId: uuid("source_id").primaryKey(),
-  rightsStatus: varchar("rights_status", { length: 32 }).notNull(),
-  lastCheckedAt: timestamp("last_checked_at").notNull(),
-  document: jsonDocument("document").notNull(),
-});
+export const evidenceSources = mysqlTable(
+  "evidence_sources",
+  {
+    sourceId: uuid("source_id").primaryKey(),
+    // Hash of the DOI or URL key; URLs can outgrow an index, the hash cannot.
+    locatorSha256: char("locator_sha256", { length: 64 }).notNull(),
+    rightsStatus: varchar("rights_status", { length: 32 }).notNull(),
+    lastCheckedAt: timestamp("last_checked_at").notNull(),
+    document: jsonDocument("document").notNull(),
+  },
+  (table) => [index("evidence_sources_locator_idx").on(table.locatorSha256)],
+);
 
 export const claims = mysqlTable("claims", {
   claimId: uuid("claim_id").primaryKey(),
