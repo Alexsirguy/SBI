@@ -7,12 +7,15 @@ export interface HttpOptions {
   maxBytes?: number;
 }
 
-export const USER_AGENT = "SBI-evidence/0.1 (research prototype)";
+// Wikimedia's User-Agent policy asks automated clients to name a contact (owner's choice).
+export const DEFAULT_EVIDENCE_CONTACT = "alex@moonsatech.com";
 
-/** Wikimedia and others ask automated clients to name a contact; never a user's own details. */
-export function userAgentWith(contact: string | undefined): string {
-  return contact ? `SBI-evidence/0.1 (${contact})` : USER_AGENT;
+/** The crawler's User-Agent; EVIDENCE_CONTACT overrides the default contact. */
+export function userAgentWith(contact: string | undefined = DEFAULT_EVIDENCE_CONTACT): string {
+  return `SBI-evidence/0.1 (${contact || DEFAULT_EVIDENCE_CONTACT})`;
 }
+
+export const USER_AGENT = userAgentWith(undefined);
 
 export class SourceFetchError extends Error {
   constructor(
