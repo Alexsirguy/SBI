@@ -1,14 +1,16 @@
 import type { ConnectorOptions } from "./crossref";
-import { getJson, SourceFetchError } from "./http";
+import { getJson, getText, SourceFetchError } from "./http";
 import { rightsFromLicense } from "./rights";
-import { abstractPassages, contentSha256, stripTags } from "./text";
+import { abstractPassages, contentSha256, jatsPassages, stripTags } from "./text";
 import type { SourceConnector } from "./types";
 
 interface EuropePmcSearch {
   resultList: {
     result: {
       pmid?: string;
+      pmcid?: string;
       doi?: string;
+      isOpenAccess?: string;
       title?: string;
       authorString?: string;
       firstPublicationDate?: string;
@@ -18,6 +20,26 @@ interface EuropePmcSearch {
       journalInfo?: { journal?: { title?: string } };
     }[];
   };
+}
+
+type SearchRecord = EuropePmcSearch["resultList"]["result"][number];
+
+// Only Creative Commons articles; full text is optional, so a failed fetch keeps the abstract.
+async function openFullText(
+  record: SearchRecord,
+  options: ConnectorOptions,
+  signal: AbortSignal | undefined,
+) {
+  if (record.isOpenAccess !== "Y" || !record.pmcid || !/^cc\b/i.test(record.license ?? "")) {
+    return [];
+  }
+  try {
+    const url = `https://www.ebi.ac.uk/europepmc/webservices/rest/${record.pmcid}/fullTextXML`;
+    return jatsPassages((await getText(url, options, signal)).text);
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return [];
+  }
 }
 
 export function createEuropePmcConnector(options: ConnectorOptions = {}): SourceConnector {
@@ -33,7 +55,9 @@ export function createEuropePmcConnector(options: ConnectorOptions = {}): Source
       if (!record) {
         throw new SourceFetchError(`Europe PMC has no record for ${query}`, 404);
       }
-      const passages = record.abstractText ? abstractPassages(record.abstractText) : [];
+      const abstract = record.abstractText ? abstractPassages(record.abstractText) : [];
+      const fullText = await openFullText(record, options, signal);
+      const passages = [...abstract, ...fullText];
       const pubTypes = record.pubTypeList?.pubType ?? [];
       return {
         title: stripTags(record.title ?? query).replace(/\.$/, ""),
@@ -54,7 +78,8 @@ export function createEuropePmcConnector(options: ConnectorOptions = {}): Source
         retrieval: {
           connector: "europe-pmc",
           fetchedAt: now().toISOString(),
-          access: passages.length > 0 ? "abstract" : "metadata-only",
+          access:
+            fullText.length > 0 ? "full-text" : passages.length > 0 ? "abstract" : "metadata-only",
           license: record.license,
           contentSha256: contentSha256(passages),
         },

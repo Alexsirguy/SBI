@@ -1,31 +1,8 @@
 {
-  "topic": "object.electric-kettle",
-  "wikipedia": ["Kettle", "Boiling"],
+  "wikipedia": ["Kettle"],
   "refs": [
     {
       "url": "https://www.usgs.gov/special-topics/water-science-school/science/evaporation-and-water-cycle"
-    }
-  ],
-  "drafts": [
-    {
-      "key": "object.electric-kettle:fact-1",
-      "text": "An electric current through the heating element turns electrical energy into heat.",
-      "scope": "electric kettles"
-    },
-    {
-      "key": "object.electric-kettle:fact-2",
-      "text": "The bubbles in boiling water are water vapour, not air.",
-      "scope": "boiling water"
-    },
-    {
-      "key": "object.electric-kettle:fact-3",
-      "text": "Some kettles let you choose a temperature below boiling.",
-      "scope": "some electric kettles"
-    },
-    {
-      "key": "object.electric-kettle:fact-4",
-      "text": "Some kettles hide the element under a flat metal base.",
-      "scope": "some electric kettles"
     }
   ]
 }

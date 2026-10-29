@@ -6,6 +6,7 @@ import {
   type Lesson,
 } from "@sbi/contracts";
 import type { EvidenceRepositories } from "../claims/persist";
+import { type ExcerptDisplay, excerptDisplay, type LicenseInfo, licenseInfo } from "./display";
 import { comparableText as comparable } from "../retrieval/text";
 
 export type CitationProblem =
@@ -31,9 +32,15 @@ export interface ResolvedExcerpt {
   title: string;
   url?: string;
   doi?: string;
+  publisher?: string;
+  authors: string[];
+  accessedOn: string;
+  license?: LicenseInfo;
   location: string;
   text: string;
   rightsStatus: EvidenceSource["rightsStatus"];
+  /** What a page may show for this excerpt; render this, not `text`, to respect the licence. */
+  display: ExcerptDisplay;
 }
 
 export interface ResolvedClaim {
@@ -69,9 +76,14 @@ export function createCitationResolver(repositories: EvidenceRepositories): Cita
           title: source.title,
           url: source.url,
           doi: source.doi,
+          publisher: source.publisher,
+          authors: source.authors,
+          accessedOn: source.accessedOn,
+          license: licenseInfo(source.retrieval?.license),
           location: excerpt.location,
           text: excerpt.text,
           rightsStatus: source.rightsStatus,
+          display: excerptDisplay(source, excerpt.text),
         }
       : undefined;
   };

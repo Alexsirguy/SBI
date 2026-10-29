@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",
+    "@sbi/evidence": "workspace:*",
     "@sbi/llm": "workspace:*",
     "@sbi/recognition": "workspace:*",
     "zod": "4.6.7"

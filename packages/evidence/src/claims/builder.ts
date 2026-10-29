@@ -1,6 +1,7 @@
 import { Claim, type ClaimStatus, type EvidenceSource, newId } from "@sbi/contracts";
 import { toEvidenceSource } from "../retrieval/retriever";
 import type { FetchedSource, Passage } from "../retrieval/types";
+import { QUOTE_LIMIT_CHARS } from "../citations/display";
 import { applySourcePolicy, independentSourceCount } from "../policy/two-source";
 import { orderByDependencies } from "./graph";
 import type { SupportJudge, SupportVerdict } from "./judge";
@@ -46,6 +47,14 @@ interface Judged {
   verdict: SupportVerdict["verdict"];
 }
 
+/** For quote-only sources, only the judge's short quote may be stored, never the paragraph. */
+function storable(source: FetchedSource, passage: Passage, quote: string | undefined) {
+  if (source.rightsStatus !== "quote-only") return passage;
+  return quote && quote.length <= QUOTE_LIMIT_CHARS
+    ? { location: passage.location, text: quote }
+    : undefined;
+}
+
 class SourceSlots {
   private readonly slots = new Map<
     number,
@@ -60,7 +69,9 @@ class SourceSlots {
       slot = { sourceId: newId(), passages: [], claimIds: new Set() };
       this.slots.set(sourceIndex, slot);
     }
-    let position = slot.passages.indexOf(passage);
+    let position = slot.passages.findIndex(
+      (stored) => stored.location === passage.location && stored.text === passage.text,
+    );
     if (position === -1) position = slot.passages.push(passage) - 1;
     slot.claimIds.add(claimId);
     return { sourceId: slot.sourceId, excerptId: `x${position + 1}` };
@@ -97,7 +108,7 @@ async function judgeDraft(
   const judged: Judged[] = [];
   for (const candidate of candidates) {
     const source = fetched[candidate.sourceIndex] as FetchedSource;
-    const { verdict } = await options.judge.judge(
+    const { verdict, quote } = await options.judge.judge(
       {
         claim: draft.text,
         scope: draft.scope,
@@ -107,7 +118,8 @@ async function judgeDraft(
       },
       { signal: options.signal },
     );
-    judged.push({ sourceIndex: candidate.sourceIndex, passage: candidate.passage, verdict });
+    const passage = storable(source, candidate.passage, quote);
+    if (passage) judged.push({ sourceIndex: candidate.sourceIndex, passage, verdict });
   }
   return judged;
 }

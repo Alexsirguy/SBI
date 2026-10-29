@@ -168,8 +168,8 @@ describe("hierarchy, concepts and facts", () => {
         label: "Vehicles",
         domain: "physics",
         facts: [
-          { scope: "category", text: "Vehicles move people or things." },
-          { scope: "object-specific", text: "Some vehicles are electric." },
+          { scope: "category", text: "Vehicles move people or things.", unsourced: true },
+          { scope: "object-specific", text: "Some vehicles are electric.", unsourced: true },
         ],
       },
       { id: "object.scooter", kind: "object", label: "Scooter", parentId: "category.vehicles" },
