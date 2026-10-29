@@ -1,7 +1,13 @@
 import { RecognisedPhoto, RecognitionResult } from "@sbi/contracts";
 import type { FallbackOutcome, FallbackRecogniser, RecognitionImage } from "@sbi/recognition";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fakeMedia, fakeRecognition, startTestApp, type TestApp } from "../testing/test-app";
+import {
+  fakeGaps,
+  fakeMedia,
+  fakeRecognition,
+  startTestApp,
+  type TestApp,
+} from "../testing/test-app";
 
 const KEY = "photos/0192f1a0-0000-7000-8000-000000000001.png";
 const SESSION = "0192f1a0-0000-7000-8000-0000000000aa";
@@ -57,7 +63,14 @@ describe("recognition routes", () => {
     const reply = RecognisedPhoto.parse(await response.json());
     expect(reply).toMatchObject({
       sessionId: SESSION,
-      candidates: [{ taxonomyId: "object.bicycle", label: "Bicycle", certainty: "likely" }],
+      candidates: [
+        {
+          taxonomyId: "object.bicycle",
+          label: "Bicycle",
+          certainty: "likely",
+          parts: expect.arrayContaining([{ taxonomyId: "object.bicycle:chain", label: "Chain" }]),
+        },
+      ],
       next: { kind: "proceed", taxonomyId: "object.bicycle" },
     });
     expect(JSON.stringify(reply)).not.toContain("0.93");
@@ -67,6 +80,27 @@ describe("recognition routes", () => {
     expect(stored).toMatchObject({ provider: "meta-spark", imageSha256: expect.any(String) });
     expect(JSON.stringify(stored)).not.toContain(Buffer.from(PNG).toString("base64"));
     expect(media.expiredSooner.has(KEY)).toBe(true);
+  });
+
+  it("records labels the taxonomy does not know as catalog gaps", async () => {
+    const gaps = fakeGaps();
+    test = await startTestApp(
+      storedPhoto(),
+      fakeRecognition(
+        answering({
+          status: "ambiguous",
+          candidates: [
+            { label: "lava lamp", certainty: "possible", calibratedConfidence: 0.6, reasons: [] },
+            { label: "bicycle", certainty: "possible", calibratedConfidence: 0.5, reasons: [] },
+          ],
+        }),
+      ),
+      gaps,
+    );
+
+    await test.post("/recognitions", { key: KEY });
+
+    expect(gaps.recorded).toEqual([{ source: "recognition-label", term: "lava lamp" }]);
   });
 
   it("issues a session id when none is sent", async () => {
@@ -131,5 +165,80 @@ describe("recognition routes", () => {
 
     expect((await test.post("/recognitions", { key: KEY })).status).toBe(404);
     expect((await test.post("/recognitions", { key: "../secret" })).status).toBe(400);
+  });
+});
+
+describe("recording the learner's choice", () => {
+  let test: TestApp | undefined;
+
+  afterEach(async () => {
+    await test?.app.close();
+  });
+
+  async function recognised() {
+    const recognition = fakeRecognition(
+      answering({
+        candidates: [
+          { label: "bicycle", certainty: "likely", calibratedConfidence: 0.9, reasons: [] },
+          { label: "swing", certainty: "unsure", calibratedConfidence: 0.2, reasons: [] },
+        ],
+      }),
+    );
+    test = await startTestApp(storedPhoto(), recognition);
+    const reply = RecognisedPhoto.parse(
+      await (await test.post("/recognitions", { key: KEY })).json(),
+    );
+    const select = (selection: unknown) =>
+      test?.post("/recognitions/selection", { resultId: reply.resultId, selection });
+    const stored = () => RecognitionResult.parse(recognition.saved.get(reply.resultId));
+    return { select, stored };
+  }
+
+  it("records a confirmed candidate without calling it a correction", async () => {
+    const { select, stored } = await recognised();
+
+    const response = await select({ kind: "object", taxonomyId: "object.bicycle" });
+
+    expect(await response?.json()).toEqual({ recorded: true });
+    expect(stored().selectedTaxonomyId).toBe("object.bicycle");
+    expect(stored().userCorrection).toBeUndefined();
+  });
+
+  it("records an alternative or a tapped part as a correction", async () => {
+    const { select, stored } = await recognised();
+
+    await select({ kind: "object", taxonomyId: "object.bicycle:chain" });
+    expect(stored()).toMatchObject({
+      selectedTaxonomyId: "object.bicycle:chain",
+      userCorrection: { kind: "selected-alternative", taxonomyId: "object.bicycle:chain" },
+    });
+
+    await select({ kind: "object", taxonomyId: "object.teapot" });
+    expect(stored().userCorrection).toEqual({
+      kind: "selected-alternative",
+      taxonomyId: "object.teapot",
+    });
+  });
+
+  it("records free-text corrections", async () => {
+    const { select, stored } = await recognised();
+
+    await select({ kind: "free-text", text: "  a penny-farthing " });
+
+    expect(stored().userCorrection).toEqual({ kind: "free-text", text: "a penny-farthing" });
+    expect(stored().selectedTaxonomyId).toBeUndefined();
+  });
+
+  it("rejects unknown objects and parts, and results that are gone", async () => {
+    const { select } = await recognised();
+
+    for (const taxonomyId of ["object.spaceship", "object.bicycle:wings", "category.heating:x"]) {
+      expect((await select({ kind: "object", taxonomyId }))?.status).toBe(400);
+    }
+    const gone = await test?.post("/recognitions/selection", {
+      resultId: "0192f1a0-0000-7000-9000-0000000000ff",
+      selection: { kind: "free-text", text: "kettle" },
+    });
+    expect(gone?.status).toBe(404);
   });
 });

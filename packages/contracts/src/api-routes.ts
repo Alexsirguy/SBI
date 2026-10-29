@@ -7,8 +7,18 @@ import {
   UploadRequest,
   UploadTicket,
 } from "./media-api";
-import { RecognisedPhoto, RecognisePhotoRequest } from "./recognition-api";
-import { TaxonomySearchRequest, TaxonomySearchResults } from "./taxonomy-api";
+import {
+  RecognisedPhoto,
+  RecognisePhotoRequest,
+  RecordedSelection,
+  RecordSelectionRequest,
+} from "./recognition-api";
+import {
+  ObservationMatches,
+  ObservationRequest,
+  TaxonomySearchRequest,
+  TaxonomySearchResults,
+} from "./taxonomy-api";
 
 // GET routes take their request as query parameters, so their request schemas hold strings only.
 /** HTTP routes served by `apps/api`; the web client and OpenAPI document both read this table. */
@@ -36,6 +46,22 @@ export const API_ROUTES = {
     request: RecognisePhotoRequest,
     response: RecognisedPhoto,
     errors: [400, 404, 503],
+  },
+  recordSelection: {
+    method: "post",
+    path: "/recognitions/selection",
+    summary: "Record the object the learner confirmed, or their own words for it.",
+    request: RecordSelectionRequest,
+    response: RecordedSelection,
+    errors: [400, 404],
+  },
+  noticeObject: {
+    method: "post",
+    path: "/observations",
+    summary: "Match what a learner noticed to objects, and note the gap when nothing fits.",
+    request: ObservationRequest,
+    response: ObservationMatches,
+    errors: [400],
   },
   searchTaxonomy: {
     method: "get",

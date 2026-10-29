@@ -11,3 +11,4 @@ export const PURGE_PASS = Symbol("PURGE_PASS");
 export const TAXONOMY = Symbol("TAXONOMY");
 export const RECOGNISER = Symbol("RECOGNISER");
 export const RECOGNITION_RESULTS = Symbol("RECOGNITION_RESULTS");
+export const CATALOG_GAPS = Symbol("CATALOG_GAPS");

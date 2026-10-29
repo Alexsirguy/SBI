@@ -222,6 +222,9 @@ importers:
       '@sbi/rights':
         specifier: workspace:*
         version: link:../rights
+      '@sbi/taxonomy':
+        specifier: workspace:*
+        version: link:../taxonomy
       '@sbi/tutor':
         specifier: workspace:*
         version: link:../tutor
