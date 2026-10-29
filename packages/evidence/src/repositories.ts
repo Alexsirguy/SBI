@@ -25,6 +25,8 @@ export interface ClaimRepository {
   findDependents(claimId: string): Promise<Claim[]>;
   /** Claims that cite this source, so a changed source can invalidate them. */
   findBySource(sourceId: string): Promise<Claim[]>;
+  /** Claims a given judge version verified, so they can be re-checked after it changes. */
+  findByJudge(judge: string): Promise<Claim[]>;
 }
 
 /** One key per source: the DOI when there is one, since the same paper has many URLs. */

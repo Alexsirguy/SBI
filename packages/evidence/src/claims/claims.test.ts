@@ -299,6 +299,22 @@ describe("buildClaims", () => {
     expect(judge.judge).not.toHaveBeenCalled();
   });
 
+  it("records which judge verified each claim and when", async () => {
+    const repos = createMemoryEvidenceRepositories();
+    const built = await buildClaims(
+      [{ key: "ice", text: "Ice is less dense than liquid water.", scope: "water" }],
+      [USGS, NIST],
+      { judge: supportsAll, now: () => new Date("2026-10-29T09:00:00Z") },
+    );
+    expect(built.claims[0]?.verification).toEqual({
+      judge: "always",
+      verifiedAt: "2026-10-29T09:00:00.000Z",
+    });
+    await saveClaimGraph(repos, built);
+    expect(await repos.claims.findByJudge("always")).toHaveLength(1);
+    expect(await repos.claims.findByJudge("newer-judge")).toEqual([]);
+  });
+
   it("produces records that pass the contracts", async () => {
     const built = await buildClaims(
       [{ key: "ice", text: "Ice is less dense than liquid water.", scope: "water" }],

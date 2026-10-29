@@ -88,6 +88,12 @@ export const EvidenceSource = z
 /** Names one stored excerpt, so a claim's support can be checked word for word. */
 export const ExcerptRef = z.object({ sourceId: Uuid, excerptId: Id });
 
+/** Which judge (model + prompt version) checked the claim against its excerpts, and when. */
+export const ClaimVerification = z.object({
+  judge: z.string().min(1).max(200),
+  verifiedAt: IsoDateTime,
+});
+
 export const ClaimStatus = z.enum(["supported", "qualified", "disputed", "unsupported"]);
 
 export const Claim = z
@@ -105,6 +111,7 @@ export const Claim = z
     // Absent means non-trivial: only textbook basics may rest on one source.
     significance: z.enum(["basic", "non-trivial"]).optional(),
     limitations: z.string().min(1).max(300).optional(),
+    verification: ClaimVerification.optional(),
   })
   .refine((claim) => claim.status === "unsupported" || claim.sourceIds.length > 0, {
     message: "Only unsupported claims may have no sources",
@@ -143,3 +150,4 @@ export type SourceType = z.infer<typeof SourceType>;
 export type Claim = z.infer<typeof Claim>;
 export type ClaimStatus = z.infer<typeof ClaimStatus>;
 export type ExcerptRef = z.infer<typeof ExcerptRef>;
+export type ClaimVerification = z.infer<typeof ClaimVerification>;
