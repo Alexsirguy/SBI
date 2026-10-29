@@ -26,12 +26,14 @@ export {
 } from "./entailment";
 export { createEvidenceCheck, type EvidenceCheckDeps } from "./evidence-check";
 export {
+  createMemoryReviewAuditLog,
   createPublisher,
   RightsBlockedError,
   routeLesson,
   transitionLesson,
   type PublishAudit,
   type PublishAuditSink,
+  type ReviewAuditLog,
   type Publisher,
   type ReviewStatus,
   type RightsDecision,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Lesson } from "@sbi/contracts";
 import {
+  createMemoryReviewAuditLog,
   createPublisher,
   RightsBlockedError,
   routeLesson,
@@ -78,7 +79,10 @@ describe("routeLesson", () => {
 describe("createPublisher", () => {
   it("routes risky lessons and audits the move", async () => {
     const audits: PublishAudit[] = [];
-    const publisher = createPublisher({ rights: cleared, onAudit: (audit) => audits.push(audit) });
+    const publisher = createPublisher({
+      rights: cleared,
+      onAudit: (audit) => void audits.push(audit),
+    });
 
     const { lesson, decision } = await publisher.route(makeLesson({ safetyClass: "high" }));
 
@@ -90,7 +94,10 @@ describe("createPublisher", () => {
 
   it("holds a clean lesson for review when its rights are not cleared", async () => {
     const audits: PublishAudit[] = [];
-    const publisher = createPublisher({ rights: blocked, onAudit: (audit) => audits.push(audit) });
+    const publisher = createPublisher({
+      rights: blocked,
+      onAudit: (audit) => void audits.push(audit),
+    });
 
     const { lesson, decision } = await publisher.route(autoValidated());
 
@@ -116,7 +123,10 @@ describe("createPublisher", () => {
 
   it("blocks approval when rights refuse, leaving state untouched", async () => {
     const audits: PublishAudit[] = [];
-    const publisher = createPublisher({ rights: blocked, onAudit: (audit) => audits.push(audit) });
+    const publisher = createPublisher({
+      rights: blocked,
+      onAudit: (audit) => void audits.push(audit),
+    });
 
     await expect(publisher.approve(autoValidated(), "reviewer")).rejects.toThrow(
       RightsBlockedError,
@@ -133,5 +143,22 @@ describe("createPublisher", () => {
 
     expect(rejected.reviewStatus).toBe("rejected");
     expect(rejected.reviewedBy).toBe("reviewer");
+  });
+
+  it("stores every move in the review log before returning", async () => {
+    const log = createMemoryReviewAuditLog();
+    const publisher = createPublisher({ rights: cleared, onAudit: (audit) => log.record(audit) });
+
+    const { lesson: held } = await publisher.route(makeLesson({ safetyClass: "high" }));
+    const approved = await publisher.approve(held, "editor-7");
+
+    expect(approved.reviewedBy).toBe("editor-7");
+    expect(
+      (await log.history(held.lessonId)).map(({ from, to, by }) => ({ from, to, by })),
+    ).toEqual([
+      { from: "generated", to: "needs-review", by: "system" },
+      { from: "needs-review", to: "approved", by: "editor-7" },
+    ]);
+    expect(await log.history(held.lessonId, 2)).toEqual([]);
   });
 });
