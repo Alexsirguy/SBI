@@ -24,12 +24,14 @@ import {
   runWithFallback,
   schemaCheck,
   type CheckReport,
+  type PublishAudit,
   type LessonRepository,
+  type ReviewAuditLog,
   type RightsGate,
   type TaxonomyLessonLookup,
 } from "@sbi/orchestrator";
 import { sourcedFacts, type Taxonomy } from "@sbi/taxonomy";
-import { LESSON_EVIDENCE, LESSON_LLM, LESSONS, TAXONOMY } from "../tokens";
+import { LESSON_EVIDENCE, LESSON_LLM, LESSON_REVIEW_AUDIT, LESSONS, TAXONOMY } from "../tokens";
 import { UserFacingException } from "../common/user-facing.exception";
 
 const UNAVAILABLE = "Lesson generation is unavailable right now. Try again later.";
@@ -101,6 +103,7 @@ export class LessonService {
     @Inject(TAXONOMY) private readonly taxonomy: Taxonomy,
     @Inject(LESSONS) private readonly lessons: LessonRepository & TaxonomyLessonLookup,
     @Inject(LESSON_EVIDENCE) private readonly evidence: EvidenceRepositories,
+    @Inject(LESSON_REVIEW_AUDIT) private readonly reviewAudit: ReviewAuditLog,
   ) {}
 
   // Events leave as their stage completes, so the answer streams before the heavier payloads.
@@ -150,6 +153,7 @@ export class LessonService {
       kind = "cached";
     } else {
       let held = false;
+      const record = (audit: PublishAudit) => this.reviewAudit.record(audit);
       const outcome = await runWithFallback(
         this.lessons,
         async () => {
@@ -169,20 +173,27 @@ export class LessonService {
             },
             { provider },
           );
-          const { lesson: checked, report } = await runLessonChecks(draft, [
-            schemaCheck,
-            citationCheck,
-            misconceptionCheck,
-            readingLevelCheck,
-            createEvidenceCheck({
-              resolver: createCitationResolver(this.evidence),
-              sources: (ids) => this.evidence.sources.getMany(ids),
-            }),
-            createEntailmentCheck(provider),
-            createContradictionCheck(provider),
-          ]);
+          const { lesson: checked, report } = await runLessonChecks(
+            draft,
+            [
+              schemaCheck,
+              citationCheck,
+              misconceptionCheck,
+              readingLevelCheck,
+              createEvidenceCheck({
+                resolver: createCitationResolver(this.evidence),
+                sources: (ids) => this.evidence.sources.getMany(ids),
+              }),
+              createEntailmentCheck(provider),
+              createContradictionCheck(provider),
+            ],
+            { onAudit: record },
+          );
           // High-risk, low-confidence, failed or rights-blocked lessons wait for a reviewer.
-          const routed = await createPublisher({ rights: VISUAL_RIGHTS }).route(checked, report);
+          const routed = await createPublisher({ rights: VISUAL_RIGHTS, onAudit: record }).route(
+            checked,
+            report,
+          );
           await this.lessons.save(routed.lesson);
           if (routed.decision.action === "approve") return { lesson: routed.lesson, report };
           held = true;

@@ -9,7 +9,11 @@ import {
   type FetchedSource,
 } from "@sbi/evidence";
 import { LlmError, type Completion, type CompletionRequest, type LlmProvider } from "@sbi/llm";
-import type { LessonRepository, TaxonomyLessonLookup } from "@sbi/orchestrator";
+import {
+  createMemoryReviewAuditLog,
+  type LessonRepository,
+  type TaxonomyLessonLookup,
+} from "@sbi/orchestrator";
 import { createTaxonomy, type Taxonomy } from "@sbi/taxonomy";
 import { UserFacingException } from "../common/user-facing.exception";
 import {
@@ -173,9 +177,11 @@ function memoryLessons(stored: LessonType[] = []) {
 
 function setup(provider: LlmProvider | null, stored: LessonType[] = []) {
   const { lessons, repo } = memoryLessons(stored);
+  const audit = createMemoryReviewAuditLog();
   return {
     lessons,
-    service: new LessonService(provider, taxonomy(), repo, EVIDENCE.evidence),
+    audit,
+    service: new LessonService(provider, taxonomy(), repo, EVIDENCE.evidence, audit),
   };
 }
 
@@ -223,6 +229,25 @@ describe("LessonService", () => {
     expect(full.data.reuse.policyVersion).toBe(LESSON_POLICY_VERSION);
     expect(visuals).toMatchObject({ type: "visuals", data: { visuals: [] } });
     expect(lessons).toHaveLength(1);
+  });
+
+  it("stores the review trail for served and held lessons", async () => {
+    const served = setup(scriptedProvider());
+    await collect(served.service);
+    const lesson = served.lessons[0];
+    expect(
+      (await served.audit.history(lesson?.lessonId ?? "")).map(({ from, to, by }) => ({
+        from,
+        to,
+        by,
+      })),
+    ).toEqual([{ from: "generated", to: "auto-validated", by: "system" }]);
+
+    const held = setup(scriptedProvider({ entailment: CONTRADICTS }));
+    await userFacing(() => collect(held.service));
+    const [move] = await held.audit.history(held.lessons[0]?.lessonId ?? "");
+    expect(move).toMatchObject({ from: "generated", to: "needs-review", by: "system" });
+    expect(move?.reason).toContain("entailment");
   });
 
   it("serves aligned shared lessons from cache without calling the provider", async () => {
@@ -336,7 +361,13 @@ describe("LessonService", () => {
       },
     ]);
     const { lessons, repo } = memoryLessons();
-    const target = new LessonService(scriptedProvider(), facts, repo, evidence);
+    const target = new LessonService(
+      scriptedProvider(),
+      facts,
+      repo,
+      evidence,
+      createMemoryReviewAuditLog(),
+    );
 
     const failure = await userFacing(() => collect(target));
 
@@ -369,6 +400,7 @@ describe("LessonService", () => {
       bare,
       repo,
       createMemoryEvidenceRepositories(),
+      createMemoryReviewAuditLog(),
     );
     const missing = await userFacing(() =>
       collect(uncovered, { ...REQUEST, taxonomyId: "test.rock" }),
