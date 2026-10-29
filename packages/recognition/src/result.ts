@@ -54,6 +54,22 @@ export async function buildRecognitionResult(
   });
 }
 
+/** A learner's own copy of an earlier answer for the same photo, without anyone's selection. */
+export function copyRecognitionResult(
+  source: RecognitionResult,
+  { sessionId, now, retention }: { sessionId: string; now: Date; retention: RecognitionRetention },
+): RecognitionResult {
+  return RecognitionResult.parse({
+    ...source,
+    selectedTaxonomyId: undefined,
+    userCorrection: undefined,
+    resultId: newId(),
+    sessionId,
+    createdAt: now.toISOString(),
+    deleteBy: new Date(now.getTime() + retention.resultTtlDays * DAY_MS).toISOString(),
+  });
+}
+
 export interface Selection {
   taxonomyId?: string;
   correction?: z.input<typeof UserCorrection>;

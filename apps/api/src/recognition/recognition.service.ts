@@ -1,5 +1,11 @@
 import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
-import { newId, type ApiRequest, type ApiResponse, type NextStep } from "@sbi/contracts";
+import {
+  newId,
+  type ApiRequest,
+  type ApiResponse,
+  type NextStep,
+  type RecognitionResult,
+} from "@sbi/contracts";
 import {
   detectImageType,
   ObjectMissingError,
@@ -11,11 +17,15 @@ import {
 } from "@sbi/media";
 import {
   buildRecognitionResult,
+  copyRecognitionResult,
+  RECOGNITION_PROMPT_VERSION,
+  sha256Hex,
   planClarification,
   rankCandidates,
   type Clarification,
   withSelection,
   type FallbackRecogniser,
+  type RankedRecognition,
   type RecognitionResultRepository,
   type Selection,
 } from "@sbi/recognition";
@@ -86,27 +96,34 @@ export class RecognitionService {
     if (!mime) {
       throw new UserFacingException("Unknown photo.", HttpStatus.BAD_REQUEST);
     }
-    let outcome;
-    try {
-      outcome = await this.recogniser.recognise({ bytes: image, mime });
-    } catch (error) {
-      this.logger.warn(`Recognition failed: ${error instanceof Error ? error.message : error}`);
-      throw new UserFacingException(UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
-    }
     const now = new Date();
-    const ranked = rankCandidates(outcome, this.taxonomy, this.env.ranking);
-    const result = await buildRecognitionResult({
-      image,
-      now,
-      outcome,
-      ranked,
-      retention: this.env.recognitionRetention,
-      sessionId,
-    });
-    await this.results.save(result);
-    for (const label of ranked.unmapped) {
-      await this.observations.recordGap(label, "recognition-label");
+    const retention = this.env.recognitionRetention;
+    const earlier = await this.results.findByImage(await sha256Hex(image), now);
+    let ranked: RankedRecognition;
+    let result: RecognitionResult;
+    // Each recognition is a paid call that sends the photo out, so a repeat reuses the stored answer.
+    if (earlier?.modelVersion.endsWith(`+${RECOGNITION_PROMPT_VERSION}`)) {
+      result = copyRecognitionResult(earlier, { now, retention, sessionId });
+      ranked = {
+        calibrationVersion: result.calibrationVersion,
+        candidates: result.candidates,
+        unmapped: [],
+      };
+    } else {
+      let outcome;
+      try {
+        outcome = await this.recogniser.recognise({ bytes: image, mime });
+      } catch (error) {
+        this.logger.warn(`Recognition failed: ${error instanceof Error ? error.message : error}`);
+        throw new UserFacingException(UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
+      }
+      ranked = rankCandidates(outcome, this.taxonomy, this.env.ranking);
+      result = await buildRecognitionResult({ image, now, outcome, ranked, retention, sessionId });
+      for (const label of ranked.unmapped) {
+        await this.observations.recordGap(label, "recognition-label");
+      }
     }
+    await this.results.save(result);
     // Recognition was the photo's only purpose, so the original need not wait out its full TTL.
     await this.registry.expireSooner(key, recognisedExpiry(now, this.retention));
     return {
