@@ -4,6 +4,7 @@ import { createClaimRepository, createEvidenceSourceRepository } from "./evidenc
 import { createLessonRepository } from "./lessons";
 import { createDeletionAuditLog, createMediaRegistry } from "./media";
 import { createRecognitionResultRepository } from "./recognition-results";
+import { createReviewAuditLog } from "./review-audit";
 import { createTutorTurnRepository } from "./tutor-turns";
 import { createVisualAssetRepository } from "./visual-assets";
 
@@ -17,6 +18,7 @@ export function createRepositories(db: Database) {
     claims: createClaimRepository(db),
     visualAssets: createVisualAssetRepository(db),
     recognitionResults: createRecognitionResultRepository(db),
+    reviewAudit: createReviewAuditLog(db),
     tutorTurns: createTutorTurnRepository(db),
   };
 }

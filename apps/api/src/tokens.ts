@@ -13,3 +13,7 @@ export const TAXONOMY = Symbol("TAXONOMY");
 export const RECOGNISER = Symbol("RECOGNISER");
 export const RECOGNITION_RESULTS = Symbol("RECOGNITION_RESULTS");
 export const CATALOG_GAPS = Symbol("CATALOG_GAPS");
+export const LESSON_LLM = Symbol("LESSON_LLM");
+export const LESSONS = Symbol("LESSONS");
+export const LESSON_EVIDENCE = Symbol("LESSON_EVIDENCE");
+export const LESSON_REVIEW_AUDIT = Symbol("LESSON_REVIEW_AUDIT");

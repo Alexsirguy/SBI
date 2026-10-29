@@ -4,6 +4,7 @@ export * from "./content-hash";
 export * from "./evidence";
 export * from "./json-schema";
 export * from "./lesson";
+export * from "./lesson-api";
 export * from "./media-api";
 export * from "./recognition";
 export * from "./recognition-api";
