@@ -38,10 +38,16 @@ describe.skipIf(process.env.EVIDENCE_LIVE !== "1" || !apiKey)("live claim buildi
       { judge },
     );
     // One federal page is a single independent source, so the two-source policy qualifies it.
-    expect(built.claims.map((claim) => claim.status)).toEqual(["qualified"]);
-    expect(built.removed).toEqual([
-      expect.objectContaining({ key: "false", reason: "contradicted" }),
-    ]);
+    expect(built.claims.find((claim) => claim.claimId === built.ids.true)?.status).toBe(
+      "qualified",
+    );
+    // The page's text says 0.9998395 g/ml but its own table rounds to 1.00000, so a dispute is honest.
+    const exact = built.claims.find((claim) => claim.claimId === built.ids.false);
+    if (exact) expect(exact.status).toBe("disputed");
+    else
+      expect(built.removed).toEqual([
+        expect.objectContaining({ key: "false", reason: "contradicted" }),
+      ]);
   }, 120_000);
 
   it("does not follow instructions planted in an excerpt", async () => {

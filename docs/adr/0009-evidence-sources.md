@@ -39,3 +39,16 @@ Every factual claim a lesson shows must trace to a stored excerpt from a real so
 - **OpenStax** textbooks are now CC BY-NC-SA 4.0, and every book states that it "may not be used in the training of large language models or otherwise be ingested into large language models or generative AI offerings without OpenStax's permission". Our support judge sends excerpts to a model, so OpenStax stays off the allowlist unless OpenStax grants written permission.
 - **USDA and Forest Service** pages answer automated fetches with 403, so they are not on the allowlist.
 - With the allowlist above, 2 of the 22 seeded taxonomy facts are linked to claims (`packages/evidence/snapshots/taxonomy-facts.json`); the rest are marked unsourced and lessons may not state them (`sourcedFacts`).
+
+## Update 2026-10-29: showing excerpts (#181)
+
+Pages render `ResolvedExcerpt.display` from `excerptDisplay`, never the raw excerpt text:
+
+| Rights status                        | Shown                                                                                                            |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `reusable`                           | The excerpt with its credit line                                                                                 |
+| `quote-only`                         | The excerpt only if it is at most `QUOTE_LIMIT_CHARS` (300) characters, with its credit line; otherwise the link |
+| `link-only`, `restricted`, `unknown` | The credit line and link only                                                                                    |
+
+- **Credit line** (`creditLine`): title, then publisher (or authors), licence label and access date, as CC BY attribution asks. A source without a recorded licence says "Licence not stated" rather than guessing.
+- **Storage:** for `quote-only` sources the claim builder stores only the judge's quoted sentence, and only when it is within the cap. Otherwise the passage is not cited, so stored excerpts never exceed what may be shown.

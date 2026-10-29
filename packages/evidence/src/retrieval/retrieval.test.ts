@@ -12,7 +12,7 @@ import {
   UntrustedSourceError,
 } from "./retriever";
 import { rightsFromLicense } from "./rights";
-import { abstractPassages, htmlParagraphs } from "./text";
+import { abstractPassages, htmlParagraphs, htmlTablePassages, jatsPassages } from "./text";
 import { createUsGovConnector, usGovDomain } from "./us-gov";
 import { discoverReferences, refFromLink } from "./wikipedia";
 
@@ -113,6 +113,63 @@ describe("Europe PMC connector", () => {
     expect((await connector.fetch({ doi: "10.1371/journal.pone.0000217" })).studyDesign).toBe(
       "review",
     );
+  });
+
+  it("reads open-access full text, including table rows, after the abstract", async () => {
+    const connector = createEuropePmcConnector(
+      http(
+        fakeFetch([
+          [/fullTextXML/, () => new Response(fixture("europe-pmc-fulltext.xml"))],
+          ...ROUTES,
+        ]),
+      ),
+    );
+    const source = await connector.fetch({ doi: "10.1371/journal.pone.0000217" });
+    const locations = source.passages.map((passage) => passage.location);
+    expect(source.retrieval.access).toBe("full-text");
+    expect(locations.slice(0, 4)).toEqual([
+      "Abstract, Background",
+      "Abstract, Methodology",
+      "Abstract, Conclusions/significance",
+      "Introduction, paragraph 1",
+    ]);
+    expect(locations).toContain("A nested subsection, paragraph 1");
+    expect(source.passages.find((passage) => passage.location.endsWith("row 2"))?.text).toMatch(
+      /^Table 1 \(Sample surfaces.*\): Sample Surface: Normal SiO2; Drop Contact Angle: 33\.4/,
+    );
+    expect(source.passages.map((passage) => passage.text).join(" ")).not.toContain(
+      "figure caption",
+    );
+  });
+
+  it("keeps the abstract when full text is not open or fails", async () => {
+    const body = JSON.parse(fixture("europe-pmc-search.json"));
+    body.resultList.result[0].license = "cc by-nc";
+    const failing = createEuropePmcConnector(
+      http(
+        fakeFetch([
+          [/fullTextXML/, () => new Response("down", { status: 500 })],
+          [/europepmc/, () => new Response(fixture("europe-pmc-search.json"))],
+        ]),
+      ),
+    );
+    expect((await failing.fetch({ doi: "10.1371/journal.pone.0000217" })).retrieval.access).toBe(
+      "abstract",
+    );
+    const fullText = vi.fn(() => new Response(fixture("europe-pmc-fulltext.xml")));
+    body.resultList.result[0].isOpenAccess = "N";
+    const closed = createEuropePmcConnector(
+      http(
+        fakeFetch([
+          [/fullTextXML/, fullText],
+          [/europepmc/, () => new Response(JSON.stringify(body))],
+        ]),
+      ),
+    );
+    expect((await closed.fetch({ doi: "10.1371/journal.pone.0000217" })).retrieval.access).toBe(
+      "abstract",
+    );
+    expect(fullText).not.toHaveBeenCalled();
   });
 
   it("reports a missing record as a 404", async () => {
@@ -273,6 +330,34 @@ describe("text extraction", () => {
   it("keeps one copy of a repeated paragraph", () => {
     const paragraph = "<p>Water boils at a lower temperature at high altitude.</p>";
     expect(htmlParagraphs(`<main>${paragraph}${paragraph}</main>`)).toHaveLength(1);
+  });
+
+  it("turns table rows into passages with their headers", () => {
+    const html = `<main><table><caption>Boiling point by altitude</caption>
+      <tr><th>Altitude (m)</th><th>Boiling point (°C)</th></tr>
+      <tr><td>0</td><td>100</td></tr><tr><td>8,848</td><td>71</td></tr></table></main>`;
+    expect(htmlTablePassages(html)).toEqual([
+      {
+        location: "Table 1 (Boiling point by altitude), row 1",
+        text: "Table 1 (Boiling point by altitude): Altitude (m): 0; Boiling point (°C): 100",
+      },
+      {
+        location: "Table 1 (Boiling point by altitude), row 2",
+        text: "Table 1 (Boiling point by altitude): Altitude (m): 8,848; Boiling point (°C): 71",
+      },
+    ]);
+  });
+
+  it("keeps one copy of a table the page prints twice", () => {
+    const table = "<table><tr><th>T</th><th>D</th></tr><tr><td>4</td><td>1.000</td></tr></table>";
+    expect(htmlTablePassages(`<main>${table}${table}</main>`)).toHaveLength(1);
+  });
+
+  it("skips JATS figures and keeps paragraphs under their nearest title", () => {
+    const passages = jatsPassages(fixture("europe-pmc-fulltext.xml"));
+    expect(passages.filter((passage) => passage.location.startsWith("Introduction"))).toHaveLength(
+      3,
+    );
   });
 
   it("falls back to the whole body when a page has no main element", () => {

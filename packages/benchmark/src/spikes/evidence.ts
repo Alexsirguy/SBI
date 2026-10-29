@@ -1,4 +1,5 @@
 import { Claim, EvidenceSource, newId } from "@sbi/contracts";
+import { type FetchedSource, type Retriever, toEvidenceSource } from "@sbi/evidence";
 import { z } from "zod";
 
 export const EvidenceFixture = z.object({
@@ -9,6 +10,7 @@ export const EvidenceFixture = z.object({
         z.object({
           claimId: z.string().min(1),
           text: z.string().min(1),
+          // The Wikipedia article whose references are followed; its own text is never evidence.
           source: z.string().min(1),
           // Every term must appear in the source for the claim to count as supported.
           terms: z.array(z.string().min(1)).min(1),
@@ -19,32 +21,20 @@ export const EvidenceFixture = z.object({
 });
 
 export type EvidenceFixture = z.infer<typeof EvidenceFixture>;
-export type ArticleFetcher = (title: string) => Promise<string>;
 
-const USER_AGENT = "SBI-benchmark/1.0 (research prototype)";
+/** Trusted sources for one Wikipedia article: its references, fetched; never its own text. */
+export type SourceFinder = (article: string) => Promise<FetchedSource[]>;
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Wikipedia answers bursts with a plain-text "too many requests" page, so back off and retry.
-async function fetchExtract(fetchImpl: typeof fetch, title: string, waitMs: number) {
-  const url = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=${encodeURIComponent(title)}`;
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const response = await fetchImpl(url, { headers: { "User-Agent": USER_AGENT } });
-    const text = await response.text();
-    if (response.ok && text.startsWith("{")) {
-      const body = JSON.parse(text) as { query: { pages: Record<string, { extract?: string }> } };
-      return Object.values(body.query.pages)[0]?.extract ?? "";
+export function trustedSourceFinder(retriever: Retriever): SourceFinder {
+  const cache = new Map<string, Promise<FetchedSource[]>>();
+  return (article) => {
+    if (!cache.has(article)) {
+      cache.set(
+        article,
+        retriever.discover(article).then((found) => found.fetched),
+      );
     }
-    await sleep(waitMs * 2 ** attempt);
-  }
-  throw new Error(`Wikipedia kept refusing "${title}"`);
-}
-
-export function wikipediaFetcher(fetchImpl: typeof fetch = fetch, waitMs = 2000): ArticleFetcher {
-  const cache = new Map<string, Promise<string>>();
-  return (title) => {
-    if (!cache.has(title)) cache.set(title, fetchExtract(fetchImpl, title, waitMs));
-    return cache.get(title) as Promise<string>;
+    return cache.get(article) as Promise<FetchedSource[]>;
   };
 }
 
@@ -66,60 +56,63 @@ export function supportingExcerpt(text: string, terms: string[]): string | null 
 export interface EvidenceClaimResult {
   topic: string;
   claimId: string;
-  source: string;
+  article: string;
+  sourcesFound: number;
   supported: boolean;
   contractValid: boolean;
   excerpt: string | null;
+  sourceTitle: string | null;
+  connector: string | null;
 }
 
-/** Builds contract records for each claim from retrieved text, then checks the citation supports it. */
+/** Checks each claim against trusted sources reached from its article, then builds contract records. */
 export async function runEvidenceSpike(
   fixture: EvidenceFixture,
-  fetchArticle: ArticleFetcher,
-  now: Date = new Date(),
+  findSources: SourceFinder,
 ): Promise<EvidenceClaimResult[]> {
   const results: EvidenceClaimResult[] = [];
   for (const topic of fixture.topics) {
     for (const claim of topic.claims) {
-      const text = await fetchArticle(claim.source);
-      const excerpt = supportingExcerpt(text, claim.terms);
-      const sourceId = newId();
+      const sources = await findSources(claim.source);
+      let match: { source: FetchedSource; location: string; excerpt: string } | undefined;
+      for (const source of sources) {
+        for (const passage of source.passages) {
+          const excerpt = supportingExcerpt(passage.text, claim.terms);
+          if (excerpt) {
+            match = { source, location: passage.location, excerpt };
+            break;
+          }
+        }
+        if (match) break;
+      }
       const recordId = newId();
-      const source = EvidenceSource.safeParse({
-        sourceId,
-        title: claim.source,
-        publisher: "Wikipedia",
-        url: `https://en.wikipedia.org/wiki/${encodeURIComponent(claim.source.replace(/ /g, "_"))}`,
-        sourceType: "encyclopedia",
-        accessedOn: now.toISOString().slice(0, 10),
-        excerpts: [
-          {
-            excerptId: `${claim.claimId}-x1`,
-            location: "article text",
-            text: excerpt ?? "(no supporting text found)",
-          },
-        ],
-        claimIds: [recordId],
-        evidenceQuality: "moderate",
-        rightsStatus: "quote-only",
-        lastCheckedAt: now.toISOString(),
-      });
+      const source = match
+        ? EvidenceSource.safeParse(
+            toEvidenceSource(match.source, {
+              passages: [{ location: match.location, text: match.excerpt }],
+              claimIds: [recordId],
+            }),
+          )
+        : undefined;
       const record = Claim.safeParse({
         claimId: recordId,
         text: claim.text,
-        status: excerpt ? "supported" : "unsupported",
-        sourceIds: excerpt ? [sourceId] : [],
+        status: source?.success ? "supported" : "unsupported",
+        sourceIds: source?.success ? [source.data.sourceId] : [],
         scope: topic.topic,
-        confidence: excerpt ? "medium" : "low",
-        ...(excerpt ? {} : { uncertainty: "No supporting passage found in the cited source." }),
+        confidence: source?.success ? "medium" : "low",
+        ...(source?.success ? {} : { uncertainty: "No trusted source found that states this." }),
       });
       results.push({
         topic: topic.topic,
         claimId: claim.claimId,
-        source: claim.source,
-        supported: excerpt !== null,
-        contractValid: source.success && record.success,
-        excerpt,
+        article: claim.source,
+        sourcesFound: sources.length,
+        supported: match !== undefined,
+        contractValid: (source?.success ?? true) && record.success,
+        excerpt: match?.excerpt ?? null,
+        sourceTitle: match?.source.title ?? null,
+        connector: match?.source.retrieval.connector ?? null,
       });
     }
   }

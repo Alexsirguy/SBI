@@ -1,6 +1,6 @@
 import type { ConnectorOptions } from "./crossref";
 import { getText, SourceFetchError } from "./http";
-import { contentSha256, htmlParagraphs, htmlTitle } from "./text";
+import { contentSha256, htmlParagraphs, htmlTablePassages, htmlTitle } from "./text";
 import type { SourceConnector } from "./types";
 
 // Federal science agencies whose own pages are US government works.
@@ -48,10 +48,13 @@ export function createUsGovConnector(options: ConnectorOptions = {}): SourceConn
       if (!domain) {
         throw new SourceFetchError(`${ref.url} redirected outside the allowlist`);
       }
-      const passages = htmlParagraphs(response.text).map((text, index) => ({
-        location: `paragraph ${index + 1}`,
-        text,
-      }));
+      const passages = [
+        ...htmlParagraphs(response.text).map((text, index) => ({
+          location: `paragraph ${index + 1}`,
+          text,
+        })),
+        ...htmlTablePassages(response.text),
+      ];
       if (passages.length === 0) {
         throw new SourceFetchError(`${response.url} has no readable paragraphs`);
       }

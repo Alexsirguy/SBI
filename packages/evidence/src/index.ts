@@ -1,4 +1,12 @@
 export {
+  creditLine,
+  excerptDisplay,
+  licenseInfo,
+  QUOTE_LIMIT_CHARS,
+  type ExcerptDisplay,
+  type LicenseInfo,
+} from "./citations/display";
+export {
   CitationError,
   createCitationResolver,
   type CitationProblem,
