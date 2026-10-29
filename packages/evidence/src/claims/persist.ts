@@ -1,5 +1,9 @@
 import { type Claim, type EvidenceSource, EvidenceSource as SourceSchema } from "@sbi/contracts";
-import type { ClaimRepository, EvidenceSourceRepository } from "../repositories";
+import {
+  type ClaimRepository,
+  DuplicateSourceError,
+  type EvidenceSourceRepository,
+} from "../repositories";
 import type { BuiltClaims } from "./builder";
 
 export interface EvidenceRepositories {
@@ -16,10 +20,18 @@ export async function saveClaimGraph(
   const sources: EvidenceSource[] = [];
 
   for (const source of built.sources) {
-    const stored = await repositories.sources.findByLocator(source);
+    let stored = await repositories.sources.findByLocator(source);
     if (!stored) {
-      sources.push(source);
-      continue;
+      try {
+        await repositories.sources.save(source);
+        sources.push(source);
+        continue;
+      } catch (error) {
+        // Another build stored this source between our lookup and insert; merge into theirs.
+        if (!(error instanceof DuplicateSourceError)) throw error;
+        stored = await repositories.sources.findByLocator(source);
+        if (!stored) throw error;
+      }
     }
     const excerpts = [...stored.excerpts];
     const excerptIds = new Map<string, string>();

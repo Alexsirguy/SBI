@@ -1,6 +1,6 @@
 import type { ConnectorOptions } from "./crossref";
 import { getText, SourceFetchError } from "./http";
-import { contentSha256, htmlParagraphs, htmlTitle } from "./text";
+import { contentSha256, htmlParagraphs, htmlTablePassages, htmlTitle } from "./text";
 import type { SourceConnector } from "./types";
 
 // Federal science agencies whose own pages are US government works.
@@ -10,6 +10,9 @@ export const US_GOV_PUBLISHERS: Readonly<Record<string, string>> = {
   "noaa.gov": "National Oceanic and Atmospheric Administration",
   "usgs.gov": "U.S. Geological Survey",
   "nih.gov": "National Institutes of Health",
+  "nps.gov": "National Park Service",
+  "energy.gov": "U.S. Department of Energy",
+  "epa.gov": "U.S. Environmental Protection Agency",
 };
 
 // These republish journal abstracts under the publishers' copyright; Europe PMC covers them.
@@ -45,10 +48,13 @@ export function createUsGovConnector(options: ConnectorOptions = {}): SourceConn
       if (!domain) {
         throw new SourceFetchError(`${ref.url} redirected outside the allowlist`);
       }
-      const passages = htmlParagraphs(response.text).map((text, index) => ({
-        location: `paragraph ${index + 1}`,
-        text,
-      }));
+      const passages = [
+        ...htmlParagraphs(response.text).map((text, index) => ({
+          location: `paragraph ${index + 1}`,
+          text,
+        })),
+        ...htmlTablePassages(response.text),
+      ];
       if (passages.length === 0) {
         throw new SourceFetchError(`${response.url} has no readable paragraphs`);
       }

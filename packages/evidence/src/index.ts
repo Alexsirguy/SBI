@@ -1,4 +1,12 @@
 export {
+  creditLine,
+  excerptDisplay,
+  licenseInfo,
+  QUOTE_LIMIT_CHARS,
+  type ExcerptDisplay,
+  type LicenseInfo,
+} from "./citations/display";
+export {
   CitationError,
   createCitationResolver,
   type CitationProblem,
@@ -23,6 +31,7 @@ export {
 } from "./claims/graph";
 export {
   createLlmSupportJudge,
+  groundVerdict,
   SUPPORT_PROMPT_VERSION,
   SupportVerdict,
   type SupportJudge,
@@ -49,10 +58,18 @@ export {
   type PolicyAssessment,
   type PolicyIssue,
 } from "./policy/two-source";
+export {
+  ingestTopic,
+  TopicSources,
+  TopicSpec,
+  type IngestOptions,
+  type IngestReport,
+} from "./ingest/ingest";
 export { saveClaimGraph, type EvidenceRepositories } from "./claims/persist";
 export { claimTerms, matchTerms, type TermMatch, type TermProfile } from "./claims/terms";
 export { createMemoryEvidenceRepositories, type MemoryEvidenceRepositories } from "./memory";
 export {
+  DuplicateSourceError,
   sourceLocatorKey,
   type ClaimRepository,
   type EvidenceSourceRepository,
@@ -88,3 +105,4 @@ export {
   usGovDomain,
 } from "./retrieval/us-gov";
 export { discoverReferences, refFromLink } from "./retrieval/wikipedia";
+export { EvidenceSnapshot, loadSnapshot, snapshotRepositories } from "./snapshot";

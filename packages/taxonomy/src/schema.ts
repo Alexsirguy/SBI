@@ -1,4 +1,4 @@
-import { Id } from "@sbi/contracts";
+import { Id, Uuid } from "@sbi/contracts";
 import { z } from "zod";
 
 export const Domain = z.enum(["maths", "physics", "biology", "chemistry", "arts"]);
@@ -7,10 +7,18 @@ export const Domain = z.enum(["maths", "physics", "biology", "chemistry", "arts"
 // ("some kettles…") rather than claim them about the learner's photo.
 export const FactScope = z.enum(["category", "object-specific"]);
 
-export const TaxonomyFact = z.object({
-  scope: FactScope,
-  text: z.string().min(1),
-});
+export const TaxonomyFact = z
+  .object({
+    scope: FactScope,
+    text: z.string().min(1),
+    /** The stored claim that backs this fact (packages/evidence/snapshots/taxonomy-facts.json). */
+    claimId: Uuid.optional(),
+    /** No trusted source states it yet; lessons must not present it as fact. */
+    unsourced: z.literal(true).optional(),
+  })
+  .refine((fact) => (fact.claimId === undefined) !== (fact.unsourced === undefined), {
+    message: "A fact needs either a claimId or unsourced: true",
+  });
 
 export const TaxonomyPart = z.object({
   id: Id,

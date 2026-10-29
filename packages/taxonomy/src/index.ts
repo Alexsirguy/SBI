@@ -6,6 +6,7 @@ export {
   TaxonomyPart,
   type TaxonomyEntryInput,
 } from "./schema";
+export { sourcedFacts, type FactClaimStatus } from "./facts";
 export { SEED_TAXONOMY } from "./seed";
 export {
   createTaxonomy,

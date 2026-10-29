@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { Claim, EvidenceSource } from "@sbi/contracts";
 import {
+  DuplicateSourceError,
   type ClaimRepository,
   type EvidenceSourceRepository,
   sourceLocatorKey,
@@ -10,6 +11,15 @@ import { asc, desc, eq, inArray, lt } from "drizzle-orm";
 import type { Database } from "../client";
 import { claimDependencies, claims, claimSources, evidenceSources } from "../schema";
 import { parseDocuments } from "./document";
+
+// Drizzle wraps driver errors, so look for the MariaDB code on the error or its cause.
+function isDuplicateLocator(error: unknown): boolean {
+  for (let current = error; current instanceof Error; current = current.cause) {
+    const { code, message } = current as Error & { code?: string };
+    if (code === "ER_DUP_ENTRY" && message.includes("evidence_sources_locator")) return true;
+  }
+  return false;
+}
 
 const locatorHash = (locator: SourceLocator) =>
   createHash("sha256").update(sourceLocatorKey(locator)).digest("hex");
@@ -27,7 +37,27 @@ export function createEvidenceSourceRepository(db: Database): EvidenceSourceRepo
         lastCheckedAt: new Date(source.lastCheckedAt),
         document: source,
       };
-      await db.insert(evidenceSources).values(row).onDuplicateKeyUpdate({ set: row });
+      try {
+        await db.transaction(async (tx) => {
+          const [existing] = await tx
+            .select({ sourceId: evidenceSources.sourceId })
+            .from(evidenceSources)
+            .where(eq(evidenceSources.sourceId, source.sourceId))
+            .for("update");
+          // No upsert: on a locator clash it would overwrite a different source's row.
+          if (existing) {
+            await tx
+              .update(evidenceSources)
+              .set(row)
+              .where(eq(evidenceSources.sourceId, source.sourceId));
+          } else {
+            await tx.insert(evidenceSources).values(row);
+          }
+        });
+      } catch (error) {
+        if (isDuplicateLocator(error)) throw new DuplicateSourceError(sourceLocatorKey(source));
+        throw error;
+      }
     },
     async get(sourceId) {
       return parseDocuments(
