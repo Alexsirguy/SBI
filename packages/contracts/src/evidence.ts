@@ -32,6 +32,9 @@ export const SourceRetrieval = z.object({
   contentSha256: Sha256,
 });
 
+/** What kind of evidence a source is; a single primary study needs a limitation note (§7). */
+export const StudyDesign = z.enum(["primary-study", "review", "not-research"]);
+
 export const FreshnessStatus = z.enum(["current", "changed", "gone", "rights-changed"]);
 
 /** Result of the last re-check; anything but "current" means lessons citing it need review. */
@@ -70,6 +73,7 @@ export const EvidenceSource = z
     lastCheckedAt: IsoDateTime,
     retrieval: SourceRetrieval.optional(),
     freshness: SourceFreshness.optional(),
+    studyDesign: StudyDesign.optional(),
   })
   .refine((source) => source.url !== undefined || source.doi !== undefined, {
     message: "A source needs a url or a doi",
@@ -98,6 +102,9 @@ export const Claim = z
     dependsOn: z.array(Uuid).default([]),
     // Optional, not defaulted, so claims written before citations keep their lesson content hash.
     citations: z.array(ExcerptRef).optional(),
+    // Absent means non-trivial: only textbook basics may rest on one source.
+    significance: z.enum(["basic", "non-trivial"]).optional(),
+    limitations: z.string().min(1).max(300).optional(),
   })
   .refine((claim) => claim.status === "unsupported" || claim.sourceIds.length > 0, {
     message: "Only unsupported claims may have no sources",
@@ -128,6 +135,7 @@ export const EvidenceInvalidated = z.object({
 export type EvidenceSource = z.infer<typeof EvidenceSource>;
 export type EvidenceInvalidated = z.infer<typeof EvidenceInvalidated>;
 export type FreshnessStatus = z.infer<typeof FreshnessStatus>;
+export type StudyDesign = z.infer<typeof StudyDesign>;
 export type SourceAccess = z.infer<typeof SourceAccess>;
 export type SourceRetrieval = z.infer<typeof SourceRetrieval>;
 export type RightsStatus = z.infer<typeof RightsStatus>;

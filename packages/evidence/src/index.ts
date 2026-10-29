@@ -36,6 +36,19 @@ export {
   type FreshnessPassResult,
   type InvalidationSink,
 } from "./freshness/freshness";
+export {
+  applySourcePolicy,
+  assessClaim,
+  checkSourcePolicy,
+  independentSourceCount,
+  isPrimaryStudy,
+  sameOrigin,
+  SINGLE_SOURCE_NOTE,
+  SINGLE_STUDY_LIMITATION,
+  STUDIES_LIMITATION,
+  type PolicyAssessment,
+  type PolicyIssue,
+} from "./policy/two-source";
 export { saveClaimGraph, type EvidenceRepositories } from "./claims/persist";
 export { claimTerms, matchTerms, type TermMatch, type TermProfile } from "./claims/terms";
 export { createMemoryEvidenceRepositories, type MemoryEvidenceRepositories } from "./memory";
