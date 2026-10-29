@@ -88,6 +88,23 @@ describe("createPublisher", () => {
     expect(audits[0]).toMatchObject({ from: "generated", to: "needs-review", by: "system" });
   });
 
+  it("holds a clean lesson for review when its rights are not cleared", async () => {
+    const audits: PublishAudit[] = [];
+    const publisher = createPublisher({ rights: blocked, onAudit: (audit) => audits.push(audit) });
+
+    const { lesson, decision } = await publisher.route(autoValidated());
+
+    expect(decision).toEqual({ action: "review", reasons: ["rights: licence pending"] });
+    expect(lesson.reviewStatus).toBe("needs-review");
+    expect(audits[0]).toMatchObject({ from: "auto-validated", to: "needs-review" });
+  });
+
+  it("lets a clean lesson through when its rights clear", async () => {
+    const { lesson, decision } = await createPublisher({ rights: cleared }).route(autoValidated());
+    expect(decision.action).toBe("approve");
+    expect(lesson.reviewStatus).toBe("auto-validated");
+  });
+
   it("approves clean lessons once rights clear, and stamps the reviewer", async () => {
     const publisher = createPublisher({ rights: cleared });
 

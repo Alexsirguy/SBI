@@ -101,7 +101,7 @@ describe("createContradictionCheck", () => {
 
 describe("prompt versions", () => {
   it("pins judge prompt versions", () => {
-    expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.1");
+    expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.2");
     expect(CONTRADICTION_PROMPT_VERSION).toBe("orchestrator-contradiction-p0.1");
   });
 });
