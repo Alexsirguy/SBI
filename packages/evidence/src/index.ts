@@ -133,3 +133,11 @@ export {
   type PoliteFetcherOptions,
   type RobotsRules,
 } from "./retrieval/robots";
+export {
+  Discipline,
+  INQUIRY_PROMPT_VERSION,
+  InquiryPlan,
+  InquiryQuestion,
+  planInquiry,
+  type InquiryInput,
+} from "./plan/inquiry";
