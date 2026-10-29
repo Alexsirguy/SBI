@@ -1,5 +1,5 @@
 export { createLessonInvalidator, isReusable, type LessonInvalidator } from "./invalidation";
-export type { LessonRepository } from "./lesson-repository";
+export type { LessonRepository, TaxonomyLessonLookup } from "./lesson-repository";
 export {
   createDraftPromptRegistry,
   generateDraft,
@@ -37,3 +37,9 @@ export {
   type RightsGate,
   type RouteDecision,
 } from "./publish";
+export {
+  runWithFallback,
+  type FallbackQuery,
+  type GenerationAttempt,
+  type PipelineOutcome,
+} from "./pipeline";
