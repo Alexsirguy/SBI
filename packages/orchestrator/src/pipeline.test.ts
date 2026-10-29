@@ -7,8 +7,9 @@ import { runWithFallback, type FallbackQuery, type GenerationAttempt } from "./p
 import { makeLesson } from "./lesson-fixture";
 
 const fallbackQuery: FallbackQuery = {
-  taxonomyId: "home.kettle",
+  taxonomyIds: ["home.kettle", "category.heating"],
   locale: "en-GB",
+  safetyClass: "low",
   audience: "general",
   policyVersion: "safety-1",
 };
@@ -31,8 +32,10 @@ function report(passed: boolean, failedNames: string[] = []): CheckReport {
   };
 }
 
-function gated(version = 1): Lesson {
-  return makeLesson({ reviewStatus: "auto-validated", version });
+const SHARED = { ...makeLesson().reuse, cacheScope: "shared" as const };
+
+function gated(version = 1, overrides: Record<string, unknown> = {}): Lesson {
+  return makeLesson({ reviewStatus: "auto-validated", version, reuse: SHARED, ...overrides });
 }
 
 describe("runWithFallback", () => {
@@ -122,12 +125,11 @@ describe("runWithFallback", () => {
       makeLesson(),
       gated(1),
       gated(2),
-      makeLesson({ reviewStatus: "auto-validated", locale: "fr" }),
-      makeLesson({ reviewStatus: "auto-validated", audience: ["child"] }),
-      makeLesson({
-        reviewStatus: "auto-validated",
-        reuse: { ...makeLesson().reuse, policyVersion: "safety-0" },
-      }),
+      gated(3, { locale: "fr" }),
+      gated(4, { audience: ["child"] }),
+      gated(5, { reuse: { ...SHARED, policyVersion: "safety-0" } }),
+      gated(6, { safetyClass: "medium" }),
+      gated(7, { reuse: { ...SHARED, cacheScope: "private" } }),
     ];
     const attempt: GenerationAttempt = async () => {
       throw new LlmError("stub: empty completion");
@@ -137,5 +139,24 @@ describe("runWithFallback", () => {
 
     expect(outcome.kind).toBe("fallback");
     if (outcome.kind === "fallback") expect(outcome.lesson.version).toBe(2);
+  });
+
+  it("falls back to a category lesson when the entry has none of its own", async () => {
+    const categoryLesson = gated(1, { taxonomyId: "category.heating" });
+    const attempt: GenerationAttempt = async () => {
+      throw new LlmError("stub: timed out after 10ms");
+    };
+    const outcome = await runWithFallback(memoryLookup([categoryLesson]), attempt, fallbackQuery);
+    expect(outcome.kind).toBe("fallback");
+    if (outcome.kind === "fallback") expect(outcome.lesson.taxonomyId).toBe("category.heating");
+  });
+
+  it("prefers the entry's own lesson over its category's", async () => {
+    const stored = [gated(1, { taxonomyId: "category.heating" }), gated(1)];
+    const attempt: GenerationAttempt = async () => {
+      throw new LlmError("stub: timed out after 10ms");
+    };
+    const outcome = await runWithFallback(memoryLookup(stored), attempt, fallbackQuery);
+    if (outcome.kind === "fallback") expect(outcome.lesson.taxonomyId).toBe("home.kettle");
   });
 });

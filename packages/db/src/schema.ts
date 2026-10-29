@@ -33,6 +33,7 @@ export const lessons = mysqlTable(
     primaryKey({ columns: [table.lessonId, table.version] }),
     index("lessons_intent_idx").on(table.intentSignature),
     index("lessons_content_hash_idx").on(table.contentHash),
+    index("lessons_taxonomy_idx").on(table.taxonomyId),
   ],
 );
 
