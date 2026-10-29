@@ -9,7 +9,14 @@ import {
 } from "@sbi/llm";
 import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
-import { API_ENV, LESSON_EVIDENCE, LESSON_LLM, LESSONS, REPOSITORIES } from "../tokens";
+import {
+  API_ENV,
+  LESSON_EVIDENCE,
+  LESSON_LLM,
+  LESSON_REVIEW_AUDIT,
+  LESSONS,
+  REPOSITORIES,
+} from "../tokens";
 import { LessonController } from "./lesson.controller";
 import { LessonService } from "./lesson.service";
 
@@ -60,6 +67,11 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       provide: LESSONS,
       inject: [REPOSITORIES],
       useFactory: (repos: Repositories) => repos.lessons,
+    },
+    {
+      provide: LESSON_REVIEW_AUDIT,
+      inject: [REPOSITORIES],
+      useFactory: (repos: Repositories) => repos.reviewAudit,
     },
     {
       provide: LESSON_EVIDENCE,
