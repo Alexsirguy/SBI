@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.11.0"
+    "version": "0.12.0"
   },
   "paths": {
     "/uploads": {
@@ -1080,6 +1080,18 @@
               ],
               "additionalProperties": false
             }
+          },
+          "significance": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "non-trivial"
+            ]
+          },
+          "limitations": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
           }
         },
         "required": [
@@ -1322,6 +1334,14 @@
               "missingExcerptIds"
             ],
             "additionalProperties": false
+          },
+          "studyDesign": {
+            "type": "string",
+            "enum": [
+              "primary-study",
+              "review",
+              "not-research"
+            ]
           }
         },
         "required": [
@@ -1568,6 +1588,18 @@
                     ],
                     "additionalProperties": false
                   }
+                },
+                "significance": {
+                  "type": "string",
+                  "enum": [
+                    "basic",
+                    "non-trivial"
+                  ]
+                },
+                "limitations": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
                 }
               },
               "required": [
