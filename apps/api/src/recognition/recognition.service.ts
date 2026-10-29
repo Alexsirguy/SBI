@@ -53,6 +53,11 @@ function toNextStep(plan: Clarification): NextStep {
   }
 }
 
+function sentenceCase(label: string) {
+  const trimmed = label.trim().slice(0, 60);
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
 @Injectable()
 export class RecognitionService {
   private readonly logger = new Logger(RecognitionService.name);
@@ -114,6 +119,7 @@ export class RecognitionService {
           label: part.label,
         })),
       })),
+      otherLabels: [...new Set(ranked.unmapped.map(sentenceCase))].slice(0, 3),
       next: toNextStep(planClarification(ranked, this.taxonomy, this.env.ranking)),
     };
   }

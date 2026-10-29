@@ -39,6 +39,8 @@ export const RecognisedPhoto = z.object({
   resultId: Uuid,
   sessionId: Uuid,
   candidates: z.array(LearnerCandidate).max(3),
+  /** Look-alikes the model named that the catalog cannot teach yet; picking one is a correction. */
+  otherLabels: z.array(z.string().min(1).max(60)).max(3).default([]),
   next: NextStep,
 });
 

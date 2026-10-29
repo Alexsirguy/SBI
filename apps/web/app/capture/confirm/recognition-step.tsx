@@ -52,6 +52,7 @@ export function RecognitionStep({ recognition, onSelect }: RecognitionStepProps)
       initialCandidates={candidates}
       initialMessage={promptFor(reply)}
       fallback={fallback}
+      otherLabels={reply.otherLabels}
       onStart={({ taxonomyId }) =>
         onSelect({ resultId: reply.resultId, selection: { kind: "object", taxonomyId } })
       }

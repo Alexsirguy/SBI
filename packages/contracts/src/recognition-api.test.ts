@@ -65,14 +65,14 @@ describe("recognition API contracts", () => {
     expect(NextStep.safeParse({ kind: "ask", question: "?", options: [] }).success).toBe(false);
   });
 
-  it("parses a full reply", () => {
+  it("parses a full reply and defaults other labels to none", () => {
     expect(
       RecognisedPhoto.parse({
         resultId: RESULT,
         sessionId: SESSION,
         candidates: [],
         next: { kind: "describe" },
-      }),
-    ).toBeTruthy();
+      }).otherLabels,
+    ).toEqual([]);
   });
 });

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "paths": {
     "/uploads": {
@@ -333,6 +333,16 @@
                         "additionalProperties": false
                       }
                     },
+                    "otherLabels": {
+                      "default": [],
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 60
+                      }
+                    },
                     "next": {
                       "oneOf": [
                         {
@@ -493,6 +503,7 @@
                     "resultId",
                     "sessionId",
                     "candidates",
+                    "otherLabels",
                     "next"
                   ],
                   "additionalProperties": false
