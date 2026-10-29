@@ -198,6 +198,16 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       ).toHaveLength(1);
     });
 
+    it("finds claims by the judge version that verified them", async () => {
+      const verified = fixture(Claim, "claim", "verified-by-judge");
+      const unverified = fixture(Claim, "claim", "supported");
+      await repos.claims.save(verified);
+      await repos.claims.save(unverified);
+      const judge = verified.verification?.judge ?? "";
+      expect(await repos.claims.findByJudge(judge)).toEqual([verified]);
+      expect(await repos.claims.findByJudge("other+p0")).toEqual([]);
+    });
+
     it("deletes a claim", async () => {
       const claim = fixture(Claim, "claim", "supported");
       await repos.claims.save(claim);

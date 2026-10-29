@@ -35,6 +35,7 @@ export interface BuiltClaims {
 
 export interface BuildOptions {
   judge: SupportJudge;
+  now?: () => Date;
   maxPassagesPerClaim?: number;
   signal?: AbortSignal;
 }
@@ -128,6 +129,8 @@ export async function buildClaims(
   const claims: Claim[] = [];
   const removed: RemovedClaim[] = [];
 
+  const verifiedAt = (options.now?.() ?? new Date()).toISOString();
+
   for (const draft of ordered) {
     const judged = await judgeDraft(draft, fetched, options);
     const supporting = judged.filter((item) => item.verdict === "supports");
@@ -183,6 +186,7 @@ export async function buildClaims(
         dependsOn: dependencyKeys.flatMap((key) => (ids[key] ? [ids[key]] : [])),
         citations,
         significance: draft.basic ? "basic" : undefined,
+        verification: { judge: options.judge.version, verifiedAt },
       }),
     );
   }

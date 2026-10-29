@@ -64,6 +64,11 @@ export function createMemoryEvidenceRepositories(): MemoryEvidenceRepositories {
           .filter((claim) => claim.dependsOn.includes(claimId))
           .map((claim) => structuredClone(claim));
       },
+      async findByJudge(judge) {
+        return [...claims.values()]
+          .filter((claim) => claim.verification?.judge === judge)
+          .map((claim) => structuredClone(claim));
+      },
       async findBySource(sourceId) {
         return [...claims.values()]
           .filter((claim) => claim.sourceIds.includes(sourceId))

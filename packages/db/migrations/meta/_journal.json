@@ -50,6 +50,13 @@
       "when": 1793285648194,
       "tag": "0006_evidence_freshness",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1793290383301,
+      "tag": "0007_claim_judge_version",
+      "breakpoints": true
     }
   ]
 }

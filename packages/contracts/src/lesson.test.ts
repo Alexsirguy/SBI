@@ -17,6 +17,17 @@ describe("lessonContentHash", () => {
     expect(await lessonContentHash(lesson)).toBe(lesson.reuse.contentHash);
   });
 
+  it("ignores claim verification records", async () => {
+    const verified = {
+      ...full,
+      claims: full.claims.map((claim) => ({
+        ...claim,
+        verification: { judge: "judge+p1", verifiedAt: "2026-10-29T09:00:00Z" },
+      })),
+    };
+    expect(await lessonContentHash(verified)).toBe(await lessonContentHash(full));
+  });
+
   it("ignores review and reuse metadata", async () => {
     const reviewed = {
       ...full,
