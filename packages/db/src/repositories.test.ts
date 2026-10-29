@@ -126,6 +126,12 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.lessons.findByIntent("no-match")).toEqual([]);
     });
 
+    it("finds lessons by taxonomy category", async () => {
+      await repos.lessons.save(lesson);
+      expect(await repos.lessons.findByTaxonomy(lesson.taxonomyId)).toHaveLength(1);
+      expect(await repos.lessons.findByTaxonomy("no-match")).toEqual([]);
+    });
+
     it("rejects invalid lessons before writing", async () => {
       await expect(repos.lessons.save({ ...lesson, sections: [] })).rejects.toThrow();
       expect(await repos.lessons.get(lesson.lessonId, lesson.version)).toBeUndefined();
