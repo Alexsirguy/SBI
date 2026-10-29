@@ -155,3 +155,11 @@ export {
   type SourceSearchResult,
 } from "./search/search";
 export { searchTokens } from "./search/tokens";
+export {
+  EXTRACT_PROMPT_VERSION,
+  extractAndVerify,
+  extractClaims,
+  relevantPassages,
+  type CandidatePassage,
+  type ExtractOptions,
+} from "./extract/extract";
