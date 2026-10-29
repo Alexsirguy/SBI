@@ -9,9 +9,9 @@ const tinyPng = Buffer.from(
 
 // Runs the shared confirmation step inside `scope`, the same way for either entry path.
 async function confirmKettle(page: Page, scope: Locator) {
-  await scope.getByLabel("Describe the object").fill("kettles");
+  await scope.getByLabel("Describe the object").fill("electric kettles");
   await scope.getByLabel("Describe the object").press("Enter");
-  await expect(scope.getByRole("status").last()).toHaveText("1 match for “kettles”.");
+  await expect(scope.getByRole("status").last()).toHaveText("1 match for “electric kettles”.");
   await scope.getByRole("button", { name: "Electric kettle" }).click();
 
   const heading = scope.getByRole("heading", { name: "Start this lesson?" });
@@ -55,7 +55,7 @@ test("text entry works from the keyboard alone", async ({ page }) => {
   await section.getByLabel("Describe the object").focus();
   await page.keyboard.type("tea");
   await page.keyboard.press("Enter");
-  await expect(section.getByRole("status")).toHaveText("2 matches for “tea”.");
+  await expect(section.getByRole("status")).toHaveText("3 matches for “tea”.");
 
   await section.getByRole("button", { name: "Teapot" }).focus();
   await page.keyboard.press("Enter");

@@ -40,13 +40,14 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
   category("states-of-matter", "Solids, liquids and gases", "chemistry", ["density"]),
   category("crystals", "Crystals", "chemistry", ["crystal structure"]),
   category("mixtures", "Mixtures and solutions", "chemistry", ["surface tension"]),
+  category("materials", "Materials", "chemistry", ["properties of materials"]),
   category("household-chemicals", "Household chemicals and medicines", "chemistry"),
   category("instruments", "Musical instruments", "arts", ["vibration", "pitch"]),
   category("colour", "Colour and art", "arts", ["colour mixing"]),
   category("ceramics", "Ceramics", "arts", ["firing"]),
 
   object("bicycle", "Bicycle", "mechanisms", {
-    aliases: ["bike", "road bike", "mountain bike", "cycle"],
+    aliases: ["bike", "road bike", "mountain bike", "cycle", "cargo bike", "city bike"],
     keywords: ["pedal", "ride", "wheel"],
     parts: [
       { id: "object.bicycle:chain", label: "Chain" },
@@ -91,6 +92,11 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
       },
       { scope: "object-specific", text: "Some kettles hide the element under a flat metal base." },
     ],
+  }),
+  object("stovetop-kettle", "Stovetop kettle", "heating", {
+    aliases: ["kettle", "tea kettle", "stove kettle", "whistling kettle"],
+    keywords: ["stove", "whistle", "hob"],
+    concepts: ["conduction", "boiling"],
   }),
   object("teapot", "Teapot", "heating", {
     keywords: ["brew", "pot", "tea"],
@@ -263,7 +269,11 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
     ],
   }),
   object("glass-of-water", "Glass of water", "states-of-matter", {
-    aliases: ["drinking glass", "glass", "water"],
+    aliases: ["water"],
+  }),
+  object("drinking-glass", "Drinking glass", "materials", {
+    aliases: ["glass", "tumbler", "whiskey glass", "whisky glass", "crystal tumbler"],
+    concepts: ["amorphous solids"],
   }),
   object("salt-crystals", "Salt crystals", "crystals", {
     aliases: ["salt", "sea salt", "sodium chloride"],
