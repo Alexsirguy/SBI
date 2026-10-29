@@ -37,6 +37,13 @@ export function createMemoryEvidenceRepositories(): MemoryEvidenceRepositories {
       async delete(sourceId) {
         return sources.delete(sourceId);
       },
+      async listDueForCheck(checkedBefore, limit) {
+        return [...sources.values()]
+          .filter((source) => Date.parse(source.lastCheckedAt) < checkedBefore.getTime())
+          .sort((a, b) => Date.parse(a.lastCheckedAt) - Date.parse(b.lastCheckedAt))
+          .slice(0, limit)
+          .map((source) => structuredClone(source));
+      },
     },
     claims: {
       async save(input) {
@@ -51,6 +58,16 @@ export function createMemoryEvidenceRepositories(): MemoryEvidenceRepositories {
       },
       async delete(claimId) {
         return claims.delete(claimId);
+      },
+      async findDependents(claimId) {
+        return [...claims.values()]
+          .filter((claim) => claim.dependsOn.includes(claimId))
+          .map((claim) => structuredClone(claim));
+      },
+      async findBySource(sourceId) {
+        return [...claims.values()]
+          .filter((claim) => claim.sourceIds.includes(sourceId))
+          .map((claim) => structuredClone(claim));
       },
     },
   };

@@ -12,6 +12,8 @@ export interface EvidenceSourceRepository {
   /** Finds a stored source by DOI or URL, so fetching it again updates it instead of duplicating it. */
   findByLocator(locator: SourceLocator): Promise<EvidenceSource | undefined>;
   delete(sourceId: string): Promise<boolean>;
+  /** Sources last checked before the cutoff, oldest first. */
+  listDueForCheck(checkedBefore: Date, limit: number): Promise<EvidenceSource[]>;
 }
 
 export interface ClaimRepository {
@@ -19,6 +21,10 @@ export interface ClaimRepository {
   get(claimId: string): Promise<Claim | undefined>;
   getMany(claimIds: string[]): Promise<Claim[]>;
   delete(claimId: string): Promise<boolean>;
+  /** Claims that list this one in `dependsOn`. */
+  findDependents(claimId: string): Promise<Claim[]>;
+  /** Claims that cite this source, so a changed source can invalidate them. */
+  findBySource(sourceId: string): Promise<Claim[]>;
 }
 
 /** One key per source: the DOI when there is one, since the same paper has many URLs. */

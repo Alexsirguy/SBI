@@ -1,0 +1,14 @@
+{
+  "claimId": "0192f1a0-0000-7000-8000-000000000008",
+  "text": "The heating element converts electrical energy into thermal energy.",
+  "status": "supported",
+  "sourceIds": ["0192f1a0-0000-7000-8000-000000000001", "0192f1a0-0000-7000-8000-000000000006"],
+  "scope": "typical electric kettle",
+  "confidence": "high",
+  "citations": [
+    {
+      "sourceId": "0192f1a0-0000-7000-8000-000000000009",
+      "excerptId": "x1"
+    }
+  ]
+}
