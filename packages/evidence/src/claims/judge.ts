@@ -9,10 +9,21 @@ export const SUPPORT_PROMPT_VERSION = "evidence-judge-p0.2";
 export const SupportVerdict = z.object({
   verdict: z.enum(["supports", "contradicts", "insufficient"]),
   reason: z.string().min(1).max(300),
+  /** The deciding words, as they appear in the excerpt; set for a grounded verdict. */
+  quote: z.string().min(1).max(1000).optional(),
 });
 
 // What the model returns: the verdict plus the excerpt words it rests on.
 const ModelVerdict = SupportVerdict.extend({ quote: z.string().max(1000) });
+
+// The model may tidy spacing; return the excerpt's own words so a stored quote is exact.
+function excerptSpan(excerpt: string, quote: string): string {
+  const words = quote
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return new RegExp(words.join("\\s+"), "i").exec(excerpt)?.[0] ?? quote.trim();
+}
 
 export type SupportVerdict = z.infer<typeof SupportVerdict>;
 
@@ -66,7 +77,7 @@ export function groundVerdict(question: SupportQuestion, raw: unknown): SupportV
   if (verdict === "supports" && !matchTerms(claimTerms(question.claim), quote).passes) {
     return INSUFFICIENT("The quoted words do not state the claim's figures and terms.");
   }
-  return { verdict, reason };
+  return { verdict, reason, quote: excerptSpan(question.excerpt, quote) };
 }
 
 export function createLlmSupportJudge(llm: LlmProvider): SupportJudge {
