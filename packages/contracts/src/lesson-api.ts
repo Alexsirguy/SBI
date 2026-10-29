@@ -32,6 +32,16 @@ export const QuickAnswer = z.object({
   note: z.string().min(1).optional(),
 });
 
+export const LessonStage = z.enum(["planning", "researching", "verified", "drafting", "checking"]);
+
+/** Streamed while evidence is gathered, so a slow first request is not a silent wait. */
+export const LessonProgress = z.object({
+  stage: LessonStage,
+  message: z.string().min(1).max(300),
+  /** Verified claims so far, when the stage has produced any. */
+  claims: z.int().nonnegative().optional(),
+});
+
 export const LessonVisuals = z.object({
   lessonId: Uuid,
   visuals: z.array(VisualRef),
@@ -41,3 +51,4 @@ export type LessonRequest = z.infer<typeof LessonRequest>;
 export type LessonKind = z.infer<typeof LessonKind>;
 export type QuickAnswer = z.infer<typeof QuickAnswer>;
 export type LessonVisuals = z.infer<typeof LessonVisuals>;
+export type LessonProgress = z.infer<typeof LessonProgress>;

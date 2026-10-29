@@ -77,6 +77,7 @@ describe("runWithFallback", () => {
     expect(outcome).toEqual({
       kind: "retry",
       reason: "The language model timed out; try again",
+      detail: "stub: timed out after 20ms",
     });
   });
 
@@ -107,6 +108,7 @@ describe("runWithFallback", () => {
     expect(outcome).toEqual({
       kind: "retry",
       reason: "The draft failed validation; try again",
+      detail: "stub: invalid structured output (oops)",
     });
   });
 

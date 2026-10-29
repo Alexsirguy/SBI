@@ -8,7 +8,12 @@ import {
 import type { Completion, CompletionRequest, LlmProvider } from "@sbi/llm";
 import { describe, expect, it } from "vitest";
 import { makeLesson } from "./lesson-fixture";
-import { gateQuickAnswer, generateQuickAnswer, withShortAnswer } from "./quick-answer";
+import {
+  gateQuickAnswer,
+  generateQuickAnswer,
+  withoutInlineIds,
+  withShortAnswer,
+} from "./quick-answer";
 
 function provider(answer: unknown, seen: CompletionRequest[] = []): LlmProvider {
   return {
@@ -158,5 +163,31 @@ describe("withShortAnswer", () => {
     const short = updated.sections.find((section) => section.module === "short-answer");
     expect(short).toMatchObject({ text: "Heat bends the strip.", claimIds: [claimId] });
     expect(updated.reuse.contentHash).not.toBe(lesson.reuse.contentHash);
+  });
+
+  it("brings in claims the answer cites that the draft left out, and drops ones no longer cited", async () => {
+    const lesson = makeLesson();
+    const [first, second] = lesson.claims;
+    if (!first || !second) throw new Error("fixture needs two claims");
+    const extra = { ...first, claimId: "0192f1a0-0000-7000-8000-0000000000e1", text: "Extra." };
+    const trimmed = { ...lesson, claims: [first, second] };
+    const updated = await withShortAnswer(
+      trimmed,
+      { text: "Heat bends the strip.", claimIds: [extra.claimId] },
+      [extra],
+    );
+    const cited = new Set(updated.sections.flatMap((section) => section.claimIds));
+    expect(updated.claims.map((claim) => claim.claimId).sort()).toEqual([...cited].sort());
+    expect(cited.has(extra.claimId)).toBe(true);
+  });
+});
+
+describe("withoutInlineIds", () => {
+  it("removes claim ids a model wrote into the text", () => {
+    expect(
+      withoutInlineIds(
+        "Torque makes things turn [01a189b8-d216-713f-a7a8-3e2c44650553]. It grows with distance (01a189b8-d218-7377-8b85-5b8490ed5b9b).",
+      ),
+    ).toBe("Torque makes things turn. It grows with distance.");
   });
 });

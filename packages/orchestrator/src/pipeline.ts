@@ -13,10 +13,11 @@ export interface FallbackQuery {
   policyVersion: string;
 }
 
+// `reason` is for learners; `detail` names fields, checks and ids for operators' logs.
 export type PipelineOutcome =
   | { kind: "fresh"; lesson: Lesson; report: CheckReport }
-  | { kind: "fallback"; lesson: Lesson; reason: string }
-  | { kind: "retry"; reason: string };
+  | { kind: "fallback"; lesson: Lesson; reason: string; detail?: string }
+  | { kind: "retry"; reason: string; detail?: string };
 
 export type GenerationAttempt = () => Promise<{ lesson: Lesson; report: CheckReport }>;
 
@@ -54,6 +55,7 @@ export async function runWithFallback(
   fallback: FallbackQuery,
 ): Promise<PipelineOutcome> {
   let failure: string;
+  let detail: string | undefined;
   try {
     const { lesson, report } = await attempt();
     if (report.passed) return { kind: "fresh", lesson, report };
@@ -62,6 +64,7 @@ export async function runWithFallback(
   } catch (error) {
     if (!(error instanceof LlmError)) throw error;
     failure = failureKind(error);
+    detail = error.message;
   }
   let standby: Lesson | undefined;
   for (const taxonomyId of fallback.taxonomyIds) {
@@ -73,7 +76,8 @@ export async function runWithFallback(
       kind: "fallback",
       lesson: standby,
       reason: `${failure}; serving a related cached lesson instead`,
+      detail,
     };
   }
-  return { kind: "retry", reason: `${failure}; try again` };
+  return { kind: "retry", reason: `${failure}; try again`, detail };
 }

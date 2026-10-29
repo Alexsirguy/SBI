@@ -1,11 +1,18 @@
 import { Lesson } from "@sbi/contracts";
 import { transitionLesson, type PublishAuditSink } from "./publish";
 
+export interface SectionFinding {
+  sectionId: string;
+  reason: string;
+}
+
 export interface CheckResult {
   name: string;
   passed: boolean;
   /** Findings, plus notes such as skipped sections; empty on a clean pass. */
   details: string[];
+  /** The same findings per section, for checks a repair pass can act on. */
+  sections?: SectionFinding[];
 }
 
 /** One automated lesson validation; checks run independently and in parallel. */
