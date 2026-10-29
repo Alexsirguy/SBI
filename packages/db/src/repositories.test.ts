@@ -36,6 +36,7 @@ const TABLES = [
   "catalog_gaps",
   "claim_dependencies",
   "claim_sources",
+  "lesson_claims",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -94,6 +95,28 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       await repos.lessons.save(lesson);
 
       expect((await repos.lessons.get(lesson.lessonId, 1))?.reviewStatus).toBe("approved");
+    });
+
+    it("finds every version that shows a claim, and forgets claims a version dropped", async () => {
+      const [first, second] = lesson.claims;
+      const v2: LessonRecord = { ...lesson, version: 2 };
+      await repos.lessons.save(lesson);
+      await repos.lessons.save(v2);
+
+      const found = await repos.lessons.findByClaimIds([first?.claimId ?? "", "missing"]);
+      expect(found.map((item) => item.version)).toEqual([2, 1]);
+      expect(await repos.lessons.findByClaimIds([])).toEqual([]);
+
+      if (second) {
+        const trimmed = { ...v2, claims: lesson.claims.filter((claim) => claim !== second) };
+        const sections = trimmed.sections.map((section) => ({
+          ...section,
+          claimIds: section.claimIds.filter((id) => id !== second.claimId),
+        }));
+        await repos.lessons.save({ ...trimmed, sections });
+        const stillShown = await repos.lessons.findByClaimIds([second.claimId]);
+        expect(stillShown.map((item) => item.version)).toEqual([1]);
+      }
     });
 
     it("finds lessons by intent signature", async () => {
@@ -157,6 +180,22 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.claims.findDependents(base.claimId)).toEqual([]);
       await repos.claims.delete(base.claimId);
       expect(await repos.claims.findBySource(base.sourceIds[0] ?? "")).toHaveLength(1);
+    });
+
+    it("lists sources due for a re-check, oldest first", async () => {
+      const page = fixture(EvidenceSource, "evidence-source", "institution-page");
+      const paper = fixture(EvidenceSource, "evidence-source", "paper-with-doi");
+      await repos.evidenceSources.save({ ...page, lastCheckedAt: "2026-09-01T00:00:00Z" });
+      await repos.evidenceSources.save({ ...paper, lastCheckedAt: "2026-08-01T00:00:00Z" });
+
+      const due = await repos.evidenceSources.listDueForCheck(new Date("2026-09-15T00:00:00Z"), 10);
+      expect(due.map((source) => source.sourceId)).toEqual([paper.sourceId, page.sourceId]);
+      expect(
+        await repos.evidenceSources.listDueForCheck(new Date("2026-08-15T00:00:00Z"), 10),
+      ).toHaveLength(1);
+      expect(
+        await repos.evidenceSources.listDueForCheck(new Date("2026-09-15T00:00:00Z"), 1),
+      ).toHaveLength(1);
     });
 
     it("deletes a claim", async () => {

@@ -89,3 +89,14 @@ export function contentSha256(passages: Passage[]): string {
   for (const passage of passages) hash.update(`${passage.location}\n${passage.text}\n`);
   return hash.digest("hex");
 }
+
+/** Normalises case, spacing and curly quotes, so the same words compare equal across fetches. */
+export function comparableText(text: string): string {
+  return text
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201c\u201d]/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}

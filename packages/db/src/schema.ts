@@ -35,6 +35,20 @@ export const lessons = mysqlTable(
   ],
 );
 
+// Which claims each lesson version shows, so an invalidated claim finds its lessons by index.
+export const lessonClaims = mysqlTable(
+  "lesson_claims",
+  {
+    lessonId: uuid("lesson_id").notNull(),
+    version: int("version").notNull(),
+    claimId: uuid("claim_id").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.lessonId, table.version, table.claimId] }),
+    index("lesson_claims_claim_idx").on(table.claimId),
+  ],
+);
+
 export const evidenceSources = mysqlTable(
   "evidence_sources",
   {
@@ -45,7 +59,10 @@ export const evidenceSources = mysqlTable(
     lastCheckedAt: timestamp("last_checked_at").notNull(),
     document: jsonDocument("document").notNull(),
   },
-  (table) => [index("evidence_sources_locator_idx").on(table.locatorSha256)],
+  (table) => [
+    index("evidence_sources_locator_idx").on(table.locatorSha256),
+    index("evidence_sources_checked_idx").on(table.lastCheckedAt),
+  ],
 );
 
 export const claims = mysqlTable("claims", {

@@ -32,6 +32,15 @@ export const SourceRetrieval = z.object({
   contentSha256: Sha256,
 });
 
+export const FreshnessStatus = z.enum(["current", "changed", "gone", "rights-changed"]);
+
+/** Result of the last re-check; anything but "current" means lessons citing it need review. */
+export const SourceFreshness = z.object({
+  status: FreshnessStatus,
+  checkedAt: IsoDateTime,
+  missingExcerptIds: z.array(Id).default([]),
+});
+
 export const Excerpt = z.object({
   excerptId: Id,
   // Where in the source the text sits (section, page or paragraph), so a reader can check it.
@@ -60,6 +69,7 @@ export const EvidenceSource = z
     rightsStatus: RightsStatus,
     lastCheckedAt: IsoDateTime,
     retrieval: SourceRetrieval.optional(),
+    freshness: SourceFreshness.optional(),
   })
   .refine((source) => source.url !== undefined || source.doi !== undefined, {
     message: "A source needs a url or a doi",
@@ -105,7 +115,19 @@ export const Claim = z
     path: ["dependsOn"],
   });
 
+/** Emitted when a source changes under its claims, so caches drop lessons built on them. */
+export const EvidenceInvalidated = z.object({
+  type: z.literal("evidence.invalidated"),
+  sourceId: Uuid,
+  reason: FreshnessStatus.exclude(["current"]),
+  // The claims citing the source plus every claim that builds on them.
+  claimIds: z.array(Uuid),
+  detectedAt: IsoDateTime,
+});
+
 export type EvidenceSource = z.infer<typeof EvidenceSource>;
+export type EvidenceInvalidated = z.infer<typeof EvidenceInvalidated>;
+export type FreshnessStatus = z.infer<typeof FreshnessStatus>;
 export type SourceAccess = z.infer<typeof SourceAccess>;
 export type SourceRetrieval = z.infer<typeof SourceRetrieval>;
 export type RightsStatus = z.infer<typeof RightsStatus>;

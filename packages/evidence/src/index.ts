@@ -28,6 +28,14 @@ export {
   type SupportJudge,
   type SupportQuestion,
 } from "./claims/judge";
+export {
+  checkSource,
+  runFreshnessPass,
+  type CheckOutcome,
+  type FreshnessPassOptions,
+  type FreshnessPassResult,
+  type InvalidationSink,
+} from "./freshness/freshness";
 export { saveClaimGraph, type EvidenceRepositories } from "./claims/persist";
 export { claimTerms, matchTerms, type TermMatch, type TermProfile } from "./claims/terms";
 export { createMemoryEvidenceRepositories, type MemoryEvidenceRepositories } from "./memory";
@@ -48,10 +56,11 @@ export {
   type ExcerptChoice,
   type RetrievalFailure,
   type Retriever,
+  type RetrieveOptions,
   type RetrieverOptions,
 } from "./retrieval/retriever";
 export { rightsFromLicense } from "./retrieval/rights";
-export { contentSha256 } from "./retrieval/text";
+export { comparableText, contentSha256 } from "./retrieval/text";
 export type {
   FetchedSource,
   FetchOptions,
