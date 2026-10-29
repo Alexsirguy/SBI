@@ -71,6 +71,9 @@ export const EvidenceSource = z
     { message: "Excerpt ids must be unique within a source", path: ["excerpts"] },
   );
 
+/** Names one stored excerpt, so a claim's support can be checked word for word. */
+export const ExcerptRef = z.object({ sourceId: Uuid, excerptId: Id });
+
 export const ClaimStatus = z.enum(["supported", "qualified", "disputed", "unsupported"]);
 
 export const Claim = z
@@ -83,10 +86,23 @@ export const Claim = z
     confidence: Confidence,
     uncertainty: z.string().min(1).optional(),
     dependsOn: z.array(Uuid).default([]),
+    // Optional, not defaulted, so claims written before citations keep their lesson content hash.
+    citations: z.array(ExcerptRef).optional(),
   })
   .refine((claim) => claim.status === "unsupported" || claim.sourceIds.length > 0, {
     message: "Only unsupported claims may have no sources",
     path: ["sourceIds"],
+  })
+  .refine(
+    (claim) => (claim.citations ?? []).every((ref) => claim.sourceIds.includes(ref.sourceId)),
+    {
+      message: "Citations must point at the claim's own sources",
+      path: ["citations"],
+    },
+  )
+  .refine((claim) => !claim.dependsOn.includes(claim.claimId), {
+    message: "A claim cannot depend on itself",
+    path: ["dependsOn"],
   });
 
 export type EvidenceSource = z.infer<typeof EvidenceSource>;
@@ -96,3 +112,4 @@ export type RightsStatus = z.infer<typeof RightsStatus>;
 export type SourceType = z.infer<typeof SourceType>;
 export type Claim = z.infer<typeof Claim>;
 export type ClaimStatus = z.infer<typeof ClaimStatus>;
+export type ExcerptRef = z.infer<typeof ExcerptRef>;
