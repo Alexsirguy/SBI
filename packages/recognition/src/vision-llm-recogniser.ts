@@ -26,10 +26,14 @@ export interface RecognitionOutcome extends z.infer<typeof RecognitionOutput> {
   usage: Usage;
 }
 
+export interface RecogniseOptions {
+  signal?: AbortSignal;
+}
+
 /** Identifies the main object in a photo and ranks up to three candidates. */
 export interface RecognitionProvider {
   readonly id: string;
-  recognise(image: RecognitionImage): Promise<RecognitionOutcome>;
+  recognise(image: RecognitionImage, options?: RecogniseOptions): Promise<RecognitionOutcome>;
 }
 
 const SYSTEM_PROMPT = `You identify the main everyday object in a photo for a science-learning app used by people aged 8 and up.
@@ -70,7 +74,7 @@ const OUTPUT_SCHEMA = {
 export function createVisionLlmRecogniser(llm: LlmProvider): RecognitionProvider {
   return {
     id: llm.id,
-    async recognise(image) {
+    async recognise(image, options = {}) {
       const completion = await llm.complete({
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -88,6 +92,7 @@ export function createVisionLlmRecogniser(llm: LlmProvider): RecognitionProvider
         ],
         jsonSchema: { name: "RecognitionOutput", schema: OUTPUT_SCHEMA },
         maxTokens: 2000,
+        signal: options.signal,
       });
       const output = RecognitionOutput.parse(JSON.parse(completion.text));
       return {

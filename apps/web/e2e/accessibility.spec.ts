@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { expectNoAxeViolations } from "./a11y";
-import { mockUploads } from "./mock-api";
+import { mockTaxonomy, mockUploads } from "./mock-api";
 
 async function selectPhoto(page: Page) {
   await page.evaluate(
@@ -72,6 +72,7 @@ test("keyboard focus is clearly visible on every kind of control", async ({ page
 
 test("the whole photo journey works from the keyboard alone", async ({ page }) => {
   await mockUploads(page);
+  await mockTaxonomy(page);
   await page.goto("/capture");
   await selectPhoto(page);
   const form = page.getByRole("form", { name: "Photo capture" });
