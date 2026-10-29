@@ -1,8 +1,8 @@
 import { Lesson } from "@sbi/contracts";
 import type { LessonRepository } from "@sbi/orchestrator";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Database } from "../client";
-import { lessons } from "../schema";
+import { lessonClaims, lessons } from "../schema";
 import { parseDocuments } from "./document";
 
 export function createLessonRepository(db: Database): LessonRepository {
@@ -23,7 +23,18 @@ export function createLessonRepository(db: Database): LessonRepository {
         contentHash: lesson.reuse.contentHash,
         document: lesson,
       };
-      await db.insert(lessons).values(row).onDuplicateKeyUpdate({ set: row });
+      const key = { lessonId: lesson.lessonId, version: lesson.version };
+      await db.transaction(async (tx) => {
+        await tx.insert(lessons).values(row).onDuplicateKeyUpdate({ set: row });
+        await tx
+          .delete(lessonClaims)
+          .where(
+            and(eq(lessonClaims.lessonId, key.lessonId), eq(lessonClaims.version, key.version)),
+          );
+        await tx
+          .insert(lessonClaims)
+          .values(lesson.claims.map((claim) => ({ ...key, claimId: claim.claimId })));
+      });
     },
     async get(lessonId, version) {
       const rows = await select()
@@ -41,6 +52,26 @@ export function createLessonRepository(db: Database): LessonRepository {
     async findByIntent(intentSignature) {
       const rows = await select()
         .where(eq(lessons.intentSignature, intentSignature))
+        .orderBy(lessons.lessonId, desc(lessons.version));
+      return parseDocuments(Lesson, rows);
+    },
+    async findByClaimIds(claimIds) {
+      if (claimIds.length === 0) return [];
+      const rows = await db
+        .selectDistinct({
+          document: lessons.document,
+          lessonId: lessons.lessonId,
+          version: lessons.version,
+        })
+        .from(lessons)
+        .innerJoin(
+          lessonClaims,
+          and(
+            eq(lessonClaims.lessonId, lessons.lessonId),
+            eq(lessonClaims.version, lessons.version),
+          ),
+        )
+        .where(inArray(lessonClaims.claimId, claimIds))
         .orderBy(lessons.lessonId, desc(lessons.version));
       return parseDocuments(Lesson, rows);
     },

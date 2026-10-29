@@ -19,7 +19,9 @@
     "@sbi/contracts": "workspace:*",
     "@sbi/db": "workspace:*",
     "@sbi/env": "workspace:*",
+    "@sbi/evidence": "workspace:*",
     "@sbi/media": "workspace:*",
+    "@sbi/orchestrator": "workspace:*",
     "@sbi/recognition": "workspace:*",
     "@sbi/taxonomy": "workspace:*",
     "reflect-metadata": "0.2.2",
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@nestjs/testing": "12.1.3",
     "@sbi/config": "workspace:*",
+    "@sbi/testing": "workspace:*",
     "tsup": "8.5.1",
     "tsx": "4.23.15"
   }
