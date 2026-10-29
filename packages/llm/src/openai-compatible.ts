@@ -3,6 +3,7 @@ import {
   type ChatMessage,
   type Completion,
   type CompletionRequest,
+  type LlmEventSink,
   type LlmProvider,
 } from "./provider";
 
@@ -19,6 +20,10 @@ export interface OpenAiCompatibleOptions {
   extraBody?: Record<string, unknown>;
   retries?: number;
   fetchImpl?: typeof fetch;
+  // Per-attempt deadline; each retry gets a fresh budget. Use the request signal for a total deadline.
+  timeoutMs?: number;
+  /** Called once per complete() call with versions and usage, never message text. */
+  onEvent?: LlmEventSink;
 }
 
 interface ChatCompletionResponse {
@@ -62,18 +67,64 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
   const fetchImpl = options.fetchImpl ?? fetch;
   const retries = options.retries ?? 3;
 
+  // Races the request so a hung connection still hits the deadline.
+  async function attemptFetch(
+    body: unknown,
+    caller: AbortSignal | undefined,
+    timeoutMs: number,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    let onCallerAbort: (() => void) | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const pending = fetchImpl(`${options.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${options.apiKey}`,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    pending.then(undefined, () => undefined);
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(new LlmError(`${options.id}: timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+    });
+    const aborted = new Promise<never>((_, reject) => {
+      if (!caller) return;
+      if (caller.aborted) {
+        reject(caller.reason);
+        return;
+      }
+      onCallerAbort = () => reject(caller.reason);
+      caller.addEventListener("abort", onCallerAbort, { once: true });
+    });
+    try {
+      return await Promise.race([pending, timeout, aborted]);
+    } finally {
+      clearTimeout(timer);
+      if (caller && onCallerAbort) caller.removeEventListener("abort", onCallerAbort);
+      controller.abort();
+    }
+  }
+
   async function post(body: unknown, signal?: AbortSignal): Promise<ChatCompletionResponse> {
     for (let attempt = 0; ; attempt += 1) {
       signal?.throwIfAborted();
-      const response = await fetchImpl(`${options.baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${options.apiKey}`,
-        },
-        body: JSON.stringify(body),
-        signal,
-      });
+      const response =
+        options.timeoutMs === undefined
+          ? await fetchImpl(`${options.baseUrl}/chat/completions`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${options.apiKey}`,
+              },
+              body: JSON.stringify(body),
+              signal,
+            })
+          : await attemptFetch(body, signal, options.timeoutMs);
       signal?.throwIfAborted();
       if (response.ok) return (await response.json()) as ChatCompletionResponse;
       const retryable = response.status === 429 || response.status >= 500;
@@ -108,19 +159,41 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
         ...options.extraBody,
       };
       const started = performance.now();
-      const data = await post(body, request.signal);
-      const text = data.choices?.[0]?.message?.content;
-      if (!text) throw new LlmError(`${options.id}: empty completion`);
-      return {
-        text,
-        model: data.model ?? options.model,
-        latencyMs: Math.round(performance.now() - started),
-        usage: {
-          inputTokens: data.usage?.prompt_tokens ?? 0,
-          cachedInputTokens: data.usage?.prompt_tokens_details?.cached_tokens ?? 0,
-          outputTokens: data.usage?.completion_tokens ?? 0,
-        },
-      };
+      try {
+        const data = await post(body, request.signal);
+        const text = data.choices?.[0]?.message?.content;
+        if (!text) throw new LlmError(`${options.id}: empty completion`);
+        const completion: Completion = {
+          text,
+          model: data.model ?? options.model,
+          latencyMs: Math.round(performance.now() - started),
+          usage: {
+            inputTokens: data.usage?.prompt_tokens ?? 0,
+            cachedInputTokens: data.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+            outputTokens: data.usage?.completion_tokens ?? 0,
+          },
+          prompt: request.prompt,
+        };
+        options.onEvent?.({
+          providerId: options.id,
+          model: completion.model,
+          prompt: request.prompt,
+          usage: completion.usage,
+          latencyMs: completion.latencyMs,
+          outcome: "ok",
+        });
+        return completion;
+      } catch (error) {
+        options.onEvent?.({
+          providerId: options.id,
+          model: options.model,
+          prompt: request.prompt,
+          latencyMs: Math.round(performance.now() - started),
+          outcome: "error",
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
     },
   };
 }

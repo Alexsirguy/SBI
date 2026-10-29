@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, type Mock } from "vitest";
-import { createOpenAiCompatibleProvider } from "./openai-compatible";
-import { LlmError } from "./provider";
+import { createOpenAiCompatibleProvider, type OpenAiCompatibleOptions } from "./openai-compatible";
+import { LlmError, type LlmEvent } from "./provider";
 
 const ok = (content: string) =>
   new Response(
@@ -15,7 +15,7 @@ const ok = (content: string) =>
     }),
   );
 
-function provider(fetchImpl: typeof fetch, extra: object = {}) {
+function provider(fetchImpl: typeof fetch, extra: Partial<OpenAiCompatibleOptions> = {}) {
   return createOpenAiCompatibleProvider({
     id: "meta",
     baseUrl: "https://api.meta.ai/v1",
@@ -124,5 +124,46 @@ describe("createOpenAiCompatibleProvider", () => {
       provider(fetchImpl).complete({ messages: [{ role: "user", content: "hi" }] }),
     ).rejects.toBeInstanceOf(LlmError);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("times out a hung request", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(() => new Promise<Response>(() => undefined));
+    await expect(
+      provider(fetchImpl, { timeoutMs: 20, retries: 0 }).complete({
+        messages: [{ role: "user", content: "hi" }],
+      }),
+    ).rejects.toThrow("meta: timed out after 20ms");
+  });
+
+  it("echoes the prompt ref and reports versions and usage, never content", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => ok("hi"));
+    const events: LlmEvent[] = [];
+    const result = await provider(fetchImpl, { onEvent: (event) => events.push(event) }).complete({
+      messages: [{ role: "user", content: "secret question" }],
+      prompt: { id: "lesson-draft", version: "2" },
+    });
+
+    expect(result.prompt).toEqual({ id: "lesson-draft", version: "2" });
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      providerId: "meta",
+      model: "muse-spark-1.3",
+      prompt: { id: "lesson-draft", version: "2" },
+      usage: { inputTokens: 10, cachedInputTokens: 2, outputTokens: 5 },
+      outcome: "ok",
+    });
+    expect(JSON.stringify(events[0])).not.toContain("secret question");
+  });
+
+  it("reports terminal failures once", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => new Response("bad", { status: 400 }));
+    const events: LlmEvent[] = [];
+    await expect(
+      provider(fetchImpl, { onEvent: (event) => events.push(event) }).complete({
+        messages: [{ role: "user", content: "hi" }],
+      }),
+    ).rejects.toBeInstanceOf(LlmError);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ outcome: "error", providerId: "meta" });
   });
 });
