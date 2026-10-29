@@ -1,16 +1,22 @@
-import { Module } from "@nestjs/common";
+import { Logger, Module } from "@nestjs/common";
 import type { Repositories } from "@sbi/db";
 import {
   META_MODEL_API_BASE_URL,
   OPENAI_BASE_URL,
   createOpenAiCompatibleProvider,
+  type LlmEventSink,
   type LlmProvider,
 } from "@sbi/llm";
 import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
-import { API_ENV, LESSON_CLAIMS, LESSON_LLM, LESSONS, REPOSITORIES } from "../tokens";
+import { API_ENV, LESSON_EVIDENCE, LESSON_LLM, LESSONS, REPOSITORIES } from "../tokens";
 import { LessonController } from "./lesson.controller";
 import { LessonService } from "./lesson.service";
+
+const logger = new Logger("LessonLlm");
+
+// Versions, usage and outcome only; the event type carries no message text.
+const logEvent: LlmEventSink = (event) => logger.log(JSON.stringify(event));
 
 // Without a key and a model the API still serves everything else; /lessons answers 503.
 export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvider | null {
@@ -23,6 +29,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       apiKey: META_MODEL_API_KEY,
       model: LESSON_MODEL,
       timeoutMs: 60_000,
+      onEvent: logEvent,
     });
   }
   if (OPENAI_API_KEY) {
@@ -33,6 +40,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       model: LESSON_MODEL,
       maxTokensParam: "max_completion_tokens",
       timeoutMs: 60_000,
+      onEvent: logEvent,
     });
   }
   return null;
@@ -54,9 +62,12 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       useFactory: (repos: Repositories) => repos.lessons,
     },
     {
-      provide: LESSON_CLAIMS,
+      provide: LESSON_EVIDENCE,
       inject: [REPOSITORIES],
-      useFactory: (repos: Repositories) => repos.claims,
+      useFactory: (repos: Repositories) => ({
+        claims: repos.claims,
+        sources: repos.evidenceSources,
+      }),
     },
   ],
 })

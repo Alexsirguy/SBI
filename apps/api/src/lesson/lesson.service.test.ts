@@ -1,15 +1,23 @@
 import { HttpStatus } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { Lesson, type Claim, type Lesson as LessonType, type LessonRequest } from "@sbi/contracts";
-import type { ClaimRepository } from "@sbi/evidence";
+import {
+  buildClaims,
+  createMemoryEvidenceRepositories,
+  saveClaimGraph,
+  type EvidenceRepositories,
+  type FetchedSource,
+} from "@sbi/evidence";
 import { LlmError, type Completion, type CompletionRequest, type LlmProvider } from "@sbi/llm";
 import type { LessonRepository, TaxonomyLessonLookup } from "@sbi/orchestrator";
 import { createTaxonomy, type Taxonomy } from "@sbi/taxonomy";
 import { UserFacingException } from "../common/user-facing.exception";
-import { LESSON_POLICY_VERSION, LessonService, type LessonStreamEvent } from "./lesson.service";
-
-const CLAIM_A = "123e4567-e89b-12d3-a456-426614174000";
-const SOURCE = "123e4567-e89b-12d3-a456-426614174002";
+import {
+  effectiveSafetyClass,
+  LESSON_POLICY_VERSION,
+  LessonService,
+  type LessonStreamEvent,
+} from "./lesson.service";
 
 const REQUEST: LessonRequest = {
   question: "Why does my kettle click off?",
@@ -22,17 +30,40 @@ const REQUEST: LessonRequest = {
   fresh: false,
 };
 
-function claim(): Claim {
+function page(publisher: string, url: string): FetchedSource {
   return {
-    claimId: CLAIM_A,
-    text: "Bimetallic thermostats snap open when hot.",
-    status: "supported",
-    sourceIds: [SOURCE],
-    scope: "textbook",
-    confidence: "high",
-    dependsOn: [],
+    title: publisher,
+    publisher,
+    authors: [],
+    url,
+    sourceType: "institution",
+    passages: [{ location: "paragraph 1", text: "Bimetallic thermostats snap open when hot." }],
+    rightsStatus: "reusable",
+    retrieval: {
+      connector: "us-gov",
+      fetchedAt: "2026-10-29T09:00:00.000Z",
+      access: "full-text",
+      contentSha256: "c".repeat(64),
+    },
   };
 }
+
+// One claim backed by two independent agencies, stored as the evidence check expects.
+async function evidenceStore(): Promise<{ evidence: EvidenceRepositories; claim: Claim }> {
+  const evidence = createMemoryEvidenceRepositories();
+  const built = await buildClaims(
+    [{ key: "snap", text: "Bimetallic thermostats snap open when hot.", scope: "kettles" }],
+    [page("USGS", "https://www.usgs.gov/a"), page("NIST", "https://www.nist.gov/b")],
+    { judge: { version: "t", judge: async () => ({ verdict: "supports", reason: "ok" }) } },
+  );
+  const { claims } = await saveClaimGraph(evidence, built);
+  const claim = claims[0];
+  if (!claim) throw new Error("fixture claim was not built");
+  return { evidence, claim };
+}
+
+const EVIDENCE = await evidenceStore();
+const CLAIM_A = EVIDENCE.claim.claimId;
 
 function taxonomy(): Taxonomy {
   return createTaxonomy([
@@ -43,6 +74,19 @@ function taxonomy(): Taxonomy {
       label: "Kettle",
       parentId: "test.home",
       concepts: ["heat transfer"],
+      facts: [{ scope: "category", text: "Thermostats snap open when hot.", claimId: CLAIM_A }],
+    },
+    {
+      id: "category.household-chemicals",
+      kind: "category",
+      label: "Household chemicals",
+    },
+    {
+      id: "object.cleaning-products",
+      kind: "object",
+      label: "Cleaning products",
+      parentId: "category.household-chemicals",
+      concepts: ["acids and bases"],
       facts: [{ scope: "category", text: "Thermostats snap open when hot.", claimId: CLAIM_A }],
     },
   ]);
@@ -73,7 +117,7 @@ function scriptedProvider(options: { entailment?: string } = {}): LlmProvider {
     async complete(request: CompletionRequest): Promise<Completion> {
       calls.push(request);
       const text = JSON.stringify(request.messages);
-      const payload = text.includes("Question:")
+      const payload = text.includes("<question-")
         ? JSON.stringify(FRAGMENT)
         : text.includes("<section-")
           ? (options.entailment ?? SUPPORTS)
@@ -127,43 +171,11 @@ function memoryLessons(stored: LessonType[] = []) {
   return { lessons, repo };
 }
 
-function memoryClaims(stored: Claim[] = [claim()]): ClaimRepository {
-  const byId = new Map(stored.map((item) => [item.claimId, item]));
-  return {
-    async save(item) {
-      byId.set(item.claimId, item);
-    },
-    async get(claimId) {
-      return byId.get(claimId);
-    },
-    async getMany(claimIds) {
-      const found: Claim[] = [];
-      for (const id of claimIds) {
-        const item = byId.get(id);
-        if (item) found.push(item);
-      }
-      return found;
-    },
-    async delete(claimId) {
-      return byId.delete(claimId);
-    },
-    async findDependents() {
-      return [];
-    },
-    async findBySource() {
-      return [];
-    },
-    async findByJudge() {
-      return [];
-    },
-  };
-}
-
-function setup(provider: LlmProvider | null, stored: LessonType[] = [], claims = memoryClaims()) {
+function setup(provider: LlmProvider | null, stored: LessonType[] = []) {
   const { lessons, repo } = memoryLessons(stored);
   return {
     lessons,
-    service: new LessonService(provider, taxonomy(), repo, claims),
+    service: new LessonService(provider, taxonomy(), repo, EVIDENCE.evidence),
   };
 }
 
@@ -213,9 +225,10 @@ describe("LessonService", () => {
     expect(lessons).toHaveLength(1);
   });
 
-  it("serves aligned lessons from cache without calling the provider", async () => {
+  it("serves aligned shared lessons from cache without calling the provider", async () => {
     const first = setup(scriptedProvider());
     await collect(first.service);
+    share(first.lessons);
     const provider = throwingProvider(new Error("must not be called"));
     const { service: cached } = setup(provider, first.lessons);
 
@@ -229,6 +242,7 @@ describe("LessonService", () => {
   it("regenerates on a fresh-answer override", async () => {
     const first = setup(scriptedProvider());
     await collect(first.service);
+    share(first.lessons);
     const provider = throwingProvider(new LlmError("stub: timed out after 20ms"));
     const { service: fresh } = setup(provider, first.lessons);
 
@@ -265,13 +279,69 @@ describe("LessonService", () => {
     expect(failure.message).toContain("timed out");
   });
 
-  it("asks for a retry when the judges reject the draft", async () => {
-    const { service: target } = setup(scriptedProvider({ entailment: CONTRADICTS }));
+  it("holds a draft the judges reject for review instead of serving it", async () => {
+    const { lessons, service: target } = setup(scriptedProvider({ entailment: CONTRADICTS }));
 
     const failure = await userFacing(() => collect(target));
 
     expect(failure.status).toBe(HttpStatus.SERVICE_UNAVAILABLE);
-    expect(failure.message).toContain("entailment");
+    expect(failure.message).toContain("reviewer needs to check");
+    expect(lessons.map((lesson) => lesson.reviewStatus)).toEqual(["needs-review"]);
+  });
+
+  it("never serves another learner's private lesson from cache or as a fallback", async () => {
+    const first = setup(scriptedProvider());
+    await collect(first.service);
+    const { service: next } = setup(
+      throwingProvider(new LlmError("stub: timed out after 20ms")),
+      first.lessons,
+    );
+
+    const failure = await userFacing(() => collect(next));
+
+    expect(failure.message).toContain("timed out");
+  });
+
+  it("holds a lesson on a high-risk topic for review even when the client says low", async () => {
+    const { lessons, service: target } = setup(scriptedProvider());
+
+    const failure = await userFacing(() =>
+      collect(target, { ...REQUEST, taxonomyId: "object.cleaning-products", safetyClass: "low" }),
+    );
+
+    expect(failure.message).toContain("reviewer needs to check");
+    expect(lessons[0]).toMatchObject({ safetyClass: "high", reviewStatus: "needs-review" });
+  });
+
+  it("holds a draft whose cited excerpt has gone stale", async () => {
+    // A copy of the shared store, with the cited source reported gone by the freshness check.
+    const evidence = createMemoryEvidenceRepositories();
+    const claim = EVIDENCE.claim;
+    for (const source of await EVIDENCE.evidence.sources.getMany(claim.sourceIds)) {
+      await evidence.sources.save({
+        ...source,
+        freshness: { status: "gone", checkedAt: "2026-10-29T10:00:00Z", missingExcerptIds: [] },
+      });
+    }
+    await evidence.claims.save(claim);
+    const facts = createTaxonomy([
+      { id: "test.home", kind: "category", label: "Home" },
+      {
+        id: "test.kettle",
+        kind: "object",
+        label: "Kettle",
+        parentId: "test.home",
+        concepts: ["heat transfer"],
+        facts: [{ scope: "category", text: "Thermostats snap.", claimId: claim.claimId }],
+      },
+    ]);
+    const { lessons, repo } = memoryLessons();
+    const target = new LessonService(scriptedProvider(), facts, repo, evidence);
+
+    const failure = await userFacing(() => collect(target));
+
+    expect(failure.message).toContain("reviewer needs to check");
+    expect(lessons[0]?.reviewStatus).toBe("needs-review");
   });
 
   it("answers 404 for unknown categories and uncovered ones", async () => {
@@ -294,7 +364,12 @@ describe("LessonService", () => {
       },
     ]);
     const { repo } = memoryLessons();
-    const uncovered = new LessonService(scriptedProvider(), bare, repo, memoryClaims([]));
+    const uncovered = new LessonService(
+      scriptedProvider(),
+      bare,
+      repo,
+      createMemoryEvidenceRepositories(),
+    );
     const missing = await userFacing(() =>
       collect(uncovered, { ...REQUEST, taxonomyId: "test.rock" }),
     );
@@ -307,6 +382,25 @@ describe("LessonService", () => {
     const failure = await userFacing(() => collect(target));
 
     expect(failure.status).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+  });
+});
+
+// Stands in for opt-in sharing (#104): only shared lessons may be reused or stand in.
+function share(lessons: LessonType[]) {
+  for (const lesson of lessons) lesson.reuse = { ...lesson.reuse, cacheScope: "shared" };
+}
+
+describe("effectiveSafetyClass", () => {
+  it("raises flagged topics and their children to high, and never lowers a request", () => {
+    expect(effectiveSafetyClass("low", { id: "object.mushroom" })).toBe("high");
+    expect(
+      effectiveSafetyClass("low", {
+        id: "object.medicine-tablets",
+        parentId: "category.household-chemicals",
+      }),
+    ).toBe("high");
+    expect(effectiveSafetyClass("medium", { id: "object.bicycle" })).toBe("medium");
+    expect(effectiveSafetyClass("low", { id: "object.bicycle" })).toBe("low");
   });
 });
 
@@ -344,14 +438,14 @@ function firstLesson(): LessonType {
         claimIds: [CLAIM_A],
       },
     ],
-    claims: [claim()],
+    claims: [EVIDENCE.claim],
     visuals: [],
     safetyClass: "low",
     reviewStatus: "auto-validated",
     reuse: {
       intentSignature: "seeded",
       matchDimensions: ["intent", "depth", "locale", "assumptions", "safety"],
-      cacheScope: "private",
+      cacheScope: "shared",
       generatedAt: "2026-10-29T00:00:00.000Z",
       evidenceSnapshotId: "123e4567-e89b-12d3-a456-426614174003",
       sourceFreshness: "fresh",
