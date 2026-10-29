@@ -38,7 +38,10 @@ export const schemaCheck: LessonCheck = {
   },
 };
 
-/** Every cited claim must exist, and every stored claim must be cited somewhere. */
+// Questions for the learner state no facts; every other module must rest on a claim.
+const UNCITED_MODULES = new Set<Lesson["sections"][number]["module"]>(["check-thinking"]);
+
+/** Every cited claim must exist, every claim must be cited, and factual sections must cite. */
 export const citationCheck: LessonCheck = {
   name: "citations",
   async run(lesson) {
@@ -47,6 +50,9 @@ export const citationCheck: LessonCheck = {
     const details = [
       ...[...cited].filter((id) => !known.has(id)).map((id) => `Unknown claim "${id}"`),
       ...[...known].filter((id) => !cited.has(id)).map((id) => `Claim "${id}" is never cited`),
+      ...lesson.sections
+        .filter((section) => section.claimIds.length === 0 && !UNCITED_MODULES.has(section.module))
+        .map((section) => `Section "${section.sectionId}" states facts without citing a claim`),
     ];
     return result(citationCheck.name, details);
   },

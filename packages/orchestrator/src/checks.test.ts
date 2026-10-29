@@ -63,6 +63,33 @@ describe("citationCheck", () => {
   });
 });
 
+describe("citationCheck on uncited sections", () => {
+  const cited = makeLesson().sections;
+
+  it("fails a factual section that cites no claim", async () => {
+    const lesson = withSections([
+      ...cited,
+      { sectionId: "history-4", module: "history", text: "Kettles date from 1891.", claimIds: [] },
+    ]);
+    const result = await citationCheck.run(lesson);
+    expect(result.passed).toBe(false);
+    expect(result.details).toContain('Section "history-4" states facts without citing a claim');
+  });
+
+  it("allows check-thinking questions without citations", async () => {
+    const lesson = withSections([
+      ...cited,
+      {
+        sectionId: "check-thinking-4",
+        module: "check-thinking",
+        text: "What would happen without the strip?",
+        claimIds: [],
+      },
+    ]);
+    expect((await citationCheck.run(lesson)).passed).toBe(true);
+  });
+});
+
 describe("misconceptionCheck", () => {
   it("passes settled lessons with no notes", async () => {
     expect(await misconceptionCheck.run(makeLesson())).toMatchObject({ passed: true });

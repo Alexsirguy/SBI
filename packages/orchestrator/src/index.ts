@@ -24,3 +24,4 @@ export {
   createEntailmentCheck,
   ENTAILMENT_PROMPT_VERSION,
 } from "./entailment";
+export { createEvidenceCheck, type EvidenceCheckDeps } from "./evidence-check";
