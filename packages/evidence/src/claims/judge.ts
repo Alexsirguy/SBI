@@ -59,7 +59,8 @@ export function createLlmSupportJudge(llm: LlmProvider): SupportJudge {
           },
         ],
         jsonSchema: { name: "SupportVerdict", schema: OUTPUT_SCHEMA },
-        maxTokens: 600,
+        // Reasoning models spend tokens before answering; 600 sometimes left an empty reply.
+        maxTokens: 2000,
         signal: options.signal,
       });
       let raw: unknown;
