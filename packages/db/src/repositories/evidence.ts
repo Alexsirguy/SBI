@@ -1,9 +1,18 @@
+import { createHash } from "node:crypto";
 import { Claim, EvidenceSource } from "@sbi/contracts";
-import type { ClaimRepository, EvidenceSourceRepository } from "@sbi/evidence";
-import { eq, inArray } from "drizzle-orm";
+import {
+  type ClaimRepository,
+  type EvidenceSourceRepository,
+  sourceLocatorKey,
+  type SourceLocator,
+} from "@sbi/evidence";
+import { desc, eq, inArray } from "drizzle-orm";
 import type { Database } from "../client";
 import { claims, evidenceSources } from "../schema";
 import { parseDocuments } from "./document";
+
+const locatorHash = (locator: SourceLocator) =>
+  createHash("sha256").update(sourceLocatorKey(locator)).digest("hex");
 
 export function createEvidenceSourceRepository(db: Database): EvidenceSourceRepository {
   const select = () => db.select({ document: evidenceSources.document }).from(evidenceSources);
@@ -13,6 +22,7 @@ export function createEvidenceSourceRepository(db: Database): EvidenceSourceRepo
       const source = EvidenceSource.parse(input);
       const row = {
         sourceId: source.sourceId,
+        locatorSha256: locatorHash(source),
         rightsStatus: source.rightsStatus,
         lastCheckedAt: new Date(source.lastCheckedAt),
         document: source,
@@ -32,6 +42,19 @@ export function createEvidenceSourceRepository(db: Database): EvidenceSourceRepo
         await select().where(inArray(evidenceSources.sourceId, sourceIds)),
       );
     },
+    async findByLocator(locator) {
+      const rows = await select()
+        .where(eq(evidenceSources.locatorSha256, locatorHash(locator)))
+        .orderBy(desc(evidenceSources.lastCheckedAt))
+        .limit(1);
+      return parseDocuments(EvidenceSource, rows)[0];
+    },
+    async delete(sourceId) {
+      const [result] = await db
+        .delete(evidenceSources)
+        .where(eq(evidenceSources.sourceId, sourceId));
+      return result.affectedRows > 0;
+    },
   };
 }
 
@@ -50,6 +73,10 @@ export function createClaimRepository(db: Database): ClaimRepository {
     async getMany(claimIds) {
       if (claimIds.length === 0) return [];
       return parseDocuments(Claim, await select().where(inArray(claims.claimId, claimIds)));
+    },
+    async delete(claimId) {
+      const [result] = await db.delete(claims).where(eq(claims.claimId, claimId));
+      return result.affectedRows > 0;
     },
   };
 }

@@ -22,7 +22,8 @@ export const RightsStatus = z.enum([
 
 export const Excerpt = z.object({
   excerptId: Id,
-  location: z.string().min(1),
+  // Where in the source the text sits (section, page or paragraph), so a reader can check it.
+  location: z.string().min(1).max(200),
   // Short quotations only; the spec limits reuse to what's needed to support a claim.
   text: z.string().min(1).max(1000),
 });
@@ -50,7 +51,12 @@ export const EvidenceSource = z
   .refine((source) => source.url !== undefined || source.doi !== undefined, {
     message: "A source needs a url or a doi",
     path: ["url"],
-  });
+  })
+  .refine(
+    (source) =>
+      new Set(source.excerpts.map((excerpt) => excerpt.excerptId)).size === source.excerpts.length,
+    { message: "Excerpt ids must be unique within a source", path: ["excerpts"] },
+  );
 
 export const ClaimStatus = z.enum(["supported", "qualified", "disputed", "unsupported"]);
 
