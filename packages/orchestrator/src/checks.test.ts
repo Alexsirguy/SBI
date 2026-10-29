@@ -155,7 +155,7 @@ describe("runLessonChecks", () => {
   it("audits the auto-validation move", async () => {
     const audits: { from: string; to: string; by: string }[] = [];
     await runLessonChecks(makeLesson(), [pass], {
-      onAudit: (audit) => audits.push(audit),
+      onAudit: (audit) => void audits.push(audit),
     });
 
     expect(audits).toHaveLength(1);
