@@ -1,4 +1,5 @@
 import { Lesson } from "@sbi/contracts";
+import { transitionLesson, type PublishAuditSink } from "./publish";
 
 export interface CheckResult {
   name: string;
@@ -70,6 +71,7 @@ export const misconceptionCheck: LessonCheck = {
 
 interface RunOptions {
   signal?: AbortSignal;
+  onAudit?: PublishAuditSink;
 }
 
 // Only the generated -> auto-validated step lives here; review routing is E6-6.
@@ -91,12 +93,10 @@ export async function runLessonChecks(
     checkedAt,
   };
   if (!passed || lesson.reviewStatus !== "generated") return { lesson, report };
+  const moved = transitionLesson(lesson, "auto-validated", { by: "system", at: checkedAt });
+  options?.onAudit?.(moved.audit);
   return {
-    lesson: {
-      ...lesson,
-      reviewStatus: "auto-validated",
-      reuse: { ...lesson.reuse, validatedAt: checkedAt },
-    },
+    lesson: { ...moved.lesson, reuse: { ...moved.lesson.reuse, validatedAt: checkedAt } },
     report,
   };
 }

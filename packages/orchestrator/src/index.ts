@@ -24,3 +24,16 @@ export {
   createEntailmentCheck,
   ENTAILMENT_PROMPT_VERSION,
 } from "./entailment";
+export {
+  createPublisher,
+  RightsBlockedError,
+  routeLesson,
+  transitionLesson,
+  type PublishAudit,
+  type PublishAuditSink,
+  type Publisher,
+  type ReviewStatus,
+  type RightsDecision,
+  type RightsGate,
+  type RouteDecision,
+} from "./publish";
