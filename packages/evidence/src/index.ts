@@ -50,10 +50,12 @@ export {
   type PolicyAssessment,
   type PolicyIssue,
 } from "./policy/two-source";
+export { ingestTopic, TopicSpec, type IngestOptions, type IngestReport } from "./ingest/ingest";
 export { saveClaimGraph, type EvidenceRepositories } from "./claims/persist";
 export { claimTerms, matchTerms, type TermMatch, type TermProfile } from "./claims/terms";
 export { createMemoryEvidenceRepositories, type MemoryEvidenceRepositories } from "./memory";
 export {
+  DuplicateSourceError,
   sourceLocatorKey,
   type ClaimRepository,
   type EvidenceSourceRepository,
