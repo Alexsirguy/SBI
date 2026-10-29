@@ -151,4 +151,14 @@ describe("runLessonChecks", () => {
     expect(lesson.reviewStatus).toBe("auto-validated");
     expect(lesson.reuse.validatedAt).toBeUndefined();
   });
+
+  it("audits the auto-validation move", async () => {
+    const audits: { from: string; to: string; by: string }[] = [];
+    await runLessonChecks(makeLesson(), [pass], {
+      onAudit: (audit) => void audits.push(audit),
+    });
+
+    expect(audits).toHaveLength(1);
+    expect(audits[0]).toMatchObject({ from: "generated", to: "auto-validated", by: "system" });
+  });
 });

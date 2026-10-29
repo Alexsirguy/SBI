@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { API_ROUTES } from "./api-routes";
 import { contractOpenApi } from "./json-schema";
+import { LessonRequest } from "./lesson-api";
 import { ObservationRequest, TaxonomySearchRequest } from "./taxonomy-api";
 
 interface Operation {
@@ -36,6 +37,23 @@ describe("API_ROUTES", () => {
     expect(ObservationRequest.parse({ shape: " round ", use: "" })).toEqual({
       shape: "round",
       use: "",
+    });
+  });
+
+  it("trims lesson questions and defaults the reuse options", () => {
+    const base = {
+      taxonomyId: "home.kettle",
+      audience: "general",
+      readingLevel: "plain",
+      locale: "en-GB",
+      safetyClass: "low",
+    };
+    expect(LessonRequest.safeParse({ ...base, question: "  " }).success).toBe(false);
+    expect(LessonRequest.safeParse({ ...base, question: "Why?" }).success).toBe(true);
+    expect(LessonRequest.parse({ ...base, question: "  Why? " })).toMatchObject({
+      question: "Why?",
+      assumptions: [],
+      fresh: false,
     });
   });
 });
