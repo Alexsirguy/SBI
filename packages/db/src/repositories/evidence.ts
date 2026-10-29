@@ -71,7 +71,12 @@ export function createClaimRepository(db: Database): ClaimRepository {
   return {
     async save(input) {
       const claim = Claim.parse(input);
-      const row = { claimId: claim.claimId, status: claim.status, document: claim };
+      const row = {
+        claimId: claim.claimId,
+        status: claim.status,
+        judgeVersion: claim.verification?.judge ?? null,
+        document: claim,
+      };
       await db.transaction(async (tx) => {
         await tx.insert(claims).values(row).onDuplicateKeyUpdate({ set: row });
         await tx.delete(claimDependencies).where(eq(claimDependencies.claimId, claim.claimId));
@@ -106,6 +111,9 @@ export function createClaimRepository(db: Database): ClaimRepository {
         .innerJoin(claimDependencies, eq(claimDependencies.claimId, claims.claimId))
         .where(eq(claimDependencies.dependsOn, claimId));
       return parseDocuments(Claim, rows);
+    },
+    async findByJudge(judge) {
+      return parseDocuments(Claim, await select().where(eq(claims.judgeVersion, judge)));
     },
     async findBySource(sourceId) {
       const rows = await db

@@ -65,11 +65,16 @@ export const evidenceSources = mysqlTable(
   ],
 );
 
-export const claims = mysqlTable("claims", {
-  claimId: uuid("claim_id").primaryKey(),
-  status: varchar("status", { length: 32 }).notNull(),
-  document: jsonDocument("document").notNull(),
-});
+export const claims = mysqlTable(
+  "claims",
+  {
+    claimId: uuid("claim_id").primaryKey(),
+    status: varchar("status", { length: 32 }).notNull(),
+    judgeVersion: varchar("judge_version", { length: 200 }),
+    document: jsonDocument("document").notNull(),
+  },
+  (table) => [index("claims_judge_idx").on(table.judgeVersion)],
+);
 
 // Edges copied out of the claim document so dependents and citing claims are indexed lookups.
 export const claimDependencies = mysqlTable(
