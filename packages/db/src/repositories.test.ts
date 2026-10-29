@@ -117,6 +117,36 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.claims.getMany([claim.claimId, "missing"])).toEqual([claim]);
       expect(await repos.claims.getMany([])).toEqual([]);
     });
+
+    it("finds a source by DOI or URL and deletes it", async () => {
+      const page = fixture(EvidenceSource, "evidence-source", "institution-page");
+      const paper = fixture(EvidenceSource, "evidence-source", "paper-with-doi");
+      await repos.evidenceSources.save(page);
+      await repos.evidenceSources.save(paper);
+
+      expect(await repos.evidenceSources.findByLocator({ doi: paper.doi?.toUpperCase() })).toEqual(
+        paper,
+      );
+      expect(await repos.evidenceSources.findByLocator({ url: `${page.url}#top` })).toEqual(page);
+
+      expect(await repos.evidenceSources.delete(page.sourceId)).toBe(true);
+      expect(await repos.evidenceSources.findByLocator({ url: page.url })).toBeUndefined();
+      expect(await repos.evidenceSources.delete(page.sourceId)).toBe(false);
+    });
+
+    it("rejects a source without rights status before writing", async () => {
+      const page = fixture(EvidenceSource, "evidence-source", "institution-page");
+      const unlicensed: Partial<EvidenceSource> = { ...page, rightsStatus: undefined };
+      await expect(repos.evidenceSources.save(unlicensed as EvidenceSource)).rejects.toThrow();
+      expect(await repos.evidenceSources.get(page.sourceId)).toBeUndefined();
+    });
+
+    it("deletes a claim", async () => {
+      const claim = fixture(Claim, "claim", "supported");
+      await repos.claims.save(claim);
+      expect(await repos.claims.delete(claim.claimId)).toBe(true);
+      expect(await repos.claims.get(claim.claimId)).toBeUndefined();
+    });
   });
 
   describe("visual assets", () => {
