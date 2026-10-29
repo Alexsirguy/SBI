@@ -1,6 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 import { expectNoAxeViolations } from "./a11y";
 import {
+  mockObservations,
   mockRecognition,
   mockTaxonomy,
   mockUploads,
@@ -214,4 +215,32 @@ test("suggestions and parts work from the keyboard alone", async ({ page }) => {
 
   await expect(photo.getByText("Starting lesson: Bicycle: chain.")).toBeFocused();
   await expect.poll(() => recognition.selections).toHaveLength(1);
+});
+
+test("look-alikes the catalog cannot teach yet are offered as corrections", async ({ page }) => {
+  const sent = await mockObservations(page);
+  const recognition = await mockRecognition(page, {
+    candidates: [{ ...BICYCLE, reasons: ["two spoked wheels"] }],
+    otherLabels: ["Tricycle", "Motorcycle"],
+    next: { kind: "proceed", taxonomyId: "object.bicycle" },
+  });
+  const photo = await uploadPhoto(page);
+
+  await expect(photo.getByRole("button", { name: "Bicycle" })).toHaveAccessibleDescription(
+    "Likely. Two spoked wheels.",
+  );
+  const others = photo.getByRole("list", { name: "Or something we cannot teach yet:" });
+  await expect(others.getByRole("button")).toHaveText(["Tricycle", "Motorcycle"]);
+  await expectNoAxeViolations(page);
+
+  await others.getByRole("button", { name: "Tricycle" }).click();
+  await expect(photo.getByRole("status")).toContainText("No matches for “Tricycle”");
+  await expect(photo.getByLabel("Not right? Tell us what it is")).toHaveValue("Tricycle");
+  await expect(
+    photo.getByRole("button", { name: "Can't find it? Tell us what you notice" }),
+  ).toBeVisible();
+  await expect
+    .poll(() => recognition.selections)
+    .toEqual([{ resultId: RESULT_ID, selection: { kind: "free-text", text: "Tricycle" } }]);
+  expect(sent).toEqual([]);
 });

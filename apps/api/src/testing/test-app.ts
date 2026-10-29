@@ -74,6 +74,10 @@ export function fakeRecognition(recogniser: FallbackRecogniser | null = null) {
   const saved = new Map<string, RecognitionResult>();
   const results: RecognitionResultRepository = {
     deleteExpired: async () => 0,
+    findByImage: async (imageSha256, now) =>
+      [...saved.values()]
+        .filter((r) => r.imageSha256 === imageSha256 && Date.parse(r.deleteBy) > now.getTime())
+        .at(-1),
     get: async (resultId) => saved.get(resultId),
     listBySession: async (sessionId) =>
       [...saved.values()].filter((r) => r.sessionId === sessionId),

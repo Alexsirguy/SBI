@@ -36,6 +36,8 @@ describe("createVisionLlmRecogniser", () => {
 
     expect(result).toMatchObject({ ...output, provider: "fake", latencyMs: 12 });
     expect(seen[0]?.jsonSchema?.name).toBe("RecognitionOutput");
+    expect(result.promptVersion).toBe("recognition-p0.2");
+    expect(seen[0]?.messages[0]?.content).toContain("two closest look-alikes");
     expect(seen[0]?.messages[1]?.content).toContainEqual({
       type: "image",
       mime: "image/jpeg",

@@ -2,7 +2,7 @@ import { RecognitionCandidate } from "@sbi/contracts";
 import type { LlmProvider, Usage } from "@sbi/llm";
 import { z } from "zod";
 
-export const RECOGNITION_PROMPT_VERSION = "recognition-p0.1";
+export const RECOGNITION_PROMPT_VERSION = "recognition-p0.2";
 
 export interface RecognitionImage {
   bytes: Uint8Array;
@@ -37,7 +37,8 @@ export interface RecognitionProvider {
 }
 
 const SYSTEM_PROMPT = `You identify the main everyday object in a photo for a science-learning app used by people aged 8 and up.
-Return up to 3 candidate labels, most likely first, each a short common noun phrase (e.g. "bicycle", "electric kettle").
+Return 3 candidate labels, most likely first, each a short common noun phrase (e.g. "bicycle", "electric kettle").
+Even when you are sure, add the two closest look-alikes as alternatives with low calibratedConfidence, so the learner can correct you.
 certainty: "likely" only when you would bet on it, "possible" when plausible, "unsure" otherwise; calibratedConfidence is your probability from 0 to 1.
 status:
 - "recognised" when the top candidate is clearly identifiable.
