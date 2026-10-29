@@ -15,4 +15,4 @@ export const RECOGNITION_RESULTS = Symbol("RECOGNITION_RESULTS");
 export const CATALOG_GAPS = Symbol("CATALOG_GAPS");
 export const LESSON_LLM = Symbol("LESSON_LLM");
 export const LESSONS = Symbol("LESSONS");
-export const LESSON_CLAIMS = Symbol("LESSON_CLAIMS");
+export const LESSON_EVIDENCE = Symbol("LESSON_EVIDENCE");
