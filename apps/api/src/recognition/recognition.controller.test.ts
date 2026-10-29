@@ -1,5 +1,10 @@
 import { RecognisedPhoto, RecognitionResult } from "@sbi/contracts";
-import type { FallbackOutcome, FallbackRecogniser, RecognitionImage } from "@sbi/recognition";
+import {
+  RECOGNITION_PROMPT_VERSION,
+  type FallbackOutcome,
+  type FallbackRecogniser,
+  type RecognitionImage,
+} from "@sbi/recognition";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fakeGaps,
@@ -25,7 +30,7 @@ function answering(output: Partial<FallbackOutcome>) {
     observations: [],
     provider: "meta-spark",
     model: "muse-spark-1.3",
-    promptVersion: "recognition-p0.1",
+    promptVersion: RECOGNITION_PROMPT_VERSION,
     latencyMs: 5,
     usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 },
     fallbackFrom: [],
@@ -98,9 +103,62 @@ describe("recognition routes", () => {
       gaps,
     );
 
-    await test.post("/recognitions", { key: KEY });
+    const reply = RecognisedPhoto.parse(
+      await (await test.post("/recognitions", { key: KEY })).json(),
+    );
 
     expect(gaps.recorded).toEqual([{ source: "recognition-label", term: "lava lamp" }]);
+    expect(reply.otherLabels).toEqual(["Lava lamp"]);
+  });
+
+  it("recognises the same photo once, giving each session its own record", async () => {
+    const recogniser = answering({
+      candidates: [
+        { label: "bicycle", certainty: "likely", calibratedConfidence: 0.9, reasons: ["chain"] },
+      ],
+    });
+    const recognition = fakeRecognition(recogniser);
+    test = await startTestApp(storedPhoto(), recognition);
+    const other = "0192f1a0-0000-7000-8000-0000000000bb";
+
+    const first = RecognisedPhoto.parse(
+      await (await test.post("/recognitions", { key: KEY, sessionId: SESSION })).json(),
+    );
+    const again = RecognisedPhoto.parse(
+      await (await test.post("/recognitions", { key: KEY, sessionId: other })).json(),
+    );
+
+    expect(recogniser.recognise).toHaveBeenCalledTimes(1);
+    expect(again).toMatchObject({
+      sessionId: other,
+      candidates: first.candidates,
+      next: first.next,
+    });
+    expect(again.resultId).not.toBe(first.resultId);
+    expect(recognition.saved.get(again.resultId)?.sessionId).toBe(other);
+    expect(recognition.saved.get(first.resultId)?.sessionId).toBe(SESSION);
+  });
+
+  it("asks the provider again once the earlier result has expired or used an older prompt", async () => {
+    const recogniser = answering({});
+    const recognition = fakeRecognition(recogniser);
+    test = await startTestApp(storedPhoto(), recognition);
+    const first = RecognisedPhoto.parse(
+      await (await test.post("/recognitions", { key: KEY })).json(),
+    );
+    const stored = RecognitionResult.parse(recognition.saved.get(first.resultId));
+    recognition.saved.set(first.resultId, {
+      ...stored,
+      modelVersion: "muse-spark-1.3+recognition-p0.1",
+    });
+
+    await test.post("/recognitions", { key: KEY });
+    for (const result of recognition.saved.values()) {
+      recognition.saved.set(result.resultId, { ...result, deleteBy: "2026-01-01T00:00:00.000Z" });
+    }
+    await test.post("/recognitions", { key: KEY });
+
+    expect(recogniser.recognise).toHaveBeenCalledTimes(3);
   });
 
   it("issues a session id when none is sent", async () => {

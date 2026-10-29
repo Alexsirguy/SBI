@@ -1,0 +1,1 @@
+CREATE INDEX `recognition_image_idx` ON `recognition_results` (`image_sha256`);

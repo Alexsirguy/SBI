@@ -22,6 +22,8 @@ interface ConfirmLessonProps {
   initialMessage?: string;
   /** A category the learner can learn about when unsure which object it is. */
   fallback?: z.output<typeof CategoryFallback>;
+  /** Look-alikes the catalog cannot teach yet; picking one searches for it as a correction. */
+  otherLabels?: string[];
   onStart?: (choice: TaxonomyMatch) => void;
   /** Set for photos, where the learner's own words correct what recognition suggested. */
   onCorrection?: (text: string) => void;
@@ -43,7 +45,8 @@ function describeSuggestion({ certainty, reasons = [] }: Suggestion): string | n
   if (!certainty) {
     return null;
   }
-  return [CERTAINTY_LABELS[certainty], ...reasons].join(". ") + ".";
+  const sentences = reasons.map((reason) => reason.charAt(0).toUpperCase() + reason.slice(1));
+  return [CERTAINTY_LABELS[certainty], ...sentences].join(". ") + ".";
 }
 
 // Photo and text entry share this step so every lesson starts from a learner-confirmed object.
@@ -52,9 +55,11 @@ export function ConfirmLesson({
   initialCandidates = [],
   initialMessage = "",
   fallback,
+  otherLabels = [],
   onStart,
   onCorrection,
 }: ConfirmLessonProps) {
+  const othersId = useId();
   const inputId = useId();
   const confirmHeadingId = useId();
   const describedById = useId();
@@ -99,8 +104,8 @@ export function ConfirmLesson({
     }
   }, [selected, started, noticed]);
 
-  function runSearch() {
-    const trimmed = query.trim();
+  function runSearch(text = query) {
+    const trimmed = text.trim();
     if (trimmed.length < TAXONOMY_QUERY_MIN_LENGTH) {
       setSubmitted(null);
       setMessage(`Type at least ${TAXONOMY_QUERY_MIN_LENGTH} letters to search.`);
@@ -220,6 +225,26 @@ export function ConfirmLesson({
               </ul>
             </>
           ) : null}
+          {suggesting && otherLabels.length > 0 ? (
+            <>
+              <p id={othersId}>Or something we cannot teach yet:</p>
+              <ul aria-labelledby={othersId}>
+                {otherLabels.map((label) => (
+                  <li key={label}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery(label);
+                        runSearch(label);
+                      }}
+                    >
+                      {label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
           {suggesting && fallback ? (
             <button type="button" onClick={() => setSelected(fallback)}>
               Not sure? Learn about {fallback.label.toLowerCase()}
@@ -248,7 +273,7 @@ export function ConfirmLesson({
               }
             }}
           />
-          <button type="button" onClick={runSearch}>
+          <button type="button" onClick={() => runSearch()}>
             Search objects
           </button>
           {noticing ? (
