@@ -57,7 +57,7 @@ describe("resolve", () => {
   it("resolves labels and aliases regardless of case, punctuation and plurals", () => {
     expect(resolvedIds("Bicycle")).toEqual(["object.bicycle"]);
     expect(resolvedIds("BIKE!")).toEqual(["object.bicycle"]);
-    expect(resolvedIds("kettles")).toEqual(["object.electric-kettle"]);
+    expect(resolvedIds("electric kettles")).toEqual(["object.electric-kettle"]);
     expect(resolvedIds("tree leaves")).toEqual(["object.leaf"]);
   });
 
@@ -86,6 +86,19 @@ describe("resolve", () => {
     ]);
   });
 
+  it("covers look-alikes that live runs named but the first seed lacked", () => {
+    expect(resolvedIds("stovetop kettle")).toEqual(["object.stovetop-kettle"]);
+    expect(resolvedIds("tumbler")).toEqual(["object.drinking-glass"]);
+    expect(resolvedIds("glass")).toEqual(["object.drinking-glass"]);
+    expect(resolvedIds("cargo bike")).toEqual(["object.bicycle"]);
+    expect(
+      taxonomy
+        .resolve("kettle")
+        .map(({ entry }) => entry.id)
+        .sort(),
+    ).toEqual(["object.electric-kettle", "object.stovetop-kettle"]);
+  });
+
   it("returns nothing for unknown labels and never matches ids", () => {
     expect(taxonomy.resolve("spaceship")).toEqual([]);
     expect(taxonomy.resolve("object.bicycle")).toEqual([]);
@@ -94,9 +107,9 @@ describe("resolve", () => {
 
 describe("search", () => {
   it("matches names and keywords and ranks names first", () => {
-    expect(labels("kettle")).toEqual(["Electric kettle"]);
+    expect(labels("kettle")).toEqual(["Electric kettle", "Stovetop kettle"]);
     expect(labels("  boil   water ")).toEqual(["Electric kettle"]);
-    expect(labels("tea")[0]).toBe("Teapot");
+    expect(labels("tea").slice(0, 2).sort()).toEqual(["Stovetop kettle", "Teapot"]);
     expect(labels("tea")).toContain("Electric kettle");
   });
 
