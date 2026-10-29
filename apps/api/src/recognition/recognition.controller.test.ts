@@ -98,9 +98,12 @@ describe("recognition routes", () => {
       gaps,
     );
 
-    await test.post("/recognitions", { key: KEY });
+    const reply = RecognisedPhoto.parse(
+      await (await test.post("/recognitions", { key: KEY })).json(),
+    );
 
     expect(gaps.recorded).toEqual([{ source: "recognition-label", term: "lava lamp" }]);
+    expect(reply.otherLabels).toEqual(["Lava lamp"]);
   });
 
   it("issues a session id when none is sent", async () => {

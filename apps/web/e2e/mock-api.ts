@@ -46,7 +46,10 @@ export const RESULT_ID = "0192f1a0-0000-7000-9000-000000000005";
 export const SESSION_ID = "0192f1a0-0000-7000-8000-000000000011";
 
 /** Answers recognition with `reply` and returns the selections the page records. */
-export async function mockRecognition(page: Page, reply: { candidates: unknown[]; next: unknown }) {
+export async function mockRecognition(
+  page: Page,
+  reply: { candidates: unknown[]; otherLabels?: string[]; next: unknown },
+) {
   const selections: unknown[] = [];
   const requests: unknown[] = [];
   await mockApi(page, "/recognitions", (body) => {
