@@ -43,6 +43,13 @@
       "when": 1793285066739,
       "tag": "0005_claim_edges",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1793285648194,
+      "tag": "0006_evidence_freshness",
+      "breakpoints": true
     }
   ]
 }

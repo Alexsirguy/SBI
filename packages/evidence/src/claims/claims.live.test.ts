@@ -37,7 +37,8 @@ describe.skipIf(process.env.EVIDENCE_LIVE !== "1" || !apiKey)("live claim buildi
       [source],
       { judge },
     );
-    expect(built.claims.map((claim) => claim.status)).toEqual(["supported"]);
+    // One federal page is a single independent source, so the two-source policy qualifies it.
+    expect(built.claims.map((claim) => claim.status)).toEqual(["qualified"]);
     expect(built.removed).toEqual([
       expect.objectContaining({ key: "false", reason: "contradicted" }),
     ]);

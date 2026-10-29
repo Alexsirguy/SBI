@@ -161,6 +161,24 @@ describe("citation resolver", () => {
     });
   });
 
+  it("rejects an excerpt the freshness check found missing or gone", async () => {
+    const [citation] = claim.citations ?? [];
+    const ref = citation as { sourceId: string; excerptId: string };
+    const source = await repos.sources.get(ref.sourceId);
+    const checkedAt = "2026-10-29T10:00:00Z";
+    await repos.sources.save({
+      ...(source as NonNullable<typeof source>),
+      freshness: { status: "changed", checkedAt, missingExcerptIds: [ref.excerptId] },
+    });
+    await expect(resolver.resolveExcerpt(ref)).rejects.toMatchObject({
+      problems: [{ kind: "stale-excerpt" }],
+    });
+    await expect(resolver.checkLesson({ claims: [claim] })).resolves.toEqual([
+      { kind: "stale-excerpt", ...ref, claimId: claim.claimId },
+      { kind: "no-excerpt", claimId: claim.claimId },
+    ]);
+  });
+
   describe("checkLesson", () => {
     it("passes a lesson whose claims match the store", async () => {
       expect(await resolver.checkLesson({ claims: [claim, openQuestion] })).toEqual([]);
