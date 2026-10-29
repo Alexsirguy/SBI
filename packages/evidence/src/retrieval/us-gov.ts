@@ -10,6 +10,9 @@ export const US_GOV_PUBLISHERS: Readonly<Record<string, string>> = {
   "noaa.gov": "National Oceanic and Atmospheric Administration",
   "usgs.gov": "U.S. Geological Survey",
   "nih.gov": "National Institutes of Health",
+  "nps.gov": "National Park Service",
+  "energy.gov": "U.S. Department of Energy",
+  "epa.gov": "U.S. Environmental Protection Agency",
 };
 
 // These republish journal abstracts under the publishers' copyright; Europe PMC covers them.
