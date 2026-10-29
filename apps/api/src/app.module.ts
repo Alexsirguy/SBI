@@ -4,6 +4,7 @@ import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { ApiErrorFilter } from "./common/api-error.filter";
 import { ConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
+import { EvidenceModule } from "./evidence/evidence.module";
 import { HealthController } from "./health/health.controller";
 import { MediaModule } from "./media/media.module";
 import { PurgeModule } from "./purge/purge.module";
@@ -14,6 +15,7 @@ import { TaxonomyModule } from "./taxonomy/taxonomy.module";
   imports: [
     ConfigModule,
     DatabaseModule,
+    EvidenceModule,
     MediaModule,
     PurgeModule,
     RecognitionModule,

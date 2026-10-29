@@ -17,8 +17,13 @@ export interface RetrievalFailure {
   reason: string;
 }
 
+export interface RetrieveOptions extends FetchOptions {
+  /** Tries this connector first, so a re-check reads the same record it stored. */
+  prefer?: string;
+}
+
 export interface Retriever {
-  retrieve(ref: SourceRef, options?: FetchOptions): Promise<FetchedSource>;
+  retrieve(ref: SourceRef, options?: RetrieveOptions): Promise<FetchedSource>;
   /** Follows a Wikipedia article's references to trusted sources and fetches them. */
   discover(
     title: string,
@@ -35,8 +40,10 @@ export interface RetrieverOptions {
 const reason = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 export function createRetriever(options: RetrieverOptions): Retriever {
-  async function retrieve(ref: SourceRef, { signal }: FetchOptions = {}) {
-    const able = options.connectors.filter((connector) => connector.canFetch(ref));
+  async function retrieve(ref: SourceRef, { signal, prefer }: RetrieveOptions = {}) {
+    const able = options.connectors
+      .filter((connector) => connector.canFetch(ref))
+      .sort((a, b) => Number(b.id === prefer) - Number(a.id === prefer));
     if (able.length === 0) throw new UntrustedSourceError(ref);
     const errors: string[] = [];
     // Connectors are in preference order; a later one may still have the source.
