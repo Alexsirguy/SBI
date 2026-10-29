@@ -77,7 +77,13 @@ export {
 } from "./repositories";
 export { createCrossrefConnector, fullDate, type ConnectorOptions } from "./retrieval/crossref";
 export { createEuropePmcConnector } from "./retrieval/europe-pmc";
-export { getText, SourceFetchError, USER_AGENT, type HttpOptions } from "./retrieval/http";
+export {
+  getText,
+  SourceFetchError,
+  USER_AGENT,
+  userAgentWith,
+  type HttpOptions,
+} from "./retrieval/http";
 export {
   createDefaultRetriever,
   createRetriever,
@@ -103,6 +109,7 @@ export {
   GRANTS,
   institutionFor,
   INSTITUTIONS,
+  OGL_V3,
   US_GOV_LICENSE,
   type Institution,
   type ReuseGrant,
@@ -118,3 +125,11 @@ export {
   wikisourceLicence,
   type TextbookConnectorOptions,
 } from "./retrieval/open-textbooks";
+export {
+  createPoliteFetcher,
+  parseRobots,
+  RobotsDisallowedError,
+  type PoliteFetcher,
+  type PoliteFetcherOptions,
+  type RobotsRules,
+} from "./retrieval/robots";

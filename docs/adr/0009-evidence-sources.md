@@ -52,3 +52,30 @@ Pages render `ResolvedExcerpt.display` from `excerptDisplay`, never the raw exce
 
 - **Credit line** (`creditLine`): title, then publisher (or authors), licence label and access date, as CC BY attribution asks. A source without a recorded licence says "Licence not stated" rather than guessing.
 - **Storage:** for `quote-only` sources the claim builder stores only the judge's quoted sentence, and only when it is within the cap. Otherwise the passage is not cited, so stored excerpts never exceed what may be shown.
+
+## Update 2026-10-29: open textbooks, more institutions, robots.txt (#42)
+
+Sources follow the spec's §7 list (textbooks, public science institutions, standards, peer-reviewed papers). Every entry below was checked against the source's own terms on 2026-10-29; the registry in `packages/evidence/src/retrieval/` is the source of truth.
+
+- **NASA stays.** The owner accepted NASA's guidance on AI attribution: credits name NASA as the source of an excerpt, never of a generated answer.
+- **Open textbooks** (`open-textbook` connector):
+  - **LibreTexts:** a page is used only if its own licence tag is CC BY, CC BY-SA or public domain. Most books are NC, so the check is per page. Pages under any other tag keep no text and are stored `restricted`. OpenStax-derived pages modified after 2026-04-22 are also refused, since OpenStax then relicensed new editions as NC with an AI clause.
+  - **Wikisource:** only works marked public domain, for history of science.
+  - **Kuphaldt, _Lessons In Electric Circuits_:** CC BY, as each chapter states.
+  - **Rejected:** openstax.org (NC plus an AI clause), MIT OCW and Saylor (NC), CK-12 (educational use only; bans AI scraping), OpenIntro (terms target AI scrapers), BCcampus and other Pressbooks hosts (block automated access), Project Gutenberg (human users only).
+- **Institutions** (`institution` connector). Each entry records its reuse grant, any excluded sub-hosts and any path scope.
+  - **US federal works:** FDA, NSF, EIA, NRC, USDA and ARS, NWS, Climate.gov, NARA (excluding catalog.archives.gov), USPTO (excluding its search databases), FAA, FWS.
+  - **CDC:** public domain, with its required notice that use implies no endorsement and the material is free at cdc.gov.
+  - **LANL:** free use provided its notice is reproduced.
+  - **UK:** GOV.UK under OGL v3.
+  - **CC BY 4.0:** European Commission and JRC (ec.europa.eu and commission.europa.eu only), CORDIS, ECMWF, Geoscience Australia, NZ Department of Conservation, and ESO, whose grant is limited to news, announcements, pictures of the week and blog paths.
+- **Not added:**
+  - **Non-commercial terms or no reuse grant:** Smithsonian web pages (only its CC0 Open Access records qualify, which needs a separate API connector), LLNL, Sandia, LBNL, Fermilab, Argonne, Brookhaven, PNNL, Ames, SLAC, NREL, UKRI, NPL, BGS web text, Science Museum Group and NHM websites, Kew, canada.ca, NRCan, Canadian Space Agency, Ingenium, CSIRO, Bureau of Meteorology, Science Learning Hub, Earth Sciences NZ, ESA, CERN text, Biodiversity Heritage Library, Internet Archive.
+  - **Terms that forbid scraping or AI tools:** Met Office, NIWA, HathiTrust.
+  - **Blocking automated access:** Library of Congress, Forest Service, Science Museum Group collection pages, Europeana.
+  - **Left for the owner:** ORNL (it promises not to assert rights rather than granting a licence) and Australia's DCCEEW (CC BY 4.0, but its robots.txt blocks AI crawlers by name).
+- **robots.txt is honoured** for every web source:
+  - disallowed paths are never fetched;
+  - each host's `Crawl-delay` is respected, with at least 1 s between requests otherwise;
+  - an unreachable robots.txt means staying out, per RFC 9309.
+- **User-Agent contact:** set `EVIDENCE_CONTACT` to a project URL or role mailbox, never a person's own email. Wikimedia asks for a contact.

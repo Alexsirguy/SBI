@@ -27,10 +27,13 @@ function serving(pages: Record<string, string>) {
   });
 }
 
-const connector = (pages: Record<string, string>, wait = vi.fn(async (_ms: number) => undefined)) =>
+const connector = (
+  pages: Record<string, string>,
+  sleep = vi.fn(async (_ms: number) => undefined),
+) =>
   createOpenTextbookConnector({
     fetchImpl: serving(pages),
-    wait,
+    sleep,
     now: () => new Date("2026-10-29T09:00:00Z"),
   });
 
@@ -137,12 +140,18 @@ describe("createOpenTextbookConnector", () => {
     expect(licenseInfo(history.retrieval.license)?.label).toBe("Public domain");
   });
 
-  it("waits out the host's crawl delay between requests", async () => {
-    const wait = vi.fn(async (_ms: number) => undefined);
-    const target = connector({ [EARLE]: fixture("libretexts-open.html") }, wait);
+  it("waits out the crawl delay the host's robots.txt asks for", async () => {
+    const sleep = vi.fn(async (_ms: number) => undefined);
+    const target = connector(
+      {
+        [EARLE]: fixture("libretexts-open.html"),
+        "https://geo.libretexts.org/robots.txt": "User-agent: *\nCrawl-delay: 5\nDisallow: /@*\n",
+      },
+      sleep,
+    );
     await target.fetch({ url: EARLE });
     await target.fetch({ url: EARLE });
-    expect(wait).toHaveBeenCalledTimes(1);
-    expect(wait.mock.calls[0]?.[0]).toBeGreaterThan(4000);
+    expect(sleep).toHaveBeenCalledTimes(1);
+    expect(sleep.mock.calls[0]?.[0]).toBeGreaterThan(4000);
   });
 });
