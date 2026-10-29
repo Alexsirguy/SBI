@@ -53,9 +53,15 @@ importers:
       '@sbi/env':
         specifier: workspace:*
         version: link:../../packages/env
+      '@sbi/evidence':
+        specifier: workspace:*
+        version: link:../../packages/evidence
       '@sbi/media':
         specifier: workspace:*
         version: link:../../packages/media
+      '@sbi/orchestrator':
+        specifier: workspace:*
+        version: link:../../packages/orchestrator
       '@sbi/recognition':
         specifier: workspace:*
         version: link:../../packages/recognition
@@ -78,6 +84,9 @@ importers:
       '@sbi/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@sbi/testing':
+        specifier: workspace:*
+        version: link:../../packages/testing
       tsup:
         specifier: 8.5.1
         version: 8.5.1(postcss@8.5.32)(tsx@4.23.15)(typescript@5.9.3)
@@ -269,6 +278,12 @@ importers:
       '@sbi/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@sbi/llm':
+        specifier: workspace:*
+        version: link:../llm
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@sbi/config':
         specifier: workspace:*
@@ -317,6 +332,9 @@ importers:
       '@sbi/config':
         specifier: workspace:*
         version: link:../config
+      '@sbi/testing':
+        specifier: workspace:*
+        version: link:../testing
 
   packages/recognition:
     dependencies:
