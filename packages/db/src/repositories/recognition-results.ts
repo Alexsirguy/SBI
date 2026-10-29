@@ -1,6 +1,6 @@
 import { RecognitionResult } from "@sbi/contracts";
 import type { RecognitionResultRepository } from "@sbi/recognition";
-import { eq, lte } from "drizzle-orm";
+import { and, desc, eq, gt, lte } from "drizzle-orm";
 import type { Database } from "../client";
 import { recognitionResults } from "../schema";
 import { parseDocuments } from "./document";
@@ -40,6 +40,20 @@ export function createRecognitionResultRepository(db: Database): RecognitionResu
         .where(eq(recognitionResults.sessionId, sessionId))
         .orderBy(recognitionResults.createdAt);
       return parseDocuments(RecognitionResult, rows);
+    },
+    async findByImage(imageSha256, now) {
+      const rows = await db
+        .select({ document: recognitionResults.document })
+        .from(recognitionResults)
+        .where(
+          and(
+            eq(recognitionResults.imageSha256, imageSha256),
+            gt(recognitionResults.deleteBy, now),
+          ),
+        )
+        .orderBy(desc(recognitionResults.createdAt))
+        .limit(1);
+      return parseDocuments(RecognitionResult, rows)[0];
     },
     async deleteExpired(now) {
       const [result] = await db

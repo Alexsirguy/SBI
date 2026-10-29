@@ -4,6 +4,7 @@ import type { FallbackOutcome } from "./fallback";
 import type { RankedRecognition } from "./ranking";
 import {
   buildRecognitionResult,
+  copyRecognitionResult,
   parseRecognitionRetention,
   sha256Hex,
   withSelection,
@@ -96,6 +97,41 @@ describe("buildRecognitionResult", () => {
 
     expect(result.createdAt).toBe("2026-10-28T12:00:00.000Z");
     expect(result.deleteBy).toBe("2026-11-27T12:00:00.000Z");
+  });
+});
+
+describe("copyRecognitionResult", () => {
+  it("copies the answer into a new record for another session, without its selection", async () => {
+    const original = withSelection(
+      await buildRecognitionResult({
+        image: bytes,
+        now,
+        outcome,
+        ranked,
+        retention: { resultTtlDays: 30 },
+        sessionId: SESSION,
+      }),
+      { taxonomyId: "object.bicycle" },
+    );
+    const later = new Date("2026-10-29T12:00:00.000Z");
+    const other = "0192f1a0-0000-7000-8000-0000000000bb";
+
+    const copy = copyRecognitionResult(original, {
+      now: later,
+      retention: { resultTtlDays: 30 },
+      sessionId: other,
+    });
+
+    expect(copy).toMatchObject({
+      sessionId: other,
+      imageSha256: original.imageSha256,
+      candidates: original.candidates,
+      modelVersion: original.modelVersion,
+      createdAt: "2026-10-29T12:00:00.000Z",
+      deleteBy: "2026-11-28T12:00:00.000Z",
+    });
+    expect(copy.resultId).not.toBe(original.resultId);
+    expect(copy.selectedTaxonomyId).toBeUndefined();
   });
 });
 
