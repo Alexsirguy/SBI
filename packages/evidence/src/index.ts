@@ -141,3 +141,17 @@ export {
   planInquiry,
   type InquiryInput,
 } from "./plan/inquiry";
+export { OPEN_LIBRETEXTS_BOOKS } from "./search/libretexts-books";
+export {
+  createLibreTextsIndex,
+  type LibreTextsIndex,
+  type LibreTextsIndexOptions,
+} from "./search/libretexts-index";
+export {
+  searchSources,
+  searchWikipedia,
+  type SourceSearchDeps,
+  type SourceSearchOptions,
+  type SourceSearchResult,
+} from "./search/search";
+export { searchTokens } from "./search/tokens";
