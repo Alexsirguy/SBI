@@ -6,6 +6,7 @@ import {
   int,
   mysqlTable,
   primaryKey,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
 import { jsonDocument } from "./json-document";
@@ -60,7 +61,7 @@ export const evidenceSources = mysqlTable(
     document: jsonDocument("document").notNull(),
   },
   (table) => [
-    index("evidence_sources_locator_idx").on(table.locatorSha256),
+    uniqueIndex("evidence_sources_locator_idx").on(table.locatorSha256),
     index("evidence_sources_checked_idx").on(table.lastCheckedAt),
   ],
 );

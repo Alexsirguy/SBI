@@ -1,0 +1,22 @@
+{
+  "topic": "object.leaf",
+  "wikipedia": ["Leaf", "Photosynthesis"],
+  "refs": [{ "url": "https://earthobservatory.nasa.gov/features/CarbonCycle" }],
+  "drafts": [
+    {
+      "key": "object.leaf:fact-1",
+      "text": "Leaves use sunlight to make sugar from carbon dioxide and water.",
+      "scope": "green plants"
+    },
+    {
+      "key": "object.leaf:fact-2",
+      "text": "Most of a plant's dry mass comes from carbon dioxide in the air, not from soil.",
+      "scope": "green plants"
+    },
+    {
+      "key": "object.leaf:fact-3",
+      "text": "Some leaves are red or purple because other pigments hide the green chlorophyll.",
+      "scope": "some leaves"
+    }
+  ]
+}

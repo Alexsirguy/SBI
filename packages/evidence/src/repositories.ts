@@ -5,7 +5,16 @@ export interface SourceLocator {
   doi?: string;
 }
 
+/** Another record already holds this DOI or URL; merge into it instead of creating a second. */
+export class DuplicateSourceError extends Error {
+  constructor(readonly locator: string) {
+    super(`A source with locator ${locator} already exists`);
+    this.name = "DuplicateSourceError";
+  }
+}
+
 export interface EvidenceSourceRepository {
+  /** Inserts or updates by id; throws DuplicateSourceError for a new id with a known locator. */
   save(source: EvidenceSource): Promise<void>;
   get(sourceId: string): Promise<EvidenceSource | undefined>;
   getMany(sourceIds: string[]): Promise<EvidenceSource[]>;

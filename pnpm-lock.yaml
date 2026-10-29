@@ -56,6 +56,9 @@ importers:
       '@sbi/evidence':
         specifier: workspace:*
         version: link:../../packages/evidence
+      '@sbi/llm':
+        specifier: workspace:*
+        version: link:../../packages/llm
       '@sbi/media':
         specifier: workspace:*
         version: link:../../packages/media

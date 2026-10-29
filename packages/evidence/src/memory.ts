@@ -1,5 +1,6 @@
 import { Claim, EvidenceSource } from "@sbi/contracts";
 import {
+  DuplicateSourceError,
   type ClaimRepository,
   type EvidenceSourceRepository,
   sourceLocatorKey,
@@ -21,6 +22,9 @@ export function createMemoryEvidenceRepositories(): MemoryEvidenceRepositories {
     sources: {
       async save(input) {
         const source = EvidenceSource.parse(input);
+        const key = sourceLocatorKey(source);
+        const holder = [...sources.values()].find((item) => sourceLocatorKey(item) === key);
+        if (holder && holder.sourceId !== source.sourceId) throw new DuplicateSourceError(key);
         sources.set(source.sourceId, structuredClone(source));
       },
       async get(sourceId) {
