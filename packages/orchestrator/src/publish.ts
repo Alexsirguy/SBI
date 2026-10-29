@@ -13,7 +13,32 @@ export interface PublishAudit {
   reason?: string;
 }
 
-export type PublishAuditSink = (audit: PublishAudit) => void;
+// Awaited, so a stored trail never misses a move that the caller already acted on.
+export type PublishAuditSink = (audit: PublishAudit) => void | Promise<void>;
+
+/** Durable review history: every move with who made it, when and why. */
+export interface ReviewAuditLog {
+  record(audit: PublishAudit): Promise<void>;
+  /** Oldest first; all versions when `version` is omitted. */
+  history(lessonId: string, version?: number): Promise<PublishAudit[]>;
+}
+
+export function createMemoryReviewAuditLog(): ReviewAuditLog {
+  const audits: PublishAudit[] = [];
+  return {
+    async record(audit) {
+      audits.push({ ...audit });
+    },
+    async history(lessonId, version) {
+      return audits
+        .filter(
+          (audit) =>
+            audit.lessonId === lessonId && (version === undefined || audit.version === version),
+        )
+        .map((audit) => ({ ...audit }));
+    },
+  };
+}
 
 export interface RightsDecision {
   cleared: boolean;
@@ -118,7 +143,7 @@ export function createPublisher(deps: {
         by: "system",
         reason: decision.reasons.join("; "),
       });
-      deps.onAudit?.(moved.audit);
+      await deps.onAudit?.(moved.audit);
       return { lesson: moved.lesson, decision };
     },
 
@@ -128,13 +153,13 @@ export function createPublisher(deps: {
         throw new RightsBlockedError(decision.reason ?? "no reason given");
       }
       const moved = transitionLesson(lesson, "approved", { by });
-      deps.onAudit?.(moved.audit);
+      await deps.onAudit?.(moved.audit);
       return moved.lesson;
     },
 
     async reject(lesson, by, reason) {
       const moved = transitionLesson(lesson, "rejected", { by, reason });
-      deps.onAudit?.(moved.audit);
+      await deps.onAudit?.(moved.audit);
       return moved.lesson;
     },
   };

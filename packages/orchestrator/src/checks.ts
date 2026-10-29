@@ -100,7 +100,7 @@ export async function runLessonChecks(
   };
   if (!passed || lesson.reviewStatus !== "generated") return { lesson, report };
   const moved = transitionLesson(lesson, "auto-validated", { by: "system", at: checkedAt });
-  options?.onAudit?.(moved.audit);
+  await options?.onAudit?.(moved.audit);
   return {
     lesson: { ...moved.lesson, reuse: { ...moved.lesson.reuse, validatedAt: checkedAt } },
     report,
