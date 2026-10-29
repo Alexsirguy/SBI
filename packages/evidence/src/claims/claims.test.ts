@@ -9,10 +9,10 @@ import { createLlmSupportJudge, type SupportJudge, type SupportVerdict } from ".
 import { saveClaimGraph } from "./persist";
 import { claimTerms, matchTerms } from "./terms";
 
-function fetched(url: string, passages: string[]): FetchedSource {
+function fetched(url: string, passages: string[], publisher: string): FetchedSource {
   return {
     title: `Source at ${url}`,
-    publisher: "U.S. Geological Survey",
+    publisher,
     authors: [],
     url,
     sourceType: "institution",
@@ -27,15 +27,23 @@ function fetched(url: string, passages: string[]): FetchedSource {
   };
 }
 
-const USGS = fetched("https://www.usgs.gov/water-density", [
-  "Water is densest at 4.0 °C, where its density is 0.9998395 g/ml.",
-  "Ice is less dense than liquid water, which is why ice floats.",
-  "Water boils at 100 °C at sea level.",
-]);
-const NIST = fetched("https://www.nist.gov/water", [
-  "At sea level, pure water boils at 100 °C.",
-  "Ice floats because it is less dense than liquid water.",
-]);
+const USGS = fetched(
+  "https://www.usgs.gov/water-density",
+  [
+    "Water is densest at 4.0 °C, where its density is 0.9998395 g/ml.",
+    "Ice is less dense than liquid water, which is why ice floats.",
+    "Water boils at 100 °C at sea level.",
+  ],
+  "U.S. Geological Survey",
+);
+const NIST = fetched(
+  "https://www.nist.gov/water",
+  [
+    "At sea level, pure water boils at 100 °C.",
+    "Ice floats because it is less dense than liquid water.",
+  ],
+  "National Institute of Standards and Technology",
+);
 
 // Answers from a lookup of passage → verdict; anything unlisted is "insufficient".
 function scriptedJudge(verdicts: Record<string, SupportVerdict["verdict"]>): SupportJudge {
@@ -81,13 +89,24 @@ describe("buildClaims", () => {
   it("supports a claim only with an excerpt the judge accepted, and cites it", async () => {
     const judge = scriptedJudge({ [USGS.passages[2]?.text ?? ""]: "supports" });
     const built = await buildClaims(
-      [{ key: "boil", text: "Water boils at 100 °C at sea level.", scope: "pure water" }],
+      [
+        {
+          key: "boil",
+          text: "Water boils at 100 °C at sea level.",
+          scope: "pure water",
+          basic: true,
+        },
+      ],
       [USGS],
       { judge },
     );
 
     const [claim] = built.claims;
-    expect(claim).toMatchObject({ status: "supported", confidence: "medium" });
+    expect(claim).toMatchObject({
+      status: "supported",
+      confidence: "medium",
+      significance: "basic",
+    });
     expect(built.sources).toHaveLength(1);
     const [source] = built.sources;
     expect(source?.excerpts).toEqual([

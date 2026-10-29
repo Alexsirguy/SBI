@@ -186,6 +186,14 @@
         "missingExcerptIds"
       ],
       "additionalProperties": false
+    },
+    "studyDesign": {
+      "type": "string",
+      "enum": [
+        "primary-study",
+        "review",
+        "not-research"
+      ]
     }
   },
   "required": [

@@ -1,6 +1,7 @@
 import { Claim, type ClaimStatus, type EvidenceSource, newId } from "@sbi/contracts";
 import { toEvidenceSource } from "../retrieval/retriever";
 import type { FetchedSource, Passage } from "../retrieval/types";
+import { applySourcePolicy, independentSourceCount } from "../policy/two-source";
 import { orderByDependencies } from "./graph";
 import type { SupportJudge, SupportVerdict } from "./judge";
 import { claimTerms, matchTerms } from "./terms";
@@ -13,6 +14,8 @@ export interface ClaimDraft {
   dependsOn?: string[];
   /** How to word the claim when no source backs it; without one, it is removed. */
   openQuestion?: string;
+  /** Textbook basics may rest on one source; everything else needs two (§7). */
+  basic?: boolean;
 }
 
 export interface RemovedClaim {
@@ -168,9 +171,6 @@ export async function buildClaims(
     }
     statuses.set(draft.key, status);
 
-    const supportingSources = new Set(
-      supporting.map((item) => fetched[item.sourceIndex]?.url ?? item.sourceIndex),
-    );
     claims.push(
       Claim.parse({
         claimId,
@@ -178,18 +178,22 @@ export async function buildClaims(
         status,
         sourceIds,
         scope: draft.scope,
-        confidence:
-          status === "unsupported"
-            ? "low"
-            : status === "supported" && supportingSources.size > 1
-              ? "high"
-              : "medium",
+        confidence: status === "unsupported" ? "low" : "medium",
         uncertainty,
         dependsOn: dependencyKeys.flatMap((key) => (ids[key] ? [ids[key]] : [])),
         citations,
+        significance: draft.basic ? "basic" : undefined,
       }),
     );
   }
 
-  return { claims, sources: slots.build(), ids, removed, judgeVersion: options.judge.version };
+  const sources = slots.build();
+  const checked = claims.map((claim) => {
+    const supporting = sources.filter((source) =>
+      claim.citations?.some((citation) => citation.sourceId === source.sourceId),
+    );
+    const confident = claim.status === "supported" && independentSourceCount(supporting) >= 2;
+    return applySourcePolicy(confident ? { ...claim, confidence: "high" } : claim, sources);
+  });
+  return { claims: checked, sources, ids, removed, judgeVersion: options.judge.version };
 }
