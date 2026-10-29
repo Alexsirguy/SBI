@@ -1,7 +1,8 @@
 import { EvidenceSource, newId, type SourceType } from "@sbi/contracts";
 import { createCrossrefConnector, type ConnectorOptions } from "./crossref";
 import { createEuropePmcConnector } from "./europe-pmc";
-import { createUsGovConnector } from "./us-gov";
+import { createInstitutionConnector } from "./institutions";
+import { createOpenTextbookConnector } from "./open-textbooks";
 import { discoverReferences } from "./wikipedia";
 import type { FetchedSource, FetchOptions, Passage, SourceConnector, SourceRef } from "./types";
 
@@ -84,7 +85,8 @@ export function createDefaultRetriever(options: ConnectorOptions = {}): Retrieve
     connectors: [
       createEuropePmcConnector(options),
       createCrossrefConnector(options),
-      createUsGovConnector(options),
+      createInstitutionConnector(options),
+      createOpenTextbookConnector(options),
     ],
     discoverRefs: (title, signal) => discoverReferences(title, options, signal),
   });
