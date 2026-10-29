@@ -1,27 +1,4 @@
 {
-  "topic": "object.bicycle",
   "wikipedia": ["Bicycle gearing", "Bicycle chain"],
-  "refs": [],
-  "drafts": [
-    {
-      "key": "object.bicycle:fact-1",
-      "text": "The chain carries the turning force from the pedals to the back wheel.",
-      "scope": "chain-driven bicycles"
-    },
-    {
-      "key": "object.bicycle:fact-2",
-      "text": "A low gear turns the back wheel less per pedal turn, so each push needs less force.",
-      "scope": "geared bicycles"
-    },
-    {
-      "key": "object.bicycle:fact-3",
-      "text": "Some bicycles have gears hidden inside the back hub instead of a visible cassette.",
-      "scope": "some bicycles"
-    },
-    {
-      "key": "object.bicycle:fact-4",
-      "text": "Some bicycles have only one gear.",
-      "scope": "some bicycles"
-    }
-  ]
+  "refs": []
 }

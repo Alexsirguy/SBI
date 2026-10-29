@@ -125,6 +125,8 @@ describe("US government connector", () => {
   it("accepts only https pages on allowlisted federal science domains", () => {
     expect(usGovDomain(USGS)).toBe("usgs.gov");
     expect(usGovDomain("https://science.nasa.gov/sun")).toBe("nasa.gov");
+    expect(usGovDomain("https://home.nps.gov/romo/learn/nature/fall.htm")).toBe("nps.gov");
+    expect(usGovDomain("https://www.energy.gov/energysaver/heating")).toBe("energy.gov");
     expect(usGovDomain("http://www.usgs.gov/page")).toBeUndefined();
     expect(usGovDomain("https://usgs.gov.example.com/page")).toBeUndefined();
     expect(usGovDomain("https://pubmed.ncbi.nlm.nih.gov/10066724")).toBeUndefined();
