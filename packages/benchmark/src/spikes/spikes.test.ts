@@ -2,7 +2,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { loadSeedSet } from "../seed-set";
-import { EvidenceFixture, runEvidenceSpike, supportingExcerpt, wikipediaFetcher } from "./evidence";
+import type { FetchedSource, Retriever } from "@sbi/evidence";
+import {
+  EvidenceFixture,
+  runEvidenceSpike,
+  supportingExcerpt,
+  trustedSourceFinder,
+} from "./evidence";
 import {
   CacheFixture,
   evaluateCache,
@@ -85,26 +91,37 @@ describe("evidence spike", () => {
         },
       ],
     });
-    const results = await runEvidenceSpike(
-      fixture,
-      async () => article,
-      new Date("2026-10-27T12:00:00Z"),
-    );
+    const source: FetchedSource = {
+      title: "Safety bicycles",
+      publisher: "NASA",
+      authors: [],
+      url: "https://www.nasa.gov/bikes",
+      sourceType: "institution",
+      passages: [{ location: "paragraph 1", text: article }],
+      rightsStatus: "reusable",
+      retrieval: {
+        connector: "us-gov",
+        fetchedAt: "2026-10-27T12:00:00.000Z",
+        access: "full-text",
+        contentSha256: "a".repeat(64),
+      },
+    };
+    const results = await runEvidenceSpike(fixture, async () => [source]);
     expect(results.map((result) => [result.supported, result.contractValid])).toEqual([
       [true, true],
       [false, true],
     ]);
+    expect(results[0]).toMatchObject({ sourceTitle: "Safety bicycles", connector: "us-gov" });
   });
 
-  it("retries Wikipedia when it is rate limited", async () => {
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(new Response("You are making too many requests", { status: 429 }))
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ query: { pages: { "1": { extract: article } } } })),
-      );
-    expect(await wikipediaFetcher(fetchImpl, 1)("Safety bicycle")).toBe(article);
-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  it("reaches sources through Wikipedia references only, once per article", async () => {
+    const discover = vi.fn(async () => ({ fetched: [], failed: [] }));
+    const retriever: Retriever = { discover, retrieve: vi.fn() };
+    const find = trustedSourceFinder(retriever);
+    await find("Safety bicycle");
+    await find("Safety bicycle");
+    expect(discover).toHaveBeenCalledTimes(1);
+    expect(retriever.retrieve).not.toHaveBeenCalled();
   });
 
   it("covers at least three topics", () => {
