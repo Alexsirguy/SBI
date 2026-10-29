@@ -6,14 +6,14 @@
 
 ## Summary
 
-| Gate item                          | Status                   | Evidence so far                                                                                                                                                                    |
-| ---------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Learners explain more clearly      | **Pending**              | Prototype, pre/post check and explain-back are ready (#12–#14). Learner sessions not yet run.                                                                                      |
-| Evidence retrieval and claim graph | **Feasible, with fixes** | 10 of 12 real claims were automatically supported by their cited source, and the false control was rejected. One miss was a real authoring error; the other was a retrieval limit. |
-| Safety classification              | **Feasible**             | Rules: 5 of 5 risky caught, 0 of 35 benign blocked. Meta Spark classifier: 5 of 5 risky handled safely, 38 of 40 exact, 2 cautious redirects on vague prompts.                     |
-| Intent-signature cache             | **Feasible**             | Meta Spark intent classifier: precision 100%, recall 100% on 19 pairs (keywords alone: 100% / 80%). Misses fall back to generating, which is safe.                                 |
-| Rights workflow                    | **Feasible**             | 38 of 38 seed images have complete records. 34 can be published with attribution; 4 (GFDL or FAL) are internal-only. Prototype assets are all project-owned or OFL/MIT.            |
-| Vendor selection (#15)             | **Decided**              | ADR 0006: Meta Spark primary, GPT-5.4-mini fallback, Meta Wonder rejected. Recognition latency (p95 17 s) misses the 6 s target and must be fixed in Phase 1.                      |
+| Gate item                          | Status                             | Evidence so far                                                                                                                                                                  |
+| ---------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Learners explain more clearly      | **Pending**                        | Prototype, pre/post check and explain-back are ready (#12–#14). Learner sessions not yet run.                                                                                    |
+| Evidence retrieval and claim graph | **Feasible; coverage is the risk** | With Wikipedia text as evidence, 10 of 12 claims were supported. Re-run through trusted sources only (ADR 0009, 2026-10-29): 1 of 12. The false control was rejected both times. |
+| Safety classification              | **Feasible**                       | Rules: 5 of 5 risky caught, 0 of 35 benign blocked. Meta Spark classifier: 5 of 5 risky handled safely, 38 of 40 exact, 2 cautious redirects on vague prompts.                   |
+| Intent-signature cache             | **Feasible**                       | Meta Spark intent classifier: precision 100%, recall 100% on 19 pairs (keywords alone: 100% / 80%). Misses fall back to generating, which is safe.                               |
+| Rights workflow                    | **Feasible**                       | 38 of 38 seed images have complete records. 34 can be published with attribution; 4 (GFDL or FAL) are internal-only. Prototype assets are all project-owned or OFL/MIT.          |
+| Vendor selection (#15)             | **Decided**                        | ADR 0006: Meta Spark primary, GPT-5.4-mini fallback, Meta Wonder rejected. Recognition latency (p95 17 s) misses the 6 s target and must be fixed in Phase 1.                    |
 
 **Current recommendation: conditional go.** The evidence, safety, caching and rights workflows are feasible, and the vendors are chosen. The remaining condition is the primary gate measure: the learner sessions. Two engineering risks carry into Phase 1:
 
@@ -36,6 +36,22 @@ What this shows:
 - Simple term-matching verification already catches unsupported specifics, such as dates and numbers.
 - Production needs table-aware extraction and an entailment check (an LLM judge over the excerpt), not just term matching.
 - Claims that fail verification can be stored as `unsupported` with an uncertainty note, which the `Lesson` contract already requires.
+
+### Re-run through trusted sources (2026-10-29)
+
+Run `2026-10-29T16-40-25.json`. The spike now follows each article's references to trusted connectors only: Europe PMC (with open-access full text and table rows), Crossref and allowlisted federal pages. Wikipedia's own text is no longer used. All 13 records were contract-valid.
+
+| Topic           | Claims | Supported | Notes                                                                                                                    |
+| --------------- | ------ | --------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Bicycle gearing | 4      | 0         | None of the four articles cites a trusted source; their references are blogs, manufacturers and books.                   |
+| Boiling water   | 4      | 0         | Up to 4 sources per article, all specialist research papers; none states `k5`'s 2,257 kJ/kg, even with table extraction. |
+| Photosynthesis  | 4      | 1         | `l6` is supported by an open-access paper via Europe PMC; the others' references are research on other questions.        |
+| Control (false) | 1      | 0         | Correctly unsupported.                                                                                                   |
+
+What this shows:
+
+- The verification side holds up: nothing false was supported, and records stay contract-valid.
+- Following Wikipedia's references rarely reaches a source that states a school-level fact. Coverage needs topic sources chosen per object, as `packages/evidence/topics/` does for the taxonomy facts (2 of 22 linked, #182).
 
 ## Safety spike
 
@@ -83,4 +99,4 @@ The rights workflow works as a manual register. `@sbi/rights` should enforce the
 - [x] Judge every guess with a second model; `lesson-p0.4` cuts Meta Spark's bad guesses from 5 to 3 of about 190 (2 real), and live lessons check their guesses before showing them.
 - [ ] Score the `2026-10-27T19-47-15` lesson rubric CSV by hand (accuracy, age fit, reasoning sound, misconception handled).
 - [x] Seed set 2.0.0: replace the `seed-006`, `seed-008` and `seed-022` photos and add the alias "electrical outlet"; then re-run recognition (Meta Spark 100% top-3, GPT-5.4-mini 92%).
-- [ ] Re-run the evidence spike after adding table-aware extraction.
+- [x] Re-run the evidence spike after adding table-aware extraction (#186): 1 of 12 through trusted sources only; see the re-run above.

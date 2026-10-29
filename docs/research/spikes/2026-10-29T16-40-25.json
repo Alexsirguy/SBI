@@ -1,0 +1,194 @@
+{
+  "runAt": "2026-10-29T16:40:25.879Z",
+  "seedVersion": "2.0.0",
+  "cache": {
+    "keyword": {
+      "pairs": 19,
+      "truePositive": 8,
+      "falsePositive": 0,
+      "falseNegative": 2,
+      "trueNegative": 9,
+      "precision": 1,
+      "recall": 0.8,
+      "misses": [
+        "held-out: gears, no shared keywords (gearing / none)",
+        "held-out: steam wording (bubbles / none)"
+      ]
+    }
+  },
+  "safety": {
+    "rules": {
+      "risky": 5,
+      "riskyCaught": 5,
+      "benign": 35,
+      "benignBlocked": 0,
+      "missed": [],
+      "overBlocked": []
+    }
+  },
+  "evidence": [
+    {
+      "topic": "bicycle gearing",
+      "claimId": "b2",
+      "article": "Bicycle gearing",
+      "sourcesFound": 0,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "bicycle gearing",
+      "claimId": "b5",
+      "article": "Derailleur",
+      "sourcesFound": 0,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "bicycle gearing",
+      "claimId": "b6",
+      "article": "Penny-farthing",
+      "sourcesFound": 0,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "bicycle gearing",
+      "claimId": "b7",
+      "article": "Safety bicycle",
+      "sourcesFound": 0,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "k4",
+      "article": "Boiling point",
+      "sourcesFound": 3,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "k5",
+      "article": "Enthalpy of vaporization",
+      "sourcesFound": 4,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "k7",
+      "article": "Kettle",
+      "sourcesFound": 1,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "k8",
+      "article": "Russell Hobbs",
+      "sourcesFound": 0,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "boiling water",
+      "claimId": "control-1",
+      "article": "Russell Hobbs",
+      "sourcesFound": 0,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "photosynthesis",
+      "claimId": "l4",
+      "article": "Photosynthesis",
+      "sourcesFound": 8,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "photosynthesis",
+      "claimId": "l6",
+      "article": "Chlorophyll",
+      "sourcesFound": 8,
+      "supported": true,
+      "contractValid": true,
+      "excerpt": "The objective of this study was to investigate the response of light emitting diodes (LEDs) at different light intensities (70 and 80 for green LEDs, 88 and 238 for red LEDs and 80 and 238 μmol m-2 s-1 for blue LEDs) at three wavelengths in lettuce leaves.",
+      "sourceTitle": "Influence of green, red and blue light emitting diodes on multiprotein complex proteins and photosynthetic activity under different light intensities in lettuce leaves (Lactuca sativa L.)",
+      "connector": "europe-pmc"
+    },
+    {
+      "topic": "photosynthesis",
+      "claimId": "l7",
+      "article": "Jan Baptist van Helmont",
+      "sourcesFound": 8,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    },
+    {
+      "topic": "photosynthesis",
+      "claimId": "l9",
+      "article": "Photosynthesis",
+      "sourcesFound": 8,
+      "supported": false,
+      "contractValid": true,
+      "excerpt": null,
+      "sourceTitle": null,
+      "connector": null
+    }
+  ],
+  "rights": {
+    "images": 38,
+    "complete": 38,
+    "byLicence": {
+      "CC BY 2.0": 2,
+      "GFDL 1.2": 3,
+      "CC BY-SA 3.0": 14,
+      "CC BY-SA 4.0": 6,
+      "Public domain": 5,
+      "CC BY 4.0": 1,
+      "CC BY 3.0": 1,
+      "CC BY-SA 2.5": 3,
+      "CC BY-SA 2.0": 1,
+      "CC BY-SA 2.0 de": 1,
+      "FAL": 1
+    },
+    "shareAlike": 25,
+    "internalOnly": ["seed-002", "seed-011", "seed-029", "seed-035"],
+    "publishable": 34
+  }
+}

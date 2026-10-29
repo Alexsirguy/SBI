@@ -60,16 +60,19 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
       {
         scope: "category",
         text: "The chain carries the turning force from the pedals to the back wheel.",
+        unsourced: true,
       },
       {
         scope: "category",
         text: "A low gear turns the back wheel less per pedal turn, so each push needs less force.",
+        unsourced: true,
       },
       {
         scope: "object-specific",
         text: "Some bicycles have gears hidden inside the back hub instead of a visible cassette.",
+        unsourced: true,
       },
-      { scope: "object-specific", text: "Some bicycles have only one gear." },
+      { scope: "object-specific", text: "Some bicycles have only one gear.", unsourced: true },
     ],
   }),
   object("electric-kettle", "Electric kettle", "heating", {
@@ -84,13 +87,23 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
       {
         scope: "category",
         text: "An electric current through the heating element turns electrical energy into heat.",
+        unsourced: true,
       },
-      { scope: "category", text: "The bubbles in boiling water are water vapour, not air." },
+      {
+        scope: "category",
+        text: "The bubbles in boiling water are water vapour, not air.",
+        unsourced: true,
+      },
       {
         scope: "object-specific",
         text: "Some kettles let you choose a temperature below boiling.",
+        unsourced: true,
       },
-      { scope: "object-specific", text: "Some kettles hide the element under a flat metal base." },
+      {
+        scope: "object-specific",
+        text: "Some kettles hide the element under a flat metal base.",
+        unsourced: true,
+      },
     ],
   }),
   object("stovetop-kettle", "Stovetop kettle", "heating", {
@@ -120,14 +133,17 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
       {
         scope: "category",
         text: "A magnifying glass is a convex lens: thicker in the middle than at the edge.",
+        unsourced: true,
       },
       {
         scope: "category",
         text: "Light bends as it passes through the lens, so a close object looks bigger.",
+        unsourced: true,
       },
       {
         scope: "object-specific",
         text: "How much it magnifies depends on how strongly its lens curves.",
+        unsourced: true,
       },
     ],
   }),
@@ -155,10 +171,12 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
       {
         scope: "category",
         text: "The needle is a small magnet that lines up with Earth's magnetic field.",
+        unsourced: true,
       },
       {
         scope: "object-specific",
         text: "Some compasses are filled with liquid to steady the needle.",
+        unsourced: true,
       },
     ],
   }),
@@ -209,14 +227,17 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
       {
         scope: "category",
         text: "Leaves use sunlight to make sugar from carbon dioxide and water.",
+        unsourced: true,
       },
       {
         scope: "category",
         text: "Most of a plant's dry mass comes from carbon dioxide in the air, not from soil.",
+        unsourced: true,
       },
       {
         scope: "object-specific",
         text: "Some leaves are red or purple because other pigments hide the green chlorophyll.",
+        unsourced: true,
       },
     ],
   }),
@@ -235,10 +256,15 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
     aliases: ["rust", "nail", "corroded iron"],
     concepts: ["corrosion"],
     facts: [
-      { scope: "category", text: "Rust forms when iron reacts with oxygen and water." },
+      {
+        scope: "category",
+        text: "Rust forms when iron reacts with oxygen and water.",
+        claimId: "01a18881-1f15-719c-9247-2bf2d73b4e76",
+      },
       {
         scope: "object-specific",
         text: "Galvanised nails have a zinc coating that slows rusting.",
+        unsourced: true,
       },
     ],
   }),
@@ -261,10 +287,12 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
       {
         scope: "category",
         text: "Ice floats because water expands as it freezes, so ice is less dense.",
+        claimId: "01a18881-8192-758c-9d9a-ebb3f8fc6bc2",
       },
       {
         scope: "object-specific",
         text: "Cloudy ice has tiny trapped air bubbles; clear ice has fewer.",
+        unsourced: true,
       },
     ],
   }),
@@ -300,10 +328,12 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
       {
         scope: "category",
         text: "A shorter, tighter or thinner string vibrates faster and sounds higher.",
+        unsourced: true,
       },
       {
         scope: "object-specific",
         text: "Classical guitars use nylon strings; many others use steel.",
+        unsourced: true,
       },
     ],
   }),

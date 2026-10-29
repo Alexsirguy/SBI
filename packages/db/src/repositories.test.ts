@@ -9,6 +9,7 @@ import {
   VisualAsset,
   type Lesson as LessonRecord,
 } from "@sbi/contracts";
+import { DuplicateSourceError } from "@sbi/evidence";
 import { loadFixtures } from "@sbi/testing";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -157,6 +158,18 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.evidenceSources.delete(page.sourceId)).toBe(true);
       expect(await repos.evidenceSources.findByLocator({ url: page.url })).toBeUndefined();
       expect(await repos.evidenceSources.delete(page.sourceId)).toBe(false);
+    });
+
+    it("refuses a second record for the same DOI and keeps the first intact", async () => {
+      const paper = fixture(EvidenceSource, "evidence-source", "paper-with-doi");
+      await repos.evidenceSources.save(paper);
+      const copy = { ...paper, sourceId: "0192f1a0-0000-7000-8000-0000000000ee", title: "Copy" };
+      await expect(repos.evidenceSources.save(copy)).rejects.toBeInstanceOf(DuplicateSourceError);
+      expect(await repos.evidenceSources.get(paper.sourceId)).toEqual(paper);
+      expect(await repos.evidenceSources.get(copy.sourceId)).toBeUndefined();
+
+      await repos.evidenceSources.save({ ...paper, title: "Renamed" });
+      expect((await repos.evidenceSources.get(paper.sourceId))?.title).toBe("Renamed");
     });
 
     it("rejects a source without rights status before writing", async () => {
