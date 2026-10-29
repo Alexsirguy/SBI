@@ -38,6 +38,12 @@ export function loadEnv(source: EnvSource = process.env) {
       RECOGNITION_PROVIDERS: source.RECOGNITION_PROVIDERS,
       RECOGNITION_TIMEOUT_MS: source.RECOGNITION_TIMEOUT_MS,
     },
+    // LessonModule builds the lesson provider only when a key and model are both set.
+    lessonSource: {
+      META_MODEL_API_KEY: source.META_MODEL_API_KEY,
+      OPENAI_API_KEY: source.OPENAI_API_KEY,
+      LESSON_MODEL: source.LESSON_MODEL,
+    },
     recognitionRetention: parseRecognitionRetention(source),
     retention: parseRetentionPolicy(source),
     webOrigins: env.WEB_ORIGINS.split(",")
