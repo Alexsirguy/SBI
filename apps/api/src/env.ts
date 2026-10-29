@@ -22,7 +22,7 @@ const schema = z.object({
   EVIDENCE_RECHECK_INTERVAL_MINUTES: z.coerce.number().int().positive().default(360),
   EVIDENCE_MAX_AGE_DAYS: z.coerce.number().int().positive().default(30),
   EVIDENCE_RECHECK_BATCH: z.coerce.number().int().positive().max(200).default(20),
-  // A project URL or role mailbox for the evidence crawler's User-Agent; never a person's own email.
+  // Overrides the contact in the evidence crawler's User-Agent (default in @sbi/evidence).
   EVIDENCE_CONTACT: z.string().min(1).max(200).optional(),
   FEATURE_FLAGS: z.string().optional(),
 });
