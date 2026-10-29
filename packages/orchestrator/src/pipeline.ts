@@ -5,8 +5,10 @@ import { isReusable } from "./invalidation";
 import type { TaxonomyLessonLookup } from "./lesson-repository";
 
 export interface FallbackQuery {
-  taxonomyId: string;
+  /** The requested entry, then its category: the most specific lesson that exists wins. */
+  taxonomyIds: string[];
   locale: Lesson["locale"];
+  safetyClass: Lesson["safetyClass"];
   audience: Lesson["audience"][number];
   policyVersion: string;
 }
@@ -28,16 +30,21 @@ function failureKind(error: LlmError): string {
 
 // Fallbacks must have passed automated checks; failed drafts never stand in.
 function fallbackLesson(candidates: Lesson[], query: FallbackQuery): Lesson | undefined {
-  return candidates
-    .filter((lesson) => isReusable(lesson))
-    .filter(
-      (lesson) => lesson.reviewStatus === "approved" || lesson.reviewStatus === "auto-validated",
-    )
-    .filter((lesson) => lesson.locale === query.locale)
-    .filter((lesson) => lesson.audience.length === 1 && lesson.audience[0] === query.audience)
-    .filter((lesson) => lesson.reuse.policyVersion === query.policyVersion)
-    .sort((left, right) => right.version - left.version)
-    .at(0);
+  return (
+    candidates
+      .filter((lesson) => isReusable(lesson))
+      // Private lessons may hold another learner's context, so only shared ones stand in.
+      .filter((lesson) => lesson.reuse.cacheScope === "shared")
+      .filter((lesson) => lesson.safetyClass === query.safetyClass)
+      .filter(
+        (lesson) => lesson.reviewStatus === "approved" || lesson.reviewStatus === "auto-validated",
+      )
+      .filter((lesson) => lesson.locale === query.locale)
+      .filter((lesson) => lesson.audience.length === 1 && lesson.audience[0] === query.audience)
+      .filter((lesson) => lesson.reuse.policyVersion === query.policyVersion)
+      .sort((left, right) => right.version - left.version)
+      .at(0)
+  );
 }
 
 // A fallback is always labelled as one; an ungated answer never passes as validated.
@@ -56,8 +63,11 @@ export async function runWithFallback(
     if (!(error instanceof LlmError)) throw error;
     failure = failureKind(error);
   }
-  const candidates = await lessons.findByTaxonomy(fallback.taxonomyId);
-  const standby = fallbackLesson(candidates, fallback);
+  let standby: Lesson | undefined;
+  for (const taxonomyId of fallback.taxonomyIds) {
+    standby = fallbackLesson(await lessons.findByTaxonomy(taxonomyId), fallback);
+    if (standby) break;
+  }
   if (standby) {
     return {
       kind: "fallback",
