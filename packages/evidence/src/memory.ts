@@ -37,6 +37,13 @@ export function createMemoryEvidenceRepositories(): MemoryEvidenceRepositories {
       async delete(sourceId) {
         return sources.delete(sourceId);
       },
+      async listDueForCheck(checkedBefore, limit) {
+        return [...sources.values()]
+          .filter((source) => Date.parse(source.lastCheckedAt) < checkedBefore.getTime())
+          .sort((a, b) => Date.parse(a.lastCheckedAt) - Date.parse(b.lastCheckedAt))
+          .slice(0, limit)
+          .map((source) => structuredClone(source));
+      },
     },
     claims: {
       async save(input) {
