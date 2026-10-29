@@ -255,6 +255,11 @@ describe("text extraction", () => {
     ]);
   });
 
+  it("keeps one copy of a repeated paragraph", () => {
+    const paragraph = "<p>Water boils at a lower temperature at high altitude.</p>";
+    expect(htmlParagraphs(`<main>${paragraph}${paragraph}</main>`)).toHaveLength(1);
+  });
+
   it("falls back to the whole body when a page has no main element", () => {
     const html = "<body><p>Water boils at a lower temperature at high altitude.</p></body>";
     expect(htmlParagraphs(html)).toEqual(["Water boils at a lower temperature at high altitude."]);

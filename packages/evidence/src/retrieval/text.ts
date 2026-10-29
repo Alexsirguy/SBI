@@ -58,9 +58,11 @@ export function htmlParagraphs(html: string): string[] {
     /<main\b[\s\S]*?<\/main>/i.exec(content)?.[0] ??
     /<article\b[\s\S]*?<\/article>/i.exec(content)?.[0] ??
     content;
-  return [...region.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)]
+  const paragraphs = [...region.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)]
     .map((match) => stripTags(match[1] ?? ""))
     .filter((text) => text.length >= 40 && /[.!?]/.test(text));
+  // Pages often repeat a paragraph (teaser and body); one copy is enough to cite.
+  return [...new Set(paragraphs)];
 }
 
 export function htmlTitle(html: string): string | undefined {
