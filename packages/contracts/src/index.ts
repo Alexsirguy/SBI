@@ -6,6 +6,7 @@ export * from "./json-schema";
 export * from "./lesson";
 export * from "./media-api";
 export * from "./recognition";
+export * from "./recognition-api";
 export * from "./registry";
 export * from "./taxonomy-api";
 export * from "./tutor";

@@ -18,6 +18,21 @@ export function createRecognitionResultRepository(db: Database): RecognitionResu
         document: result,
       });
     },
+    async get(resultId) {
+      const rows = await db
+        .select({ document: recognitionResults.document })
+        .from(recognitionResults)
+        .where(eq(recognitionResults.resultId, resultId));
+      return parseDocuments(RecognitionResult, rows)[0];
+    },
+    async update(input) {
+      const result = RecognitionResult.parse(input);
+      const [outcome] = await db
+        .update(recognitionResults)
+        .set({ document: result })
+        .where(eq(recognitionResults.resultId, result.resultId));
+      return outcome.affectedRows > 0;
+    },
     async listBySession(sessionId) {
       const rows = await db
         .select({ document: recognitionResults.document })
