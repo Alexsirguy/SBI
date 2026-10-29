@@ -16,6 +16,7 @@
     "@sbi/contracts": "workspace:*"
   },
   "devDependencies": {
-    "@sbi/config": "workspace:*"
+    "@sbi/config": "workspace:*",
+    "@sbi/testing": "workspace:*"
   }
 }
