@@ -67,74 +67,77 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
   const fetchImpl = options.fetchImpl ?? fetch;
   const retries = options.retries ?? 3;
 
-  // Races the request so a hung connection still hits the deadline.
-  async function attemptFetch(
-    body: unknown,
-    caller: AbortSignal | undefined,
-    timeoutMs: number,
-  ): Promise<Response> {
+  // Fetches and reads the body under one deadline; aborting earlier would cancel the body read.
+  async function attempt(body: unknown, caller: AbortSignal | undefined) {
+    caller?.throwIfAborted();
     const controller = new AbortController();
-    let onCallerAbort: (() => void) | undefined;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const pending = fetchImpl(`${options.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${options.apiKey}`,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
+    const onCallerAbort = () => controller.abort(caller?.reason);
+    caller?.addEventListener("abort", onCallerAbort, { once: true });
+    const timer =
+      options.timeoutMs === undefined
+        ? undefined
+        : setTimeout(
+            () =>
+              controller.abort(
+                new LlmError(`${options.id}: timed out after ${options.timeoutMs}ms`),
+              ),
+            options.timeoutMs,
+          );
+    // A fetch that ignores its signal must still lose the race.
+    const stopped = new Promise<never>((_, reject) => {
+      controller.signal.addEventListener("abort", () => reject(controller.signal.reason), {
+        once: true,
+      });
     });
-    pending.then(undefined, () => undefined);
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => {
-        controller.abort();
-        reject(new LlmError(`${options.id}: timed out after ${timeoutMs}ms`));
-      }, timeoutMs);
-    });
-    const aborted = new Promise<never>((_, reject) => {
-      if (!caller) return;
-      if (caller.aborted) {
-        reject(caller.reason);
-        return;
-      }
-      onCallerAbort = () => reject(caller.reason);
-      caller.addEventListener("abort", onCallerAbort, { once: true });
-    });
+    stopped.catch(() => undefined);
+    const exchange = (async () => {
+      const response = await fetchImpl(`${options.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${options.apiKey}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      return { ok: response.ok, status: response.status, text: await response.text() };
+    })();
+    exchange.catch(() => undefined);
     try {
-      return await Promise.race([pending, timeout, aborted]);
+      return await Promise.race([exchange, stopped]);
+    } catch (error) {
+      if (caller?.aborted || error instanceof LlmError) throw error;
+      // Network failures are provider failures, so callers can fall back instead of crashing.
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new LlmError(`${options.id}: request failed (${detail})`);
     } finally {
       clearTimeout(timer);
-      if (caller && onCallerAbort) caller.removeEventListener("abort", onCallerAbort);
-      controller.abort();
+      caller?.removeEventListener("abort", onCallerAbort);
     }
   }
 
   async function post(body: unknown, signal?: AbortSignal): Promise<ChatCompletionResponse> {
-    for (let attempt = 0; ; attempt += 1) {
-      signal?.throwIfAborted();
-      const response =
-        options.timeoutMs === undefined
-          ? await fetchImpl(`${options.baseUrl}/chat/completions`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${options.apiKey}`,
-              },
-              body: JSON.stringify(body),
-              signal,
-            })
-          : await attemptFetch(body, signal, options.timeoutMs);
-      signal?.throwIfAborted();
-      if (response.ok) return (await response.json()) as ChatCompletionResponse;
-      const retryable = response.status === 429 || response.status >= 500;
-      if (!retryable || attempt >= retries) {
-        throw new LlmError(
-          `${options.id}: HTTP ${response.status} ${await response.text()}`,
-          response.status,
-        );
+    for (let tries = 0; ; tries += 1) {
+      let result: { ok: boolean; status: number; text: string };
+      try {
+        result = await attempt(body, signal);
+      } catch (error) {
+        if (signal?.aborted || !(error instanceof LlmError) || tries >= retries) throw error;
+        await sleep(1000 * 2 ** tries, signal);
+        continue;
       }
-      await sleep(1000 * 2 ** attempt, signal);
+      if (result.ok) {
+        try {
+          return JSON.parse(result.text) as ChatCompletionResponse;
+        } catch {
+          throw new LlmError(`${options.id}: response was not JSON`);
+        }
+      }
+      const retryable = result.status === 429 || result.status >= 500;
+      if (!retryable || tries >= retries) {
+        throw new LlmError(`${options.id}: HTTP ${result.status} ${result.text}`, result.status);
+      }
+      await sleep(1000 * 2 ** tries, signal);
     }
   }
 
