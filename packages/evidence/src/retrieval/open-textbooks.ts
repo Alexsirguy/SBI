@@ -1,6 +1,7 @@
 import type { RightsStatus } from "@sbi/contracts";
 import type { ConnectorOptions } from "./crossref";
-import { getText, SourceFetchError } from "./http";
+import { SourceFetchError } from "./http";
+import { createPoliteFetcher, type PoliteFetcher } from "./robots";
 import { contentSha256, htmlParagraphs, htmlTablePassages, htmlTitle, stripTags } from "./text";
 import type { FetchedSource, Passage, SourceConnector, SourceRef } from "./types";
 
@@ -50,8 +51,6 @@ interface TextbookHost {
   licence(html: string): PageLicence;
   /** Opening tag of the region holding the book text, so site chrome is never quoted. */
   content: RegExp;
-  /** Seconds between requests that the host's robots.txt asks for. */
-  crawlDelaySeconds: number;
 }
 
 const hostIs = (url: URL, domain: string) =>
@@ -64,7 +63,6 @@ export const TEXTBOOK_HOSTS: readonly TextbookHost[] = [
     matches: (url) => hostIs(url, "libretexts.org") && url.pathname.startsWith("/Bookshelves/"),
     licence: libreTextsLicence,
     content: /<section[^>]*class="[^"]*mt-content-container[^"]*"[^>]*>/i,
-    crawlDelaySeconds: 5,
   },
   {
     id: "kuphaldt",
@@ -80,7 +78,6 @@ export const TEXTBOOK_HOSTS: readonly TextbookHost[] = [
           }
         : { license: "kuphaldt:unstated", rightsStatus: "restricted" },
     content: /<body[^>]*>/i,
-    crawlDelaySeconds: 2,
   },
   {
     id: "wikisource",
@@ -88,7 +85,6 @@ export const TEXTBOOK_HOSTS: readonly TextbookHost[] = [
     matches: (url) => url.hostname === "en.wikisource.org" && url.pathname.startsWith("/wiki/"),
     licence: wikisourceLicence,
     content: /<div[^>]*class="[^"]*mw-parser-output[^"]*"[^>]*>/i,
-    crawlDelaySeconds: 1,
   },
 ];
 
@@ -119,23 +115,15 @@ function authorsOf(html: string): string[] {
 }
 
 export interface TextbookConnectorOptions extends ConnectorOptions {
-  /** Injected in tests; real runs wait out each host's crawl delay. */
-  wait?: (ms: number) => Promise<void>;
+  /** Shared across connectors so robots.txt rules and crawl delays apply per host. */
+  fetcher?: PoliteFetcher;
 }
 
 export function createOpenTextbookConnector(
   options: TextbookConnectorOptions = {},
 ): SourceConnector {
   const now = options.now ?? (() => new Date());
-  const wait = options.wait ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
-  const lastRequest = new Map<string, number>();
-
-  async function politely(host: TextbookHost) {
-    const due = (lastRequest.get(host.id) ?? 0) + host.crawlDelaySeconds * 1000;
-    const delay = due - Date.now();
-    if (delay > 0) await wait(delay);
-    lastRequest.set(host.id, Date.now());
-  }
+  const fetcher = options.fetcher ?? createPoliteFetcher(options);
 
   return {
     id: "open-textbook",
@@ -143,8 +131,7 @@ export function createOpenTextbookConnector(
     async fetch(ref, { signal } = {}): Promise<FetchedSource> {
       const host = textbookHostFor(ref.url ?? "");
       if (!host) throw new SourceFetchError(`${ref.url} is not an allowlisted open textbook`);
-      await politely(host);
-      const response = await getText(ref.url ?? "", options, signal);
+      const response = await fetcher.get(ref.url ?? "", signal);
       if (textbookHostFor(response.url)?.id !== host.id) {
         throw new SourceFetchError(`${ref.url} redirected outside the allowlist`);
       }

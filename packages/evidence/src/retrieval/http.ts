@@ -1,4 +1,5 @@
 export interface HttpOptions {
+  userAgent?: string;
   fetchImpl?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
   retryDelayMs?: number;
@@ -7,6 +8,11 @@ export interface HttpOptions {
 }
 
 export const USER_AGENT = "SBI-evidence/0.1 (research prototype)";
+
+/** Wikimedia and others ask automated clients to name a contact; never a user's own details. */
+export function userAgentWith(contact: string | undefined): string {
+  return contact ? `SBI-evidence/0.1 (${contact})` : USER_AGENT;
+}
 
 export class SourceFetchError extends Error {
   constructor(
@@ -40,7 +46,7 @@ export async function getText(
   for (let attempt = 0; ; attempt += 1) {
     const timeout = AbortSignal.timeout(options.timeoutMs ?? 15_000);
     const response = await fetchImpl(url, {
-      headers: { "User-Agent": USER_AGENT },
+      headers: { "User-Agent": options.userAgent ?? USER_AGENT },
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });
     if (RETRYABLE.has(response.status) && attempt < ATTEMPTS - 1) {

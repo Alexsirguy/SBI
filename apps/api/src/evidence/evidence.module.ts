@@ -7,7 +7,7 @@ import {
   type OnApplicationShutdown,
 } from "@nestjs/common";
 import type { DatabaseHandle, Repositories } from "@sbi/db";
-import { createDefaultRetriever } from "@sbi/evidence";
+import { createDefaultRetriever, userAgentWith } from "@sbi/evidence";
 import { startIntervalWorker, type IntervalWorker } from "../common/interval-worker";
 import type { ApiEnv } from "../env";
 import { API_ENV, DATABASE, FRESHNESS_PASS, REPOSITORIES } from "../tokens";
@@ -60,7 +60,7 @@ export class FreshnessService implements OnApplicationBootstrap, OnApplicationSh
         createFreshnessPass({
           database,
           repositories,
-          retriever: createDefaultRetriever(),
+          retriever: createDefaultRetriever({ userAgent: userAgentWith(env.EVIDENCE_CONTACT) }),
           maxAgeDays: env.EVIDENCE_MAX_AGE_DAYS,
           batch: env.EVIDENCE_RECHECK_BATCH,
         }),

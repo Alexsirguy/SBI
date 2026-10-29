@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { EvidenceSource } from "@sbi/contracts";
+import { licenseInfo } from "../citations/display";
 import { describe, expect, it, vi } from "vitest";
 import { createCrossrefConnector, fullDate } from "./crossref";
 import { createEuropePmcConnector } from "./europe-pmc";
@@ -175,6 +176,38 @@ describe("Europe PMC connector", () => {
   it("reports a missing record as a 404", async () => {
     const connector = createEuropePmcConnector(http(fakeFetch(ROUTES)));
     await expect(connector.fetch({ pmid: "1" })).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("institution registry", () => {
+  it.each([
+    ["https://www.fda.gov/consumers/consumer-updates/x", "U.S. Food and Drug Administration"],
+    ["https://www.ars.usda.gov/news-events/x", "USDA Agricultural Research Service"],
+    ["https://www.usda.gov/topics/x", "U.S. Department of Agriculture"],
+    ["https://www.gov.uk/guidance/x", "GOV.UK"],
+    ["https://joint-research-centre.ec.europa.eu/x", "European Commission"],
+    ["https://www.ga.gov.au/education/x", "Geoscience Australia"],
+    ["https://www.eso.org/public/news/eso2601/", "European Southern Observatory"],
+  ])("credits %s to %s", (url, publisher) => {
+    expect(institutionFor(url)?.publisher).toBe(publisher);
+  });
+
+  it.each([
+    "https://catalog.archives.gov/id/123",
+    "https://ppubs.uspto.gov/pubwebapp/",
+    "https://www.eso.org/public/about-eso/",
+    "https://europa.eu/european-union/x",
+    "https://www.llnl.gov/news/x",
+    "https://www.csiro.au/en/research/x",
+  ])("refuses %s", (url) => {
+    expect(institutionFor(url)).toBeUndefined();
+  });
+
+  it("labels the UK licence for credit lines", () => {
+    expect(licenseInfo(institutionFor("https://www.gov.uk/x")?.grant.license)).toEqual({
+      label: "Open Government Licence v3.0",
+      url: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    });
   });
 });
 

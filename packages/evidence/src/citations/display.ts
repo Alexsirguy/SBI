@@ -1,5 +1,5 @@
 import type { EvidenceSource } from "@sbi/contracts";
-import { US_GOV_LICENSE } from "../retrieval/institutions";
+import { OGL_V3, US_GOV_LICENSE } from "../retrieval/institutions";
 
 /** Longest excerpt shown from a quote-only source: a short quotation, not a reproduction. */
 export const QUOTE_LIMIT_CHARS = 300;
@@ -24,6 +24,7 @@ export function licenseInfo(license: string | undefined): LicenseInfo | undefine
   if (!license) return undefined;
   if (license === US_GOV_LICENSE) return { label: "Public domain (US government work)" };
   if (license === "public domain") return { label: "Public domain" };
+  if (license === OGL_V3) return { label: "Open Government Licence v3.0", url: OGL_V3 };
   const ccUrl = /creativecommons\.org\/licenses\/([a-z-]+)\/(\d\.\d)/i.exec(license);
   if (ccUrl) {
     const name = CC_NAMES[ccUrl[1]?.toLowerCase() ?? ""];
