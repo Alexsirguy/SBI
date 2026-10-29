@@ -23,4 +23,16 @@ describe.skipIf(process.env.EVIDENCE_LIVE !== "1")("live retrieval", () => {
     const { fetched } = await retriever.discover("Boiling point");
     expect(fetched.length).toBeGreaterThan(0);
   }, 120_000);
+
+  it("fetches an openly licensed LibreTexts page and refuses a non-commercial one", async () => {
+    const open = await retriever.retrieve({
+      url: "https://geo.libretexts.org/Bookshelves/Geology/Physical_Geology_(Earle)/01%3A_Introduction_to_Geology/1.02%3A_Why_Study_Earth",
+    });
+    expect(open).toMatchObject({ rightsStatus: "reusable", sourceType: "textbook" });
+    expect(open.passages.length).toBeGreaterThan(0);
+    const closed = await retriever.retrieve({
+      url: "https://chem.libretexts.org/Bookshelves/General_Chemistry/Map%3A_General_Chemistry_(Petrucci_et_al.)/01%3A_Matter-_Its_Properties_And_Measurement/1.1%3A_The_Scientific_Method",
+    });
+    expect(closed).toMatchObject({ rightsStatus: "restricted", passages: [] });
+  }, 60_000);
 });

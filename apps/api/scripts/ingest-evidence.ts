@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createDatabase, createRepositories } from "@sbi/db";
 import { createEnv } from "@sbi/env";
-import { createDefaultRetriever, ingestTopic } from "@sbi/evidence";
+import { createDefaultRetriever, ingestTopic, userAgentWith } from "@sbi/evidence";
 import { z } from "zod";
 import { createEvidenceJudge } from "../src/evidence/judge";
 
@@ -25,7 +25,7 @@ const repos = createRepositories(database.db);
 try {
   for (const file of files) {
     const report = await ingestTopic(JSON.parse(readFileSync(file, "utf8")), {
-      retriever: createDefaultRetriever(),
+      retriever: createDefaultRetriever({ userAgent: userAgentWith(process.env.EVIDENCE_CONTACT) }),
       judge: createEvidenceJudge(env),
       repositories: { claims: repos.claims, sources: repos.evidenceSources },
       lock: async (task) => {
