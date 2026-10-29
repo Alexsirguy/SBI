@@ -1,5 +1,14 @@
 export { createLessonInvalidator, isReusable, type LessonInvalidator } from "./invalidation";
 export type { LessonRepository, TaxonomyLessonLookup } from "./lesson-repository";
+export { buildIntentSignature, type IntentInput } from "./intent";
+export {
+  createReuseMatcher,
+  type ReuseAudit,
+  type ReuseAuditSink,
+  type ReuseHit,
+  type ReuseMatcher,
+  type ReuseQuery,
+} from "./reuse";
 export {
   createDraftPromptRegistry,
   generateDraft,
@@ -22,6 +31,8 @@ export {
   CONTRADICTION_PROMPT_VERSION,
   createContradictionCheck,
   createEntailmentCheck,
+  judgeEntailment,
+  type EntailmentVerdict,
   ENTAILMENT_PROMPT_VERSION,
 } from "./entailment";
 export { createEvidenceCheck, type EvidenceCheckDeps } from "./evidence-check";
@@ -46,3 +57,13 @@ export {
   type GenerationAttempt,
   type PipelineOutcome,
 } from "./pipeline";
+export {
+  gateQuickAnswer,
+  generateQuickAnswer,
+  QUICK_ANSWER_PROMPT,
+  withShortAnswer,
+  type QuickAnswerDraft,
+  type QuickAnswerGate,
+  type QuickAnswerInput,
+  type QuickGateDeps,
+} from "./quick-answer";
