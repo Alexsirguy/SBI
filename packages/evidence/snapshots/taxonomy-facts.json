@@ -1,0 +1,227 @@
+{
+  "generatedAt": "2026-10-29T16:32:35.526Z",
+  "judge": "muse-spark-1.3+evidence-judge-p0.2",
+  "facts": [
+    {
+      "key": "object.bicycle#1",
+      "text": "The chain carries the turning force from the pedals to the back wheel.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.bicycle#2",
+      "text": "A low gear turns the back wheel less per pedal turn, so each push needs less force.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.bicycle#3",
+      "text": "Some bicycles have gears hidden inside the back hub instead of a visible cassette.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.bicycle#4",
+      "text": "Some bicycles have only one gear.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.electric-kettle#1",
+      "text": "An electric current through the heating element turns electrical energy into heat.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.electric-kettle#2",
+      "text": "The bubbles in boiling water are water vapour, not air.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.electric-kettle#3",
+      "text": "Some kettles let you choose a temperature below boiling.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.electric-kettle#4",
+      "text": "Some kettles hide the element under a flat metal base.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.magnifying-glass#1",
+      "text": "A magnifying glass is a convex lens: thicker in the middle than at the edge.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.magnifying-glass#2",
+      "text": "Light bends as it passes through the lens, so a close object looks bigger.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.magnifying-glass#3",
+      "text": "How much it magnifies depends on how strongly its lens curves.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.magnetic-compass#1",
+      "text": "The needle is a small magnet that lines up with Earth's magnetic field.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.magnetic-compass#2",
+      "text": "Some compasses are filled with liquid to steady the needle.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.leaf#1",
+      "text": "Leaves use sunlight to make sugar from carbon dioxide and water.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.leaf#2",
+      "text": "Most of a plant's dry mass comes from carbon dioxide in the air, not from soil.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.leaf#3",
+      "text": "Some leaves are red or purple because other pigments hide the green chlorophyll.",
+      "outcome": "contradicted"
+    },
+    {
+      "key": "object.rusty-nail#1",
+      "text": "Rust forms when iron reacts with oxygen and water.",
+      "claimId": "01a18881-1f15-719c-9247-2bf2d73b4e76",
+      "outcome": "qualified"
+    },
+    {
+      "key": "object.rusty-nail#2",
+      "text": "Galvanised nails have a zinc coating that slows rusting.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.ice-cubes#1",
+      "text": "Ice floats because water expands as it freezes, so ice is less dense.",
+      "claimId": "01a18881-8192-758c-9d9a-ebb3f8fc6bc2",
+      "outcome": "qualified"
+    },
+    {
+      "key": "object.ice-cubes#2",
+      "text": "Cloudy ice has tiny trapped air bubbles; clear ice has fewer.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.acoustic-guitar#1",
+      "text": "A shorter, tighter or thinner string vibrates faster and sounds higher.",
+      "outcome": "no-support"
+    },
+    {
+      "key": "object.acoustic-guitar#2",
+      "text": "Classical guitars use nylon strings; many others use steel.",
+      "outcome": "no-support"
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "01a18881-1f15-719c-9247-2bf2d73b4e76",
+      "text": "Rust forms when iron reacts with oxygen and water.",
+      "status": "qualified",
+      "sourceIds": ["01a18881-1f17-75c7-9646-2f8dd80aca82"],
+      "scope": "Rusty nail in general",
+      "confidence": "medium",
+      "uncertainty": "Only one independent source supports this so far.",
+      "dependsOn": [],
+      "citations": [
+        {
+          "sourceId": "01a18881-1f17-75c7-9646-2f8dd80aca82",
+          "excerptId": "x1"
+        },
+        {
+          "sourceId": "01a18881-1f17-75c7-9646-2f8dd80aca82",
+          "excerptId": "x2"
+        }
+      ],
+      "verification": {
+        "judge": "muse-spark-1.3+evidence-judge-p0.2",
+        "verifiedAt": "2026-10-29T16:31:54.980Z"
+      }
+    },
+    {
+      "claimId": "01a18881-8192-758c-9d9a-ebb3f8fc6bc2",
+      "text": "Ice floats because water expands as it freezes, so ice is less dense.",
+      "status": "qualified",
+      "sourceIds": ["01a18881-8192-758c-9d9a-ec614a26dd08"],
+      "scope": "Ice cubes in general",
+      "confidence": "medium",
+      "uncertainty": "Only one independent source supports this so far.",
+      "dependsOn": [],
+      "citations": [
+        {
+          "sourceId": "01a18881-8192-758c-9d9a-ec614a26dd08",
+          "excerptId": "x1"
+        }
+      ],
+      "verification": {
+        "judge": "muse-spark-1.3+evidence-judge-p0.2",
+        "verifiedAt": "2026-10-29T16:32:16.394Z"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "sourceId": "01a18881-1f17-75c7-9646-2f8dd80aca82",
+      "title": "The Moon Is Rusting, and Researchers Want to Know Why - NASA",
+      "publisher": "NASA",
+      "authors": [],
+      "url": "https://www.nasa.gov/centers-and-facilities/jpl/the-moon-is-rusting-and-researchers-want-to-know-why/",
+      "sourceType": "institution",
+      "accessedOn": "2026-10-29",
+      "excerpts": [
+        {
+          "excerptId": "x1",
+          "location": "paragraph 4",
+          "text": "Intrigued, Li homed in on these polar spectra. While the Moon’s surface is littered with iron-rich rocks, he nevertheless was surprised to find a close match with the spectral signature of hematite. The mineral is a form of iron oxide, or rust, produced when iron is exposed to oxygen and water. But the Moon isn’t supposed to have oxygen or liquid water, so how can it be rusting?"
+        },
+        {
+          "excerptId": "x2",
+          "location": "paragraph 2",
+          "text": "Mars has long been known for its rust. Iron on its surface, combined with water and oxygen from the ancient past, give the Red Planet its hue. But scientists were recently surprised to find evidence that our airless Moon has rust on it as well."
+        }
+      ],
+      "claimIds": ["01a18881-1f15-719c-9247-2bf2d73b4e76"],
+      "evidenceQuality": "high",
+      "rightsStatus": "reusable",
+      "lastCheckedAt": "2026-10-29T16:31:54.980Z",
+      "retrieval": {
+        "connector": "us-gov",
+        "fetchedAt": "2026-10-29T16:31:54.980Z",
+        "access": "full-text",
+        "license": "US federal government work (17 U.S.C. §105)",
+        "contentSha256": "7e5380ec97fa5bdd7b4b793987b82f59b36c21a375da3a41947efeabdce7f616"
+      },
+      "studyDesign": "not-research"
+    },
+    {
+      "sourceId": "01a18881-8192-758c-9d9a-ec614a26dd08",
+      "title": "Water Density",
+      "publisher": "U.S. Geological Survey",
+      "authors": [],
+      "url": "https://www.usgs.gov/water-science-school/science/water-density",
+      "sourceType": "institution",
+      "accessedOn": "2026-10-29",
+      "excerpts": [
+        {
+          "excerptId": "x1",
+          "location": "paragraph 6",
+          "text": "If you look at this picture you can see that some of the iceberg is below the water level. This is not a surprise, but actually almost all of the volume of an iceberg is below the water line, not above it. This is because ice is less dense than liquid water, which causes it to float. In most substances solids are more dense. If this were the case for water, ice would sink and we would not be able to ice skate or ice fish, without SCUBA equipment! Upon freezing, the density of ice decreases by about 9 percent."
+        }
+      ],
+      "claimIds": ["01a18881-8192-758c-9d9a-ebb3f8fc6bc2"],
+      "evidenceQuality": "high",
+      "rightsStatus": "reusable",
+      "lastCheckedAt": "2026-10-29T16:32:14.324Z",
+      "retrieval": {
+        "connector": "us-gov",
+        "fetchedAt": "2026-10-29T16:32:14.324Z",
+        "access": "full-text",
+        "license": "US federal government work (17 U.S.C. §105)",
+        "contentSha256": "5bba67fc3eb942f5fbf90c783f73b56ba1a888e79e2d4f79b7cd952c04b4f975"
+      },
+      "studyDesign": "not-research"
+    }
+  ]
+}

@@ -20,12 +20,16 @@ const Draft = z.object({
   basic: z.boolean().optional(),
 });
 
-/** One topic to source: where to look, and the claims we want to make about it. */
-export const TopicSpec = z.object({
-  topic: z.string().min(1),
+/** Where to look for a topic's sources; committed per object under packages/evidence/topics. */
+export const TopicSources = z.object({
   /** Wikipedia articles whose references are followed; their text is never used. */
   wikipedia: z.array(z.string().min(1)).default([]),
   refs: z.array(Ref).default([]),
+});
+
+/** One topic to source: where to look, and the claims we want to make about it. */
+export const TopicSpec = TopicSources.extend({
+  topic: z.string().min(1),
   drafts: z.array(Draft).min(1),
 });
 

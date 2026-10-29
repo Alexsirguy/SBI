@@ -16,8 +16,9 @@ import {
   runEvidenceSpike,
   safeClassifier,
   scoreSafety,
-  wikipediaFetcher,
+  trustedSourceFinder,
 } from "../src";
+import { createDefaultRetriever } from "@sbi/evidence";
 
 const envFile = join(import.meta.dirname, "../.env");
 if (existsSync(envFile)) process.loadEnvFile(envFile);
@@ -35,7 +36,10 @@ const results: Record<string, unknown> = {
   seedVersion: set.version,
   cache: { keyword: await evaluateCache(cacheFixture, keywordClassifier(cacheFixture.catalog)) },
   safety: { rules: evaluateRules(set.prompts) },
-  evidence: await runEvidenceSpike(evidenceFixture, wikipediaFetcher()),
+  evidence: await runEvidenceSpike(
+    evidenceFixture,
+    trustedSourceFinder(createDefaultRetriever({ retryDelayMs: 2000 })),
+  ),
   rights: auditRights(set),
 };
 
