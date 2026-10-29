@@ -1,0 +1,1 @@
+CREATE INDEX `lessons_taxonomy_idx` ON `lessons` (`taxonomy_id`);
