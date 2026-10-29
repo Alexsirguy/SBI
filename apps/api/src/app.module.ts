@@ -6,6 +6,7 @@ import { ConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
 import { EvidenceModule } from "./evidence/evidence.module";
 import { HealthController } from "./health/health.controller";
+import { LessonModule } from "./lesson/lesson.module";
 import { MediaModule } from "./media/media.module";
 import { PurgeModule } from "./purge/purge.module";
 import { RecognitionModule } from "./recognition/recognition.module";
@@ -16,6 +17,7 @@ import { TaxonomyModule } from "./taxonomy/taxonomy.module";
     ConfigModule,
     DatabaseModule,
     EvidenceModule,
+    LessonModule,
     MediaModule,
     PurgeModule,
     RecognitionModule,
