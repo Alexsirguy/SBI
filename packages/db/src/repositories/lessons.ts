@@ -1,11 +1,11 @@
 import { Lesson } from "@sbi/contracts";
-import type { LessonRepository } from "@sbi/orchestrator";
+import type { LessonRepository, TaxonomyLessonLookup } from "@sbi/orchestrator";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Database } from "../client";
 import { lessonClaims, lessons } from "../schema";
 import { parseDocuments } from "./document";
 
-export function createLessonRepository(db: Database): LessonRepository {
+export function createLessonRepository(db: Database): LessonRepository & TaxonomyLessonLookup {
   const select = () => db.select({ document: lessons.document }).from(lessons);
 
   return {
@@ -52,6 +52,12 @@ export function createLessonRepository(db: Database): LessonRepository {
     async findByIntent(intentSignature) {
       const rows = await select()
         .where(eq(lessons.intentSignature, intentSignature))
+        .orderBy(lessons.lessonId, desc(lessons.version));
+      return parseDocuments(Lesson, rows);
+    },
+    async findByTaxonomy(taxonomyId) {
+      const rows = await select()
+        .where(eq(lessons.taxonomyId, taxonomyId))
         .orderBy(lessons.lessonId, desc(lessons.version));
       return parseDocuments(Lesson, rows);
     },

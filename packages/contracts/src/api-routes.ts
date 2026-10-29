@@ -1,4 +1,6 @@
 import type { z } from "zod";
+import { Lesson } from "./lesson";
+import { LessonRequest } from "./lesson-api";
 import {
   ConfirmedPhoto,
   ConfirmUploadRequest,
@@ -78,6 +80,14 @@ export const API_ROUTES = {
     request: KeepPhotoRequest,
     response: KeptPhoto,
     errors: [400, 409, 502, 503],
+  },
+  requestLesson: {
+    method: "post",
+    path: "/lessons",
+    summary: "Generate or reuse a lesson, streaming the quick answer before the full lesson.",
+    request: LessonRequest,
+    response: Lesson,
+    errors: [400, 404, 503],
   },
 } as const;
 
