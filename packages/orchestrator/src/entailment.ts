@@ -78,6 +78,7 @@ function renderClaim(claim: Claim): string {
 
 async function judge<T>(
   provider: LlmProvider,
+  promptVersion: string,
   system: string,
   user: string,
   schema: Record<string, unknown>,
@@ -91,6 +92,8 @@ async function judge<T>(
   const { value } = await completeStructured(provider, {
     messages,
     jsonSchema: { name: "Verdict", schema },
+    // Logged with the completion, so every verdict traces to the wording that produced it.
+    prompt: { id: promptVersion.replace(/-p[\d.]+$/, ""), version: promptVersion },
     signal,
     parse,
   });
@@ -126,6 +129,7 @@ export function createEntailmentCheck(provider: LlmProvider): LessonCheck {
             .filter((claim) => claim !== undefined);
           return judge(
             provider,
+            ENTAILMENT_PROMPT_VERSION,
             ENTAILMENT_SYSTEM,
             `<section-${tag}>\n${section.text}\n</section-${tag}>\n<claims-${tag}>\n${cited.map(renderClaim).join("\n")}\n</claims-${tag}>`,
             ENTAILMENT_SCHEMA,
@@ -161,6 +165,7 @@ export function createContradictionCheck(provider: LlmProvider): LessonCheck {
       const tag = nonce();
       const verdict = await judge(
         provider,
+        CONTRADICTION_PROMPT_VERSION,
         CONTRADICTION_SYSTEM,
         `<claims-${tag}>\n${lesson.claims.map(renderClaim).join("\n")}\n</claims-${tag}>`,
         CONTRADICTION_SCHEMA,
