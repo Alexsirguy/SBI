@@ -70,7 +70,7 @@ function makeLesson(overrides: Partial<LessonType> = {}): LessonType {
     reuse: {
       intentSignature: buildIntentSignature(intent),
       matchDimensions: ["intent", "depth", "locale", "assumptions", "safety"],
-      cacheScope: "private",
+      cacheScope: "shared",
       generatedAt: "2026-10-29T00:00:00.000Z",
       evidenceSnapshotId: SNAPSHOT,
       sourceFreshness: "fresh",
@@ -115,7 +115,6 @@ const query: ReuseQuery = {
   intent,
   assumptions: ["sea level"],
   policyVersion: "safety-1",
-  scope: "private",
 };
 
 describe("createReuseMatcher", () => {
@@ -184,18 +183,27 @@ describe("createReuseMatcher", () => {
     expect(hit?.lesson.version).toBe(2);
   });
 
-  it("keeps shared requests off private lessons", async () => {
-    const shared = makeLesson({ reuse: { ...makeLesson().reuse, cacheScope: "shared" } });
-    const { repo: privateRepo } = memoryRepository([makeLesson()]);
-    expect(await createReuseMatcher(privateRepo).match({ ...query, scope: "shared" })).toBeNull();
+  it("never serves a private lesson, which has no owner to match yet", async () => {
+    const privately = makeLesson({ reuse: { ...makeLesson().reuse, cacheScope: "private" } });
+    const { repo } = memoryRepository([privately]);
+    expect(await createReuseMatcher(repo).match(query)).toBeNull();
+  });
 
-    const { repo: sharedRepo } = memoryRepository([makeLesson(), shared]);
-    expect(
-      (await createReuseMatcher(sharedRepo).match({ ...query, scope: "shared" }))?.lesson.reuse
-        .cacheScope,
-    ).toBe("shared");
-    expect(
-      (await createReuseMatcher(sharedRepo).match(query))?.lesson.reuse.cacheScope,
-    ).toBeDefined();
+  it.each(["generated", "needs-review"] as const)(
+    "never serves a %s lesson that has not passed checks or review",
+    async (reviewStatus) => {
+      const { repo } = memoryRepository([makeLesson({ reviewStatus })]);
+      expect(await createReuseMatcher(repo).match(query)).toBeNull();
+    },
+  );
+
+  it("serves an approved lesson", async () => {
+    const approved = makeLesson({
+      reviewStatus: "approved",
+      reviewedAt: "2026-10-29T01:00:00.000Z",
+      reviewedBy: "editor-1",
+    });
+    const { repo } = memoryRepository([approved]);
+    expect((await createReuseMatcher(repo).match(query))?.lesson.reviewStatus).toBe("approved");
   });
 });
