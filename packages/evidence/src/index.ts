@@ -23,6 +23,7 @@ export {
 } from "./claims/graph";
 export {
   createLlmSupportJudge,
+  groundVerdict,
   SUPPORT_PROMPT_VERSION,
   SupportVerdict,
   type SupportJudge,
