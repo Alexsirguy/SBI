@@ -1,5 +1,6 @@
 import { createEnv, FEATURE_DEFAULTS, parseFlags, type EnvSource } from "@sbi/env";
 import { parseRetentionPolicy } from "@sbi/media";
+import { parseRankingConfig, parseRecognitionRetention } from "@sbi/recognition";
 import { z } from "zod";
 
 const schema = z.object({
@@ -25,6 +26,15 @@ export function loadEnv(source: EnvSource = process.env) {
   return {
     ...env,
     features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS),
+    ranking: parseRankingConfig(source),
+    // Provider keys stay in the source; RecognitionModule builds the chain only when one is set.
+    recognitionSource: {
+      META_MODEL_API_KEY: source.META_MODEL_API_KEY,
+      OPENAI_API_KEY: source.OPENAI_API_KEY,
+      RECOGNITION_PROVIDERS: source.RECOGNITION_PROVIDERS,
+      RECOGNITION_TIMEOUT_MS: source.RECOGNITION_TIMEOUT_MS,
+    },
+    recognitionRetention: parseRecognitionRetention(source),
     retention: parseRetentionPolicy(source),
     webOrigins: env.WEB_ORIGINS.split(",")
       .map((origin) => origin.trim())
