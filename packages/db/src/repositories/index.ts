@@ -1,4 +1,5 @@
 import type { Database } from "../client";
+import { createCatalogGapRepository } from "./catalog-gaps";
 import { createClaimRepository, createEvidenceSourceRepository } from "./evidence";
 import { createLessonRepository } from "./lessons";
 import { createDeletionAuditLog, createMediaRegistry } from "./media";
@@ -8,6 +9,7 @@ import { createVisualAssetRepository } from "./visual-assets";
 
 export function createRepositories(db: Database) {
   return {
+    catalogGaps: createCatalogGapRepository(db),
     deletionAudit: createDeletionAuditLog(db),
     lessons: createLessonRepository(db),
     mediaRegistry: createMediaRegistry(db),

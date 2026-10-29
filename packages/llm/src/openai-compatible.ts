@@ -43,15 +43,28 @@ function toWireMessage(message: ChatMessage) {
   };
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(signal.reason);
+      },
+      { once: true },
+    );
+  });
+}
 
 /** LLM provider for any Chat Completions-compatible API, including Meta Model API and OpenAI. */
 export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions): LlmProvider {
   const fetchImpl = options.fetchImpl ?? fetch;
   const retries = options.retries ?? 3;
 
-  async function post(body: unknown): Promise<ChatCompletionResponse> {
+  async function post(body: unknown, signal?: AbortSignal): Promise<ChatCompletionResponse> {
     for (let attempt = 0; ; attempt += 1) {
+      signal?.throwIfAborted();
       const response = await fetchImpl(`${options.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
@@ -59,7 +72,9 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
           Authorization: `Bearer ${options.apiKey}`,
         },
         body: JSON.stringify(body),
+        signal,
       });
+      signal?.throwIfAborted();
       if (response.ok) return (await response.json()) as ChatCompletionResponse;
       const retryable = response.status === 429 || response.status >= 500;
       if (!retryable || attempt >= retries) {
@@ -68,7 +83,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
           response.status,
         );
       }
-      await sleep(1000 * 2 ** attempt);
+      await sleep(1000 * 2 ** attempt, signal);
     }
   }
 
@@ -93,7 +108,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
         ...options.extraBody,
       };
       const started = performance.now();
-      const data = await post(body);
+      const data = await post(body, request.signal);
       const text = data.choices?.[0]?.message?.content;
       if (!text) throw new LlmError(`${options.id}: empty completion`);
       return {
