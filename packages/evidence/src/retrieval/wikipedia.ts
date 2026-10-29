@@ -1,6 +1,7 @@
 import { getJson, type HttpOptions } from "./http";
 import type { SourceRef } from "./types";
-import { usGovDomain } from "./us-gov";
+import { institutionFor } from "./institutions";
+import { textbookHostFor } from "./open-textbooks";
 
 interface ParseResponse {
   parse?: { externallinks?: string[] };
@@ -23,7 +24,7 @@ export function refFromLink(link: string): SourceRef | undefined {
     const pmid = /^\/(\d+)\/?$/.exec(url.pathname)?.[1];
     return pmid ? { pmid } : undefined;
   }
-  return usGovDomain(link) ? { url: link } : undefined;
+  return institutionFor(link) || textbookHostFor(link) ? { url: link } : undefined;
 }
 
 const refKey = (ref: SourceRef) => ref.doi?.toLowerCase() ?? ref.pmid ?? ref.url ?? "";

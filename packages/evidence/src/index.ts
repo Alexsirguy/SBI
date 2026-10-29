@@ -77,7 +77,14 @@ export {
 } from "./repositories";
 export { createCrossrefConnector, fullDate, type ConnectorOptions } from "./retrieval/crossref";
 export { createEuropePmcConnector } from "./retrieval/europe-pmc";
-export { getText, SourceFetchError, USER_AGENT, type HttpOptions } from "./retrieval/http";
+export {
+  DEFAULT_EVIDENCE_CONTACT,
+  getText,
+  SourceFetchError,
+  USER_AGENT,
+  userAgentWith,
+  type HttpOptions,
+} from "./retrieval/http";
 export {
   createDefaultRetriever,
   createRetriever,
@@ -99,10 +106,72 @@ export type {
   SourceRef,
 } from "./retrieval/types";
 export {
-  createUsGovConnector,
+  createInstitutionConnector,
+  GRANTS,
+  institutionFor,
+  INSTITUTIONS,
+  OGL_V3,
   US_GOV_LICENSE,
-  US_GOV_PUBLISHERS,
-  usGovDomain,
-} from "./retrieval/us-gov";
+  type Institution,
+  type ReuseGrant,
+} from "./retrieval/institutions";
 export { discoverReferences, refFromLink } from "./retrieval/wikipedia";
 export { EvidenceSnapshot, loadSnapshot, snapshotRepositories } from "./snapshot";
+export {
+  createOpenTextbookConnector,
+  libreTextsLicence,
+  OPENSTAX_RELICENSED_AT,
+  TEXTBOOK_HOSTS,
+  textbookHostFor,
+  wikisourceLicence,
+  type TextbookConnectorOptions,
+} from "./retrieval/open-textbooks";
+export {
+  createPoliteFetcher,
+  parseRobots,
+  RobotsDisallowedError,
+  type PoliteFetcher,
+  type PoliteFetcherOptions,
+  type RobotsRules,
+} from "./retrieval/robots";
+export {
+  Discipline,
+  INQUIRY_PROMPT_VERSION,
+  InquiryPlan,
+  InquiryQuestion,
+  planInquiry,
+  type InquiryInput,
+} from "./plan/inquiry";
+export { OPEN_LIBRETEXTS_BOOKS } from "./search/libretexts-books";
+export {
+  createLibreTextsIndex,
+  type LibreTextsIndex,
+  type LibreTextsIndexOptions,
+} from "./search/libretexts-index";
+export {
+  searchSources,
+  searchWikipedia,
+  type SourceSearchDeps,
+  type SourceSearchOptions,
+  type SourceSearchResult,
+} from "./search/search";
+export { searchTokens } from "./search/tokens";
+export {
+  EXTRACT_PROMPT_VERSION,
+  extractAndVerify,
+  extractClaims,
+  relevantPassages,
+  type CandidatePassage,
+  type ExtractOptions,
+} from "./extract/extract";
+export {
+  createMemoryEvidencePackRepository,
+  EvidencePack,
+  evidencePackKey,
+  gatherEvidence,
+  type EvidencePackRepository,
+  type GatherDeps,
+  type GatheredEvidence,
+  type GatherEvent,
+  type GatherOptions,
+} from "./pack/pack";

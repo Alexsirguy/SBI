@@ -36,9 +36,28 @@ export interface BuiltClaims {
 
 export interface BuildOptions {
   judge: SupportJudge;
+  /** Judge calls in flight at once; the provider's rate limit is the real ceiling. */
+  concurrency?: number;
   now?: () => Date;
   maxPassagesPerClaim?: number;
   signal?: AbortSignal;
+}
+
+type Limiter = <T>(task: () => Promise<T>) => Promise<T>;
+
+function limiter(size: number): Limiter {
+  let active = 0;
+  const waiting: (() => void)[] = [];
+  return async (task) => {
+    if (active >= size) await new Promise<void>((resolve) => waiting.push(resolve));
+    active += 1;
+    try {
+      return await task();
+    } finally {
+      active -= 1;
+      waiting.shift()?.();
+    }
+  };
 }
 
 interface Judged {
@@ -92,6 +111,7 @@ async function judgeDraft(
   draft: ClaimDraft,
   fetched: FetchedSource[],
   options: BuildOptions,
+  limit: Limiter,
 ): Promise<Judged[]> {
   const profile = claimTerms(draft.text);
   const candidates = fetched
@@ -106,21 +126,28 @@ async function judgeDraft(
     .sort((a, b) => b.match.score - a.match.score)
     .slice(0, options.maxPassagesPerClaim ?? 3);
   const judged: Judged[] = [];
-  for (const candidate of candidates) {
+  const verdicts = await Promise.all(
+    candidates.map((candidate) =>
+      limit(() =>
+        options.judge.judge(
+          {
+            claim: draft.text,
+            scope: draft.scope,
+            excerpt: candidate.passage.text,
+            location: candidate.passage.location,
+            sourceTitle: (fetched[candidate.sourceIndex] as FetchedSource).title,
+          },
+          { signal: options.signal },
+        ),
+      ),
+    ),
+  );
+  candidates.forEach((candidate, index) => {
+    const { verdict, quote } = verdicts[index] as SupportVerdict;
     const source = fetched[candidate.sourceIndex] as FetchedSource;
-    const { verdict, quote } = await options.judge.judge(
-      {
-        claim: draft.text,
-        scope: draft.scope,
-        excerpt: candidate.passage.text,
-        location: candidate.passage.location,
-        sourceTitle: source.title,
-      },
-      { signal: options.signal },
-    );
     const passage = storable(source, candidate.passage, quote);
     if (passage) judged.push({ sourceIndex: candidate.sourceIndex, passage, verdict });
-  }
+  });
   return judged;
 }
 
@@ -143,8 +170,14 @@ export async function buildClaims(
 
   const verifiedAt = (options.now?.() ?? new Date()).toISOString();
 
-  for (const draft of ordered) {
-    const judged = await judgeDraft(draft, fetched, options);
+  // Judging one draft never depends on another, so all run up front under one concurrency limit.
+  const limit = limiter(options.concurrency ?? 6);
+  const allJudged = await Promise.all(
+    ordered.map((draft) => judgeDraft(draft, fetched, options, limit)),
+  );
+
+  for (const [index, draft] of ordered.entries()) {
+    const judged = allJudged[index] as Judged[];
     const supporting = judged.filter((item) => item.verdict === "supports");
     const contradicting = judged.filter((item) => item.verdict === "contradicts");
     const backed = supporting.length > 0;
