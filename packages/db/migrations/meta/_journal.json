@@ -15,6 +15,13 @@
       "when": 1793208776211,
       "tag": "0001_media_retention",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1793226327054,
+      "tag": "0002_catalog_gaps",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { API_ROUTES, ApiError } from "./media-api";
+import { API_ROUTES } from "./api-routes";
+import { ApiError } from "./media-api";
 import { CONTRACT_SCHEMAS, CONTRACTS_VERSION } from "./registry";
 
 type JsonObject = Record<string, unknown>;
@@ -24,15 +25,31 @@ function json(schema: JsonObject) {
   return { content: { "application/json": { schema } } };
 }
 
+function queryParameters(schema: JsonObject) {
+  const properties = (schema.properties ?? {}) as Record<string, JsonObject>;
+  const required = new Set((schema.required ?? []) as string[]);
+  return Object.entries(properties).map(([name, property]) => ({
+    name,
+    in: "query",
+    required: required.has(name),
+    schema: property,
+  }));
+}
+
 function apiPaths(): JsonObject {
   const error = json(inlineSchema(ApiError, "output"));
   const paths: Record<string, JsonObject> = {};
   for (const [operationId, route] of Object.entries(API_ROUTES)) {
+    const request = inlineSchema(route.request, "input");
+    const input =
+      route.method === "get"
+        ? { parameters: queryParameters(request) }
+        : { requestBody: { required: true, ...json(request) } };
     paths[route.path] = {
       [route.method]: {
         operationId,
         summary: route.summary,
-        requestBody: { required: true, ...json(inlineSchema(route.request, "input")) },
+        ...input,
         responses: {
           200: { description: "OK", ...json(inlineSchema(route.response, "output")) },
           ...Object.fromEntries(

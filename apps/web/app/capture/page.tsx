@@ -12,8 +12,9 @@ export default function CapturePage() {
         <ul>
           <li>We use your photo only to recognise the object for your lesson.</li>
           <li>
-            It is stored privately on Cloudflare R2 and sent to Meta&apos;s model API for
-            recognition. It is never shown to other learners.
+            It is stored privately on Cloudflare R2 and never shown to other learners. When photo
+            recognition is on, it is sent to Meta&apos;s model API, or to OpenAI&apos;s if Meta is
+            unavailable; neither may train on it.
           </li>
           <li>
             It is deleted within {PHOTO_RETENTION_DAYS} days, or sooner once recognised, unless you

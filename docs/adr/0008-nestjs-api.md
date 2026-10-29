@@ -13,7 +13,7 @@ ADR 0001 chose Fastify for `apps/api`. The first media routes were written as Ne
 - **NestJS 12 with `@nestjs/platform-fastify`.** Nest gives modules, providers and controllers; Fastify still serves HTTP. Express is not used.
 - **One module per feature** (`media`, `purge`), plus global `config` and `database` modules. Controllers stay thin; services hold the logic.
 - **Explicit injection tokens** (`src/tokens.ts`). Our esbuild-based toolchain (tsx, tsup, Vitest) emits no decorator metadata, so every constructor parameter uses `@Inject(TOKEN)`.
-- **Contracts drive validation.** `API_ROUTES` in `@sbi/contracts` names each route's path and its Zod request and response schemas. `ZodBodyPipe` validates bodies, the OpenAPI document is generated from the same table, and the web client checks replies against it.
+- **Contracts drive validation.** `API_ROUTES` in `@sbi/contracts` names each route's path and its Zod request and response schemas. `ZodPipe` validates bodies and GET query strings, the OpenAPI document is generated from the same table, and the web client checks replies against it.
 - **One error shape.** `ApiErrorFilter` sends `{ error }` for every failure. Only a `UserFacingException` message reaches clients, because framework errors can quote the request body back.
 - **The web app holds no server secrets.** It calls the API through `createApiClient` and react-query mutations.
 
