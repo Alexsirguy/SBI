@@ -95,7 +95,7 @@ export function routeLesson(lesson: Lesson, report?: CheckReport): RouteDecision
 }
 
 export interface Publisher {
-  /** Moves review-bound lessons to needs-review; clean ones pass through. */
+  /** Moves review-bound or rights-blocked lessons to needs-review; clean ones pass through. */
   route(lesson: Lesson, report?: CheckReport): Promise<{ lesson: Lesson; decision: RouteDecision }>;
   approve(lesson: Lesson, by: string): Promise<Lesson>;
   reject(lesson: Lesson, by: string, reason: string): Promise<Lesson>;
@@ -107,8 +107,13 @@ export function createPublisher(deps: {
 }): Publisher {
   return {
     async route(lesson, report) {
-      const decision = routeLesson(lesson, report);
-      if (decision.action === "approve") return { lesson, decision };
+      let decision = routeLesson(lesson, report);
+      // Auto-validated lessons are served, so they must clear rights just as approvals do.
+      if (decision.action === "approve") {
+        const rights = await deps.rights.check(lesson);
+        if (rights.cleared) return { lesson, decision };
+        decision = { action: "review", reasons: [`rights: ${rights.reason ?? "not cleared"}`] };
+      }
       const moved = transitionLesson(lesson, "needs-review", {
         by: "system",
         reason: decision.reasons.join("; "),
