@@ -26,7 +26,8 @@ export const InquiryQuestion = z.object({
 });
 
 export const InquiryPlan = z.object({
-  questions: z.array(InquiryQuestion).min(1).max(6),
+  // Fewer than three cannot get from what is seen to the principles behind it.
+  questions: z.array(InquiryQuestion).min(3).max(6),
 });
 
 export type Discipline = z.infer<typeof Discipline>;
@@ -60,7 +61,7 @@ const SCHEMA: Record<string, unknown> = {
   properties: {
     questions: {
       type: "array",
-      minItems: 1,
+      minItems: 3,
       maxItems: 6,
       items: {
         type: "object",
