@@ -164,6 +164,7 @@ describe("extractAndVerify", () => {
     expect(built.claims).toHaveLength(1);
     expect(built.claims[0]).toMatchObject({ status: "supported", confidence: "high" });
     expect(built.claims[0]?.sourceIds).toHaveLength(2);
+    expect(built.extraction).toEqual({ passages: 3, proposed: 1, ungrounded: 0 });
   });
 
   it("checks pages pooled from other sub-questions once each, never a copy of its own", async () => {

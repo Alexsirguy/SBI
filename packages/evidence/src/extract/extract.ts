@@ -85,10 +85,18 @@ function grounded(proposal: z.infer<typeof Proposal>, excerpt: string): boolean 
   );
 }
 
+/** Where a sub-question's claims go: passages read, claims proposed, proposals dropped. */
+export interface ExtractionStats {
+  passages: number;
+  proposed: number;
+  ungrounded: number;
+}
+
 export interface ExtractOptions {
   provider: LlmProvider;
   maxPassages?: number;
   signal?: AbortSignal;
+  onStats?: (stats: ExtractionStats) => void;
 }
 
 /** Proposes claims worded as the sources state them; ungrounded proposals are dropped. */
@@ -98,7 +106,10 @@ export async function extractClaims(
   options: ExtractOptions,
 ): Promise<ClaimDraft[]> {
   const candidates = relevantPassages(question, fetched, options.maxPassages ?? 8);
-  if (candidates.length === 0) return [];
+  if (candidates.length === 0) {
+    options.onStats?.({ passages: 0, proposed: 0, ungrounded: 0 });
+    return [];
+  }
   const tag = `excerpt-${randomBytes(6).toString("hex")}`;
   const byId = new Map(candidates.map((candidate, index) => [`e${index + 1}`, candidate]));
   const user = [
@@ -137,6 +148,11 @@ export async function extractClaims(
       scope: `${question.discipline}: ${question.question}`,
     });
   }
+  options.onStats?.({
+    passages: candidates.length,
+    proposed: output.claims.length,
+    ungrounded: output.claims.length - drafts.length,
+  });
   return drafts;
 }
 
@@ -150,8 +166,14 @@ export async function extractAndVerify(
     /** Sources found for other sub-questions: checked for support, never extracted from. */
     corroborating?: FetchedSource[];
   },
-): Promise<BuiltClaims> {
-  const drafts = await extractClaims(question, fetched, options);
+): Promise<BuiltClaims & { extraction: ExtractionStats }> {
+  let extraction: ExtractionStats = { passages: 0, proposed: 0, ungrounded: 0 };
+  const drafts = await extractClaims(question, fetched, {
+    ...options,
+    onStats: (stats) => {
+      extraction = stats;
+    },
+  });
   // Two sub-questions can fetch one page; a copy would cite the same stored source twice.
   const seen = new Set(fetched.map((source) => source.url));
   const others = (options.corroborating ?? []).filter((source) => {
@@ -159,9 +181,10 @@ export async function extractAndVerify(
     seen.add(source.url);
     return true;
   });
-  return buildClaims(drafts, [...fetched, ...others], {
+  const built = await buildClaims(drafts, [...fetched, ...others], {
     judge: options.judge,
     now: options.now,
     signal: options.signal,
   });
+  return { ...built, extraction };
 }
