@@ -65,6 +65,24 @@ export const lessonReviewEvents = mysqlTable(
   (table) => [index("lesson_review_events_lesson_idx").on(table.lessonId, table.version, table.at)],
 );
 
+// Learner feedback per lesson version; no learner identifier is stored, only what they chose to say.
+export const lessonFeedback = mysqlTable(
+  "lesson_feedback",
+  {
+    feedbackId: uuid("feedback_id").primaryKey(),
+    lessonId: uuid("lesson_id").notNull(),
+    version: int("version").notNull(),
+    category: varchar("category", { length: 32 }),
+    details: varchar("details", { length: 1000 }),
+    helpful: int("helpful"),
+    clear: int("clear"),
+    createdAt: timestamp("created_at").notNull(),
+  },
+  (table) => [
+    index("lesson_feedback_lesson_idx").on(table.lessonId, table.version, table.createdAt),
+  ],
+);
+
 // Which claims each lesson version shows, so an invalidated claim finds its lessons by index.
 export const lessonClaims = mysqlTable(
   "lesson_claims",

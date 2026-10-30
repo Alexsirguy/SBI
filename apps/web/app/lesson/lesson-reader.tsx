@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CitationProvider, citationIndex, SourceList } from "./citations";
 import { DepthControls } from "./depth-controls";
+import { LessonFeedback } from "./feedback";
 import { lessonHref } from "./lesson-request";
 import { sectionAnchor } from "./modules/frame";
 import { MODULE_LABELS, MODULES } from "./modules/labels";
@@ -125,6 +126,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
             )}
           </div>
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
+          {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
         </>
       )}
       {lesson && visuals && visuals.visuals.length > 0 ? (

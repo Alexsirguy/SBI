@@ -6,7 +6,7 @@ import {
   sseFrames,
 } from "../app/lesson/sample-lesson";
 import { expectNoAxeViolations } from "./a11y";
-import { mockLesson } from "./mock-api";
+import { mockApi, mockLesson } from "./mock-api";
 
 const LESSON_URL = "/lesson?taxonomyId=object.magnifying-glass&label=Magnifying+glass";
 
@@ -48,6 +48,7 @@ test("reads the quick answer, notices and every section in order once streamed",
     "Quick answer",
     ...headings,
     "Sources",
+    "Tell us what you think",
   ]);
 
   const nav = page.getByRole("navigation", { name: "Lesson sections" });
@@ -160,6 +161,45 @@ test("depth and age band request the matching lesson and last for the session", 
   // A link with no settings still gets the session's choice when a lesson is started again.
   const remembered = await page.evaluate(() => sessionStorage.getItem("sbi.lesson-prefs"));
   expect(JSON.parse(remembered ?? "{}")).toEqual({ depth: "deeper", age: "teen" });
+  await expectNoAxeViolations(page);
+});
+
+test("rates the lesson and reports a problem tied to its version", async ({ page }) => {
+  const sent: unknown[] = [];
+  await mockLesson(page, FULL);
+  await mockApi(page, "/lessons/feedback", (body) => {
+    sent.push(body);
+    return {
+      json: {
+        feedbackId: "0192f1a0-0000-7000-8000-00000000f001",
+        receivedAt: "2026-10-30T12:00:00.000Z",
+      },
+    };
+  });
+  await page.goto(LESSON_URL);
+  const rate = page.getByRole("form", { name: "Rate this lesson" });
+  await expect(rate.getByRole("button", { name: "Send rating" })).toBeDisabled();
+  await rate.getByRole("group", { name: "How helpful was it?" }).getByLabel("4 Mostly").check();
+  await rate.getByRole("group", { name: "How clear was it?" }).getByLabel("2 A little").check();
+  await rate.getByRole("button", { name: "Send rating" }).click();
+  await expect(page.getByText("Thanks for rating this lesson.")).toBeVisible();
+
+  const report = page.getByRole("form", { name: "Report a problem" });
+  await report.getByRole("button", { name: "Send report" }).click();
+  await expect(report.getByRole("alert")).toHaveText("Choose what kind of problem it is.");
+  await report.getByLabel("What is wrong?").selectOption("wrong-fact");
+  await report.getByLabel("Details (optional)").fill("The history part seems off.");
+  await report.getByRole("button", { name: "Send report" }).click();
+  await expect(page.getByText("Thanks. A reviewer will look at this lesson.")).toBeVisible();
+
+  expect(sent).toEqual([
+    { lessonId: SAMPLE_LESSON.lessonId, version: 1, rating: { helpful: 4, clear: 2 } },
+    {
+      lessonId: SAMPLE_LESSON.lessonId,
+      version: 1,
+      report: { category: "wrong-fact", details: "The history part seems off." },
+    },
+  ]);
   await expectNoAxeViolations(page);
 });
 

@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import { Lesson } from "./lesson";
-import { LessonRequest } from "./lesson-api";
+import { LessonFeedbackReceipt, LessonFeedbackRequest, LessonRequest } from "./lesson-api";
 import {
   ConfirmedPhoto,
   ConfirmUploadRequest,
@@ -80,6 +80,14 @@ export const API_ROUTES = {
     request: KeepPhotoRequest,
     response: KeptPhoto,
     errors: [400, 409, 502, 503],
+  },
+  submitLessonFeedback: {
+    method: "post",
+    path: "/lessons/feedback",
+    summary: "Report a problem with, or rate, one version of a lesson.",
+    request: LessonFeedbackRequest,
+    response: LessonFeedbackReceipt,
+    errors: [400, 404],
   },
   requestLesson: {
     method: "post",
