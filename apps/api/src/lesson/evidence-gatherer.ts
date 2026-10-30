@@ -78,6 +78,7 @@ export function createEvidenceGatherer(deps: GathererDeps): EvidenceGatherer {
           sources: question.sources,
           claims: question.claimIds.length,
           completed: question.completed,
+          timings: question.timings,
           searched: question.searched && {
             textbookPages: question.searched.textbookPages.length,
             articles: question.searched.articles,
