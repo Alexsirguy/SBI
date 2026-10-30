@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { buildClaims } from "../claims/builder";
 import { licenseInfo } from "../citations/display";
 import {
   createOpenTextbookConnector,
+  libreTextsBook,
   libreTextsLicence,
   textbookHostFor,
   wikisourceLicence,
@@ -80,6 +82,20 @@ describe("LibreTexts licences", () => {
   });
 });
 
+describe("libreTextsBook", () => {
+  it("names the book a page belongs to, the same for every chapter of it", () => {
+    const book = (path: string) =>
+      libreTextsBook(new URL(`https://phys.libretexts.org/Bookshelves/University_Physics/${path}`));
+    expect(book("Calculus-Based_Physics_(Schnick)/Volume_B%3A_Optics/B27")).toBe(
+      "Calculus-Based Physics (Schnick)",
+    );
+    expect(book("University_Physics_(OpenStax)/Vol_3/02/2.08")).toBe(
+      book("University_Physics_(OpenStax)/Vol_3/02"),
+    );
+    expect(libreTextsBook(new URL("https://phys.libretexts.org/Bookshelves"))).toBeUndefined();
+  });
+});
+
 describe("Wikisource licences", () => {
   it("uses only works marked public domain", () => {
     expect(wikisourceLicence(fixture("wikisource-pd.html")).rightsStatus).toBe("reusable");
@@ -96,7 +112,8 @@ describe("createOpenTextbookConnector", () => {
     });
 
     expect(source).toMatchObject({
-      publisher: "LibreTexts",
+      publisher: "Physical Geology (Earle), LibreTexts",
+      authors: ["Steven Earle"],
       sourceType: "textbook",
       rightsStatus: "reusable",
       retrieval: {
@@ -109,6 +126,15 @@ describe("createOpenTextbookConnector", () => {
     expect(source.passages.length).toBeGreaterThan(0);
     expect(text).not.toMatch(/navigation|This page titled|shared under a/);
     expect(licenseInfo(source.retrieval.license)?.label).toBe("CC BY 4.0");
+  });
+
+  it("reads a linked author credit as a plain name", async () => {
+    const linked = fixture("libretexts-open.html").replace(
+      "curated by Steven Earle (BCCampus).",
+      'curated by <a rel="nofollow" href="https://openstax.org/">OpenStax</a> via <a href="https://openstax.org/details">source content</a> that was edited.',
+    );
+    const source = await connector({ [EARLE]: linked }).fetch({ url: EARLE });
+    expect(source.authors).toEqual(["OpenStax"]);
   });
 
   it("keeps no text from a page whose licence forbids commercial reuse", async () => {
@@ -153,5 +179,36 @@ describe("createOpenTextbookConnector", () => {
     await target.fetch({ url: EARLE });
     expect(sleep).toHaveBeenCalledTimes(1);
     expect(sleep.mock.calls[0]?.[0]).toBeGreaterThan(4000);
+  });
+});
+
+describe("textbook independence", () => {
+  const shelf = "https://geo.libretexts.org/Bookshelves/Geology";
+  const chapter = (book: string, page: string) => `${shelf}/${book}/01%3A_Intro/${page}`;
+
+  async function claimFrom(urls: string[]) {
+    const read = connector(
+      Object.fromEntries(urls.map((url) => [url, fixture("libretexts-open.html")])),
+    );
+    const sources = await Promise.all(urls.map((url) => read.fetch({ url })));
+    const text = sources[0]?.passages[0]?.text ?? "";
+    const built = await buildClaims([{ key: "k", text, scope: "geology" }], sources, {
+      judge: { version: "t", judge: async () => ({ verdict: "supports", reason: "ok" }) },
+    });
+    return built.claims[0];
+  }
+
+  it("lets two different books corroborate a claim, but not two chapters of one book", async () => {
+    const twoBooks = await claimFrom([
+      chapter("Physical_Geology_(Earle)", "1.02"),
+      chapter("Geology_(Lumen)", "1.03"),
+    ]);
+    const oneBook = await claimFrom([
+      chapter("Physical_Geology_(Earle)", "1.02"),
+      chapter("Physical_Geology_(Earle)", "1.04"),
+    ]);
+    expect(twoBooks).toMatchObject({ status: "supported", confidence: "high" });
+    expect(oneBook?.status).toBe("qualified");
+    expect(oneBook?.uncertainty).toContain("Only one independent source");
   });
 });

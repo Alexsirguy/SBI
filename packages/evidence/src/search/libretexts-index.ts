@@ -4,6 +4,7 @@ import { searchTokens } from "./tokens";
 
 interface IndexedPage {
   url: string;
+  book: string;
   bookTokens: Set<string>;
   titleTokens: Set<string>;
 }
@@ -39,6 +40,7 @@ function indexPages(sitemap: string, books: readonly string[]): IndexedPage[] {
     const segments = url.slice(book.length).split("/").filter(Boolean);
     pages.push({
       url,
+      book,
       bookTokens: new Set(searchTokens(decode(book.split("/").at(-1) ?? ""))),
       titleTokens: new Set(searchTokens(segments.map(decode).join(" "))),
     });
@@ -78,12 +80,17 @@ export function createLibreTextsIndex(options: LibreTextsIndexOptions): LibreTex
         .map((page) => {
           const inTitle = wanted.filter((token) => page.titleTokens.has(token)).length;
           const inBook = wanted.filter((token) => page.bookTokens.has(token)).length;
-          return { url: page.url, inTitle, score: inTitle * 2 + inBook * 0.5 };
+          return { url: page.url, book: page.book, inTitle, score: inTitle * 2 + inBook * 0.5 };
         })
         // A page whose own title shares at least two query words is worth fetching.
         .filter((item) => item.inTitle >= Math.min(2, wanted.length))
         .sort((a, b) => b.score - a.score || a.url.length - b.url.length);
-      return scored.slice(0, limit).map((item) => item.url);
+      // Best page per book first: a second book can corroborate a claim, a second chapter cannot.
+      const firsts = scored.filter(
+        (item, index) => scored.findIndex((other) => other.book === item.book) === index,
+      );
+      const rest = scored.filter((item) => !firsts.includes(item));
+      return [...firsts, ...rest].slice(0, limit).map((item) => item.url);
     },
   };
 }

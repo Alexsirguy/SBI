@@ -114,7 +114,7 @@ async function judgeDraft(
   limit: Limiter,
 ): Promise<Judged[]> {
   const profile = claimTerms(draft.text);
-  const candidates = fetched
+  const ranked = fetched
     .flatMap((source, sourceIndex) =>
       source.passages.map((passage) => ({
         sourceIndex,
@@ -123,8 +123,16 @@ async function judgeDraft(
       })),
     )
     .filter((candidate) => candidate.match.passes)
-    .sort((a, b) => b.match.score - a.match.score)
-    .slice(0, options.maxPassagesPerClaim ?? 3);
+    .sort((a, b) => b.match.score - a.match.score);
+  // The page a claim came from always matches best; each source's best passage goes first so a
+  // second source is actually judged.
+  const firsts = ranked.filter(
+    (item, index) => ranked.findIndex((other) => other.sourceIndex === item.sourceIndex) === index,
+  );
+  const candidates = [...firsts, ...ranked.filter((item) => !firsts.includes(item))].slice(
+    0,
+    options.maxPassagesPerClaim ?? 3,
+  );
   const judged: Judged[] = [];
   const verdicts = await Promise.all(
     candidates.map((candidate) =>
