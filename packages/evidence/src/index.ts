@@ -156,3 +156,22 @@ export {
   type SourceSearchResult,
 } from "./search/search";
 export { searchTokens } from "./search/tokens";
+export {
+  EXTRACT_PROMPT_VERSION,
+  extractAndVerify,
+  extractClaims,
+  relevantPassages,
+  type CandidatePassage,
+  type ExtractOptions,
+} from "./extract/extract";
+export {
+  createMemoryEvidencePackRepository,
+  EvidencePack,
+  evidencePackKey,
+  gatherEvidence,
+  type EvidencePackRepository,
+  type GatherDeps,
+  type GatheredEvidence,
+  type GatherEvent,
+  type GatherOptions,
+} from "./pack/pack";
