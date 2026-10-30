@@ -136,6 +136,8 @@ function slug(label: string, taken: Set<string>): string {
   return candidate;
 }
 
+const answerLogger = new Logger("QuickAnswer");
+
 // A short answer that fails generation or its gate is skipped; the lesson's own one follows.
 async function earlyAnswer(
   provider: LlmProvider,
@@ -144,6 +146,11 @@ async function earlyAnswer(
   try {
     const answer = await generateQuickAnswer(input, { provider });
     const gate = await gateQuickAnswer(answer, { ...input, provider });
+    if (!gate.passed) {
+      answerLogger.log(
+        `not streamed from ${input.claims.length} claims: ${gate.reasons.join("; ")}`,
+      );
+    }
     return gate.passed ? answer : undefined;
   } catch (error) {
     if (error instanceof LlmError) return undefined;
@@ -285,11 +292,17 @@ export class LessonService {
       const events = createEventQueue<LessonStreamEvent>();
       let early: QuickAnswerDraft | undefined;
       let answering: Promise<void> | undefined;
+      const arrived: Claim[] = [];
+      let triedWith = 0;
+      // Early batches are often background; an attempt that cannot answer retries on newer claims.
       const tryEarlyAnswer = (claims: Claim[]) => {
-        const ready = [...usable, ...claims].filter(isTeachable);
-        if (answering || ready.length === 0) return;
+        arrived.push(...claims);
+        const ready = [...usable, ...arrived].filter(isTeachable);
+        if (early || answering || ready.length === 0 || ready.length === triedWith) return;
+        triedWith = ready.length;
         answering = earlyAnswer(provider, { ...answerInput, claims: ready }).then((answer) => {
-          if (!answer) return;
+          answering = undefined;
+          if (!answer) return tryEarlyAnswer([]);
           early = answer;
           events.push({ type: "quick-answer", data: freshAnswer(lessonId, answer) });
         });
@@ -317,7 +330,7 @@ export class LessonService {
           throw error;
         })
         .finally(async () => {
-          await answering;
+          while (answering) await answering;
           events.close();
         });
       for await (const event of events) {
@@ -360,8 +373,8 @@ export class LessonService {
       );
       // Awaited inside the attempt below; this only stops an early exit raising it unhandled.
       pendingDraft.catch(() => undefined);
-      // No claims arrived early enough to answer during gathering; answer alongside the draft.
-      if (!early) {
+      // No early attempt answered; one more try with the full set if it holds anything new.
+      if (!early && claims.length > triedWith) {
         early = await earlyAnswer(provider, { ...answerInput, claims });
         if (early) {
           answered = true;
