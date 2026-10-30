@@ -3,6 +3,7 @@
 import type { LessonDisclaimer, LessonRequest } from "@sbi/contracts";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AskQuestion } from "./ask-question";
 import { CitationProvider, citationIndex, SourceList } from "./citations";
 import { DepthControls } from "./depth-controls";
 import { LessonFeedback } from "./feedback";
@@ -60,6 +61,10 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
     request,
     fetcher,
   );
+  // The spec promises a fresh answer is always available, so a reused lesson can be replaced.
+  const askFresh = () =>
+    router.push(lessonHref(request.taxonomyId, label, { question, prefs, fresh: true }));
+  const written = lesson ? new Date(lesson.reuse.generatedAt) : undefined;
   const loading = status === "loading";
   const disclaimers = lesson?.disclaimers ?? answer?.disclaimers ?? [];
   const sections = new Map(lesson?.sections.map((section) => [section.module, section]));
@@ -89,6 +94,28 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
           <h2 id="quick-answer-heading">Quick answer</h2>
           <p>{answer.shortAnswer}</p>
           {answer.note ? <p className="note">{answer.note}</p> : null}
+          <p className="provenance">
+            {answer.kind === "cached" && written
+              ? `This lesson was written earlier for a similar question, on ${written.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}. `
+              : answer.kind === "fallback"
+                ? "This is a related lesson, shown because a new one could not be written. "
+                : null}
+            {status === "ready" && !request.fresh ? (
+              <button type="button" onClick={askFresh}>
+                Get a fresh answer
+              </button>
+            ) : null}
+          </p>
+        </section>
+      ) : null}
+      {lesson && lesson.learningObjectives.length > 0 ? (
+        <section aria-labelledby="objectives-heading" className="objectives">
+          <h2 id="objectives-heading">In this lesson</h2>
+          <ul>
+            {lesson.learningObjectives.map((objective) => (
+              <li key={objective}>{objective}</li>
+            ))}
+          </ul>
         </section>
       ) : null}
       {error && !lesson ? null : (
@@ -118,7 +145,15 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
             {lesson ? (
               <CitationProvider value={citationIndex(lesson, sources)}>
                 {lesson.sections.map((section) => (
-                  <SectionView key={section.sectionId} section={section} lesson={lesson} />
+                  <SectionView
+                    key={section.sectionId}
+                    section={section}
+                    lesson={lesson}
+                    objectLabel={label}
+                    askQuestion={
+                      <AskQuestion taxonomyId={request.taxonomyId} label={label} prefs={prefs} />
+                    }
+                  />
                 ))}
               </CitationProvider>
             ) : (
