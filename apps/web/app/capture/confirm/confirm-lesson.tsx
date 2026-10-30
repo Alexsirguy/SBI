@@ -11,6 +11,7 @@ import {
 } from "@sbi/contracts";
 import type { z } from "zod";
 import { lessonHref } from "../../lesson/lesson-request";
+import { readPrefs } from "../../lesson/prefs";
 import { useTaxonomySearch } from "../use-taxonomy-search";
 import { NoticeForm } from "./notice-form";
 
@@ -149,7 +150,7 @@ export function ConfirmLesson({
     if (selected) {
       onStart?.(selected);
       setStarted(true);
-      router.push(lessonHref(selected.taxonomyId, selected.label));
+      router.push(lessonHref(selected.taxonomyId, selected.label, { prefs: readPrefs() }));
     }
   }
 
