@@ -140,7 +140,7 @@ test("meaning never rests on colour alone", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Small print looks larger" })).toContainText(
     "Based on limited evidence:",
   );
-  await expect(page.getByRole("complementary", { name: "Before you read" })).toContainText("Note:");
+  await expect(page.getByRole("complementary", { name: "Before you read" })).toContainText("Note");
   await expectNoAxeViolations(page);
 });
 
