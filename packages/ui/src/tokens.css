@@ -1,0 +1,116 @@
+/* Workbench design tokens (ADR 0012). Every colour pair used for text or controls is checked for
+   WCAG AA in both themes by tokens.test.ts. */
+:root {
+  --sbi-bench: #eaf0ee;
+  --sbi-paper: #ffffff;
+  --sbi-paper-sunk: #f4f7f6;
+  --sbi-ink: #142a33;
+  --sbi-ink-soft: #4d6470;
+  --sbi-rule: #c7d3d3;
+  --sbi-control-edge: #6f8790;
+  --sbi-action: #0b6a64;
+  --sbi-action-ink: #ffffff;
+  --sbi-marker: #ffd84d;
+  --sbi-marker-ink: #2a2200;
+  --sbi-caution: #a63a1f;
+  --sbi-caution-ink: #ffffff;
+  --sbi-caution-wash: #fbe9e3;
+  --sbi-note: #2a5a86;
+  --sbi-note-wash: #eef4f9;
+  --sbi-focus: #1f5fd1;
+
+  --sbi-font-body:
+    var(--sbi-font-body-face, "Atkinson Hyperlegible Next"), "Atkinson Hyperlegible", system-ui,
+    -apple-system, "Segoe UI", sans-serif;
+  --sbi-font-display:
+    var(--sbi-font-display-face, "Bricolage Grotesque"), var(--sbi-font-body-face, system-ui),
+    system-ui, sans-serif;
+  --sbi-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --sbi-text-label: 0.75rem;
+  --sbi-text-small: 0.875rem;
+  --sbi-text-body: 1.0625rem;
+  --sbi-text-heading: 1.3125rem;
+  --sbi-text-answer: 1.375rem;
+  --sbi-text-title: 1.75rem;
+  --sbi-text-display: 2.125rem;
+  --sbi-leading: 1.55;
+  --sbi-measure: 65ch;
+
+  --sbi-space-1: 4px;
+  --sbi-space-2: 8px;
+  --sbi-space-3: 12px;
+  --sbi-space-4: 16px;
+  --sbi-space-5: 24px;
+  --sbi-space-6: 32px;
+  --sbi-space-7: 48px;
+
+  --sbi-radius-s: 6px;
+  --sbi-radius-m: 12px;
+  --sbi-radius-l: 20px;
+  --sbi-radius-pill: 999px;
+
+  /* WCAG 2.5.8 asks for 24px; 44px is the floor here and buttons use 48px on phones. */
+  --sbi-touch-min: 44px;
+  --sbi-touch: 48px;
+
+  --sbi-lift: 0 1px 2px rgb(20 42 51 / 0.08), 0 6px 20px rgb(20 42 51 / 0.06);
+  --sbi-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sbi-duration-quick: 150ms;
+  --sbi-duration-settle: 350ms;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sbi-bench: #0e191d;
+    --sbi-paper: #16242a;
+    --sbi-paper-sunk: #1b2c33;
+    --sbi-ink: #e6eef0;
+    --sbi-ink-soft: #a6b8be;
+    --sbi-rule: #2e434b;
+    --sbi-control-edge: #7e959c;
+    --sbi-action: #4cc4b9;
+    --sbi-action-ink: #04211f;
+    --sbi-marker: #e7c43a;
+    --sbi-marker-ink: #1d1700;
+    --sbi-caution: #ff917a;
+    --sbi-caution-ink: #2a0d06;
+    --sbi-caution-wash: #3a1e17;
+    --sbi-note: #93c2ee;
+    --sbi-note-wash: #182a39;
+    --sbi-focus: #8fb4ff;
+    --sbi-lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --sbi-bench: #0e191d;
+  --sbi-paper: #16242a;
+  --sbi-paper-sunk: #1b2c33;
+  --sbi-ink: #e6eef0;
+  --sbi-ink-soft: #a6b8be;
+  --sbi-rule: #2e434b;
+  --sbi-control-edge: #7e959c;
+  --sbi-action: #4cc4b9;
+  --sbi-action-ink: #04211f;
+  --sbi-marker: #e7c43a;
+  --sbi-marker-ink: #1d1700;
+  --sbi-caution: #ff917a;
+  --sbi-caution-ink: #2a0d06;
+  --sbi-caution-wash: #3a1e17;
+  --sbi-note: #93c2ee;
+  --sbi-note-wash: #182a39;
+  --sbi-focus: #8fb4ff;
+  --sbi-lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sbi-duration-quick: 0ms;
+    --sbi-duration-settle: 0ms;
+  }
+}

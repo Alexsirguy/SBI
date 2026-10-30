@@ -5,7 +5,8 @@
   "description": "Shared accessible React components.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens.css"
   },
   "scripts": {
     "lint": "eslint .",
