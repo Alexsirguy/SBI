@@ -174,6 +174,13 @@ describe("gatherEvidence", () => {
       "When electric current flows through a resistance, electrical energy turns into heat.",
     ]);
     expect(result.pack.questions.every((question) => question.completed)).toBe(true);
+    expect(result.pack.questions.find((question) => question.key === "q1")?.yield).toEqual({
+      passages: 1,
+      proposed: 1,
+      ungrounded: 0,
+      unsupported: 0,
+      contradicted: 0,
+    });
     for (const question of result.pack.questions) {
       expect(Object.keys(question.timings ?? {}).sort()).toEqual([
         "fetchMs",

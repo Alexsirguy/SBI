@@ -40,6 +40,16 @@ export interface SourceSearchResult {
   failures: string[];
 }
 
+// LibreTexts splits its library into one site per subject.
+const DISCIPLINE_SITES: Partial<Record<InquiryQuestion["discipline"], string[]>> = {
+  physics: ["https://phys.libretexts.org"],
+  chemistry: ["https://chem.libretexts.org"],
+  biology: ["https://bio.libretexts.org"],
+  maths: ["https://math.libretexts.org"],
+  "earth-science": ["https://geo.libretexts.org"],
+  engineering: ["https://eng.libretexts.org"],
+};
+
 const refKey = (ref: SourceRef) => ref.doi?.toLowerCase() ?? ref.pmid ?? ref.url ?? "";
 
 /** Trusted refs for one sub-question: open-textbook pages first, then Wikipedia's references. */
@@ -52,7 +62,9 @@ export async function searchSources(
   const query = question.searchTerms.join(" ");
   const textbookPages = deps.libretexts
     ? await deps.libretexts
-        .search(`${question.question} ${query}`, options.booksPerQuestion ?? 3)
+        .search(`${question.question} ${query}`, options.booksPerQuestion ?? 3, {
+          preferSites: DISCIPLINE_SITES[question.discipline] ?? [],
+        })
         .catch((error: unknown) => {
           failures.push(`libretexts: ${String(error)}`);
           return [];

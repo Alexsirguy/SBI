@@ -10,7 +10,8 @@ interface IndexedPage {
 }
 
 export interface LibreTextsIndex {
-  search(query: string, limit: number): Promise<string[]>;
+  /** `preferSites` are origins, such as the sub-question's discipline site, ranked first on ties. */
+  search(query: string, limit: number, options?: { preferSites?: string[] }): Promise<string[]>;
 }
 
 export interface LibreTextsIndexOptions {
@@ -61,7 +62,22 @@ export function createLibreTextsIndex(options: LibreTextsIndexOptions): LibreTex
       sites.map(async (site) => {
         try {
           const response = await options.fetcher.get(`${site}/sitemap.xml`);
-          return indexPages(response.text, books);
+          // Large sites (chem) publish a sitemap index whose entries are the real sitemaps.
+          const parts = /<sitemapindex/i.test(response.text)
+            ? [...response.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1] ?? "")
+            : [];
+          if (parts.length === 0) return indexPages(response.text, books);
+          const pagesOf = await Promise.all(
+            parts
+              .filter((part) => part.startsWith(`${site}/`))
+              .map((part) =>
+                options.fetcher.get(part).then(
+                  (sub) => indexPages(sub.text, books),
+                  () => [],
+                ),
+              ),
+          );
+          return pagesOf.flat();
         } catch {
           // One unreachable site must not empty the whole index.
           return [];
@@ -73,17 +89,28 @@ export function createLibreTextsIndex(options: LibreTextsIndexOptions): LibreTex
   }
 
   return {
-    async search(query, limit) {
+    async search(query, limit, searchOptions = {}) {
+      const preferred = new Set(searchOptions.preferSites ?? []);
       const wanted = [...new Set(searchTokens(query))];
       if (wanted.length === 0) return [];
       const scored = (await pages())
         .map((page) => {
           const inTitle = wanted.filter((token) => page.titleTokens.has(token)).length;
           const inBook = wanted.filter((token) => page.bookTokens.has(token)).length;
-          return { url: page.url, book: page.book, inTitle, score: inTitle * 2 + inBook * 0.5 };
+          // Title words are ambiguous across subjects ("cell" in biology and crystals), so the
+          // sub-question's own subject site ranks first.
+          const onSubject = preferred.has(new URL(page.url).origin);
+          return {
+            url: page.url,
+            book: page.book,
+            inTitle,
+            // Another subject's page needs one more shared title word, as its words may mean else.
+            needed: Math.min(onSubject || preferred.size === 0 ? 2 : 3, wanted.length),
+            score: inTitle * 2 + inBook * 0.5 + (onSubject ? 1.5 : 0),
+          };
         })
         // A page whose own title shares at least two query words is worth fetching.
-        .filter((item) => item.inTitle >= Math.min(2, wanted.length))
+        .filter((item) => item.inTitle >= item.needed)
         .sort((a, b) => b.score - a.score || a.url.length - b.url.length);
       // Best page per book first: a second book can corroborate a claim, a second chapter cannot.
       const firsts = scored.filter(
