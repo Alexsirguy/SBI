@@ -92,4 +92,56 @@ describe("streamLesson", () => {
     const fetcher = streaming(sseFrames([{ type: "lesson", data: { title: "No" } }]));
     await expect(collect(fetcher)).rejects.toBeInstanceOf(ApiRequestError);
   });
+
+  it("joins a CRLF pair split across two chunks, so the next event is not swallowed", async () => {
+    const body = sseFrames([
+      { type: "quick-answer", data: SAMPLE_ANSWER },
+      { type: "lesson", data: SAMPLE_LESSON },
+    ]).replace(/\n/g, "\r\n");
+    // Cut inside the blank line between the two events: "\r\n\r" | "\n".
+    const cut = body.indexOf("\r\n\r\n") + 3;
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              const bytes = new TextEncoder();
+              controller.enqueue(bytes.encode(body.slice(0, cut)));
+              controller.enqueue(bytes.encode(body.slice(cut)));
+              controller.close();
+            },
+          }),
+        ),
+    );
+    expect((await collect(fetcher)).map((event) => event.type)).toEqual(["quick-answer", "lesson"]);
+  });
+
+  it("calls a frame with broken JSON unreadable, not a lost connection", async () => {
+    const fetcher = streaming("event: lesson\ndata: {not json\n\n");
+    await expect(collect(fetcher)).rejects.toThrow("could not read");
+  });
+
+  it("hands over nothing more once the request is cancelled mid-chunk", async () => {
+    const controller = new AbortController();
+    const events: LessonEvent[] = [];
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          sseFrames([
+            { type: "quick-answer", data: SAMPLE_ANSWER },
+            { type: "lesson", data: SAMPLE_LESSON },
+          ]),
+        ),
+    );
+    await streamLesson(
+      "http://api.test",
+      REQUEST,
+      (event) => {
+        events.push(event);
+        controller.abort();
+      },
+      { fetcher, signal: controller.signal },
+    );
+    expect(events.map((event) => event.type)).toEqual(["quick-answer"]);
+  });
 });

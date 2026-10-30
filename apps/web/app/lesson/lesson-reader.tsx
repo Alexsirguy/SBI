@@ -45,10 +45,13 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const router = useRouter();
   // The choice in the URL is the learner's latest, so it is what the session remembers.
   useEffect(() => writePrefs(prefs), [prefs]);
-  // Shown at once, so the control answers the click while the matching lesson is requested.
-  const [chosen, setChosen] = useState(prefs);
+  // A choice shows at once and lasts until the URL catches up; it is tied to the prefs it
+  // replaced, so arriving at any other URL (back button included) shows that URL's prefs.
+  const [pending, setPending] = useState<{ from: string; next: LessonPrefs }>();
+  const current = `${prefs.depth}/${prefs.age}`;
+  const chosen = pending?.from === current ? pending.next : prefs;
   const choose = (next: LessonPrefs) => {
-    setChosen(next);
+    setPending({ from: current, next });
     router.replace(lessonHref(request.taxonomyId, label, { question, prefs: next }), {
       scroll: false,
     });
