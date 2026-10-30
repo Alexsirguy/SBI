@@ -110,7 +110,7 @@ test("checks that cannot run say so instead of failing silently", async ({ page 
   await page.goto("/capture");
   await selectPatternedPhoto(page, "checker");
 
-  await expect(page.getByLabel("Photo check")).toContainText("Photo checks could not run", {
+  await expect(page.getByLabel("Photo check")).toContainText("We couldn't check this photo", {
     timeout: 15000,
   });
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();

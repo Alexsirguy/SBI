@@ -100,7 +100,7 @@ test("after upload the learner can choose to keep the photo", async ({ page }) =
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
   const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Uploaded and privacy-checked");
+  await expect(status).toContainText("Uploaded, with location and camera details removed");
 
   await page.getByRole("button", { name: "Keep this photo" }).click();
   await expect(status).toContainText("will not be deleted automatically");

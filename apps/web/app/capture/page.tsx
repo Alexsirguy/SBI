@@ -5,7 +5,7 @@ import "./capture.css";
 
 export default function CapturePage() {
   return (
-    <main className="capture">
+    <main id="main" className="capture">
       <header className="capture__intro">
         <p className="eyebrow">Start a lesson</p>
         <h1>Photograph an object</h1>
