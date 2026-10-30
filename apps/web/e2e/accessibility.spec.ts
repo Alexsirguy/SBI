@@ -36,8 +36,8 @@ async function selectPhoto(page: Page) {
 
 test("keyboard focus is clearly visible on every kind of control", async ({ page }) => {
   await page.goto("/capture");
-  await tabTo(page, page.getByLabel("Take a photo"));
-  await expectVisibleFocus(page.getByLabel("Take a photo"));
+  await tabTo(page, page.getByRole("button", { name: "Take a photo" }));
+  await expectVisibleFocus(page.getByRole("button", { name: "Take a photo" }));
   await tabTo(page, page.getByRole("button", { name: "Search objects" }));
   await expectVisibleFocus(page.getByRole("button", { name: "Search objects" }));
 

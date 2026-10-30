@@ -29,7 +29,7 @@ export default function CapturePage() {
       </section>
       <CaptureForm />
       <section aria-labelledby="text-entry" className="capture-path">
-        <h2 id="text-entry">No camera? Describe it instead</h2>
+        <h2 id="text-entry">No image? Describe it instead</h2>
         <ConfirmLesson headingLevel={3} />
       </section>
     </main>

@@ -47,7 +47,7 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
     open: async (page) => {
       await mockTaxonomy(page);
       await page.goto("/capture");
-      const describe = page.getByRole("region", { name: "No camera? Describe it instead" });
+      const describe = page.getByRole("region", { name: "No image? Describe it instead" });
       await describe.getByLabel("Describe the object").fill("electric kettles");
       await describe.getByLabel("Describe the object").press("Enter");
       await describe.getByRole("button", { name: "Electric kettle" }).click();

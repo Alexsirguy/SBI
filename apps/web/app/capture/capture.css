@@ -61,40 +61,91 @@
 
 /* File pickers keep the native input, so keyboard, screen readers and camera capture all work. */
 /* A file input's natural width (button plus file name) is wider than a 360px phone. */
-.file-pick {
+.photo-choice {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sbi-space-3);
+}
+
+.photo-choice legend {
+  padding: 0;
+  margin-bottom: var(--sbi-space-2);
+  font-weight: 700;
+  font-size: var(--sbi-text-heading);
+}
+
+.photo-choice__actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: var(--sbi-space-2);
 }
 
-.file-pick label {
-  font-weight: 700;
-}
-
-.file-pick input[type="file"] {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  font-size: var(--sbi-text-small);
-  color: var(--sbi-ink-soft);
-}
-
-.file-pick input[type="file"]::file-selector-button {
-  min-height: var(--sbi-touch);
-  margin-right: var(--sbi-space-3);
-  padding: 0 20px;
-  border-radius: var(--sbi-radius-m);
-  border: 2px solid var(--sbi-action);
-  background: transparent;
-  color: var(--sbi-action);
-  font: inherit;
-  font-weight: 700;
+.photo-choice .sbi-button {
+  gap: var(--sbi-space-2);
   cursor: pointer;
 }
 
-.file-pick--primary input[type="file"]::file-selector-button {
-  background: var(--sbi-action);
-  color: var(--sbi-action-ink);
+.photo-choice__upload {
+  position: relative;
+  display: grid;
+}
+
+/* The real file input lies invisibly over its label, so taps and keyboards reach it directly. */
+.photo-choice__file {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.photo-choice__file:focus-visible + label {
+  outline: 3px solid var(--sbi-focus);
+  outline-offset: 2px;
+}
+
+.photo-choice__note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+  padding: var(--sbi-space-3) var(--sbi-space-4);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-note-wash);
+}
+
+.photo-choice__note p {
+  margin: 0;
+}
+
+.camera-view {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.camera-view__feed {
+  width: 100%;
+  max-height: 60vh;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-ink);
+}
+
+.camera-view .sbi-status,
+.camera-view .sbi-field__hint {
+  margin: 0;
+}
+
+.camera-view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
 }
 
 /* Kept in the DOM so its alert is announced; styled only once it has something to say. */
