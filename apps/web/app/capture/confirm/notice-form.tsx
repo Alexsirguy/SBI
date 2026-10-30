@@ -3,6 +3,7 @@
 import type { ApiRequest, TaxonomyMatch } from "@sbi/contracts";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNoticeObject } from "../use-recognition";
+import { Button } from "@sbi/ui";
 
 type Notes = Required<{ [K in keyof ApiRequest<"noticeObject">]: string }>;
 
@@ -66,13 +67,14 @@ export function NoticeForm({ onResults }: NoticeFormProps) {
             <span id={`${id}-${key}-hint`}> {hint}</span>
           </div>
         ))}
-        <button
+        <Button
+          variant="quiet"
           type="submit"
           disabled={empty || notice.isPending}
           aria-describedby={empty ? `${id}-empty` : undefined}
         >
           Find matches
-        </button>
+        </Button>
         {empty ? <p id={`${id}-empty`}>Fill in at least one answer.</p> : null}
         {notice.isError ? <p role="alert">{notice.error.message}</p> : null}
       </fieldset>

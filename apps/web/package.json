@@ -17,6 +17,7 @@
     "@sbi/contracts": "workspace:*",
     "@sbi/env": "workspace:*",
     "@sbi/media": "workspace:*",
+    "@sbi/ui": "workspace:*",
     "@tanstack/react-query": "5.105.0",
     "next": "16.4.3",
     "react": "19.3.1",

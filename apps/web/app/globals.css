@@ -1,125 +1,74 @@
-:root {
-  --focus-ring: #1d4ed8;
-  --focus-ring-halo: #ffffff;
-  color-scheme: light dark;
-}
+/* App layout on top of @sbi/ui/styles.css; colours, type and spacing come from its tokens. */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --focus-ring: #93c5fd;
-    --focus-ring-halo: #0b1220;
-  }
-}
-
-/* The halo keeps the ring visible on both light and dark photo previews. */
-:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 5px var(--focus-ring-halo);
-}
-
-/* Comfortable touch targets (WCAG 2.5.8); the crop area is sized by the selection instead. */
-button:not(.crop-area),
-input,
-select {
-  min-height: 2.75rem;
-  margin: 0.25rem 0.25rem 0.25rem 0;
+/* Comfortable touch targets for controls not yet on @sbi/ui (E15-3); the crop area sizes itself. */
+button:not(.crop-area):not(.sbi-button),
+input:not(.sbi-control):not([type="radio"]):not([type="checkbox"]),
+select:not(.sbi-control) {
+  min-height: var(--sbi-touch-min);
+  margin: var(--sbi-space-1) var(--sbi-space-1) var(--sbi-space-1) 0;
   font: inherit;
 }
 
-button:not(.crop-area) {
-  min-width: 2.75rem;
-  padding: 0 1rem;
+button:not(.crop-area):not(.sbi-button) {
+  min-width: var(--sbi-touch-min);
+  padding: 0 var(--sbi-space-4);
 }
 
 input[type="number"] {
   width: 6rem;
 }
 
-/* Lesson reader: a readable measure, with notices and placeholders that work in both themes. */
-.lesson {
+main {
   max-width: 42rem;
   margin: 0 auto;
-  padding: 1rem;
-  line-height: 1.6;
+  padding-block: var(--sbi-space-5) var(--sbi-space-7);
+  padding-left: max(var(--sbi-space-4), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--sbi-space-4), env(safe-area-inset-right, 0px));
 }
 
-.lesson-notices ul,
+/* Lesson reader */
 .lesson-nav ol {
   padding-left: 1.25rem;
 }
 
-.notice {
-  border-left: 4px solid currentColor;
-  padding: 0.5rem 0.75rem;
-  margin-bottom: 0.5rem;
-  list-style: none;
-}
-
 .module-label {
   margin: 0;
-  font-size: 0.875rem;
+  font-family: var(--sbi-font-mono);
+  font-size: var(--sbi-text-label);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.skeleton-line {
-  display: block;
-  height: 1rem;
-  margin: 0.5rem 0;
-  border-radius: 4px;
-  background: color-mix(in srgb, currentColor 15%, transparent);
-}
-
-.skeleton-line.short {
-  width: 60%;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .skeleton-line {
-    animation: skeleton-pulse 1.5s ease-in-out infinite;
-  }
-}
-
-@keyframes skeleton-pulse {
-  50% {
-    opacity: 0.5;
-  }
+  letter-spacing: 0.06em;
+  color: var(--sbi-ink-soft);
 }
 
 /* Observation and explanation differ in border style and in words, never by colour alone. */
 .lesson-section {
-  margin: 1.5rem 0;
+  margin: var(--sbi-space-5) 0;
 }
 
 .evidence-observation {
-  border-left: 4px solid currentColor;
-  padding-left: 0.75rem;
+  border-left: 4px solid var(--sbi-ink);
+  padding-left: var(--sbi-space-3);
 }
 
 .evidence-inference {
-  border-left: 4px dashed currentColor;
-  padding-left: 0.75rem;
+  border-left: 4px dashed var(--sbi-ink-soft);
+  padding-left: var(--sbi-space-3);
+}
+
+.quick-answer {
+  background: var(--sbi-paper-sunk);
+  border-radius: var(--sbi-radius-l);
+  padding: var(--sbi-space-4);
 }
 
 .short-answer {
-  font-size: 1.125rem;
+  font-family: var(--sbi-font-display);
+  font-weight: 600;
+  font-size: var(--sbi-text-answer);
+  line-height: 1.3;
 }
 
 .causal-steps li,
 .concepts li {
-  margin-bottom: 0.25rem;
-}
-
-/* Read by screen readers, never shown: extra words that a sighted reader gets from layout. */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
+  margin-bottom: var(--sbi-space-1);
 }

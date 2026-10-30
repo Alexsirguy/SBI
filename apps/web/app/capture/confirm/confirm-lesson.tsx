@@ -14,6 +14,7 @@ import { lessonHref } from "../../lesson/lesson-request";
 import { readPrefs } from "../../lesson/prefs";
 import { useTaxonomySearch } from "../use-taxonomy-search";
 import { NoticeForm } from "./notice-form";
+import { Button } from "@sbi/ui";
 
 export type Suggestion = TaxonomyMatch &
   Partial<Pick<LearnerCandidate, "certainty" | "reasons" | "parts">>;
@@ -173,12 +174,10 @@ export function ConfirmLesson({
           </Heading>
           <p>Lesson about: {selected.label}.</p>
           {assumed ? <p>{assumed.assumption}</p> : null}
-          <button type="button" onClick={start}>
-            Start lesson
-          </button>
-          <button type="button" onClick={chooseAgain}>
+          <Button onClick={start}>Start lesson</Button>
+          <Button variant="quiet" type="button" onClick={chooseAgain}>
             Choose again
-          </button>
+          </Button>
         </section>
       ) : (
         <>
@@ -193,13 +192,14 @@ export function ConfirmLesson({
                 const description = describeSuggestion(candidate);
                 return (
                   <li key={candidate.taxonomyId}>
-                    <button
+                    <Button
+                      variant="quiet"
                       type="button"
                       aria-describedby={description ? `${describedById}-${index}` : undefined}
                       onClick={() => setSelected(candidate)}
                     >
                       {candidate.label}
-                    </button>
+                    </Button>
                     {description ? (
                       <span id={`${describedById}-${index}`}> {description}</span>
                     ) : null}
@@ -214,7 +214,8 @@ export function ConfirmLesson({
               <ul aria-labelledby={partsId}>
                 {parts.map((part) => (
                   <li key={part.taxonomyId}>
-                    <button
+                    <Button
+                      variant="quiet"
                       type="button"
                       onClick={() =>
                         setSelected({
@@ -224,7 +225,7 @@ export function ConfirmLesson({
                       }
                     >
                       {part.label}
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -236,7 +237,8 @@ export function ConfirmLesson({
               <ul aria-labelledby={othersId}>
                 {otherLabels.map((label) => (
                   <li key={label}>
-                    <button
+                    <Button
+                      variant="quiet"
                       type="button"
                       onClick={() => {
                         setQuery(label);
@@ -244,16 +246,16 @@ export function ConfirmLesson({
                       }}
                     >
                       {label}
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
             </>
           ) : null}
           {suggesting && fallback ? (
-            <button type="button" onClick={() => setSelected(fallback)}>
+            <Button variant="quiet" type="button" onClick={() => setSelected(fallback)}>
               Not sure? Learn about {fallback.label.toLowerCase()}
-            </button>
+            </Button>
           ) : null}
           <label htmlFor={inputId}>
             {onCorrection ? "Not right? Tell us what it is" : "Describe the object"}
@@ -278,15 +280,15 @@ export function ConfirmLesson({
               }
             }}
           />
-          <button type="button" onClick={() => runSearch()}>
+          <Button variant="quiet" type="button" onClick={() => runSearch()}>
             Search objects
-          </button>
+          </Button>
           {noticing ? (
             <NoticeForm onResults={showNoticed} />
           ) : candidates.length === 0 && !search.isFetching ? (
-            <button type="button" onClick={() => setNoticing(true)}>
+            <Button variant="quiet" type="button" onClick={() => setNoticing(true)}>
               Can&apos;t find it? Tell us what you notice
-            </button>
+            </Button>
           ) : null}
         </>
       )}
