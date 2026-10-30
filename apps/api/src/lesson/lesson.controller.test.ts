@@ -1,9 +1,9 @@
 import type { ServerResponse } from "node:http";
 import { afterEach, describe, expect, it } from "vitest";
 import { UserFacingException } from "../common/user-facing.exception";
-import { startTestApp, type TestApp } from "../testing/test-app";
+import { startTestApp, type TestApp, WEB_ORIGIN } from "../testing/test-app";
 import { LessonController } from "./lesson.controller";
-import type { LessonService } from "./lesson.service";
+import { LessonService } from "./lesson.service";
 
 const ANSWER = {
   type: "quick-answer",
@@ -13,10 +13,11 @@ const ANSWER = {
 const FULL = { type: "lesson", data: { title: "T" } } as const;
 const VISUALS = { type: "visuals", data: { visuals: [] } } as const;
 
-function mockResponse() {
+function mockResponse(replyHeaders: Record<string, string> = {}) {
   const chunks: string[] = [];
   const state = { status: 0, headers: {} as Record<string, string>, ended: false };
   const res = {
+    getHeaders: () => replyHeaders,
     raw: {
       writeHead: (status: number, headers: Record<string, string>) => {
         state.status = status;
@@ -25,7 +26,7 @@ function mockResponse() {
       write: (chunk: string) => void chunks.push(chunk),
       end: () => void (state.ended = true),
     },
-  } as unknown as { raw: ServerResponse };
+  } as unknown as { raw: ServerResponse; getHeaders: () => Record<string, string> };
   return { chunks, res, state };
 }
 
@@ -99,6 +100,31 @@ describe("lesson routes", () => {
 
   afterEach(async () => {
     await test?.app.close();
+  });
+
+  it("streams with the CORS headers browsers need, only for allowed origins", async () => {
+    test = await startTestApp(undefined, undefined, undefined, (builder) =>
+      builder.overrideProvider(LessonService).useValue(stubService([ANSWER, FULL, VISUALS])),
+    );
+    const request = (origin: string) =>
+      test?.post(
+        "/lessons",
+        {
+          question: "Why does my kettle click off?",
+          taxonomyId: "object.bicycle",
+          audience: "general",
+          readingLevel: "plain",
+          locale: "en-GB",
+          safetyClass: "low",
+        },
+        { origin },
+      );
+    const allowed = await request(WEB_ORIGIN);
+    expect(allowed?.headers.get("content-type")).toBe("text/event-stream");
+    expect(allowed?.headers.get("access-control-allow-origin")).toBe(WEB_ORIGIN);
+    expect(await allowed?.text()).toContain("event: lesson");
+    const other = await request("https://elsewhere.example");
+    expect(other?.headers.get("access-control-allow-origin")).toBeNull();
   });
 
   it("answers 503 without a provider and 400 for bad bodies", async () => {
