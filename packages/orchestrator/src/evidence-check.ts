@@ -12,11 +12,23 @@ export function createEvidenceCheck(deps: EvidenceCheckDeps): LessonCheck {
   return {
     name: "evidence",
     async run(lesson) {
-      const problems = await deps.resolver.checkLesson(lesson);
+      // Model-knowledge claims are never stored and carry their own disclaimer (ADR 0011).
+      const model = new Set(
+        lesson.claims.filter((claim) => claim.origin === "model").map((claim) => claim.claimId),
+      );
+      const sourced = {
+        ...lesson,
+        claims: lesson.claims.filter((claim) => !model.has(claim.claimId)),
+        sections: lesson.sections.map((section) => ({
+          ...section,
+          claimIds: section.claimIds.filter((id) => !model.has(id)),
+        })),
+      };
+      const problems = await deps.resolver.checkLesson(sourced);
       const sources = await deps.sources([
         ...new Set(lesson.claims.flatMap((claim) => claim.sourceIds)),
       ]);
-      const issues = checkSourcePolicy(lesson.claims, sources);
+      const issues = checkSourcePolicy(sourced.claims, sources);
       const details = [
         ...problems.map((problem) => `${problem.kind}: ${JSON.stringify(problem)}`),
         ...issues.map((issue) => `${issue.kind}: claim ${issue.claimId}`),

@@ -452,7 +452,109 @@ describe("LessonService", () => {
     expect(short?.text).toBe("Heat snaps a small switch.");
   });
 
-  it("says no trusted sources were found when gathering finds nothing and no facts exist", async () => {
+  it("teaches from model knowledge with one disclaimer when no source or fact exists", async () => {
+    const bare = createTaxonomy([
+      { id: "test.home", kind: "category", label: "Home" },
+      { id: "test.kettle", kind: "object", label: "Kettle", parentId: "test.home" },
+    ]);
+    const base = scriptedProvider();
+    const asked: string[] = [];
+    // Answers the gaps from "memory", then drafts citing whichever claim ids the prompt offers.
+    const provider: LlmProvider = {
+      ...base,
+      complete: async (request) => {
+        const user = String(request.messages[1]?.content);
+        if (request.prompt?.id === "model-knowledge") {
+          asked.push(user);
+          return {
+            ...(await base.complete(request)),
+            text: JSON.stringify({
+              claims: [
+                { gap: 1, text: "A kettle switches off when a heat-sensitive switch opens." },
+              ],
+            }),
+          };
+        }
+        if (request.prompt?.id === "lesson-draft") {
+          const id = /- ([0-9a-f-]{36}) \[general-knowledge\]/.exec(user)?.[1] ?? "";
+          const cite = (module: string, text: string) => ({ module, text, claimIds: [id] });
+          return {
+            ...(await base.complete(request)),
+            text: JSON.stringify({
+              ...FRAGMENT,
+              sections: [
+                cite("what-youre-seeing", "The kettle switches itself off."),
+                cite("short-answer", "A heat-sensitive switch opens."),
+                cite("first-principles", "The switch reacts to heat."),
+              ],
+            }),
+          };
+        }
+        return base.complete(request);
+      },
+    };
+    const target = new LessonService(
+      provider,
+      bare,
+      memoryLessons().repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([]),
+    );
+    const events = await collect(target);
+    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
+    expect(lesson?.claims.map((claim) => claim.origin)).toEqual(["model"]);
+    expect(lesson?.reviewStatus).toBe("needs-review");
+    expect(lesson?.disclaimers?.map((item) => item.kind)).toEqual(["model-knowledge"]);
+    const answer = events[0]?.type === "quick-answer" ? events[0].data : undefined;
+    expect(answer?.disclaimers?.map((item) => item.kind)).toEqual(["model-knowledge"]);
+    expect(asked[0]).toContain(REQUEST.question);
+    expect(asked[0]).toContain("How was the kettle invented");
+  });
+
+  it("shares the model-claim cap across gaps, so history is never crowded out", async () => {
+    const bare = createTaxonomy([
+      { id: "test.home", kind: "category", label: "Home" },
+      { id: "test.kettle", kind: "object", label: "Kettle", parentId: "test.home" },
+    ]);
+    const base = scriptedProvider();
+    let draftPrompt = "";
+    const provider: LlmProvider = {
+      ...base,
+      complete: async (request) => {
+        if (request.prompt?.id === "model-knowledge") {
+          const many = Array.from({ length: 13 }, (_, index) => ({
+            gap: 1,
+            text: `Kettle fact number ${index + 1} about heating water.`,
+          }));
+          return {
+            ...(await base.complete(request)),
+            text: JSON.stringify({
+              claims: [...many, { gap: 2, text: "Electric kettles appeared in the 1890s." }],
+            }),
+          };
+        }
+        if (request.prompt?.id === "lesson-draft")
+          draftPrompt = String(request.messages[1]?.content);
+        return base.complete(request);
+      },
+    };
+    const target = new LessonService(
+      provider,
+      bare,
+      memoryLessons().repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([]),
+    );
+    // The scripted draft cites a claim this lesson lacks; only the prompt it was given matters.
+    await collectAll(target).catch(() => undefined);
+    expect(draftPrompt).toContain("Electric kettles appeared in the 1890s.");
+    expect(draftPrompt.match(/\[general-knowledge\]/g)).toHaveLength(12);
+  });
+
+  it("still answers 404 when even model knowledge has nothing to offer", async () => {
     const bare = createTaxonomy([
       { id: "test.home", kind: "category", label: "Home" },
       { id: "test.kettle", kind: "object", label: "Kettle", parentId: "test.home" },
@@ -467,7 +569,6 @@ describe("LessonService", () => {
     );
     const failure = await userFacing(() => collect(target));
     expect(failure.status).toBe(HttpStatus.NOT_FOUND);
-    expect(failure.message).toContain("could not find trusted sources");
   });
 
   it("falls back to sourced taxonomy facts when gathering fails at the provider", async () => {
@@ -603,6 +704,23 @@ describe("LessonService", () => {
         .every((section) => section.text === REVISED),
     ).toBe(true);
     expect(lessons.at(-1)?.reviewStatus).toBe("auto-validated");
+  });
+
+  it("serves the unrepaired draft with its doubts disclosed when the rewrite itself fails", async () => {
+    const base = scriptedProvider({ entailment: CONTRADICTS, quickEntailment: SUPPORTS });
+    const provider: LlmProvider = {
+      ...base,
+      complete: async (request) => {
+        if (request.prompt?.id === "lesson-revise") throw new LlmError("stub: empty completion");
+        return base.complete(request);
+      },
+    };
+    const { service } = setup(provider);
+    const events = await collect(service);
+    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
+    expect(lesson?.reviewStatus).toBe("needs-review");
+    expect(lesson?.disclaimers?.map((item) => item.kind)).toContain("unverified-sections");
   });
 
   it("never serves another learner's private lesson from cache or as a fallback", async () => {
