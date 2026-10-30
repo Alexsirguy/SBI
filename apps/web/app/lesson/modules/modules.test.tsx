@@ -23,6 +23,21 @@ describe("SeeingSection", () => {
   });
 });
 
+describe("SeeingSection with the confirmed object", () => {
+  it("names the object and lists what the lesson assumes", () => {
+    const html = renderToStaticMarkup(
+      <SeeingSection
+        section={section("what-youre-seeing")}
+        objectLabel="Magnifying glass"
+        assumptions={SAMPLE_LESSON.assumptions}
+      />,
+    );
+    expect(html).toContain("<strong>Object:</strong> Magnifying glass");
+    expect(html).toContain("This lesson assumes");
+    expect(html).toContain(SAMPLE_LESSON.assumptions[0] ?? "");
+  });
+});
+
 describe("ShortAnswerSection", () => {
   it("states the answer as an explanation, in bold", () => {
     const html = renderToStaticMarkup(<ShortAnswerSection section={section("short-answer")} />);
