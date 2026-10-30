@@ -433,6 +433,44 @@
         "contentHash"
       ],
       "additionalProperties": false
+    },
+    "disclaimers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "awaiting-review",
+              "unverified-sections",
+              "sources-disagree",
+              "open-questions",
+              "limited-evidence",
+              "reading-level"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "sectionIds": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "message",
+          "sectionIds"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [

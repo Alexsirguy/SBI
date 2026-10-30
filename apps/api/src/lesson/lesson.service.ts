@@ -401,6 +401,10 @@ export class LessonService {
           );
           await this.lessons.save(routed.lesson);
           if (routed.decision.action === "approve") return { lesson: routed.lesson, report };
+          // Doubts a disclaimer can describe are shown to the learner; the lesson still awaits review.
+          if (routed.decision.action === "disclose") {
+            return { lesson: routed.lesson, report, disclosed: true };
+          }
           held = true;
           return { lesson: routed.lesson, report: heldForReview(report, routed.decision.reasons) };
         },

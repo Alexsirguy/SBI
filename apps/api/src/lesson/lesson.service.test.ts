@@ -110,6 +110,19 @@ const FRAGMENT = {
   ],
 };
 
+// A factual section with no citation: an integrity failure that is held, never disclosed.
+const UNCITED_FRAGMENT = {
+  ...FRAGMENT,
+  sections: [
+    ...FRAGMENT.sections,
+    {
+      module: "how-parts-work",
+      text: "A spring inside pops the switch.",
+      claimIds: [] as string[],
+    },
+  ],
+};
+
 const SUPPORTS = JSON.stringify({ verdict: "supports", reason: "Claims state it." });
 const CONTRADICTS = JSON.stringify({ verdict: "contradicts", reason: "Section flips the cause." });
 const AGREE = JSON.stringify({ contradiction: false, reason: "", claimIds: [] });
@@ -123,6 +136,7 @@ interface Script {
   draftGate?: Promise<void>;
   /** When set, revised sections are judged as supported, so a repair succeeds. */
   revisionPasses?: boolean;
+  fragment?: typeof FRAGMENT;
 }
 
 const REVISED = "Revised to state only what the claims support.";
@@ -143,7 +157,7 @@ function scriptedProvider(options: Script = {}): LlmProvider {
         payload = JSON.stringify({ text: REVISED });
       } else if (request.prompt?.id === "lesson-draft") {
         await options.draftGate;
-        payload = JSON.stringify(FRAGMENT);
+        payload = JSON.stringify(options.fragment ?? FRAGMENT);
       } else if (text.includes("<section-") && options.revisionPasses && text.includes(REVISED)) {
         payload = SUPPORTS;
       } else if (text.includes("<section-")) {
@@ -324,9 +338,9 @@ describe("LessonService", () => {
     });
   });
 
-  it("ends the stream with a clear message when the lesson is held after the answer", async () => {
+  it("ends the stream with a clear message when an integrity failure holds the lesson after the answer", async () => {
     const { service } = setup(
-      scriptedProvider({ entailment: CONTRADICTS, quickEntailment: SUPPORTS }),
+      scriptedProvider({ quickEntailment: SUPPORTS, fragment: UNCITED_FRAGMENT }),
     );
     const stream = service.streamLesson(REQUEST);
     expect((await nextLessonEvent(stream)).value?.type).toBe("quick-answer");
@@ -434,7 +448,7 @@ describe("LessonService", () => {
     ).not.toContain(disputed.claimId);
   });
 
-  it("stores the review trail for served and held lessons", async () => {
+  it("stores the review trail for validated, disclosed and held lessons", async () => {
     const served = setup(scriptedProvider());
     await collect(served.service);
     const lesson = served.lessons[0];
@@ -446,11 +460,16 @@ describe("LessonService", () => {
       })),
     ).toEqual([{ from: "generated", to: "auto-validated", by: "system" }]);
 
-    const held = setup(scriptedProvider({ entailment: CONTRADICTS }));
-    await userFacing(() => collect(held.service));
-    const [move] = await held.audit.history(held.lessons[0]?.lessonId ?? "");
+    const disclosed = setup(scriptedProvider({ entailment: CONTRADICTS }));
+    await collect(disclosed.service);
+    const [move] = await disclosed.audit.history(disclosed.lessons[0]?.lessonId ?? "");
     expect(move).toMatchObject({ from: "generated", to: "needs-review", by: "system" });
     expect(move?.reason).toContain("entailment");
+
+    const held = setup(scriptedProvider({ fragment: UNCITED_FRAGMENT }));
+    await userFacing(() => collect(held.service));
+    const [hold] = await held.audit.history(held.lessons[0]?.lessonId ?? "");
+    expect(hold?.reason).toContain("citations");
   });
 
   it("serves aligned shared lessons from cache without calling the provider", async () => {
@@ -507,14 +526,18 @@ describe("LessonService", () => {
     expect(failure.message).toContain("timed out");
   });
 
-  it("holds a draft the judges reject for review instead of serving it", async () => {
-    const { lessons, service: target } = setup(scriptedProvider({ entailment: CONTRADICTS }));
+  it("serves a draft the judges doubt with disclaimers, and keeps it awaiting review", async () => {
+    const { lessons, service } = setup(scriptedProvider({ entailment: CONTRADICTS }));
 
-    const failure = await userFacing(() => collect(target));
+    const events = await collect(service);
 
-    expect(failure.status).toBe(HttpStatus.SERVICE_UNAVAILABLE);
-    expect(failure.message).toContain("reviewer needs to check");
-    expect(lessons.map((lesson) => lesson.reviewStatus)).toEqual(["needs-review"]);
+    const lesson = events.find((event) => event.type === "lesson");
+    if (lesson?.type !== "lesson") throw new Error("expected the lesson to be served");
+    expect(lesson.data.reviewStatus).toBe("needs-review");
+    const kinds = lesson.data.disclaimers?.map((item) => item.kind);
+    expect(kinds).toEqual(["awaiting-review", "unverified-sections"]);
+    expect(lesson.data.disclaimers?.[1]?.sectionIds.length).toBeGreaterThan(0);
+    expect(lessons.at(-1)?.reviewStatus).toBe("needs-review");
   });
 
   it("serves a lesson once a rewrite fixes the sections the judge rejected", async () => {
