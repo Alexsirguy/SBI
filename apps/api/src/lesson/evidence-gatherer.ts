@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import type { DatabaseHandle, Repositories } from "@sbi/db";
 import {
   createCitationResolver,
@@ -13,6 +14,8 @@ import type { LlmProvider } from "@sbi/llm";
 import type { ApiEnv } from "../env";
 import { createEvidenceJudge } from "../evidence/judge";
 import type { EvidenceGatherer } from "./lesson.service";
+
+const logger = new Logger("EvidenceGather");
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -49,7 +52,7 @@ export function createEvidenceGatherer(deps: GathererDeps): EvidenceGatherer {
   const retriever = createDefaultRetriever(http);
   return async (input, options) => {
     if (!deps.provider) throw new Error("Lesson generation has no provider configured.");
-    return gatherEvidence(
+    const gathered = await gatherEvidence(
       input,
       {
         provider: deps.provider,
@@ -67,5 +70,18 @@ export function createEvidenceGatherer(deps: GathererDeps): EvidenceGatherer {
       },
       { budgetMs: 150_000, ...options },
     );
+    // Keys, counts and failure reasons only; sub-questions that find nothing are otherwise silent.
+    for (const question of gathered.pack.questions ?? []) {
+      logger.log(
+        JSON.stringify({
+          key: question.key,
+          sources: question.sources,
+          claims: question.claimIds.length,
+          completed: question.completed,
+          failures: question.failures.map((failure) => failure.slice(0, 200)),
+        }),
+      );
+    }
+    return gathered;
   };
 }

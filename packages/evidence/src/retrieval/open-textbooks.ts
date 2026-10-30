@@ -47,6 +47,8 @@ export function wikisourceLicence(html: string): PageLicence {
 interface TextbookHost {
   id: string;
   publisher: string;
+  /** The work a page belongs to, when one host carries many independent books. */
+  work?: (url: URL) => string | undefined;
   matches(url: URL): boolean;
   licence(html: string): PageLicence;
   /** Opening tag of the region holding the book text, so site chrome is never quoted. */
@@ -60,6 +62,7 @@ export const TEXTBOOK_HOSTS: readonly TextbookHost[] = [
   {
     id: "libretexts",
     publisher: "LibreTexts",
+    work: libreTextsBook,
     matches: (url) => hostIs(url, "libretexts.org") && url.pathname.startsWith("/Bookshelves/"),
     licence: libreTextsLicence,
     content: /<section[^>]*class="[^"]*mt-content-container[^"]*"[^>]*>/i,
@@ -88,6 +91,23 @@ export const TEXTBOOK_HOSTS: readonly TextbookHost[] = [
   },
 ];
 
+/** "/Bookshelves/<shelf>/<book>/…": the book, so chapters of one book share an origin. */
+export function libreTextsBook(url: URL): string | undefined {
+  const segment = url.pathname.split("/").filter(Boolean)[2];
+  if (!segment) return undefined;
+  try {
+    return decodeURIComponent(segment).replace(/_/g, " ");
+  } catch {
+    return segment.replace(/_/g, " ");
+  }
+}
+
+// Independence is judged by publisher, so separate books on one host must not share one.
+function publisherOf(host: TextbookHost, url: string): string {
+  const work = host.work?.(new URL(url));
+  return work ? `${work}, ${host.publisher}` : host.publisher;
+}
+
 export function textbookHostFor(url: string): TextbookHost | undefined {
   try {
     const parsed = new URL(url);
@@ -109,9 +129,15 @@ function bookText(html: string, content: RegExp): string {
 }
 
 // The page footer names the authors, e.g. "authored, remixed, and/or curated by Steven Earle".
+// Tags are stripped first: a linked name's URL would otherwise end the match at "www.".
 function authorsOf(html: string): string[] {
-  const credit = /curated by\s*([\s\S]{1,200}?)(?:\(|via|\.)/.exec(html)?.[1];
-  return credit ? [stripTags(credit)].filter((name) => name.length > 0 && name.length < 120) : [];
+  const at = html.search(/curated by/i);
+  if (at < 0) return [];
+  const credit = /^curated by\s*(.{1,200}?)(?:\s*\(|\s+via\s|(?<!\b[A-Z])\.(?=\s|$))/i.exec(
+    stripTags(html.slice(at, at + 2000)),
+  )?.[1];
+  const name = credit?.trim() ?? "";
+  return name.length > 0 && name.length < 120 ? [name] : [];
 }
 
 export interface TextbookConnectorOptions extends ConnectorOptions {
@@ -149,7 +175,7 @@ export function createOpenTextbookConnector(
           : [];
       return {
         title: htmlTitle(response.text) ?? response.url,
-        publisher: host.publisher,
+        publisher: publisherOf(host, response.url),
         authors: authorsOf(response.text),
         url: response.url,
         sourceType: "textbook",
