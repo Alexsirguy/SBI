@@ -56,10 +56,9 @@ export async function saveClaimGraph(
     );
   }
 
-  const claims = built.claims.map((claim) => ({
-    ...claim,
-    sourceIds: claim.sourceIds.map((id) => remap.get(id)?.sourceId ?? id),
-    citations: claim.citations?.map((citation) => {
+  // Merging can map two built sources onto one stored source; each link is kept once.
+  const claims = built.claims.map((claim) => {
+    const citations = claim.citations?.map((citation) => {
       const moved = remap.get(citation.sourceId);
       return moved
         ? {
@@ -67,8 +66,19 @@ export async function saveClaimGraph(
             excerptId: moved.excerpts.get(citation.excerptId) ?? citation.excerptId,
           }
         : citation;
-    }),
-  }));
+    });
+    return {
+      ...claim,
+      sourceIds: [...new Set(claim.sourceIds.map((id) => remap.get(id)?.sourceId ?? id))],
+      citations: citations?.filter(
+        (citation, index) =>
+          citations.findIndex(
+            (other) =>
+              other.sourceId === citation.sourceId && other.excerptId === citation.excerptId,
+          ) === index,
+      ),
+    };
+  });
 
   for (const source of sources) await repositories.sources.save(source);
   for (const claim of claims) await repositories.claims.save(claim);
