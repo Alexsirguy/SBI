@@ -1,7 +1,8 @@
 "use client";
 
 import type { LessonSection } from "@sbi/contracts";
-import { useId, useRef, useState } from "react";
+import { Button, TextArea } from "@sbi/ui";
+import { useRef, useState } from "react";
 import { SectionFrame } from "./frame";
 
 /** Module 7: a question to reason through, then an explanation; no score, timer or streak. */
@@ -15,8 +16,6 @@ export function CheckThinkingSection({
   explanation: string;
   misconceptions: string[];
 }) {
-  const answerId = useId();
-  const hintId = useId();
   const [revealed, setRevealed] = useState(false);
   const feedbackRef = useRef<HTMLDivElement>(null);
   return (
@@ -29,15 +28,15 @@ export function CheckThinkingSection({
           requestAnimationFrame(() => feedbackRef.current?.focus());
         }}
       >
-        <label htmlFor={answerId}>Your thinking (optional, not saved or marked)</label>
-        <textarea id={answerId} rows={3} aria-describedby={hintId} />
-        <p id={hintId} className="hint">
-          Take your time. There is no score and no timer.
-        </p>
-        <button type="submit">Compare with the explanation</button>
+        <TextArea
+          label="Your thinking (optional, not saved or marked)"
+          rows={3}
+          hint="Take your time. There is no score and no timer."
+        />
+        <Button type="submit">Compare with the explanation</Button>
       </form>
       {revealed ? (
-        <div ref={feedbackRef} tabIndex={-1} className="check-feedback">
+        <div ref={feedbackRef} tabIndex={-1} className="check-feedback sbi-card">
           <h3>The explanation</h3>
           <p>{explanation}</p>
           {misconceptions.length > 0 ? (

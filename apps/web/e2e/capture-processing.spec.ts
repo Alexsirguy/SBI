@@ -223,7 +223,10 @@ test("crop area can be resized by dragging its corner handle", async ({ page }) 
   const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
   await expect(status).toContainText("Ready: 800 by 600 pixels", { timeout: 15000 });
 
-  const box = await page.getByRole("button", { name: /^Crop area/ }).boundingBox();
+  const cropArea = page.getByRole("button", { name: /^Crop area/ });
+  // Mouse moves only reach what is on screen, so bring the preview into view as a learner would.
+  await cropArea.scrollIntoViewIfNeeded();
+  const box = await cropArea.boundingBox();
   if (!box) {
     throw new Error("crop area not rendered");
   }

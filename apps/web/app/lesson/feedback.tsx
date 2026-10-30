@@ -2,7 +2,8 @@
 
 import type { ApiRequest, FeedbackCategory } from "@sbi/contracts";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useId, useRef, useState } from "react";
+import { Button, Notice, Scale, SelectField, TextArea } from "@sbi/ui";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { ApiRequestError, UNREACHABLE } from "../api-client";
 
@@ -15,14 +16,13 @@ export const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   other: "Something else",
 };
 
-const SCALE = [1, 2, 3, 4, 5] as const;
-const SCALE_WORDS: Record<(typeof SCALE)[number], string> = {
+const SCALE_WORDS = {
   1: "Not at all",
   2: "A little",
   3: "Somewhat",
   4: "Mostly",
   5: "Very",
-};
+} as const;
 
 function useSubmitFeedback() {
   return useMutation({
@@ -34,36 +34,6 @@ function useSubmitFeedback() {
 const failure = (error: unknown) =>
   error instanceof ApiRequestError ? error.message : UNREACHABLE;
 
-function Scale({
-  legend,
-  name,
-  value,
-  onChange,
-}: {
-  legend: string;
-  name: string;
-  value: number | undefined;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <fieldset>
-      <legend>{legend}</legend>
-      {SCALE.map((point) => (
-        <label key={point}>
-          <input
-            type="radio"
-            name={name}
-            value={point}
-            checked={value === point}
-            onChange={() => onChange(point)}
-          />
-          {point} {SCALE_WORDS[point]}
-        </label>
-      ))}
-    </fieldset>
-  );
-}
-
 /** Rating and problem reports for this exact lesson version, so triage sees what the learner read. */
 export function LessonFeedback({ lessonId, version }: { lessonId: string; version: number }) {
   const rating = useSubmitFeedback();
@@ -73,10 +43,6 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
   const [category, setCategory] = useState<FeedbackCategory | "">("");
   const [details, setDetails] = useState("");
   const [missing, setMissing] = useState<string>();
-  const categoryId = useId();
-  const detailsId = useId();
-  const detailsHintId = useId();
-  const reportErrorId = useId();
   const ratedRef = useRef<HTMLParagraphElement>(null);
   const reportedRef = useRef<HTMLParagraphElement>(null);
   const categoryRef = useRef<HTMLSelectElement>(null);
@@ -109,12 +75,23 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
             name="helpful"
             value={helpful}
             onChange={setHelpful}
+            words={SCALE_WORDS}
           />
-          <Scale legend="How clear was it?" name="clear" value={clear} onChange={setClear} />
-          <button type="submit" disabled={!helpful || !clear || rating.isPending}>
+          <Scale
+            legend="How clear was it?"
+            name="clear"
+            value={clear}
+            onChange={setClear}
+            words={SCALE_WORDS}
+          />
+          <Button type="submit" disabled={!helpful || !clear || rating.isPending}>
             Send rating
-          </button>
-          {rating.isError ? <p role="alert">{failure(rating.error)}</p> : null}
+          </Button>
+          {rating.isError ? (
+            <Notice kind="error" live>
+              {failure(rating.error)}
+            </Notice>
+          ) : null}
         </form>
       )}
 
@@ -141,13 +118,11 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
           }}
         >
           <h3>Report a problem</h3>
-          <label htmlFor={categoryId}>What is wrong?</label>
-          <select
+          <SelectField
             ref={categoryRef}
-            id={categoryId}
+            label="What is wrong?"
             value={category}
-            aria-invalid={missing ? true : undefined}
-            aria-describedby={missing ? reportErrorId : undefined}
+            error={missing}
             onChange={(event) => setCategory(event.target.value as FeedbackCategory | "")}
           >
             <option value="">Choose one</option>
@@ -156,28 +131,23 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
                 {CATEGORY_LABELS[key]}
               </option>
             ))}
-          </select>
-          <label htmlFor={detailsId}>Details (optional)</label>
-          <textarea
-            id={detailsId}
+          </SelectField>
+          <TextArea
+            label="Details (optional)"
             rows={3}
             maxLength={1000}
             value={details}
-            aria-describedby={detailsHintId}
+            hint="Please leave out your name or other personal details."
             onChange={(event) => setDetails(event.target.value)}
           />
-          <p id={detailsHintId} className="hint">
-            Please leave out your name or other personal details.
-          </p>
-          <button type="submit" disabled={report.isPending}>
+          <Button type="submit" disabled={report.isPending}>
             Send report
-          </button>
-          {missing ? (
-            <p role="alert" id={reportErrorId}>
-              {missing}
-            </p>
+          </Button>
+          {report.isError ? (
+            <Notice kind="error" live>
+              {failure(report.error)}
+            </Notice>
           ) : null}
-          {report.isError ? <p role="alert">{failure(report.error)}</p> : null}
         </form>
       )}
     </section>
