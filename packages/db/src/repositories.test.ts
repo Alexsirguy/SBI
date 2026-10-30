@@ -229,6 +229,26 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       ]);
       expect(await repos.lessonFeedback.forLesson(lessonId)).toHaveLength(3);
     });
+
+    it("clears free text past retention but keeps categories and ratings", async () => {
+      const lessonId = newId();
+      await repos.lessonFeedback.record(
+        { lessonId, version: 1, report: { category: "other", details: "My name is Sam." } },
+        new Date("2026-07-01T10:00:00.000Z"),
+      );
+      await repos.lessonFeedback.record(
+        { lessonId, version: 1, report: { category: "unclear", details: "Step 3?" } },
+        new Date("2026-10-30T10:00:00.000Z"),
+      );
+      expect(
+        await repos.lessonFeedback.clearDetailsBefore(new Date("2026-08-01T00:00:00.000Z")),
+      ).toBe(1);
+      const rows = await repos.lessonFeedback.forLesson(lessonId);
+      expect(rows.map((row) => row.report)).toEqual([
+        { category: "other" },
+        { category: "unclear", details: "Step 3?" },
+      ]);
+    });
   });
 
   describe("evidence", () => {

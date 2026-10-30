@@ -19,3 +19,4 @@ export const LESSON_EVIDENCE = Symbol("LESSON_EVIDENCE");
 export const LESSON_REVIEW_AUDIT = Symbol("LESSON_REVIEW_AUDIT");
 export const LESSON_GATHERER = Symbol("LESSON_GATHERER");
 export const LESSON_FEEDBACK = Symbol("LESSON_FEEDBACK");
+export const FEEDBACK_LIMITER = Symbol("FEEDBACK_LIMITER");

@@ -1,5 +1,5 @@
 import { type LessonFeedbackRequest, newId } from "@sbi/contracts";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull, lt } from "drizzle-orm";
 import type { Database } from "../client";
 import { lessonFeedback } from "../schema";
 
@@ -12,6 +12,8 @@ export interface LessonFeedbackRepository {
   record(feedback: LessonFeedbackRequest, at: Date): Promise<StoredLessonFeedback>;
   /** Oldest first, for triage of one lesson or one of its versions. */
   forLesson(lessonId: string, version?: number): Promise<StoredLessonFeedback[]>;
+  /** Clears free text received before `cutoff`, keeping category and rating; returns rows cleared. */
+  clearDetailsBefore(cutoff: Date): Promise<number>;
 }
 
 export function createLessonFeedbackRepository(db: Database): LessonFeedbackRepository {
@@ -29,6 +31,13 @@ export function createLessonFeedbackRepository(db: Database): LessonFeedbackRepo
         createdAt: at,
       });
       return { ...feedback, feedbackId, receivedAt: at.toISOString() };
+    },
+    async clearDetailsBefore(cutoff) {
+      const [result] = await db
+        .update(lessonFeedback)
+        .set({ details: null })
+        .where(and(lt(lessonFeedback.createdAt, cutoff), isNotNull(lessonFeedback.details)));
+      return result.affectedRows;
     },
     async forLesson(lessonId, version) {
       const rows = await db
