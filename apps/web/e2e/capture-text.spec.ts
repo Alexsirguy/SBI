@@ -1,5 +1,5 @@
 import { expectNoAxeViolations } from "./a11y";
-import { mockApi, mockTaxonomy, mockUploads } from "./mock-api";
+import { mockApi, mockTaxonomy, mockUploads, expectLessonOpened } from "./mock-api";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const tinyPng = Buffer.from(
@@ -23,7 +23,7 @@ async function confirmKettle(page: Page, scope: Locator) {
   await expect(scope.getByRole("button", { name: "Electric kettle" })).toBeFocused();
   await scope.getByRole("button", { name: "Electric kettle" }).click();
   await scope.getByRole("button", { name: "Start lesson" }).click();
-  await expect(scope.getByText("Starting lesson: Electric kettle.")).toBeFocused();
+  await expectLessonOpened(page, "Electric kettle");
   await expectNoAxeViolations(page);
 }
 
@@ -62,7 +62,7 @@ test("text entry works from the keyboard alone", async ({ page }) => {
   await expect(section.getByRole("heading", { name: "Start this lesson?" })).toBeFocused();
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
-  await expect(section.getByText("Starting lesson: Teapot.")).toBeVisible();
+  await expectLessonOpened(page, "Teapot");
 });
 
 test("text entry guides on short, unmatched and edited queries", async ({ page }) => {
