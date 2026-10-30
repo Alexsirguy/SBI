@@ -54,7 +54,13 @@ export {
   type RightsDecision,
   type RightsGate,
   type RouteDecision,
+  MODEL_KNOWLEDGE_DISCLAIMER,
 } from "./publish";
+export {
+  generateModelClaims,
+  MODEL_KNOWLEDGE_PROMPT_VERSION,
+  type ModelKnowledgeInput,
+} from "./model-knowledge";
 export {
   runWithFallback,
   type FallbackQuery,

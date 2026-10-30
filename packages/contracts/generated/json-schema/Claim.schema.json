@@ -108,6 +108,13 @@
         "verifiedAt"
       ],
       "additionalProperties": false
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "evidence",
+        "model"
+      ]
     }
   },
   "required": [

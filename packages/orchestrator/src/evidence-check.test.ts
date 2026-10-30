@@ -68,6 +68,37 @@ describe("createEvidenceCheck", () => {
     expect(result.details.join("\n")).toContain("claim-mismatch");
   });
 
+  it("leaves model-knowledge claims to their disclaimer, but still checks the stored ones", async () => {
+    const { check, lesson } = await store([
+      page("USGS", "https://www.usgs.gov/a"),
+      page("NIST", "https://www.nist.gov/b"),
+    ]);
+    const model = {
+      claimId: "0192f1a0-0000-7000-8000-0000000000aa",
+      text: "Metal kettles were common by the early twentieth century.",
+      status: "unsupported" as const,
+      origin: "model" as const,
+      sourceIds: [],
+      scope: "general knowledge: history",
+      confidence: "low" as const,
+      uncertainty: "From the AI's general knowledge; not yet checked against a source.",
+      dependsOn: [],
+    };
+    const mixed = {
+      ...lesson,
+      claims: [...lesson.claims, model],
+      sections: lesson.sections.map((section, index) =>
+        index === 0 ? { ...section, claimIds: [...section.claimIds, model.claimId] } : section,
+      ),
+    };
+    expect(await check.run(mixed)).toEqual({ name: "evidence", passed: true, details: [] });
+    const forged = {
+      ...mixed,
+      claims: mixed.claims.map((claim) => ({ ...claim, origin: undefined })),
+    };
+    expect((await check.run(forged)).details.join("\n")).toContain("unknown-claim");
+  });
+
   it("fails claims the store does not hold", async () => {
     const { check } = await store([page("USGS", "https://www.usgs.gov/a")]);
     const result = await check.run(makeLesson());

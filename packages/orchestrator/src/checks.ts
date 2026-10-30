@@ -71,7 +71,8 @@ export const misconceptionCheck: LessonCheck = {
   name: "misconceptions",
   async run(lesson) {
     const unsettled = lesson.claims.some(
-      (claim) => claim.status === "disputed" || claim.status === "unsupported",
+      (claim) =>
+        claim.status === "disputed" || (claim.status === "unsupported" && claim.origin !== "model"),
     );
     if (!unsettled || lesson.misconceptionNotes.length > 0) {
       return result(misconceptionCheck.name, []);

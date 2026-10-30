@@ -28,6 +28,7 @@ import {
   gateQuickAnswer,
   generateQuickAnswer,
   generateDraft,
+  generateModelClaims,
   misconceptionCheck,
   readingLevelCheck,
   repairable,
@@ -158,15 +159,47 @@ async function earlyAnswer(
   }
 }
 
-const isTeachable = (claim: Claim) => claim.status === "supported" || claim.status === "qualified";
+const isTeachable = (claim: Claim) =>
+  claim.status === "supported" || claim.status === "qualified" || claim.origin === "model";
 
-// Sourced taxonomy facts first, then gathered claims; disputed or open ones would hold the lesson.
-function lessonClaims(facts: Claim[], gathered: Claim[]): Claim[] {
+// Research questions no teachable claim answers, plus history when none was found (ADR 0011).
+function evidenceGaps(
+  question: string,
+  objectLabel: string,
+  gathered: GatheredEvidence | undefined,
+  usable: Claim[],
+): string[] {
+  const history = `How was the ${objectLabel.toLowerCase()} invented or discovered, and how did it develop?`;
+  if (!gathered) return usable.length > 0 ? [history] : [question, history];
+  const teachable = new Set(gathered.claims.filter(isTeachable).map((claim) => claim.claimId));
+  const answered = (item: { claimIds: string[] }) => item.claimIds.some((id) => teachable.has(id));
+  const questions = gathered.pack.questions ?? [];
+  const gaps = questions.filter((item) => !answered(item)).map((item) => item.question);
+  const hasHistory = questions.some((item) => item.discipline === "history" && answered(item));
+  // With nothing to teach from at all, the learner's own question leads.
+  const lead = teachable.size === 0 && usable.length === 0 && gaps.length === 0 ? [question] : [];
+  return [...lead, ...gaps, ...(hasHistory ? [] : [history])];
+}
+
+// Model claims fill gaps but never crowd out checked evidence.
+const MAX_MODEL_CLAIMS = 12;
+
+function lessonClaims(facts: Claim[], gathered: Claim[], fromModel: Claim[] = []): Claim[] {
   const byId = new Map<string, Claim>();
   for (const claim of [...facts, ...gathered]) {
     if (isTeachable(claim) && !byId.has(claim.claimId)) byId.set(claim.claimId, claim);
   }
-  return [...byId.values()].slice(0, MAX_LESSON_CLAIMS);
+  // Take one claim per gap in turn, so the last gaps (history) are not crowded out by the first.
+  const byGap = new Map<string, Claim[]>();
+  for (const claim of fromModel) byGap.set(claim.scope, [...(byGap.get(claim.scope) ?? []), claim]);
+  const model: Claim[] = [];
+  for (let round = 0; model.length < Math.min(MAX_MODEL_CLAIMS, fromModel.length); round += 1) {
+    for (const claims of byGap.values()) {
+      const claim = claims[round];
+      if (claim && model.length < MAX_MODEL_CLAIMS) model.push(claim);
+    }
+  }
+  return [...[...byId.values()].slice(0, MAX_LESSON_CLAIMS - model.length), ...model];
 }
 
 function freshAnswer(lessonId: string, answer: QuickAnswerDraft): QuickAnswer {
@@ -325,8 +358,8 @@ export class LessonService {
         },
       )
         .catch((error: unknown): GatheredEvidence | undefined => {
-          // Sourced taxonomy facts can still carry a lesson when gathering fails outright.
-          if (error instanceof LlmError && usable.length > 0) return undefined;
+          // Facts or the model's own knowledge still carry a lesson when gathering fails outright.
+          if (error instanceof LlmError) return undefined;
           throw error;
         })
         .finally(async () => {
@@ -338,18 +371,39 @@ export class LessonService {
         yield event;
       }
       const gathered = await gathering;
-      const claims = lessonClaims(usable, gathered?.claims ?? []);
+      // Evidence gaps never hold a lesson back or change its shape; the model fills them, and the
+      // lesson says so (ADR 0011).
+      const gaps = evidenceGaps(request.question, entry.label, gathered, usable);
+      const fromModel = await generateModelClaims(
+        {
+          objectLabel: entry.label,
+          question: request.question,
+          gaps,
+          audience: request.audience,
+          readingLevel: request.readingLevel,
+          safetyClass,
+        },
+        { provider },
+      ).catch((error: unknown) => {
+        if (error instanceof LlmError) return [];
+        throw error;
+      });
+      const claims = lessonClaims(usable, gathered?.claims ?? [], fromModel);
       if (claims.length === 0) {
         throw new UserFacingException(
           usable.length === 0 ? NO_EVIDENCE : NO_COVERAGE,
           HttpStatus.NOT_FOUND,
         );
       }
+      const checkedClaims = claims.filter((claim) => claim.origin !== "model");
       yield {
         type: "progress",
         data: LessonProgress.parse({
           stage: "drafting",
-          message: `Writing the lesson from ${claims.length} checked claims.`,
+          message:
+            checkedClaims.length === claims.length
+              ? `Writing the lesson from ${claims.length} checked claims.`
+              : `Writing the lesson from ${checkedClaims.length} checked claims and ${claims.length - checkedClaims.length} from general knowledge.`,
           claims: claims.length,
         }),
       };
@@ -374,8 +428,9 @@ export class LessonService {
       // Awaited inside the attempt below; this only stops an early exit raising it unhandled.
       pendingDraft.catch(() => undefined);
       // No early attempt answered; one more try with the full set if it holds anything new.
-      if (!early && claims.length > triedWith) {
-        early = await earlyAnswer(provider, { ...answerInput, claims });
+      // Model-knowledge claims never pass the quick-answer gate, so only checked ones are tried.
+      if (!early && checkedClaims.length > triedWith) {
+        early = await earlyAnswer(provider, { ...answerInput, claims: checkedClaims });
         if (early) {
           answered = true;
           yield { type: "quick-answer", data: freshAnswer(lessonId, early) };
@@ -409,13 +464,19 @@ export class LessonService {
           // Drafts often add true but uncited detail; one rewrite of just those sections, then
           // every check again, so a repair can never slip past the gate.
           if (!report.passed && repairable(report)) {
+            // A failed rewrite leaves the draft as it was; its doubts are then disclosed (ADR 0011).
             const revised = await reviseSections(checked, report, {
               provider,
               objectLabel: entry.label,
+            }).catch((error: unknown) => {
+              if (error instanceof LlmError) return undefined;
+              throw error;
             });
-            ({ lesson: checked, report } = await runLessonChecks(revised, checks, {
-              onAudit: record,
-            }));
+            if (revised) {
+              ({ lesson: checked, report } = await runLessonChecks(revised, checks, {
+                onAudit: record,
+              }));
+            }
           }
           // High-risk, low-confidence, failed or rights-blocked lessons wait for a reviewer.
           const routed = await createPublisher({ rights: VISUAL_RIGHTS, onAudit: record }).route(
