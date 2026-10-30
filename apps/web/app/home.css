@@ -1,0 +1,89 @@
+/* Home page and plain-text pages (privacy, about). */
+.home {
+  display: grid;
+  gap: var(--sbi-space-7);
+}
+
+.home__hero {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.home h1,
+.prose-page h1 {
+  font-size: clamp(2.125rem, 7vw, 3.25rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.home__lead {
+  margin: 0;
+  font-size: var(--sbi-text-answer);
+  color: var(--sbi-ink-soft);
+  max-width: var(--sbi-measure);
+}
+
+.home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+  margin-top: var(--sbi-space-2);
+}
+
+.home__actions .sbi-button {
+  text-decoration: none;
+}
+
+.home__privacy {
+  margin: 0;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.home__how h2,
+.prose-page h2 {
+  font-size: var(--sbi-text-title);
+  margin: var(--sbi-space-5) 0 var(--sbi-space-3);
+}
+
+/* The steps are a real sequence, so they are numbered. */
+.home__steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sbi-space-4);
+}
+
+.home__steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: var(--sbi-space-3);
+  align-items: start;
+}
+
+.home__steps li::before {
+  content: counter(step) / "";
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--sbi-action);
+  color: var(--sbi-action);
+  font-family: var(--sbi-font-mono);
+  font-weight: 600;
+}
+
+.prose-page {
+  max-width: var(--sbi-measure);
+}
+
+.prose-page ul,
+.prose-page ol {
+  padding-left: 1.3rem;
+  display: grid;
+  gap: var(--sbi-space-2);
+}

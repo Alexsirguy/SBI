@@ -25,14 +25,6 @@
   color: var(--sbi-ink-soft);
 }
 
-.capture .eyebrow {
-  font-family: var(--sbi-font-mono);
-  font-size: var(--sbi-text-label);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--sbi-ink-soft);
-}
-
 /* The privacy cue reads as a note pinned to the bench, not small print. */
 .privacy-cue {
   background: var(--sbi-note-wash);
