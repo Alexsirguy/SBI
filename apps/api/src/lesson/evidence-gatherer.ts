@@ -78,6 +78,11 @@ export function createEvidenceGatherer(deps: GathererDeps): EvidenceGatherer {
           sources: question.sources,
           claims: question.claimIds.length,
           completed: question.completed,
+          searched: question.searched && {
+            textbookPages: question.searched.textbookPages.length,
+            articles: question.searched.articles,
+            refs: question.searched.refs.length,
+          },
           failures: question.failures.map((failure) => failure.slice(0, 200)),
         }),
       );
