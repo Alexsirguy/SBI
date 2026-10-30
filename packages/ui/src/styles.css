@@ -253,6 +253,7 @@ a {
 
 .sbi-notice__kind {
   font-family: var(--sbi-font-mono);
+  font-weight: 500;
   font-size: var(--sbi-text-label);
   letter-spacing: 0.08em;
   text-transform: uppercase;

@@ -34,6 +34,7 @@ main {
 .module-label {
   margin: 0;
   font-family: var(--sbi-font-mono);
+  font-weight: 500;
   font-size: var(--sbi-text-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;

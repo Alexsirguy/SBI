@@ -25,7 +25,9 @@
   --sbi-font-display:
     var(--sbi-font-display-face, "Bricolage Grotesque"), var(--sbi-font-body-face, system-ui),
     system-ui, sans-serif;
-  --sbi-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* Labels need the same widths on every device, so the face is self-hosted like the others. */
+  --sbi-font-mono:
+    var(--sbi-font-mono-face, "JetBrains Mono"), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --sbi-text-label: 0.75rem;
   --sbi-text-small: 0.875rem;
