@@ -35,3 +35,54 @@ button:not(.crop-area) {
 input[type="number"] {
   width: 6rem;
 }
+
+/* Lesson reader: a readable measure, with notices and placeholders that work in both themes. */
+.lesson {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1rem;
+  line-height: 1.6;
+}
+
+.lesson-notices ul,
+.lesson-nav ol {
+  padding-left: 1.25rem;
+}
+
+.notice {
+  border-left: 4px solid currentColor;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  list-style: none;
+}
+
+.module-label {
+  margin: 0;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.skeleton-line {
+  display: block;
+  height: 1rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton-line {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
