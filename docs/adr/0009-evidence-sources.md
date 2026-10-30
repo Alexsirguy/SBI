@@ -59,7 +59,7 @@ Sources follow the spec's §7 list (textbooks, public science institutions, stan
 
 - **NASA stays.** The owner accepted NASA's guidance on AI attribution: credits name NASA as the source of an excerpt, never of a generated answer.
 - **Open textbooks** (`open-textbook` connector):
-  - **LibreTexts:** a page is used only if its own licence tag is CC BY, CC BY-SA or public domain. Most books are NC, so the check is per page. Pages under any other tag keep no text and are stored `restricted`. OpenStax-derived pages modified after 2026-04-22 are also refused, since OpenStax then relicensed new editions as NC with an AI clause.
+  - **LibreTexts:** a page is used only if its own licence tag is CC BY, CC BY-SA or public domain. Most books are NC, so the check is per page. Pages under any other tag keep no text and are stored `restricted`. OpenStax-derived pages modified after 2026-04-22 are also refused, since OpenStax then relicensed new editions as NC with an AI clause. Each book is its own publisher for the two-source rule. Two books on LibreTexts can corroborate a claim, but two chapters of one book cannot, and search takes the best page from each book first.
   - **Wikisource:** only works marked public domain, for history of science.
   - **Kuphaldt, _Lessons In Electric Circuits_:** CC BY, as each chapter states.
   - **Rejected:** openstax.org (NC plus an AI clause), MIT OCW and Saylor (NC), CK-12 (educational use only; bans AI scraping), OpenIntro (terms target AI scrapers), BCcampus and other Pressbooks hosts (block automated access), Project Gutenberg (human users only).

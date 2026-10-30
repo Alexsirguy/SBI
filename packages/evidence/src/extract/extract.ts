@@ -144,10 +144,17 @@ export async function extractClaims(
 export async function extractAndVerify(
   question: InquiryQuestion,
   fetched: FetchedSource[],
-  options: ExtractOptions & { judge: SupportJudge; now?: () => Date },
+  options: ExtractOptions & {
+    judge: SupportJudge;
+    now?: () => Date;
+    /** Sources found for other sub-questions: checked for support, never extracted from. */
+    corroborating?: FetchedSource[];
+  },
 ): Promise<BuiltClaims> {
   const drafts = await extractClaims(question, fetched, options);
-  return buildClaims(drafts, fetched, {
+  const own = new Set(fetched.map((source) => source.url));
+  const others = (options.corroborating ?? []).filter((source) => !own.has(source.url));
+  return buildClaims(drafts, [...fetched, ...others], {
     judge: options.judge,
     now: options.now,
     signal: options.signal,

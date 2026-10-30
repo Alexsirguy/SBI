@@ -150,6 +150,35 @@ describe("buildClaims", () => {
     expect(built.claims[0]?.sourceIds).toHaveLength(2);
   });
 
+  it("judges every source's best passage before a second passage from the same source", async () => {
+    const chatty = fetched(
+      "https://www.usgs.gov/ice",
+      [
+        "Ice floats because it is less dense than liquid water.",
+        "Ice floats on water because ice is less dense than water.",
+        "Because ice is less dense than liquid water, ice floats.",
+      ],
+      "U.S. Geological Survey",
+    );
+    const judge = scriptedJudge({
+      "Ice floats because it is less dense than liquid water.": "supports",
+      "Ice is less dense than liquid water, which is why ice floats.": "supports",
+    });
+    const built = await buildClaims(
+      [
+        {
+          key: "ice",
+          text: "Ice floats because it is less dense than liquid water.",
+          scope: "ice",
+        },
+      ],
+      [chatty, { ...USGS, publisher: "Another publisher" }],
+      { judge },
+    );
+    expect(built.claims[0]?.sourceIds).toHaveLength(2);
+    expect(built.claims[0]?.confidence).toBe("high");
+  });
+
   it("removes an unsupported claim that has no open-question wording", async () => {
     const built = await buildClaims(
       [{ key: "salt", text: "Adding salt makes pasta water boil much faster.", scope: "cooking" }],

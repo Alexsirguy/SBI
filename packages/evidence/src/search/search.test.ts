@@ -53,6 +53,25 @@ describe("createLibreTextsIndex", () => {
     expect(results.some((url) => url.startsWith(NC_BOOK))).toBe(false);
   });
 
+  it("takes the best page from each book before a second page from any one book", async () => {
+    const other =
+      "https://phys.libretexts.org/Bookshelves/University_Physics/University_Physics_(OpenStax)";
+    const pages = `<urlset>
+<url><loc>${BOOK}/Volume_B/Magnifier_Lens_Images</loc></url>
+<url><loc>${BOOK}/Volume_B/Magnifier_Lens_Image_Formation</loc></url>
+<url><loc>${other}/Optics/Simple_Magnifier_Lens</loc></url>
+</urlset>`;
+    const index = createLibreTextsIndex({
+      fetcher: fetcher({ "https://phys.libretexts.org/sitemap.xml": pages }),
+      books: [BOOK, other],
+    });
+    const results = await index.search("magnifier lens image formation", 2);
+    expect(results).toEqual([
+      `${BOOK}/Volume_B/Magnifier_Lens_Image_Formation`,
+      `${other}/Optics/Simple_Magnifier_Lens`,
+    ]);
+  });
+
   it("needs two shared title words before a page counts as a match", async () => {
     const index = createLibreTextsIndex({
       fetcher: fetcher({ "https://phys.libretexts.org/sitemap.xml": sitemap }),
