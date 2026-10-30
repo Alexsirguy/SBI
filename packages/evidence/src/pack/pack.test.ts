@@ -174,6 +174,13 @@ describe("gatherEvidence", () => {
       "When electric current flows through a resistance, electrical energy turns into heat.",
     ]);
     expect(result.pack.questions.every((question) => question.completed)).toBe(true);
+    for (const question of result.pack.questions) {
+      expect(Object.keys(question.timings ?? {}).sort()).toEqual([
+        "fetchMs",
+        "searchMs",
+        "verifyMs",
+      ]);
+    }
     expect(result.pack.questions.find((question) => question.key === "q1")?.searched).toEqual({
       query: "electric current heat resistance",
       articles: [],
@@ -238,13 +245,18 @@ describe("gatherEvidence", () => {
     expect(boiling).toMatchObject({ status: "supported", confidence: "high" });
   });
 
-  it("still reads packs stored before searches were recorded", async () => {
+  it("still reads packs stored before searches and timings were recorded", async () => {
     const { pack } = await gatherEvidence(input, deps());
     const older = {
       ...pack,
       questions: pack.questions.map(({ searched: _searched, ...question }) => question),
     };
     expect(EvidencePack.parse(older).questions[0]?.searched).toBeUndefined();
+    const untimed = {
+      ...pack,
+      questions: pack.questions.map(({ timings: _timings, ...question }) => question),
+    };
+    expect(EvidencePack.parse(untimed).questions[0]?.timings).toBeUndefined();
   });
 
   it("reuses a stored pack while its claims still resolve to fresh excerpts", async () => {
@@ -318,6 +330,9 @@ describe("gatherEvidence", () => {
       false,
       true,
     ]);
+    // Stages that finished are timed; the cut-off fetch never records one.
+    expect(result.pack.questions[0]?.timings?.searchMs).toBeGreaterThanOrEqual(0);
+    expect(result.pack.questions[0]?.timings?.fetchMs).toBeUndefined();
     expect(await target.packs.get(result.pack.packKey)).toBeUndefined();
   });
 });
