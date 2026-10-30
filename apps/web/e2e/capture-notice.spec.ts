@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 test("an unmatched search leads to prompts that find the object", async ({ page }) => {
   const sent = await mockObservations(page);
   await page.goto("/capture");
-  const section = page.getByRole("region", { name: "No camera? Describe it instead" });
+  const section = page.getByRole("region", { name: "No image? Describe it instead" });
   await section.getByLabel("Describe the object").fill("spaceship");
   await section.getByLabel("Describe the object").press("Enter");
   await expect(section.getByRole("status")).toContainText("No matches");
@@ -37,7 +37,7 @@ test("an unmatched search leads to prompts that find the object", async ({ page 
 test("when nothing fits, the guess goes back to search and the gap is noted", async ({ page }) => {
   const sent = await mockObservations(page);
   await page.goto("/capture");
-  const section = page.getByRole("region", { name: "No camera? Describe it instead" });
+  const section = page.getByRole("region", { name: "No image? Describe it instead" });
   await section.getByLabel("Describe the object").fill("spaceship");
   await section.getByRole("button", { name: "Search objects" }).click();
   await section.getByRole("button", { name: "Can't find it? Tell us what you notice" }).click();
@@ -57,7 +57,7 @@ test("when nothing fits, the guess goes back to search and the gap is noted", as
 
 test("an empty observation form explains why it cannot be sent", async ({ page }) => {
   await page.goto("/capture");
-  const section = page.getByRole("region", { name: "No camera? Describe it instead" });
+  const section = page.getByRole("region", { name: "No image? Describe it instead" });
   await section.getByRole("button", { name: "Can't find it? Tell us what you notice" }).click();
 
   await expect(section.getByRole("button", { name: "Find matches" })).toBeDisabled();

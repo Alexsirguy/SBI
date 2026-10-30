@@ -107,7 +107,7 @@ test("crop and retake flow updates and resets the prepared photo", async ({ page
   await page.getByRole("button", { name: "Retake or choose another" }).click();
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeDisabled();
   await expect(page.getByAltText("Preview of the photo to upload")).toHaveCount(0);
-  await expect(page.getByLabel("Take a photo")).toBeFocused();
+  await expect(page.getByRole("button", { name: "Take a photo" })).toBeFocused();
 });
 
 test("repeated crops start from the original rather than the previous crop", async ({ page }) => {
