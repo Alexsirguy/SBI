@@ -1,15 +1,25 @@
 import { Id, LessonRequest } from "@sbi/contracts";
+import { DEFAULT_PREFS, DEPTHS, type LessonPrefs, parsePrefs } from "./prefs";
 
 export interface LessonParams {
   taxonomyId?: string;
   label?: string;
   q?: string;
+  depth?: string;
+  age?: string;
 }
 
 /** Where "Start lesson" leads; the question defaults to the object's science. */
-export function lessonHref(taxonomyId: string, label: string, question?: string): string {
+export function lessonHref(
+  taxonomyId: string,
+  label: string,
+  options: { question?: string; prefs?: LessonPrefs } = {},
+): string {
   const params = new URLSearchParams({ taxonomyId, label });
-  if (question) params.set("q", question);
+  if (options.question) params.set("q", options.question);
+  const prefs = options.prefs ?? DEFAULT_PREFS;
+  params.set("depth", prefs.depth);
+  if (prefs.age !== "none") params.set("age", prefs.age);
   return `/lesson?${params}`;
 }
 
@@ -22,11 +32,12 @@ export function lessonRequestFrom(params: LessonParams): LessonRequest | undefin
   const taxonomyId = Id.safeParse(params.taxonomyId);
   if (!taxonomyId.success) return undefined;
   const label = params.label?.trim() || "this object";
+  const prefs = parsePrefs(params.depth, params.age);
   const request = LessonRequest.safeParse({
     question: params.q?.trim() || defaultQuestion(label),
     taxonomyId: taxonomyId.data,
-    audience: "general",
-    readingLevel: "plain",
+    audience: prefs.age === "none" ? "general" : prefs.age,
+    readingLevel: DEPTHS[prefs.depth].readingLevel,
     locale: "en",
     safetyClass: "low",
   });
