@@ -69,6 +69,46 @@ test("the whole lesson can be read and used from the keyboard alone", async ({ p
   await expect(page.getByText("Thanks for rating this lesson.")).toBeVisible();
 });
 
+test("changing depth or age keeps focus on the control while the new lesson loads", async ({
+  page,
+}) => {
+  await page.goto(LESSON_URL);
+  await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+  await page.getByRole("radio", { name: /Explore/ }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page).toHaveURL(/depth=deeper/);
+  await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+  await expect(page.getByRole("radio", { name: /Deeper/ })).toBeFocused();
+  await expect(page.getByRole("radio", { name: /Deeper/ })).toBeChecked();
+
+  const age = page.getByLabel("Age band (optional)");
+  await age.focus();
+  await age.selectOption("teen");
+  await expect(page).toHaveURL(/age=teen/);
+  await expect(age).toBeFocused();
+});
+
+test("feedback moves focus to its confirmation, and to the field a report is missing", async ({
+  page,
+}) => {
+  await page.goto(LESSON_URL);
+  const rate = page.getByRole("form", { name: "Rate this lesson" });
+  await rate.getByRole("group", { name: "How helpful was it?" }).getByLabel("5 Very").check();
+  await rate.getByRole("group", { name: "How clear was it?" }).getByLabel("5 Very").check();
+  await rate.getByRole("button", { name: "Send rating" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Thanks for rating this lesson.")).toBeFocused();
+
+  const report = page.getByRole("form", { name: "Report a problem" });
+  await report.getByRole("button", { name: "Send report" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(report.getByLabel("What is wrong?")).toBeFocused();
+  await report.getByLabel("What is wrong?").selectOption("unclear");
+  await report.getByRole("button", { name: "Send report" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Thanks. A reviewer will look at this lesson.")).toBeFocused();
+});
+
 test("every reader control shows a clear focus outline", async ({ page }) => {
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");

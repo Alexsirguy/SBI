@@ -31,10 +31,11 @@ export default async function LessonPage({
       </main>
     );
   }
-  // Keyed by the request so a new object or question starts a fresh stream.
+  // Keyed by object and question only: a depth or age change updates the reader in place, so
+  // focus stays on the control the learner just used while the matching lesson streams.
   return (
     <LessonReader
-      key={JSON.stringify(request)}
+      key={`${request.taxonomyId}\n${request.question}`}
       request={request}
       label={label}
       prefs={prefs}

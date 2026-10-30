@@ -1,8 +1,8 @@
 import type { Lesson, LessonSection } from "@sbi/contracts";
-
-type Concept = Lesson["concepts"][number];
 import { SectionFrame } from "./frame";
 import { conceptsInOrder } from "./order";
+
+type Concept = Lesson["concepts"][number];
 
 /** Module 3: the explanation, then the key ideas in the order they build on each other. */
 export function FirstPrinciplesSection({

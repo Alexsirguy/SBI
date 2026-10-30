@@ -2,7 +2,7 @@
 
 import type { ApiRequest, FeedbackCategory } from "@sbi/contracts";
 import { useMutation } from "@tanstack/react-query";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { api } from "../api";
 import { ApiRequestError, UNREACHABLE } from "../api-client";
 
@@ -77,13 +77,25 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
   const detailsId = useId();
   const detailsHintId = useId();
   const reportErrorId = useId();
+  const ratedRef = useRef<HTMLParagraphElement>(null);
+  const reportedRef = useRef<HTMLParagraphElement>(null);
+  const categoryRef = useRef<HTMLSelectElement>(null);
+  // The sent form goes away with its focused button, so focus moves to the confirmation instead.
+  useEffect(() => {
+    if (rating.isSuccess) ratedRef.current?.focus();
+  }, [rating.isSuccess]);
+  useEffect(() => {
+    if (report.isSuccess) reportedRef.current?.focus();
+  }, [report.isSuccess]);
 
   return (
     <section aria-labelledby="feedback-heading" className="lesson-feedback">
       <h2 id="feedback-heading">Tell us what you think</h2>
 
       {rating.isSuccess ? (
-        <p role="status">Thanks for rating this lesson.</p>
+        <p ref={ratedRef} tabIndex={-1} role="status">
+          Thanks for rating this lesson.
+        </p>
       ) : (
         <form
           aria-label="Rate this lesson"
@@ -107,7 +119,9 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
       )}
 
       {report.isSuccess ? (
-        <p role="status">Thanks. A reviewer will look at this lesson.</p>
+        <p ref={reportedRef} tabIndex={-1} role="status">
+          Thanks. A reviewer will look at this lesson.
+        </p>
       ) : (
         <form
           aria-label="Report a problem"
@@ -115,6 +129,7 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
             event.preventDefault();
             if (!category) {
               setMissing("Choose what kind of problem it is.");
+              categoryRef.current?.focus();
               return;
             }
             setMissing(undefined);
@@ -128,6 +143,7 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
           <h3>Report a problem</h3>
           <label htmlFor={categoryId}>What is wrong?</label>
           <select
+            ref={categoryRef}
             id={categoryId}
             value={category}
             aria-invalid={missing ? true : undefined}
