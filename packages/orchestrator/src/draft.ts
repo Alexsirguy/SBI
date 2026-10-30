@@ -91,16 +91,27 @@ export const HIGH_RISK_DRAFT_RULE =
   "Safety: this is a high-risk topic. Explain only what it is and why it behaves as it does. Never give steps, amounts or tips for preparing, mixing, using, dosing, eating, handling, testing or repairing it, and never suggest trying anything.";
 
 // v3 adds a safety rule that is filled in only for high-risk topics.
-export const LESSON_DRAFT_PROMPT: PromptVersion = {
+const LESSON_DRAFT_PROMPT_V3: PromptVersion = {
   ...LESSON_DRAFT_PROMPT_V2,
   version: "3",
   template: `{{safetyRule}}${LESSON_DRAFT_PROMPT_V2.template}`,
+};
+
+// v4: drafts opened short answers with background, so the short answer must answer directly.
+export const LESSON_DRAFT_PROMPT: PromptVersion = {
+  ...LESSON_DRAFT_PROMPT_V3,
+  version: "4",
+  system:
+    `${LESSON_DRAFT_PROMPT_V3.system} The short-answer section answers the question asked in ` +
+    "one or two sentences: the direct cause or mechanism, not background. Background belongs " +
+    "in first-principles.",
 };
 
 export function createDraftPromptRegistry(): PromptRegistry {
   return createPromptRegistry([
     LESSON_DRAFT_PROMPT_V1,
     LESSON_DRAFT_PROMPT_V2,
+    LESSON_DRAFT_PROMPT_V3,
     LESSON_DRAFT_PROMPT,
   ]);
 }
