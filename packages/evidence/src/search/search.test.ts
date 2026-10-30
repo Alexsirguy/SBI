@@ -72,6 +72,56 @@ describe("createLibreTextsIndex", () => {
     ]);
   });
 
+  it("reads sites that publish a sitemap index, such as chemistry", async () => {
+    const chem =
+      "https://chem.libretexts.org/Bookshelves/General_Chemistry/Chemistry_2e_(OpenStax)";
+    const index = createLibreTextsIndex({
+      fetcher: fetcher({
+        "https://chem.libretexts.org/sitemap.xml": `<sitemapindex><sitemap><loc>https://chem.libretexts.org/sitemap_0.xml</loc></sitemap><sitemap><loc>https://evil.example/sitemap.xml</loc></sitemap></sitemapindex>`,
+        "https://chem.libretexts.org/sitemap_0.xml": `<urlset><url><loc>${chem}/10%3A_Liquids_and_Solids/10.06%3A_Lattice_Structures_in_Crystalline_Solids</loc></url></urlset>`,
+      }),
+      books: [chem],
+    });
+    expect(await index.search("crystal lattice structures", 3)).toEqual([
+      `${chem}/10%3A_Liquids_and_Solids/10.06%3A_Lattice_Structures_in_Crystalline_Solids`,
+    ]);
+  });
+
+  it("ranks the sub-question's own subject site first when title words tie", async () => {
+    const bio =
+      "https://bio.libretexts.org/Bookshelves/Introductory_and_General_Biology/Biology_(Kimball)";
+    const chem = "https://chem.libretexts.org/Bookshelves/General_Chemistry/Chem1_(Lower)";
+    const pages: Record<string, string> = {
+      "https://bio.libretexts.org/sitemap.xml": `<urlset><url><loc>${bio}/Unit_2%3A_Cell_Structure</loc></url></urlset>`,
+      "https://chem.libretexts.org/sitemap.xml": `<urlset><url><loc>${chem}/07%3A_Solids/7.02%3A_Unit_Cell_Structure_of_Ionic_Crystals</loc></url></urlset>`,
+    };
+    const index = createLibreTextsIndex({ fetcher: fetcher(pages), books: [bio, chem] });
+    const query = "unit cell structure";
+    expect((await index.search(query, 1))[0]).toContain("bio.libretexts.org");
+    expect(
+      (await index.search(query, 1, { preferSites: ["https://chem.libretexts.org"] }))[0],
+    ).toContain("chem.libretexts.org");
+  });
+
+  it("needs a third shared title word from a page outside the sub-question's subject", async () => {
+    const bio =
+      "https://bio.libretexts.org/Bookshelves/Introductory_and_General_Biology/Biology_(Kimball)";
+    const index = createLibreTextsIndex({
+      fetcher: fetcher({
+        "https://bio.libretexts.org/sitemap.xml": `<urlset><url><loc>${bio}/Studying_Cells_the_Basic_Unit</loc></url></urlset>`,
+      }),
+      books: [bio],
+    });
+    const query = "crystal unit cell repeating";
+    expect(await index.search(query, 3)).toHaveLength(1);
+    expect(await index.search(query, 3, { preferSites: ["https://chem.libretexts.org"] })).toEqual(
+      [],
+    );
+    expect(
+      await index.search(`${query} basic`, 3, { preferSites: ["https://chem.libretexts.org"] }),
+    ).toHaveLength(1);
+  });
+
   it("needs two shared title words before a page counts as a match", async () => {
     const index = createLibreTextsIndex({
       fetcher: fetcher({ "https://phys.libretexts.org/sitemap.xml": sitemap }),

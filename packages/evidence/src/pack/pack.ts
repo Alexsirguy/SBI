@@ -43,6 +43,16 @@ export const EvidencePack = z.object({
         })
         .partial()
         .optional(),
+      /** Why a sub-question with sources can still end with no claims. */
+      yield: z
+        .object({
+          passages: z.number().int().nonnegative(),
+          proposed: z.number().int().nonnegative(),
+          ungrounded: z.number().int().nonnegative(),
+          unsupported: z.number().int().nonnegative(),
+          contradicted: z.number().int().nonnegative(),
+        })
+        .optional(),
       completed: z.boolean(),
     }),
   ),
@@ -216,6 +226,11 @@ export async function gatherEvidence(
       });
       const saved = await lock(() => saveClaimGraph(deps.repositories, built));
       timings.verifyMs = lap();
+      result.yield = {
+        ...built.extraction,
+        unsupported: built.removed.filter((item) => item.reason === "no-support").length,
+        contradicted: built.removed.filter((item) => item.reason === "contradicted").length,
+      };
       result.claimIds = saved.claims.map((claim) => claim.claimId);
       result.completed = true;
       gathered.push(...saved.claims);
