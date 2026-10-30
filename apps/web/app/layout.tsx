@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from "next/font/google";
+import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 // Validates public env at build and startup.
 import "../env";
@@ -22,6 +22,14 @@ const displayFace = Bricolage_Grotesque({
   display: "swap",
 });
 
+// One weight keeps the font budget (#259); labels are short and set in one weight anyway.
+const monoFace = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500"],
+  variable: "--sbi-font-mono-face",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Science Behind It",
   description: "Explore the science behind everyday objects.",
@@ -29,7 +37,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${bodyFace.variable} ${displayFace.variable}`}>
+    <html lang="en" className={`${bodyFace.variable} ${displayFace.variable} ${monoFace.variable}`}>
       <body>
         <SiteHeader />
         <Providers>{children}</Providers>
