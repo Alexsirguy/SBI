@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useRef, useState } from "react";
+import { Button, TextField } from "@sbi/ui";
+import { useRef, useState } from "react";
 import { lessonHref } from "./lesson-request";
 import type { LessonPrefs } from "./prefs";
 
@@ -16,8 +17,6 @@ export function AskQuestion({
   prefs: LessonPrefs;
 }) {
   const router = useRouter();
-  const inputId = useId();
-  const errorId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [question, setQuestion] = useState("");
   const [error, setError] = useState<string>();
@@ -36,23 +35,16 @@ export function AskQuestion({
         router.push(lessonHref(taxonomyId, label, { question: question.trim(), prefs }));
       }}
     >
-      <label htmlFor={inputId}>Ask your own question about the {label.toLowerCase()}</label>
-      <input
+      <TextField
         ref={inputRef}
-        id={inputId}
+        label={`Ask your own question about the ${label.toLowerCase()}`}
         type="text"
         maxLength={500}
         value={question}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        error={error}
         onChange={(event) => setQuestion(event.target.value)}
       />
-      <button type="submit">Ask</button>
-      {error ? (
-        <p role="alert" id={errorId}>
-          {error}
-        </p>
-      ) : null}
+      <Button type="submit">Ask</Button>
     </form>
   );
 }

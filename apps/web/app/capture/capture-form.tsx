@@ -21,6 +21,7 @@ import { assessQuality, readImageData, type QualityReport } from "./quality";
 import { useKeepPhoto, usePhotoUpload } from "./use-photo-upload";
 import { useRecognisePhoto, useRecordSelection } from "./use-recognition";
 import { RecognitionStep } from "./confirm/recognition-step";
+import { Button } from "@sbi/ui";
 
 const CHECK_LABELS = {
   exposure: "Exposure",
@@ -300,15 +301,20 @@ export function CaptureForm() {
                 />
               </div>
             ))}
-            <button type="button" onClick={() => setCrop(fullFrame(original))} disabled={busy}>
+            <Button
+              variant="quiet"
+              type="button"
+              onClick={() => setCrop(fullFrame(original))}
+              disabled={busy}
+            >
               Reset crop
-            </button>
-            <button type="button" onClick={() => void applyCrop()} disabled={busy}>
+            </Button>
+            <Button variant="quiet" type="button" onClick={() => void applyCrop()} disabled={busy}>
               Apply crop
-            </button>
-            <button type="button" onClick={retake}>
+            </Button>
+            <Button variant="quiet" type="button" onClick={retake}>
               Retake or choose another
-            </button>
+            </Button>
           </fieldset>
         ) : null}
         {/* Kept mounted so screen readers announce guidance when it appears. */}
@@ -333,17 +339,17 @@ export function CaptureForm() {
           ) : null}
         </div>
         {uploaded && photoKey && !kept ? (
-          <button type="button" onClick={keepPhoto} disabled={busy}>
+          <Button variant="quiet" type="button" onClick={keepPhoto} disabled={busy}>
             Keep this photo
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="submit"
           disabled={!prepared || busy}
           aria-describedby={!prepared || busy ? uploadHintId : undefined}
         >
           Upload photo
-        </button>
+        </Button>
         {!prepared || busy ? (
           <p id={uploadHintId}>
             {busy ? "Wait until your photo is ready." : "Take or choose a photo first."}
