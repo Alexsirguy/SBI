@@ -1,5 +1,5 @@
-import { expect, type Locator, type Page, test } from "@playwright/test";
-import { expectNoAxeViolations } from "./a11y";
+import { expect, type Page, test } from "@playwright/test";
+import { expectNoAxeViolations, expectVisibleFocus, tabTo } from "./a11y";
 import { mockTaxonomy, mockUploads, expectLessonOpened } from "./mock-api";
 
 async function selectPhoto(page: Page) {
@@ -32,27 +32,6 @@ async function selectPhoto(page: Page) {
         }, "image/png");
       }),
   );
-}
-
-async function expectVisibleFocus(target: Locator) {
-  await expect(target).toBeFocused();
-  const outline = await target.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return { style: style.outlineStyle, width: parseFloat(style.outlineWidth) };
-  });
-  expect(outline.style).not.toBe("none");
-  expect(outline.width).toBeGreaterThanOrEqual(2);
-}
-
-// Tabs forward until `target` has focus, proving it is reachable without a pointer.
-async function tabTo(page: Page, target: Locator, limit = 40) {
-  for (let i = 0; i < limit; i += 1) {
-    if (await target.evaluate((element) => element === document.activeElement)) {
-      return;
-    }
-    await page.keyboard.press("Tab");
-  }
-  throw new Error("target was not reachable with Tab");
 }
 
 test("keyboard focus is clearly visible on every kind of control", async ({ page }) => {
