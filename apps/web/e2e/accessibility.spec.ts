@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { expectNoAxeViolations } from "./a11y";
-import { mockTaxonomy, mockUploads } from "./mock-api";
+import { mockTaxonomy, mockUploads, expectLessonOpened } from "./mock-api";
 
 async function selectPhoto(page: Page) {
   await page.evaluate(
@@ -97,7 +97,7 @@ test("the whole photo journey works from the keyboard alone", async ({ page }) =
   await expect(photo.getByRole("heading", { name: "Start this lesson?" })).toBeFocused();
   await tabTo(page, photo.getByRole("button", { name: "Start lesson" }));
   await page.keyboard.press("Space");
-  await expect(photo.getByText("Starting lesson: Bicycle.")).toBeFocused();
+  await expectLessonOpened(page, "Bicycle");
 });
 
 test("busy and disabled states are explained to assistive technology", async ({ page }) => {

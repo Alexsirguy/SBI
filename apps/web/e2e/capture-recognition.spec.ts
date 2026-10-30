@@ -8,6 +8,7 @@ import {
   PHOTO_KEY,
   RESULT_ID,
   SESSION_ID,
+  expectLessonOpened,
 } from "./mock-api";
 
 const tinyPng = Buffer.from(
@@ -92,7 +93,7 @@ test("choosing an alternative records it on the recognition result", async ({ pa
   await expect(photo.getByRole("heading", { name: "Start this lesson?" })).toBeFocused();
   await photo.getByRole("button", { name: "Start lesson" }).click();
 
-  await expect(photo.getByText("Starting lesson: Playground swing.")).toBeFocused();
+  await expectLessonOpened(page, "Playground swing");
   await expect
     .poll(() => recognition.selections)
     .toEqual([{ resultId: RESULT_ID, selection: { kind: "object", taxonomyId: "object.swing" } }]);
@@ -213,7 +214,7 @@ test("suggestions and parts work from the keyboard alone", async ({ page }) => {
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
 
-  await expect(photo.getByText("Starting lesson: Bicycle: chain.")).toBeFocused();
+  await expectLessonOpened(page, "Bicycle: chain");
   await expect.poll(() => recognition.selections).toHaveLength(1);
 });
 
