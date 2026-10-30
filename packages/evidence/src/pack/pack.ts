@@ -34,6 +34,15 @@ export const EvidencePack = z.object({
         })
         .optional(),
       failures: z.array(z.string()),
+      /** Milliseconds per stage, to see where a slow first request spends its time. */
+      timings: z
+        .object({
+          searchMs: z.number().nonnegative(),
+          fetchMs: z.number().nonnegative(),
+          verifyMs: z.number().nonnegative(),
+        })
+        .partial()
+        .optional(),
       completed: z.boolean(),
     }),
   ),
@@ -169,7 +178,16 @@ export async function gatherEvidence(
   await inParallel(plan.questions, options.concurrency ?? 3, async (question) => {
     const result = results.get(question.key) as EvidencePack["questions"][number];
     try {
+      const timings: NonNullable<typeof result.timings> = {};
+      result.timings = timings;
+      let started = performance.now();
+      const lap = () => {
+        const ms = Math.round(performance.now() - started);
+        started = performance.now();
+        return ms;
+      };
       const found = await searchSources(question, deps.search, { signal });
+      timings.searchMs = lap();
       result.failures.push(...found.failures);
       result.searched = {
         query: question.searchTerms.join(" "),
@@ -186,6 +204,7 @@ export async function gatherEvidence(
           result.failures.push(`fetch: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
+      timings.fetchMs = lap();
       result.sources = fetched.filter((source) => source.passages.length > 0).length;
       pool.push(...fetched);
       const built = await extractAndVerify(question, fetched, {
@@ -196,6 +215,7 @@ export async function gatherEvidence(
         corroborating: [...pool],
       });
       const saved = await lock(() => saveClaimGraph(deps.repositories, built));
+      timings.verifyMs = lap();
       result.claimIds = saved.claims.map((claim) => claim.claimId);
       result.completed = true;
       gathered.push(...saved.claims);
