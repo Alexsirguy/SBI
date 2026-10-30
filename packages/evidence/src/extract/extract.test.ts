@@ -165,4 +165,31 @@ describe("extractAndVerify", () => {
     expect(built.claims[0]).toMatchObject({ status: "supported", confidence: "high" });
     expect(built.claims[0]?.sourceIds).toHaveLength(2);
   });
+
+  it("checks pages pooled from other sub-questions once each, never a copy of its own", async () => {
+    const seen: string[] = [];
+    const judge: SupportJudge = {
+      version: "t",
+      judge: async ({ excerpt, sourceTitle }) => {
+        seen.push(sourceTitle);
+        return /latent heat/.test(excerpt)
+          ? { verdict: "supports", reason: "ok", quote: excerpt }
+          : { verdict: "insufficient", reason: "no" };
+      },
+    };
+    const built = await extractAndVerify(question, [PHYSICS], {
+      provider: provider([
+        {
+          text: "Converting a liquid to gas needs heat called the latent heat of vaporization.",
+          excerptId: "e1",
+          quote: "latent heat of vaporization",
+        },
+      ]),
+      judge,
+      corroborating: [{ ...PHYSICS }, BIOLOGY, { ...BIOLOGY }],
+    });
+    expect(built.sources).toHaveLength(2);
+    expect(new Set(built.claims[0]?.sourceIds).size).toBe(built.claims[0]?.sourceIds.length);
+    expect(seen.filter((title) => title === BIOLOGY.title)).toHaveLength(1);
+  });
 });

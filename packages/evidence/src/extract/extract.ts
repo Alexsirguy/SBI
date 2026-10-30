@@ -152,8 +152,13 @@ export async function extractAndVerify(
   },
 ): Promise<BuiltClaims> {
   const drafts = await extractClaims(question, fetched, options);
-  const own = new Set(fetched.map((source) => source.url));
-  const others = (options.corroborating ?? []).filter((source) => !own.has(source.url));
+  // Two sub-questions can fetch one page; a copy would cite the same stored source twice.
+  const seen = new Set(fetched.map((source) => source.url));
+  const others = (options.corroborating ?? []).filter((source) => {
+    if (seen.has(source.url)) return false;
+    seen.add(source.url);
+    return true;
+  });
   return buildClaims(drafts, [...fetched, ...others], {
     judge: options.judge,
     now: options.now,
