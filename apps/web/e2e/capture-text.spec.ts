@@ -33,7 +33,7 @@ test.beforeEach(async ({ page }) => {
 
 test("text entry resolves candidates and confirms the lesson", async ({ page }) => {
   await page.goto("/capture");
-  await confirmKettle(page, page.getByRole("region", { name: "No camera? Describe it instead" }));
+  await confirmKettle(page, page.getByRole("region", { name: "No image? Describe it instead" }));
 });
 
 test("photo entry reaches the same confirmation step after upload", async ({ page }) => {
@@ -51,7 +51,7 @@ test("photo entry reaches the same confirmation step after upload", async ({ pag
 
 test("text entry works from the keyboard alone", async ({ page }) => {
   await page.goto("/capture");
-  const section = page.getByRole("region", { name: "No camera? Describe it instead" });
+  const section = page.getByRole("region", { name: "No image? Describe it instead" });
   await section.getByLabel("Describe the object").focus();
   await page.keyboard.type("tea");
   await page.keyboard.press("Enter");
@@ -67,7 +67,7 @@ test("text entry works from the keyboard alone", async ({ page }) => {
 
 test("text entry guides on short, unmatched and edited queries", async ({ page }) => {
   await page.goto("/capture");
-  const section = page.getByRole("region", { name: "No camera? Describe it instead" });
+  const section = page.getByRole("region", { name: "No image? Describe it instead" });
   const status = section.getByRole("status");
 
   await section.getByRole("button", { name: "Search objects" }).click();
@@ -93,7 +93,7 @@ test("text entry explains when search is unavailable", async ({ page }) => {
     status: 503,
   }));
   await page.goto("/capture");
-  const section = page.getByRole("region", { name: "No camera? Describe it instead" });
+  const section = page.getByRole("region", { name: "No image? Describe it instead" });
 
   await section.getByLabel("Describe the object").fill("bike");
   await section.getByRole("button", { name: "Search objects" }).click();
