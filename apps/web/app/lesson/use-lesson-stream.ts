@@ -60,14 +60,17 @@ export function useLessonStream(request: LessonRequest, fetcher?: typeof fetch) 
   useEffect(() => {
     const controller = new AbortController();
     dispatch({ type: "start" });
-    streamLesson(webEnv.apiUrl, JSON.parse(key) as LessonRequest, dispatch, {
+    // Every dispatch checks the signal, so an old request can never update the new one's state.
+    const live = (action: Parameters<typeof dispatch>[0]) => {
+      if (!controller.signal.aborted) dispatch(action);
+    };
+    streamLesson(webEnv.apiUrl, JSON.parse(key) as LessonRequest, live, {
       signal: controller.signal,
       fetcher,
     }).then(
-      () => dispatch({ type: "done" }),
+      () => live({ type: "done" }),
       (error: unknown) => {
-        if (controller.signal.aborted) return;
-        dispatch({
+        live({
           type: "failed",
           error: error instanceof ApiRequestError ? error.message : UNREACHABLE,
         });

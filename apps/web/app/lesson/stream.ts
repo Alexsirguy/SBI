@@ -35,7 +35,12 @@ function toEvent(frame: string): LessonEvent | { type: "error"; error: string } 
     else if (line.startsWith("data:")) data.push(line.slice(5).trimStart());
   }
   if (data.length === 0) return undefined;
-  const payload: unknown = JSON.parse(data.join("\n"));
+  let payload: unknown;
+  try {
+    payload = JSON.parse(data.join("\n"));
+  } catch {
+    throw new ApiRequestError(UNREADABLE, 200);
+  }
   if (type === "error") {
     const error = ApiError.safeParse(payload);
     return { type: "error", error: error.success ? error.data.error : UNREADABLE };
@@ -76,10 +81,13 @@ export async function streamLesson(
   let buffer = "";
   for (;;) {
     const { done, value } = await reader.read();
-    buffer += (value ?? "").replace(/\r\n/g, "\n");
+    // Normalised over the whole buffer, so a CRLF split across two chunks still joins up.
+    buffer = (buffer + (value ?? "")).replace(/\r\n/g, "\n");
     const frames = buffer.split("\n\n");
     buffer = done ? "" : (frames.pop() ?? "");
     for (const frame of frames) {
+      // A stream cancelled mid-chunk must not hand its buffered events to whoever started next.
+      if (options.signal?.aborted) return;
       const event = toEvent(frame);
       if (event?.type === "error") throw new ApiRequestError(event.error, response.status);
       if (event) onEvent(event);
