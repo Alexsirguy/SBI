@@ -1,5 +1,6 @@
 import type { LessonSection } from "@sbi/contracts";
 import type { ReactNode } from "react";
+import { SectionCitations } from "../citations";
 import { MODULE_LABELS } from "./labels";
 
 export const sectionAnchor = (section: Pick<LessonSection, "module">) =>
@@ -36,6 +37,7 @@ export function SectionFrame({
       </p>
       <h2 id={headingId}>{section.heading ?? MODULE_LABELS[section.module]}</h2>
       {children}
+      <SectionCitations section={section} />
     </section>
   );
 }

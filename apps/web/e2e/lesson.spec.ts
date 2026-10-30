@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { SAMPLE_ANSWER, SAMPLE_LESSON, sseFrames } from "../app/lesson/sample-lesson";
+import {
+  SAMPLE_ANSWER,
+  SAMPLE_LESSON,
+  SAMPLE_SOURCES,
+  sseFrames,
+} from "../app/lesson/sample-lesson";
 import { expectNoAxeViolations } from "./a11y";
 import { mockLesson } from "./mock-api";
 
@@ -9,6 +14,7 @@ const FULL = sseFrames([
   { type: "progress", data: { stage: "researching", message: "Researching 3 questions." } },
   { type: "quick-answer", data: SAMPLE_ANSWER },
   { type: "lesson", data: SAMPLE_LESSON },
+  { type: "sources", data: SAMPLE_SOURCES },
   { type: "visuals", data: { lessonId: SAMPLE_LESSON.lessonId, visuals: [] } },
 ]);
 
@@ -38,12 +44,29 @@ test("reads the quick answer, notices and every section in order once streamed",
     SAMPLE_ANSWER.shortAnswer,
   );
   const headings = SAMPLE_LESSON.sections.map((section) => section.heading ?? "");
-  await expect(page.getByRole("heading", { level: 2 })).toHaveText(["Quick answer", ...headings]);
+  await expect(page.getByRole("heading", { level: 2 })).toHaveText([
+    "Quick answer",
+    ...headings,
+    "Sources",
+  ]);
 
   const nav = page.getByRole("navigation", { name: "Lesson sections" });
   await nav.getByRole("link", { name: "Reading stones" }).click();
   await expect(page).toHaveURL(/#section-history$/);
   await expect(page.locator(".lesson-sections")).toHaveAttribute("aria-busy", "false");
+  await expectNoAxeViolations(page);
+});
+
+test("citation markers lead to the source list, which credits each source", async ({ page }) => {
+  await mockLesson(page, FULL);
+  await page.goto(LESSON_URL);
+  const seeing = page.getByRole("region", { name: "Small print looks larger" });
+  await expect(seeing).toContainText("Based on limited evidence");
+  await seeing.getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" }).click();
+  await expect(page).toHaveURL(/#source-1$/);
+  const list = page.getByRole("region", { name: "Sources" });
+  await expect(list.getByRole("listitem").first()).toContainText("CC BY 4.0");
+  await expect(list).toContainText("Lesson written 30 October 2026");
   await expectNoAxeViolations(page);
 });
 
