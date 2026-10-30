@@ -57,7 +57,7 @@ export class PurgeService implements OnApplicationBootstrap, OnApplicationShutdo
     PurgeService,
     {
       provide: PURGE_PASS,
-      inject: [DATABASE, REPOSITORIES, OBJECT_STORAGE, RETENTION_POLICY],
+      inject: [DATABASE, REPOSITORIES, OBJECT_STORAGE, RETENTION_POLICY, API_ENV],
       // The database lock keeps other API instances from running the same pass concurrently.
       useFactory:
         (
@@ -65,6 +65,7 @@ export class PurgeService implements OnApplicationBootstrap, OnApplicationShutdo
           repos: Repositories,
           storage: ObjectStorage,
           retention: RetentionPolicy,
+          env: Pick<ApiEnv, "FEEDBACK_DETAILS_RETENTION_DAYS">,
         ): PurgePass =>
         () =>
           database.withLock("media-purge", async () => {
@@ -75,7 +76,10 @@ export class PurgeService implements OnApplicationBootstrap, OnApplicationShutdo
               retention,
             );
             const recognitionPurged = await repos.recognitionResults.deleteExpired(now);
-            return { ...media, recognitionPurged };
+            const feedbackDetailsCleared = await repos.lessonFeedback.clearDetailsBefore(
+              new Date(now.getTime() - env.FEEDBACK_DETAILS_RETENTION_DAYS * 86_400_000),
+            );
+            return { ...media, recognitionPurged, feedbackDetailsCleared };
           }),
     },
   ],
