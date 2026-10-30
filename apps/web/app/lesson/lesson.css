@@ -1,0 +1,415 @@
+/* Lesson reader (E15-4): one reading column on phones; a section list beside it on wide screens. */
+main.lesson {
+  max-width: 72rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sbi-space-4);
+}
+
+/* Everything above the sections keeps the reading measure, so the answer reads as one line of thought. */
+.lesson > :not(.reader-layout):not(.reading-progress) {
+  max-width: var(--sbi-measure);
+  width: 100%;
+  margin-inline: auto;
+}
+
+.lesson-head {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.lesson-head h1 {
+  font-size: var(--sbi-text-display);
+  margin: 0;
+}
+
+.lesson-head .depth-controls {
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.lesson-head .depth-controls .sbi-choice {
+  margin-bottom: 0;
+}
+
+@media (min-width: 640px) {
+  .lesson-head .depth-controls {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: end;
+    column-gap: var(--sbi-space-4);
+  }
+
+  .lesson-head .depth-controls > .sbi-field__hint {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .lesson-head .depth-controls > .sbi-field {
+    grid-column: 2;
+    grid-row: 1;
+    margin-block: var(--sbi-space-3) 0;
+  }
+}
+
+.lesson-notices {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.quick-answer {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.quick-answer h2 {
+  font-family: var(--sbi-font-mono);
+  font-size: var(--sbi-text-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sbi-ink-soft);
+  margin: 0;
+}
+
+.quick-answer p {
+  margin: 0;
+}
+
+.provenance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-2);
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.objectives h2,
+.lesson-sources h2,
+.lesson-feedback h2 {
+  font-size: var(--sbi-text-title);
+  margin: 0 0 var(--sbi-space-2);
+}
+
+.objectives ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+/* Layout */
+.reader-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sbi-space-5);
+}
+
+.reader-main {
+  min-width: 0;
+  max-width: var(--sbi-measure);
+  width: 100%;
+  margin-inline: auto;
+  display: grid;
+  gap: var(--sbi-space-6);
+}
+
+.lesson-nav {
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  padding: var(--sbi-space-3);
+  max-width: var(--sbi-measure);
+  width: 100%;
+  margin-inline: auto;
+}
+
+.lesson-nav ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.lesson-nav li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  min-height: var(--sbi-touch-min);
+  border-radius: var(--sbi-radius-s);
+}
+
+.nav-number {
+  font-family: var(--sbi-font-mono);
+  font-weight: 600;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+  text-align: center;
+}
+
+.lesson-nav a {
+  display: flex;
+  align-items: center;
+  min-height: var(--sbi-touch-min);
+  padding-inline: var(--sbi-space-2);
+  border-radius: var(--sbi-radius-s);
+  color: var(--sbi-ink);
+  text-decoration: none;
+}
+
+.lesson-nav a:hover {
+  text-decoration: underline;
+}
+
+/* Where you are: a bar and bold text, never colour alone. */
+.lesson-nav a[aria-current="location"] {
+  background: var(--sbi-paper-sunk);
+  box-shadow: inset 4px 0 0 var(--sbi-action);
+  font-weight: 700;
+}
+
+.lesson-nav li > span:not(.nav-number) {
+  padding-inline: var(--sbi-space-2);
+  color: var(--sbi-ink-soft);
+}
+
+@media (min-width: 1040px) {
+  .reader-layout {
+    grid-template-columns: 15rem minmax(0, var(--sbi-measure));
+    justify-content: center;
+    align-items: start;
+    gap: var(--sbi-space-7);
+  }
+
+  .lesson-nav {
+    position: sticky;
+    top: max(var(--sbi-space-4), env(safe-area-inset-top, 0px));
+    margin: 0;
+  }
+
+  .reader-main {
+    margin: 0;
+  }
+}
+
+/* Sections */
+.lesson-sections {
+  display: grid;
+  gap: var(--sbi-space-6);
+}
+
+.lesson-sections .lesson-section {
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-2);
+  scroll-margin-top: var(--sbi-space-5);
+}
+
+.lesson-section h2 {
+  font-size: var(--sbi-text-title);
+  margin: 0;
+}
+
+.lesson-section h3 {
+  font-size: var(--sbi-text-heading);
+  margin: var(--sbi-space-2) 0 0;
+}
+
+.lesson-section p {
+  margin: 0;
+}
+
+.evidence-tag {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.concepts,
+.causal-steps {
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.try-kind strong {
+  font-family: var(--sbi-font-display);
+}
+
+.check-feedback {
+  margin-top: var(--sbi-space-2);
+}
+
+.check-feedback h3 {
+  margin-top: 0;
+}
+
+.ask-question {
+  margin-top: var(--sbi-space-3);
+  padding-top: var(--sbi-space-3);
+  border-top: 1px solid var(--sbi-rule);
+}
+
+/* Citations: a boxed number reads as a reference, and its name comes from aria-label. */
+.section-citations {
+  display: grid;
+  gap: var(--sbi-space-2);
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.citation-marker {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--sbi-touch-min);
+  min-height: var(--sbi-touch-min);
+  margin-left: var(--sbi-space-1);
+  font-family: var(--sbi-font-mono);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.claim-status {
+  list-style: none;
+  margin: 0;
+  padding: var(--sbi-space-2) var(--sbi-space-3);
+  border-left: 4px double var(--sbi-note);
+  background: var(--sbi-note-wash);
+  border-radius: var(--sbi-radius-s);
+  color: var(--sbi-ink);
+}
+
+.lesson-visuals {
+  border: 2px dashed var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  padding: var(--sbi-space-4);
+}
+
+.lesson-visuals h2 {
+  font-size: var(--sbi-text-heading);
+  margin: 0 0 var(--sbi-space-2);
+}
+
+/* Sources */
+.lesson-sources {
+  border-top: 1px solid var(--sbi-rule);
+  padding-top: var(--sbi-space-5);
+}
+
+.lesson-sources ol {
+  margin: var(--sbi-space-3) 0 0;
+  padding-left: 1.6rem;
+  display: grid;
+  gap: var(--sbi-space-4);
+}
+
+.lesson-sources li {
+  scroll-margin-top: var(--sbi-space-5);
+}
+
+.lesson-sources .credit {
+  margin: var(--sbi-space-1) 0;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.lesson-sources blockquote {
+  margin: var(--sbi-space-2) 0 0;
+  padding-left: var(--sbi-space-3);
+  border-left: 3px solid var(--sbi-marker);
+}
+
+.lesson-sources blockquote p {
+  margin: 0;
+}
+
+.lesson-sources blockquote footer {
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.lesson-sources li:target {
+  background: var(--sbi-paper-sunk);
+  border-radius: var(--sbi-radius-s);
+}
+
+.lesson-feedback {
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  padding: var(--sbi-space-4);
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.lesson-feedback form {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.lesson-feedback form + form {
+  border-top: 1px solid var(--sbi-rule);
+  padding-top: var(--sbi-space-3);
+}
+
+.lesson-feedback h3 {
+  margin: 0;
+  font-size: var(--sbi-text-heading);
+}
+
+/* Phone-only reading progress; the section list carries the same location for assistive technology. */
+.reading-progress {
+  position: sticky;
+  bottom: 0;
+  margin-inline: calc(-1 * max(var(--sbi-space-4), env(safe-area-inset-left, 0px)));
+  padding: var(--sbi-space-2) max(var(--sbi-space-4), env(safe-area-inset-right, 0px))
+    calc(var(--sbi-space-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--sbi-paper);
+  border-top: 1px solid var(--sbi-rule);
+  display: grid;
+  gap: 6px;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.reading-progress__track {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sbi-paper-sunk);
+  overflow: hidden;
+}
+
+.reading-progress__fill {
+  display: block;
+  height: 100%;
+  background: var(--sbi-action);
+  transition: width var(--sbi-duration-settle) var(--sbi-ease);
+}
+
+@media (min-width: 1040px) {
+  .reading-progress {
+    display: none;
+  }
+}
+
+/* Inside its section the short answer is body text with the answer in bold; the card above leads. */
+.lesson-section .short-answer {
+  font-family: var(--sbi-font-body);
+  font-size: var(--sbi-text-body);
+  font-weight: 400;
+  line-height: var(--sbi-leading);
+}
+
+/* On wide screens the top blocks start where the reading column starts, beside the section list. */
+@media (min-width: 1040px) {
+  .lesson > :not(.reader-layout):not(.reading-progress) {
+    margin-left: max(
+      0px,
+      calc(
+        (100% - (15rem + var(--sbi-space-7) + var(--sbi-measure))) / 2 + 15rem + var(--sbi-space-7)
+      )
+    );
+    margin-right: auto;
+  }
+}
