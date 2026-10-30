@@ -13,6 +13,31 @@ test("home page says what the product does and starts either path in one tap", a
   await expect(page).toHaveURL(/\/capture$/);
 });
 
+test("home page sells the idea with an example, the lesson shape, trust and a closing call", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const example = page.getByRole("figure", { name: "Example lesson, shortened" });
+  await expect(example).toContainText("A magnifying glass");
+  await expect(example).toContainText("Sources");
+  for (const name of [
+    "How a lesson works",
+    "What's in every lesson",
+    "Built so you can trust it",
+    "For anyone who asks why",
+  ]) {
+    await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
+  }
+  await expect(page.locator("#inside li")).toHaveCount(8);
+  await page
+    .getByRole("navigation", { name: "Footer" })
+    .getByRole("link", { name: "What's in a lesson" })
+    .click();
+  await expect(page).toHaveURL(/\/#inside$/);
+  await page.getByRole("link", { name: "Start your first lesson" }).click();
+  await expect(page).toHaveURL(/\/capture$/);
+});
+
 test("every page shares the header, skip link and footer", async ({ page }) => {
   for (const path of ["/", "/capture", "/privacy", "/about"]) {
     await page.goto(path);
