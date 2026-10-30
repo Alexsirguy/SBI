@@ -267,6 +267,13 @@
               "verifiedAt"
             ],
             "additionalProperties": false
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "evidence",
+              "model"
+            ]
           }
         },
         "required": [
@@ -453,7 +460,8 @@
               "sources-disagree",
               "open-questions",
               "limited-evidence",
-              "reading-level"
+              "reading-level",
+              "model-knowledge"
             ]
           },
           "message": {

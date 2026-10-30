@@ -55,6 +55,7 @@ export const DisclaimerKind = z.enum([
   "open-questions",
   "limited-evidence",
   "reading-level",
+  "model-knowledge",
 ]);
 
 /** Shown with a lesson served before review, so learners know what was not fully checked. */

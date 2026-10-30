@@ -4,6 +4,7 @@ import {
   createMemoryReviewAuditLog,
   createPublisher,
   GENERIC_SAFETY_NOTICE,
+  MODEL_KNOWLEDGE_DISCLAIMER,
   RightsBlockedError,
   routeLesson,
   transitionLesson,
@@ -98,6 +99,42 @@ describe("routeLesson", () => {
     expect(routeLesson(makeLesson({ safetyClass: "high" }), failing("evidence")).action).toBe(
       "review",
     );
+  });
+});
+
+describe("routeLesson with model knowledge", () => {
+  const withModel = (overrides: Record<string, unknown> = {}): Lesson => {
+    const lesson = makeLesson({ reviewStatus: "auto-validated", ...overrides });
+    const model = {
+      claimId: "0192f1a0-0000-7000-8000-0000000000aa",
+      text: "Kettles were electrified in the late nineteenth century.",
+      status: "unsupported" as const,
+      origin: "model" as const,
+      sourceIds: [],
+      scope: "general knowledge: history",
+      confidence: "low" as const,
+      uncertainty: "From the AI's general knowledge; not yet checked against a source.",
+      dependsOn: [],
+    };
+    return {
+      ...lesson,
+      claims: [...lesson.claims, model],
+      sections: lesson.sections.map((section, index) =>
+        index === 0 ? { ...section, claimIds: [...section.claimIds, model.claimId] } : section,
+      ),
+    };
+  };
+
+  it("discloses with one lesson-level notice instead of holding or listing open questions", () => {
+    const decision = routeLesson(withModel());
+    expect(decision.action).toBe("disclose");
+    expect(decision.disclaimers).toEqual([MODEL_KNOWLEDGE_DISCLAIMER]);
+    expect(decision.reasons).toEqual(["1 claims from model knowledge"]);
+  });
+
+  it("keeps the safety notice first on a high-risk topic", () => {
+    const decision = routeLesson(withModel({ safetyClass: "high" }));
+    expect(decision.disclaimers.map((item) => item.kind)).toEqual(["safety", "model-knowledge"]);
   });
 });
 

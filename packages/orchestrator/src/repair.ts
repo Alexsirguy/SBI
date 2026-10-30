@@ -74,7 +74,8 @@ export async function reviseSections(
         ],
         jsonSchema: { name: "RevisedSection", schema: SCHEMA },
         prompt: { id: "lesson-revise", version: REVISE_PROMPT_VERSION },
-        maxTokens: 2000,
+        // Reasoning models spend part of the budget thinking; 2000 came back empty in live runs.
+        maxTokens: 4000,
         signal: deps.signal,
         parse,
       });

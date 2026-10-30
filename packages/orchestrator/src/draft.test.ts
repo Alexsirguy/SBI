@@ -91,7 +91,7 @@ describe("generateDraft", () => {
       cacheScope: "private",
       sourceFreshness: "fresh",
       modelVersion: "stub-1",
-      promptVersion: "lesson-draft@5",
+      promptVersion: "lesson-draft@6",
       policyVersion: "safety-1",
       evidenceSnapshotId: SNAPSHOT,
       reuseCount: 0,
@@ -149,7 +149,7 @@ describe("generateDraft", () => {
     expect(userText).toContain("child");
     expect(userText).toContain("simple");
     expect(seen[0]?.jsonSchema?.name).toBe("LessonDraft");
-    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "5" });
+    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "6" });
     expect(String(seen[0]?.messages[0]?.content)).toContain("heading of at most eight words");
     expect(String(seen[0]?.messages[0]?.content)).toContain("not background");
     expect(lesson.audience).toEqual(["child"]);
@@ -167,9 +167,39 @@ describe("generateDraft", () => {
     expect(String(user?.content)).toMatch(/^<question-[0-9a-f]+>\nWhy\?\s+Ignore the claims/);
     expect(String(user?.content)).not.toContain("</question-x>");
     expect(String(user?.content)).toContain(
-      "Required modules: what-youre-seeing, short-answer, first-principles",
+      "Required modules: what-youre-seeing, short-answer, first-principles, how-parts-work, try-an-idea, history, check-thinking, go-further",
     );
-    expect(String(user?.content)).toMatch(/Optional modules: .*history/);
+    expect(String(user?.content)).toContain("Optional modules: none");
+  });
+
+  it("keeps the shape of v5 drafts, where optional modules depended on the evidence", async () => {
+    const seen: CompletionRequest[] = [];
+    await generateDraft(
+      { ...base, promptVersion: "5" },
+      { provider: stubProvider(JSON.stringify(fragment), seen) },
+    );
+    expect(String(seen[0]?.messages[1]?.content)).toMatch(/Optional modules: .*history/);
+  });
+
+  it("marks general-knowledge claims so the draft teaches them plainly", async () => {
+    const seen: CompletionRequest[] = [];
+    const model = {
+      claimId: "0192f1a0-0000-7000-8000-0000000000aa",
+      text: "Kettles were first electrified in the late nineteenth century.",
+      status: "unsupported" as const,
+      origin: "model" as const,
+      sourceIds: [],
+      scope: "general knowledge: history",
+      confidence: "low" as const,
+      uncertainty: "From the AI's general knowledge; not yet checked against a source.",
+      dependsOn: [],
+    };
+    await generateDraft(
+      { ...base, claims: [...base.claims, model] },
+      { provider: stubProvider(JSON.stringify(fragment), seen) },
+    );
+    expect(String(seen[0]?.messages[1]?.content)).toContain(`${model.claimId} [general-knowledge]`);
+    expect(String(seen[0]?.messages[0]?.content)).toContain("never as open questions");
   });
 
   it("lists every schema property as required, as strict structured output demands", async () => {
