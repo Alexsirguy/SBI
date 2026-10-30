@@ -76,16 +76,45 @@ describe("generateQuickAnswer", () => {
       },
       {
         provider: provider(
-          { text: " Metals grow when warm. ", claimIds: [claims[0]?.claimId] },
+          {
+            text: " Metals grow when warm. ",
+            claimIds: [claims[0]?.claimId],
+            answersQuestion: true,
+          },
           seen,
         ),
       },
     );
-    expect(answer).toEqual({ text: "Metals grow when warm.", claimIds: [claims[0]?.claimId] });
+    expect(answer).toEqual({
+      text: "Metals grow when warm.",
+      claimIds: [claims[0]?.claimId],
+      answersQuestion: true,
+    });
     const user = String(seen[0]?.messages[1]?.content);
     expect(user).toMatch(/^<question-[0-9a-f]+>/);
     expect(user).not.toContain("</question-x>");
-    expect(seen[0]?.prompt).toEqual({ id: "quick-answer", version: "1" });
+    expect(seen[0]?.prompt).toEqual({ id: "quick-answer", version: "2" });
+  });
+
+  it("reports when the claims only give background, without an answer to stream", async () => {
+    const { claims } = await evidence();
+    const answer = await generateQuickAnswer(
+      {
+        question: "Why does a magnifying glass make things look bigger?",
+        audience: ["teen"],
+        readingLevel: "plain",
+        locale: "en",
+        claims,
+      },
+      {
+        provider: provider({
+          text: "Light bends at glass.",
+          claimIds: [claims[0]?.claimId],
+          answersQuestion: false,
+        }),
+      },
+    );
+    expect(answer).toEqual({ text: "", claimIds: [], answersQuestion: false });
   });
 });
 
@@ -93,16 +122,35 @@ describe("gateQuickAnswer", () => {
   it("passes a supported answer citing fresh, stored claims", async () => {
     const { claims, resolver } = await evidence();
     const gate = await gateQuickAnswer(
-      { text: "Metals expand when heated.", claimIds: [claims[0]?.claimId ?? ""] },
+      {
+        text: "Metals expand when heated.",
+        claimIds: [claims[0]?.claimId ?? ""],
+        answersQuestion: true,
+      },
       { provider: provider(SUPPORTS), resolver, claims, safetyClass: "low" },
     );
     expect(gate).toEqual({ passed: true, reasons: [] });
   });
 
+  it("refuses a related answer that does not answer the question, without asking the judge", async () => {
+    const { claims, resolver } = await evidence();
+    const seen: CompletionRequest[] = [];
+    const gate = await gateQuickAnswer(
+      {
+        text: "Metals expand when heated.",
+        claimIds: [claims[0]?.claimId ?? ""],
+        answersQuestion: false,
+      },
+      { provider: provider(SUPPORTS, seen), resolver, claims, safetyClass: "low" },
+    );
+    expect(gate).toEqual({ passed: false, reasons: ["the claims do not answer the question"] });
+    expect(seen).toHaveLength(0);
+  });
+
   it("never streams early on a high-risk topic", async () => {
     const { claims, resolver } = await evidence();
     const gate = await gateQuickAnswer(
-      { text: "Metals expand.", claimIds: [claims[0]?.claimId ?? ""] },
+      { text: "Metals expand.", claimIds: [claims[0]?.claimId ?? ""], answersQuestion: true },
       { provider: provider(SUPPORTS), resolver, claims, safetyClass: "high" },
     );
     expect(gate.passed).toBe(false);
@@ -112,7 +160,11 @@ describe("gateQuickAnswer", () => {
     const { claims, resolver } = await evidence();
     const seen: CompletionRequest[] = [];
     const invented = await gateQuickAnswer(
-      { text: "Metals expand.", claimIds: ["0192f1a0-0000-7000-8000-0000000000ff"] },
+      {
+        text: "Metals expand.",
+        claimIds: ["0192f1a0-0000-7000-8000-0000000000ff"],
+        answersQuestion: true,
+      },
       { provider: provider(SUPPORTS, seen), resolver, claims, safetyClass: "low" },
     );
     expect(invented.reasons).toContain("cites a claim outside the evidence");
@@ -122,7 +174,11 @@ describe("gateQuickAnswer", () => {
   it("refuses an answer the judge does not support", async () => {
     const { claims, resolver } = await evidence();
     const gate = await gateQuickAnswer(
-      { text: "Metals shrink when heated.", claimIds: [claims[0]?.claimId ?? ""] },
+      {
+        text: "Metals shrink when heated.",
+        claimIds: [claims[0]?.claimId ?? ""],
+        answersQuestion: true,
+      },
       {
         provider: provider({ verdict: "contradicts", reason: "Claim says expand." }),
         resolver,
@@ -145,7 +201,7 @@ describe("gateQuickAnswer", () => {
       });
     }
     const gate = await gateQuickAnswer(
-      { text: "Metals expand.", claimIds: [claims[0]?.claimId ?? ""] },
+      { text: "Metals expand.", claimIds: [claims[0]?.claimId ?? ""], answersQuestion: true },
       { provider: provider(SUPPORTS), resolver, claims, safetyClass: "low" },
     );
     expect(gate.reasons.join(" ")).toContain("does not resolve to a fresh excerpt");
@@ -159,6 +215,7 @@ describe("withShortAnswer", () => {
     const updated = await withShortAnswer(lesson, {
       text: "Heat bends the strip.",
       claimIds: [claimId],
+      answersQuestion: true,
     });
     const short = updated.sections.find((section) => section.module === "short-answer");
     expect(short).toMatchObject({ text: "Heat bends the strip.", claimIds: [claimId] });
@@ -173,7 +230,7 @@ describe("withShortAnswer", () => {
     const trimmed = { ...lesson, claims: [first, second] };
     const updated = await withShortAnswer(
       trimmed,
-      { text: "Heat bends the strip.", claimIds: [extra.claimId] },
+      { text: "Heat bends the strip.", claimIds: [extra.claimId], answersQuestion: true },
       [extra],
     );
     const cited = new Set(updated.sections.flatMap((section) => section.claimIds));

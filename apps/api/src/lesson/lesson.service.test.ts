@@ -135,6 +135,8 @@ interface Script {
   quickEntailment?: string;
   /** Held open until the test releases it, to prove the answer streams first. */
   draftGate?: Promise<void>;
+  /** Whether each successive quick answer says it answers the question; true once exhausted. */
+  quickAnswers?: boolean[];
   /** When set, revised sections are judged as supported, so a repair succeeds. */
   revisionPasses?: boolean;
   fragment?: typeof FRAGMENT;
@@ -153,7 +155,8 @@ function scriptedProvider(options: Script = {}): LlmProvider {
       const text = JSON.stringify(request.messages);
       let payload: string;
       if (request.prompt?.id === "quick-answer") {
-        payload = JSON.stringify({ text: QUICK, claimIds: [CLAIM_A] });
+        const answersQuestion = options.quickAnswers?.shift() ?? true;
+        payload = JSON.stringify({ text: QUICK, claimIds: [CLAIM_A], answersQuestion });
       } else if (request.prompt?.id === "lesson-revise") {
         payload = JSON.stringify({ text: REVISED });
       } else if (request.prompt?.id === "lesson-draft") {
@@ -406,6 +409,47 @@ describe("LessonService", () => {
     expect(types.slice(-2)).toEqual(["lesson", "visuals"]);
     const researching = events[0]?.type === "progress" ? events[0].data.message : "";
     expect(researching).toContain("How does a bimetallic strip bend?");
+  });
+
+  it("retries the early answer on later evidence when the first claims only give background", async () => {
+    const extra = { ...EVIDENCE.claim, claimId: "0192f1a0-0000-7000-8000-0000000000b2" };
+    const seen: string[] = [];
+    const base = scriptedProvider({ quickAnswers: [false, true] });
+    const provider: LlmProvider = {
+      ...base,
+      complete: (request) => {
+        if (request.prompt?.id === "quick-answer") seen.push(JSON.stringify(request.messages));
+        return base.complete(request);
+      },
+    };
+    const { service } = setup(
+      provider,
+      [],
+      gatherer(
+        [EVIDENCE.claim, extra],
+        [
+          { type: "verified", key: "q1", claims: [EVIDENCE.claim] },
+          { type: "verified", key: "q2", claims: [extra] },
+        ],
+      ),
+    );
+    const events = await collectAll(service);
+    expect(events.filter((event) => event.type === "quick-answer")).toHaveLength(1);
+    expect(seen).toHaveLength(2);
+    expect(seen[1]).toContain(extra.claimId);
+  });
+
+  it("keeps the draft's own short answer when no quick answer answers the question", async () => {
+    const { service } = setup(scriptedProvider({ quickAnswers: [false, false, false] }));
+    const events = await collectAll(service);
+    const answers = events.flatMap((event) => (event.type === "quick-answer" ? [event.data] : []));
+    expect(answers.map((answer) => answer.shortAnswer)).toEqual(["Heat snaps a small switch."]);
+    const lesson = events.find((event) => event.type === "lesson");
+    const short =
+      lesson?.type === "lesson"
+        ? lesson.data.sections.find((section) => section.module === "short-answer")
+        : undefined;
+    expect(short?.text).toBe("Heat snaps a small switch.");
   });
 
   it("says no trusted sources were found when gathering finds nothing and no facts exist", async () => {
