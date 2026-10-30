@@ -40,6 +40,7 @@ const TABLES = [
   "lesson_claims",
   "lesson_review_events",
   "evidence_packs",
+  "lesson_feedback",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -192,6 +193,41 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       ]);
       expect(first[0]?.reason).toHaveLength(2000);
       expect(await repos.reviewAudit.history(lessonId)).toHaveLength(3);
+    });
+  });
+
+  describe("lesson feedback", () => {
+    it("stores reports and ratings per lesson version, oldest first", async () => {
+      const lessonId = newId();
+      await repos.lessonFeedback.record(
+        { lessonId, version: 1, report: { category: "wrong-fact", details: "Step 2 is wrong." } },
+        new Date("2026-10-30T10:00:00.000Z"),
+      );
+      await repos.lessonFeedback.record(
+        { lessonId, version: 1, rating: { helpful: 4, clear: 2 } },
+        new Date("2026-10-30T11:00:00.000Z"),
+      );
+      await repos.lessonFeedback.record(
+        { lessonId, version: 2, report: { category: "unclear" }, rating: { helpful: 3, clear: 3 } },
+        new Date("2026-10-30T12:00:00.000Z"),
+      );
+
+      const first = await repos.lessonFeedback.forLesson(lessonId, 1);
+      expect(
+        first.map(({ report, rating, receivedAt }) => ({ report, rating, receivedAt })),
+      ).toEqual([
+        {
+          report: { category: "wrong-fact", details: "Step 2 is wrong." },
+          rating: undefined,
+          receivedAt: "2026-10-30T10:00:00.000Z",
+        },
+        {
+          report: undefined,
+          rating: { helpful: 4, clear: 2 },
+          receivedAt: "2026-10-30T11:00:00.000Z",
+        },
+      ]);
+      expect(await repos.lessonFeedback.forLesson(lessonId)).toHaveLength(3);
     });
   });
 

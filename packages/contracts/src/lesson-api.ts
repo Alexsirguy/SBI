@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Id, Locale, SafetyClass, Uuid } from "./common";
+import { Id, IsoDateTime, Locale, SafetyClass, Uuid } from "./common";
 import { AudienceBand, LessonDisclaimer, ReadingLevel, ReviewStatus } from "./lesson";
 import { VisualRef } from "./visual";
 
@@ -73,7 +73,47 @@ export const LessonVisuals = z.object({
   visuals: z.array(VisualRef),
 });
 
+export const FeedbackCategory = z.enum([
+  "wrong-fact",
+  "unclear",
+  "unsafe",
+  "missing-source",
+  "offensive",
+  "other",
+]);
+
+/** Feedback on one lesson version, so triage sees exactly what the learner read. */
+export const LessonFeedbackRequest = z
+  .object({
+    lessonId: Uuid,
+    version: z.int().positive(),
+    report: z
+      .object({
+        category: FeedbackCategory,
+        details: z.string().trim().min(1).max(1000).optional(),
+      })
+      .optional(),
+    rating: z
+      .object({
+        helpful: z.int().min(1).max(5),
+        clear: z.int().min(1).max(5),
+      })
+      .optional(),
+  })
+  .refine((feedback) => feedback.report !== undefined || feedback.rating !== undefined, {
+    message: "Report a problem or rate the lesson.",
+    path: ["report"],
+  });
+
+export const LessonFeedbackReceipt = z.object({
+  feedbackId: Uuid,
+  receivedAt: IsoDateTime,
+});
+
 export type LessonRequest = z.infer<typeof LessonRequest>;
+export type FeedbackCategory = z.infer<typeof FeedbackCategory>;
+export type LessonFeedbackRequest = z.infer<typeof LessonFeedbackRequest>;
+export type LessonFeedbackReceipt = z.infer<typeof LessonFeedbackReceipt>;
 export type LessonKind = z.infer<typeof LessonKind>;
 export type QuickAnswer = z.infer<typeof QuickAnswer>;
 export type LessonVisuals = z.infer<typeof LessonVisuals>;
