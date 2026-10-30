@@ -91,12 +91,29 @@ describe("generateDraft", () => {
       cacheScope: "private",
       sourceFreshness: "fresh",
       modelVersion: "stub-1",
-      promptVersion: "lesson-draft@4",
+      promptVersion: "lesson-draft@5",
       policyVersion: "safety-1",
       evidenceSnapshotId: SNAPSHOT,
       reuseCount: 0,
     });
     expect(lesson.reuse.contentHash).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("keeps each section's heading, strips ids from it and drops one that is empty or too long", async () => {
+    const titled = {
+      ...fragment,
+      sections: [
+        { ...section("what-youre-seeing", [CLAIM_A]), heading: `The click you hear [${CLAIM_A}]` },
+        { ...section("short-answer", [CLAIM_A, CLAIM_B]), heading: "  " },
+        { ...section("first-principles", [CLAIM_B]), heading: "x".repeat(121) },
+      ],
+    };
+    const lesson = await generateDraft(base, { provider: stubProvider(JSON.stringify(titled)) });
+    expect(lesson.sections.map((item) => item.heading)).toEqual([
+      "The click you hear",
+      undefined,
+      undefined,
+    ]);
   });
 
   it("never lets a claim id outside the graph into the lesson", async () => {
@@ -132,7 +149,8 @@ describe("generateDraft", () => {
     expect(userText).toContain("child");
     expect(userText).toContain("simple");
     expect(seen[0]?.jsonSchema?.name).toBe("LessonDraft");
-    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "4" });
+    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "5" });
+    expect(String(seen[0]?.messages[0]?.content)).toContain("heading of at most eight words");
     expect(String(seen[0]?.messages[0]?.content)).toContain("not background");
     expect(lesson.audience).toEqual(["child"]);
     expect(lesson.readingLevel).toBe("simple");
