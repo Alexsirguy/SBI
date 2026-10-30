@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { RadioGroup, SelectField } from "@sbi/ui";
 import { AGES, type AgeChoice, type Depth, DEPTHS, type LessonPrefs } from "./prefs";
 
 /** Depth and an optional age band, set only by the learner; changing either requests that version. */
@@ -11,31 +11,27 @@ export function DepthControls({
   prefs: LessonPrefs;
   onChange: (prefs: LessonPrefs) => void;
 }) {
-  const ageId = useId();
   return (
     <form
       className="depth-controls"
       aria-label="Lesson settings"
       onSubmit={(event) => event.preventDefault()}
     >
-      <fieldset>
-        <legend>How deep?</legend>
-        {(Object.keys(DEPTHS) as Depth[]).map((depth) => (
-          <label key={depth}>
-            <input
-              type="radio"
-              name="depth"
-              value={depth}
-              checked={prefs.depth === depth}
-              onChange={() => onChange({ ...prefs, depth })}
-            />
-            {DEPTHS[depth].label} <span className="hint">({DEPTHS[depth].hint})</span>
-          </label>
-        ))}
-      </fieldset>
-      <label htmlFor={ageId}>Age band (optional)</label>
-      <select
-        id={ageId}
+      <RadioGroup
+        legend="How deep?"
+        name="depth"
+        look="segmented"
+        value={prefs.depth}
+        onChange={(depth: Depth) => onChange({ ...prefs, depth })}
+        options={(Object.keys(DEPTHS) as Depth[]).map((depth) => ({
+          value: depth,
+          label: DEPTHS[depth].label,
+        }))}
+      />
+      {/* The segmented control has room for names only, so the chosen depth is explained here. */}
+      <p className="sbi-field__hint">{DEPTHS[prefs.depth].hint}</p>
+      <SelectField
+        label="Age band (optional)"
         value={prefs.age}
         onChange={(event) => onChange({ ...prefs, age: event.target.value as AgeChoice })}
       >
@@ -44,7 +40,7 @@ export function DepthControls({
             {AGES[age]}
           </option>
         ))}
-      </select>
+      </SelectField>
     </form>
   );
 }

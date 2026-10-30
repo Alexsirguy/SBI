@@ -1,0 +1,364 @@
+/* Workbench base and component styles (ADR 0012); every value comes from tokens.css. */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--sbi-bench);
+  color: var(--sbi-ink);
+  font-family: var(--sbi-font-body);
+  font-size: var(--sbi-text-body);
+  line-height: var(--sbi-leading);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+a {
+  color: var(--sbi-action);
+  text-underline-offset: 0.15em;
+}
+
+/* The halo keeps the ring visible over photos and on both surfaces. */
+:focus-visible {
+  outline: 3px solid var(--sbi-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--sbi-paper);
+}
+
+.sbi-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Button */
+.sbi-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sbi-space-2);
+  min-height: var(--sbi-touch);
+  min-width: var(--sbi-touch);
+  padding: 0 20px;
+  border-radius: var(--sbi-radius-m);
+  border: 2px solid var(--sbi-action);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--sbi-duration-quick) var(--sbi-ease);
+}
+
+.sbi-button--primary {
+  background: var(--sbi-action);
+  color: var(--sbi-action-ink);
+}
+
+.sbi-button--quiet {
+  background: transparent;
+  color: var(--sbi-action);
+}
+
+.sbi-button--small {
+  min-height: var(--sbi-touch-min);
+  padding: 0 14px;
+  font-size: var(--sbi-text-small);
+}
+
+.sbi-button--block {
+  width: 100%;
+}
+
+.sbi-button:active {
+  transform: translateY(1px);
+}
+
+/* Disabled is said in words by the caller; this only fades it, with the edge kept visible. */
+.sbi-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Fields */
+.sbi-field {
+  display: grid;
+  gap: 6px;
+  margin-block: var(--sbi-space-3);
+}
+
+.sbi-field__label,
+.sbi-choice__legend {
+  font-weight: 700;
+}
+
+.sbi-field__hint {
+  margin: 0;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.sbi-field__error {
+  margin: 0;
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+  color: var(--sbi-caution);
+}
+
+.sbi-control {
+  min-height: var(--sbi-touch);
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  font: inherit;
+}
+
+.sbi-control[aria-invalid="true"] {
+  border-color: var(--sbi-caution);
+  border-style: dashed;
+}
+
+/* Choices */
+.sbi-choice,
+.sbi-scale {
+  border: 0;
+  margin: var(--sbi-space-3) 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.sbi-choice__options {
+  display: grid;
+  gap: var(--sbi-space-2);
+  margin-top: var(--sbi-space-2);
+}
+
+.sbi-choice__option {
+  display: flex;
+  align-items: center;
+  gap: var(--sbi-space-3);
+  min-height: var(--sbi-touch-min);
+}
+
+.sbi-choice__option input,
+.sbi-scale__point input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--sbi-action);
+}
+
+.sbi-choice__hint {
+  color: var(--sbi-ink-soft);
+}
+
+.sbi-choice--segmented .sbi-choice__options {
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 3px;
+  border: 2px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-pill);
+}
+
+.sbi-choice--segmented .sbi-choice__option {
+  position: relative;
+  justify-content: center;
+  border-radius: var(--sbi-radius-pill);
+  padding: 0 var(--sbi-space-3);
+}
+
+.sbi-choice--segmented .sbi-choice__option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.sbi-choice--segmented .sbi-choice__option:has(input:checked) {
+  background: var(--sbi-ink);
+  color: var(--sbi-paper);
+  font-weight: 700;
+}
+
+.sbi-choice--segmented .sbi-choice__option:has(input:focus-visible) {
+  outline: 3px solid var(--sbi-focus);
+  outline-offset: 2px;
+}
+
+.sbi-choice--segmented .sbi-choice__hint {
+  display: none;
+}
+
+.sbi-scale__points {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sbi-space-1);
+  margin-top: var(--sbi-space-2);
+}
+
+.sbi-scale__point {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: var(--sbi-space-2) 2px;
+  min-height: var(--sbi-touch);
+  border: 2px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-s);
+  text-align: center;
+  cursor: pointer;
+}
+
+.sbi-scale__point:has(input:checked) {
+  border-color: var(--sbi-action);
+  box-shadow: inset 0 0 0 2px var(--sbi-action);
+}
+
+.sbi-scale__number {
+  font-weight: 700;
+}
+
+.sbi-scale__word {
+  font-size: var(--sbi-text-label);
+  color: var(--sbi-ink-soft);
+}
+
+/* Notices: kind in words, and each kind its own edge style. */
+.sbi-notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sbi-space-3);
+  align-items: start;
+  padding: var(--sbi-space-3) var(--sbi-space-4);
+  border-radius: var(--sbi-radius-m);
+  margin-block: var(--sbi-space-2);
+}
+
+.sbi-notice__kind {
+  font-family: var(--sbi-font-mono);
+  font-size: var(--sbi-text-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+
+.sbi-notice--safety {
+  background: var(--sbi-caution-wash);
+  border-left: 6px solid var(--sbi-caution);
+}
+
+.sbi-notice--safety .sbi-notice__kind {
+  background: var(--sbi-caution);
+  color: var(--sbi-caution-ink);
+}
+
+.sbi-notice--note {
+  background: var(--sbi-note-wash);
+  border-left: 6px double var(--sbi-note);
+}
+
+.sbi-notice--note .sbi-notice__kind {
+  border: 1.5px solid var(--sbi-note);
+  color: var(--sbi-note);
+}
+
+.sbi-notice--error {
+  background: var(--sbi-caution-wash);
+  border-left: 6px dashed var(--sbi-caution);
+}
+
+.sbi-notice--error .sbi-notice__kind {
+  border: 1.5px dashed var(--sbi-caution);
+  color: var(--sbi-caution);
+}
+
+/* Surfaces */
+.sbi-card {
+  display: grid;
+  gap: var(--sbi-space-3);
+  padding: var(--sbi-space-4);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+}
+
+.sbi-placeholder {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding-left: var(--sbi-space-4);
+  border-left: 4px solid var(--sbi-paper-sunk);
+}
+
+.sbi-placeholder__line {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--sbi-paper-sunk);
+}
+
+.sbi-placeholder__line:nth-child(2) {
+  width: 80%;
+}
+
+.sbi-placeholder__line:nth-child(3) {
+  width: 55%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sbi-placeholder__line {
+    animation: sbi-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes sbi-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.sbi-disclosure {
+  border-top: 1px solid var(--sbi-rule);
+  padding-block: var(--sbi-space-2);
+}
+
+.sbi-disclosure__summary {
+  min-height: var(--sbi-touch-min);
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sbi-status {
+  margin: var(--sbi-space-2) 0;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+/* Highlighter: a full fill with its own ink, readable in both themes (ADR 0012). */
+.sbi-mark {
+  background: var(--sbi-marker);
+  color: var(--sbi-marker-ink);
+  padding-inline: 3px;
+  border-radius: 3px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
