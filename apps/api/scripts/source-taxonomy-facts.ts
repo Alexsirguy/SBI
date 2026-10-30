@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { createEnv } from "@sbi/env";
 import {
   createDefaultRetriever,
+  userAgentWith,
   createMemoryEvidenceRepositories,
   EvidenceSnapshot,
   ingestTopic,
@@ -38,7 +39,11 @@ for (const entry of SEED_TAXONOMY) {
   }));
   const report = await ingestTopic(
     { ...sources, topic: entry.id, drafts },
-    { retriever: createDefaultRetriever(), judge, repositories },
+    {
+      retriever: createDefaultRetriever({ userAgent: userAgentWith(process.env.EVIDENCE_CONTACT) }),
+      judge,
+      repositories,
+    },
   );
   for (const draft of drafts) {
     const claim = report.claims.find((item) => item.key === draft.key);

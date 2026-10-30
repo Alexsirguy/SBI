@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Lesson, type Claim } from "@sbi/contracts";
 import { type Completion, type CompletionRequest, type LlmProvider } from "@sbi/llm";
-import { generateDraft, type DraftInput } from "./draft";
+import { generateDraft, HIGH_RISK_DRAFT_RULE, type DraftInput } from "./draft";
 
 const CLAIM_A = "123e4567-e89b-12d3-a456-426614174000";
 const CLAIM_B = "123e4567-e89b-12d3-a456-426614174001";
@@ -91,7 +91,7 @@ describe("generateDraft", () => {
       cacheScope: "private",
       sourceFreshness: "fresh",
       modelVersion: "stub-1",
-      promptVersion: "lesson-draft@2",
+      promptVersion: "lesson-draft@3",
       policyVersion: "safety-1",
       evidenceSnapshotId: SNAPSHOT,
       reuseCount: 0,
@@ -99,19 +99,20 @@ describe("generateDraft", () => {
     expect(lesson.reuse.contentHash).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("rejects fragments citing claims outside the graph", async () => {
+  it("never lets a claim id outside the graph into the lesson", async () => {
     const bad = {
       ...fragment,
       sections: [
         section("what-youre-seeing", [CLAIM_A]),
-        section("short-answer", [UNKNOWN]),
+        section("short-answer", [UNKNOWN, CLAIM_B]),
         section("first-principles", [CLAIM_B]),
       ],
     };
 
-    await expect(
-      generateDraft(base, { provider: stubProvider(JSON.stringify(bad)) }),
-    ).rejects.toThrow(/does not conform.*Unknown claim/s);
+    const lesson = await generateDraft(base, { provider: stubProvider(JSON.stringify(bad)) });
+    const cited = lesson.sections.flatMap((item) => item.claimIds);
+    expect(cited).not.toContain(UNKNOWN);
+    expect(lesson.claims.map((claim) => claim.claimId)).not.toContain(UNKNOWN);
   });
 
   it("rejects malformed model output", async () => {
@@ -131,7 +132,7 @@ describe("generateDraft", () => {
     expect(userText).toContain("child");
     expect(userText).toContain("simple");
     expect(seen[0]?.jsonSchema?.name).toBe("LessonDraft");
-    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "2" });
+    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "3" });
     expect(lesson.audience).toEqual(["child"]);
     expect(lesson.readingLevel).toBe("simple");
   });
@@ -164,6 +165,37 @@ describe("generateDraft", () => {
     expect([...(section?.required ?? [])].sort()).toEqual(
       Object.keys(section?.properties ?? {}).sort(),
     );
+  });
+
+  it("keeps only the claims the sections cite, plus what those depend on", async () => {
+    const CLAIM_C = "0192f1a0-0000-7000-8000-0000000000c3";
+    const CLAIM_D = "0192f1a0-0000-7000-8000-0000000000c4";
+    const lesson = await generateDraft(
+      {
+        ...base,
+        claims: [
+          claim(CLAIM_A, "Bimetallic thermostats snap open when hot."),
+          { ...claim(CLAIM_B, "Water boils at 100C at sea level."), dependsOn: [CLAIM_C] },
+          claim(CLAIM_C, "Heat raises the temperature of water."),
+          claim(CLAIM_D, "Gears trade force for distance."),
+        ],
+      },
+      { provider: stubProvider(JSON.stringify(fragment)) },
+    );
+    expect(lesson.claims.map((item) => item.claimId).sort()).toEqual(
+      [CLAIM_A, CLAIM_B, CLAIM_C].sort(),
+    );
+  });
+
+  it("adds the safety rule only for high-risk topics", async () => {
+    const seen: CompletionRequest[] = [];
+    await generateDraft(
+      { ...base, safetyClass: "high" },
+      { provider: stubProvider(JSON.stringify(fragment), seen) },
+    );
+    await generateDraft(base, { provider: stubProvider(JSON.stringify(fragment), seen) });
+    expect(String(seen[0]?.messages[1]?.content)).toContain(HIGH_RISK_DRAFT_RULE);
+    expect(String(seen[1]?.messages[1]?.content)).not.toContain("high-risk topic");
   });
 
   it("honours a pinned prompt version", async () => {

@@ -84,7 +84,8 @@ export const API_ROUTES = {
   requestLesson: {
     method: "post",
     path: "/lessons",
-    summary: "Generate or reuse a lesson, streaming the quick answer before the full lesson.",
+    summary:
+      "Generate or reuse a lesson, streaming progress, a checked quick answer, then the full lesson and its visuals.",
     request: LessonRequest,
     response: Lesson,
     errors: [400, 404, 503],

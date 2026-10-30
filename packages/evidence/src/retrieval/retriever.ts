@@ -1,7 +1,9 @@
 import { EvidenceSource, newId, type SourceType } from "@sbi/contracts";
 import { createCrossrefConnector, type ConnectorOptions } from "./crossref";
 import { createEuropePmcConnector } from "./europe-pmc";
-import { createUsGovConnector } from "./us-gov";
+import { createInstitutionConnector } from "./institutions";
+import { createOpenTextbookConnector } from "./open-textbooks";
+import { createPoliteFetcher } from "./robots";
 import { discoverReferences } from "./wikipedia";
 import type { FetchedSource, FetchOptions, Passage, SourceConnector, SourceRef } from "./types";
 
@@ -80,11 +82,14 @@ export function createRetriever(options: RetrieverOptions): Retriever {
 
 /** Europe PMC first: it carries abstracts and licences that Crossref often lacks. */
 export function createDefaultRetriever(options: ConnectorOptions = {}): Retriever {
+  // One fetcher for all web connectors, so each host sees one polite request stream.
+  const fetcher = createPoliteFetcher(options);
   return createRetriever({
     connectors: [
       createEuropePmcConnector(options),
       createCrossrefConnector(options),
-      createUsGovConnector(options),
+      createInstitutionConnector({ ...options, fetcher }),
+      createOpenTextbookConnector({ ...options, fetcher }),
     ],
     discoverRefs: (title, signal) => discoverReferences(title, options, signal),
   });

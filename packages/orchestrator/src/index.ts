@@ -12,6 +12,7 @@ export {
 export {
   createDraftPromptRegistry,
   generateDraft,
+  HIGH_RISK_DRAFT_RULE,
   LESSON_DRAFT_PROMPT,
   REUSE_MATCH_DIMENSIONS,
   type DraftDeps,
@@ -24,6 +25,7 @@ export {
   schemaCheck,
   type CheckReport,
   type CheckResult,
+  type SectionFinding,
   type LessonCheck,
 } from "./checks";
 export { readingEase, readingLevelCheck } from "./reading";
@@ -39,12 +41,14 @@ export { createEvidenceCheck, type EvidenceCheckDeps } from "./evidence-check";
 export {
   createMemoryReviewAuditLog,
   createPublisher,
+  GENERIC_SAFETY_NOTICE,
   RightsBlockedError,
   routeLesson,
   transitionLesson,
   type PublishAudit,
   type PublishAuditSink,
   type ReviewAuditLog,
+  type RouteOptions,
   type Publisher,
   type ReviewStatus,
   type RightsDecision,
@@ -67,3 +71,4 @@ export {
   type QuickAnswerInput,
   type QuickGateDeps,
 } from "./quick-answer";
+export { repairable, REVISE_PROMPT_VERSION, reviseSections } from "./repair";
