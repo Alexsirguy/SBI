@@ -46,6 +46,7 @@ export const LessonSection = z.object({
 });
 
 export const DisclaimerKind = z.enum([
+  "safety",
   "awaiting-review",
   "unverified-sections",
   "sources-disagree",

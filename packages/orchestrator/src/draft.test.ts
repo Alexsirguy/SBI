@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Lesson, type Claim } from "@sbi/contracts";
 import { type Completion, type CompletionRequest, type LlmProvider } from "@sbi/llm";
-import { generateDraft, type DraftInput } from "./draft";
+import { generateDraft, HIGH_RISK_DRAFT_RULE, type DraftInput } from "./draft";
 
 const CLAIM_A = "123e4567-e89b-12d3-a456-426614174000";
 const CLAIM_B = "123e4567-e89b-12d3-a456-426614174001";
@@ -91,7 +91,7 @@ describe("generateDraft", () => {
       cacheScope: "private",
       sourceFreshness: "fresh",
       modelVersion: "stub-1",
-      promptVersion: "lesson-draft@2",
+      promptVersion: "lesson-draft@3",
       policyVersion: "safety-1",
       evidenceSnapshotId: SNAPSHOT,
       reuseCount: 0,
@@ -132,7 +132,7 @@ describe("generateDraft", () => {
     expect(userText).toContain("child");
     expect(userText).toContain("simple");
     expect(seen[0]?.jsonSchema?.name).toBe("LessonDraft");
-    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "2" });
+    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "3" });
     expect(lesson.audience).toEqual(["child"]);
     expect(lesson.readingLevel).toBe("simple");
   });
@@ -185,6 +185,17 @@ describe("generateDraft", () => {
     expect(lesson.claims.map((item) => item.claimId).sort()).toEqual(
       [CLAIM_A, CLAIM_B, CLAIM_C].sort(),
     );
+  });
+
+  it("adds the safety rule only for high-risk topics", async () => {
+    const seen: CompletionRequest[] = [];
+    await generateDraft(
+      { ...base, safetyClass: "high" },
+      { provider: stubProvider(JSON.stringify(fragment), seen) },
+    );
+    await generateDraft(base, { provider: stubProvider(JSON.stringify(fragment), seen) });
+    expect(String(seen[0]?.messages[1]?.content)).toContain(HIGH_RISK_DRAFT_RULE);
+    expect(String(seen[1]?.messages[1]?.content)).not.toContain("high-risk topic");
   });
 
   it("honours a pinned prompt version", async () => {

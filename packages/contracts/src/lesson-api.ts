@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Id, Locale, SafetyClass, Uuid } from "./common";
-import { AudienceBand, ReadingLevel, ReviewStatus } from "./lesson";
+import { AudienceBand, LessonDisclaimer, ReadingLevel, ReviewStatus } from "./lesson";
 import { VisualRef } from "./visual";
 
 export const LessonRequest = z.object({
@@ -28,6 +28,8 @@ export const QuickAnswer = z.object({
   /** The stored claims the answer rests on. */
   claimIds: z.array(Uuid).default([]),
   reviewStatus: ReviewStatus,
+  /** Shown with the answer itself, so a risky topic never appears without its safety notice. */
+  disclaimers: z.array(LessonDisclaimer).optional(),
   /** Why a fallback stands in; absent for fresh and cached lessons. */
   note: z.string().min(1).optional(),
 });

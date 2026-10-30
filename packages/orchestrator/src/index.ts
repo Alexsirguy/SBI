@@ -12,6 +12,7 @@ export {
 export {
   createDraftPromptRegistry,
   generateDraft,
+  HIGH_RISK_DRAFT_RULE,
   LESSON_DRAFT_PROMPT,
   REUSE_MATCH_DIMENSIONS,
   type DraftDeps,
@@ -40,12 +41,14 @@ export { createEvidenceCheck, type EvidenceCheckDeps } from "./evidence-check";
 export {
   createMemoryReviewAuditLog,
   createPublisher,
+  GENERIC_SAFETY_NOTICE,
   RightsBlockedError,
   routeLesson,
   transitionLesson,
   type PublishAudit,
   type PublishAuditSink,
   type ReviewAuditLog,
+  type RouteOptions,
   type Publisher,
   type ReviewStatus,
   type RightsDecision,

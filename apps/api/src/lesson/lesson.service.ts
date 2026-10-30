@@ -74,13 +74,24 @@ const LESSON_LATER =
 // Policy versions come from E8; one stable value keeps reuse matching exact until then.
 export const LESSON_POLICY_VERSION = "1";
 
-// Topics the E4 gate flagged as unsafe to teach without review; the client cannot lower them.
-// TODO(#67) replace with the server-side safety classifier.
-const HIGH_RISK_ENTRIES = new Set([
-  "category.household-chemicals",
-  "object.electrical-socket",
-  "object.mushroom",
-]);
+// Topics the E4 gate flagged as high risk; the client cannot lower them. Each carries the
+// safety notice shown first with its lesson (ADR 0010). TODO(#67) server-side classifier.
+const SAFETY_NOTICES: Readonly<Record<string, string>> = {
+  "object.medicine-tablets":
+    "Medicines: this lesson explains how medicines work in general, not how to use one. Never take or give a medicine because of this lesson; follow the label or a doctor or pharmacist. If someone may have taken too much, call your local poison control centre or emergency number.",
+  "object.cleaning-products":
+    "Cleaning products: this lesson explains the chemistry only. Never mix cleaning products or use one in a way its label does not say; some mixtures release toxic gas. If someone swallows or breathes one in, call your local poison control centre or emergency number.",
+  "category.household-chemicals":
+    "Household chemicals: this lesson explains the chemistry only. Never mix, taste or handle chemicals because of it; follow the label. If someone swallows or breathes one in, call your local poison control centre or emergency number.",
+  "object.electrical-socket":
+    "Electricity: this lesson explains the science only. Never put anything into a socket or open a plug, socket or appliance; mains electricity can kill. If someone gets a shock, switch off the power before touching them and call your local emergency number.",
+  "object.mushroom":
+    "Wild mushrooms: this lesson explains the biology only and cannot tell you whether a mushroom is safe. Never eat or taste a wild mushroom because of a photo or this lesson; some are deadly. If someone may have eaten one, call your local poison control centre or emergency number.",
+};
+
+export function safetyNoticeFor(entry: { id: string; parentId?: string }): string | undefined {
+  return SAFETY_NOTICES[entry.id] ?? SAFETY_NOTICES[entry.parentId ?? ""];
+}
 
 const SAFETY_ORDER = ["low", "medium", "high"] as const;
 
@@ -88,8 +99,7 @@ export function effectiveSafetyClass(
   requested: LessonRequest["safetyClass"],
   entry: { id: string; parentId?: string },
 ): LessonRequest["safetyClass"] {
-  const floor =
-    HIGH_RISK_ENTRIES.has(entry.id) || HIGH_RISK_ENTRIES.has(entry.parentId ?? "") ? "high" : "low";
+  const floor = safetyNoticeFor(entry) ? "high" : "low";
   return SAFETY_ORDER.indexOf(requested) >= SAFETY_ORDER.indexOf(floor) ? requested : floor;
 }
 
@@ -398,6 +408,7 @@ export class LessonService {
           const routed = await createPublisher({ rights: VISUAL_RIGHTS, onAudit: record }).route(
             checked,
             report,
+            { safetyNotice: safetyNoticeFor(entry) },
           );
           await this.lessons.save(routed.lesson);
           if (routed.decision.action === "approve") return { lesson: routed.lesson, report };
@@ -461,6 +472,7 @@ export class LessonService {
           shortAnswer: short?.text ?? validated.summary,
           claimIds: short?.claimIds ?? [],
           reviewStatus: validated.reviewStatus,
+          disclaimers: validated.disclaimers,
           note:
             kind === "fallback"
               ? "Fresh generation failed; showing a related cached lesson."

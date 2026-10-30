@@ -68,7 +68,7 @@ const LESSON_DRAFT_PROMPT_V1: PromptVersion = {
 };
 
 // v2 fences the learner's question as data and separates required from optional modules.
-export const LESSON_DRAFT_PROMPT: PromptVersion = {
+const LESSON_DRAFT_PROMPT_V2: PromptVersion = {
   id: "lesson-draft",
   version: "2",
   system:
@@ -87,8 +87,22 @@ export const LESSON_DRAFT_PROMPT: PromptVersion = {
     "Claims (cite by id):\n{{claims}}",
 };
 
+export const HIGH_RISK_DRAFT_RULE =
+  "Safety: this is a high-risk topic. Explain only what it is and why it behaves as it does. Never give steps, amounts or tips for preparing, mixing, using, dosing, eating, handling, testing or repairing it, and never suggest trying anything.";
+
+// v3 adds a safety rule that is filled in only for high-risk topics.
+export const LESSON_DRAFT_PROMPT: PromptVersion = {
+  ...LESSON_DRAFT_PROMPT_V2,
+  version: "3",
+  template: `{{safetyRule}}${LESSON_DRAFT_PROMPT_V2.template}`,
+};
+
 export function createDraftPromptRegistry(): PromptRegistry {
-  return createPromptRegistry([LESSON_DRAFT_PROMPT_V1, LESSON_DRAFT_PROMPT]);
+  return createPromptRegistry([
+    LESSON_DRAFT_PROMPT_V1,
+    LESSON_DRAFT_PROMPT_V2,
+    LESSON_DRAFT_PROMPT,
+  ]);
 }
 
 // A per-call tag the question cannot close, so it cannot pose as instructions.
@@ -235,6 +249,7 @@ export async function generateDraft(input: DraftInput, deps: DraftDeps): Promise
     LESSON_DRAFT_PROMPT.id,
     {
       question: fencedQuestion(input.question, prompt.version),
+      safetyRule: input.safetyClass === "high" ? `${HIGH_RISK_DRAFT_RULE}\n` : "",
       taxonomyId: input.taxonomyId,
       concepts: input.concepts.map((concept) => concept.label).join(", "),
       audience: input.audience.join(", "),

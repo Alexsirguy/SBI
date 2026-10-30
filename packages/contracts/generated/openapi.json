@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.17.0"
+    "version": "0.18.0"
   },
   "paths": {
     "/uploads": {
@@ -1523,6 +1523,7 @@
                           "kind": {
                             "type": "string",
                             "enum": [
+                              "safety",
                               "awaiting-review",
                               "unverified-sections",
                               "sources-disagree",
@@ -2461,6 +2462,7 @@
                 "kind": {
                   "type": "string",
                   "enum": [
+                    "safety",
                     "awaiting-review",
                     "unverified-sections",
                     "sources-disagree",
