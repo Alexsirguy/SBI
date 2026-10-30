@@ -17,6 +17,8 @@ Each check runs in CI on every pull request (`apps/web/e2e`).
 | Progress and "Lesson ready." are announced through one polite status; failures come through an alert with "Try again"                                                                   | `lesson.spec.ts`                                                                                                                                        |
 | Placeholder animation stops under `prefers-reduced-motion`                                                                                                                              | `globals.css`                                                                                                                                           |
 
+Re-checked on the Workbench polish (epic #253, 2026-10-30). All of the above pass on the polished screens. `budgets.spec.ts` adds layout checks at 360, 768 and 1280px, 44px touch targets and reduced motion. `screenshots.spec.ts` guards the look in light and dark, on phone and desktop.
+
 ## Manual screen-reader test
 
 Automated checks cannot judge how the lesson sounds, so a person runs this script before each release that changes the reader. Use the mocked lesson (`pnpm --filter @sbi/web test:e2e` fixtures) or any real lesson.
