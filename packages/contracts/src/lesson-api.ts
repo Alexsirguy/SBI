@@ -44,6 +44,30 @@ export const LessonProgress = z.object({
   claims: z.int().nonnegative().optional(),
 });
 
+/** One cited passage, quoted only where its licence allows; otherwise the reader links out. */
+export const SourceExcerpt = z.object({
+  excerptId: z.string().min(1),
+  mode: z.enum(["quote", "link"]),
+  text: z.string().min(1).optional(),
+  location: z.string().min(1).optional(),
+});
+
+/** A source as the learner sees it: title, link and the credit its licence asks for. */
+export const LessonSource = z.object({
+  sourceId: Uuid,
+  title: z.string().min(1),
+  url: z.url().optional(),
+  credit: z.string().min(1),
+  license: z.object({ label: z.string().min(1), url: z.url().optional() }).optional(),
+  excerpts: z.array(SourceExcerpt).default([]),
+});
+
+/** Streamed after the lesson, so citation markers can name and link their sources. */
+export const LessonSources = z.object({
+  lessonId: Uuid,
+  sources: z.array(LessonSource),
+});
+
 export const LessonVisuals = z.object({
   lessonId: Uuid,
   visuals: z.array(VisualRef),
@@ -53,4 +77,7 @@ export type LessonRequest = z.infer<typeof LessonRequest>;
 export type LessonKind = z.infer<typeof LessonKind>;
 export type QuickAnswer = z.infer<typeof QuickAnswer>;
 export type LessonVisuals = z.infer<typeof LessonVisuals>;
+export type SourceExcerpt = z.infer<typeof SourceExcerpt>;
+export type LessonSource = z.infer<typeof LessonSource>;
+export type LessonSources = z.infer<typeof LessonSources>;
 export type LessonProgress = z.infer<typeof LessonProgress>;

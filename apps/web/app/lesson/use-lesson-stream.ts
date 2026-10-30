@@ -4,6 +4,7 @@ import type {
   Lesson,
   LessonProgress,
   LessonRequest,
+  LessonSources,
   LessonVisuals,
   QuickAnswer,
 } from "@sbi/contracts";
@@ -17,6 +18,7 @@ export interface LessonStreamState {
   progress?: LessonProgress;
   answer?: QuickAnswer;
   lesson?: Lesson;
+  sources?: LessonSources;
   visuals?: LessonVisuals;
   error?: string;
 }
@@ -34,6 +36,8 @@ export function lessonReducer(state: LessonStreamState, action: Action): LessonS
       return { ...state, answer: action.data };
     case "lesson":
       return { ...state, lesson: action.data };
+    case "sources":
+      return { ...state, sources: action.data };
     case "visuals":
       return { ...state, visuals: action.data };
     case "done":

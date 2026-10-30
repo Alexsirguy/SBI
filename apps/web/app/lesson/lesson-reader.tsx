@@ -1,6 +1,7 @@
 "use client";
 
 import type { LessonDisclaimer, LessonRequest } from "@sbi/contracts";
+import { CitationProvider, citationIndex, SourceList } from "./citations";
 import { sectionAnchor } from "./modules/frame";
 import { MODULE_LABELS, MODULES } from "./modules/labels";
 import { SectionView } from "./modules/section-view";
@@ -31,7 +32,7 @@ function Disclaimers({ items }: { items: LessonDisclaimer[] }) {
 
 // Text first: the quick answer, then sections as they arrive; visuals load only after the text.
 export function LessonReader({ request, label, fetcher }: LessonReaderProps) {
-  const { status, progress, answer, lesson, visuals, error, retry } = useLessonStream(
+  const { status, progress, answer, lesson, sources, visuals, error, retry } = useLessonStream(
     request,
     fetcher,
   );
@@ -86,18 +87,23 @@ export function LessonReader({ request, label, fetcher }: LessonReaderProps) {
             </ol>
           </nav>
           <div aria-busy={!lesson} className="lesson-sections">
-            {lesson
-              ? lesson.sections.map((section) => (
+            {lesson ? (
+              <CitationProvider value={citationIndex(lesson, sources)}>
+                {lesson.sections.map((section) => (
                   <SectionView key={section.sectionId} section={section} lesson={lesson} />
-                ))
-              : MODULES.map((module) => (
-                  <div key={module} className="lesson-section skeleton" aria-hidden="true">
-                    <p className="module-label">{MODULE_LABELS[module]}</p>
-                    <span className="skeleton-line" />
-                    <span className="skeleton-line short" />
-                  </div>
                 ))}
+              </CitationProvider>
+            ) : (
+              MODULES.map((module) => (
+                <div key={module} className="lesson-section skeleton" aria-hidden="true">
+                  <p className="module-label">{MODULE_LABELS[module]}</p>
+                  <span className="skeleton-line" />
+                  <span className="skeleton-line short" />
+                </div>
+              ))
+            )}
           </div>
+          {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
         </>
       )}
       {lesson && visuals && visuals.visuals.length > 0 ? (
