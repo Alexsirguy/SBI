@@ -192,6 +192,10 @@
   max-width: 26rem;
 }
 
+.site-footer__brand svg {
+  flex-shrink: 0;
+}
+
 .site-footer__brand p {
   margin: 0;
 }
