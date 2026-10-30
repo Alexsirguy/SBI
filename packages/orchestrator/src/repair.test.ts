@@ -4,14 +4,14 @@ import type { CheckReport } from "./checks";
 import { makeLesson } from "./lesson-fixture";
 import { repairable, REVISE_PROMPT_VERSION, reviseSections } from "./repair";
 
-function provider(text: string, seen: CompletionRequest[] = []): LlmProvider {
+function provider(text: string, seen: CompletionRequest[] = [], heading?: string): LlmProvider {
   return {
     id: "stub",
     model: "stub-1",
     async complete(request): Promise<Completion> {
       seen.push(request);
       return {
-        text: JSON.stringify({ text }),
+        text: JSON.stringify({ heading, text }),
         model: "stub-1",
         latencyMs: 1,
         usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 },
@@ -64,5 +64,27 @@ describe("reviseSections", () => {
     expect(revised.reuse.contentHash).not.toBe(lesson.reuse.contentHash);
     expect(seen[0]?.prompt).toEqual({ id: "lesson-revise", version: REVISE_PROMPT_VERSION });
     expect(String(seen[0]?.messages[1]?.content)).toContain("adds uncited detail");
+  });
+
+  it("replaces a heading the reviser corrects, and keeps one it leaves out", async () => {
+    const base = makeLesson();
+    const lesson = {
+      ...base,
+      sections: base.sections.map((section) =>
+        section.sectionId === "first-principles-3"
+          ? { ...section, heading: "Steam pressure lifts the lid" }
+          : section,
+      ),
+    };
+    const fixed = await reviseSections(lesson, report([entailmentFailure]), {
+      provider: provider("Metals expand when heated.", [], "Warm metal expands"),
+    });
+    const kept = await reviseSections(lesson, report([entailmentFailure]), {
+      provider: provider("Metals expand when heated."),
+    });
+    const heading = (target: typeof lesson) =>
+      target.sections.find((section) => section.sectionId === "first-principles-3")?.heading;
+    expect(heading(fixed)).toBe("Warm metal expands");
+    expect(heading(kept)).toBe("Steam pressure lifts the lid");
   });
 });

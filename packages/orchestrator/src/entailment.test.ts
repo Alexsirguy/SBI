@@ -127,4 +127,20 @@ describe("prompt versions", () => {
       "applying a cited general principle to the object",
     );
   });
+
+  it("judges a section's heading together with its text", async () => {
+    const seen: CompletionRequest[] = [];
+    const base = makeLesson();
+    const lesson = {
+      ...base,
+      sections: base.sections.map((section, index) =>
+        index === 0 ? { ...section, heading: "Steam lifts the lid" } : section,
+      ),
+    };
+    await createEntailmentCheck(scriptedProvider([supports, supports, supports], seen)).run(lesson);
+    const judged = seen.map((request) => String(request.messages[1]?.content));
+    expect(
+      judged.some((text) => text.includes(`Steam lifts the lid\n\n${lesson.sections[0]?.text}`)),
+    ).toBe(true);
+  });
 });

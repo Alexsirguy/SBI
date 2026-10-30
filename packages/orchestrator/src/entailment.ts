@@ -160,7 +160,8 @@ export function createEntailmentCheck(
         judged.map((section) =>
           judgeEntailment(
             provider,
-            section.text,
+            // A heading is read as part of its section, so it cannot claim more than the text.
+            section.heading ? `${section.heading}\n\n${section.text}` : section.text,
             section.claimIds.map((id) => claims.get(id)).filter((claim) => claim !== undefined),
             options?.signal,
             { objectLabel: context.objectLabel, module: section.module },

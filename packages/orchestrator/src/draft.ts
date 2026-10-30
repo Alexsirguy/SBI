@@ -98,7 +98,7 @@ const LESSON_DRAFT_PROMPT_V3: PromptVersion = {
 };
 
 // v4: drafts opened short answers with background, so the short answer must answer directly.
-export const LESSON_DRAFT_PROMPT: PromptVersion = {
+const LESSON_DRAFT_PROMPT_V4: PromptVersion = {
   ...LESSON_DRAFT_PROMPT_V3,
   version: "4",
   system:
@@ -107,11 +107,21 @@ export const LESSON_DRAFT_PROMPT: PromptVersion = {
     "in first-principles.",
 };
 
+// v5 asks each section for a heading that names its idea, so the lesson reads as more than modules.
+export const LESSON_DRAFT_PROMPT: PromptVersion = {
+  ...LESSON_DRAFT_PROMPT_V4,
+  version: "5",
+  system:
+    `${LESSON_DRAFT_PROMPT_V4.system} Give every section a heading of at most eight words that ` +
+    "names its idea in plain words, states nothing its claims do not, and cites nothing.",
+};
+
 export function createDraftPromptRegistry(): PromptRegistry {
   return createPromptRegistry([
     LESSON_DRAFT_PROMPT_V1,
     LESSON_DRAFT_PROMPT_V2,
     LESSON_DRAFT_PROMPT_V3,
+    LESSON_DRAFT_PROMPT_V4,
     LESSON_DRAFT_PROMPT,
   ]);
 }
@@ -129,7 +139,7 @@ interface DraftFragment {
   learningObjectives: string[];
   assumptions?: string[];
   misconceptionNotes?: string[];
-  sections: { module: string; text: string; claimIds: string[] }[];
+  sections: { module: string; heading?: string; text: string; claimIds: string[] }[];
 }
 
 // Guides the model; Lesson.parse remains the conformance gate.
@@ -148,10 +158,11 @@ const FRAGMENT_SCHEMA: Record<string, unknown> = {
         type: "object",
         properties: {
           module: { type: "string", enum: [...LessonModule.options] },
+          heading: { type: "string" },
           text: { type: "string" },
           claimIds: { type: "array", items: { type: "string" } },
         },
-        required: ["module", "text", "claimIds"],
+        required: ["module", "heading", "text", "claimIds"],
         additionalProperties: false,
       },
     },
@@ -173,6 +184,12 @@ function toFragment(value: unknown): DraftFragment {
     throw new Error("expected a JSON object");
   }
   return value as DraftFragment;
+}
+
+// A heading is a nicety: one that is missing, empty or overlong is dropped, never fatal.
+export function sectionHeading(heading: string | undefined): string | undefined {
+  const text = heading === undefined ? "" : withoutInlineIds(heading);
+  return text.length > 0 && text.length <= 120 ? text : undefined;
 }
 
 function renderClaims(claims: Claim[]): string {
@@ -219,6 +236,7 @@ async function assemble(
     sections: fragment.sections.map((section, index) => ({
       sectionId: `${section.module}-${index + 1}`,
       ...section,
+      heading: sectionHeading(section.heading),
       text: withoutInlineIds(section.text),
       // Models sometimes mangle an id; an unknown citation is dropped, never trusted, and a
       // section left uncited then fails the citation check.

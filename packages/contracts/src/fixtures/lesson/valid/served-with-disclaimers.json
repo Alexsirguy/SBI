@@ -25,18 +25,21 @@
     {
       "sectionId": "seeing",
       "module": "what-youre-seeing",
+      "heading": "The kettle clicks off by itself",
       "text": "A kettle with a base and a spout; we assume an electric element.",
       "claimIds": ["0192f1a0-0000-7000-8000-000000000007"]
     },
     {
       "sectionId": "short",
       "module": "short-answer",
+      "heading": "A metal strip bends and flips the switch",
       "text": "The element heats the water at the bottom, and warm water rises.",
       "claimIds": ["0192f1a0-0000-7000-8000-000000000005", "0192f1a0-0000-7000-8000-000000000004"]
     },
     {
       "sectionId": "principles",
       "module": "first-principles",
+      "heading": "Metals grow when they warm",
       "text": "Energy moves from hotter to cooler places.",
       "claimIds": ["0192f1a0-0000-7000-8000-000000000005"]
     }
@@ -83,7 +86,7 @@
     "promptVersion": "lesson-v3",
     "policyVersion": "policy-v1",
     "reuseCount": 4,
-    "contentHash": "c92ebf1c5e8217459c77b32b502177e4bbcea8b6c095bcba10c5ce2a3048a966"
+    "contentHash": "5d6c43f9254bb7278ec90179a18818e1e4919fa56909a4e70a2177d45d6262d0"
   },
   "disclaimers": [
     {
