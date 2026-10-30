@@ -13,6 +13,7 @@ import {
   API_ENV,
   DATABASE,
   LESSON_EVIDENCE,
+  LESSON_FEEDBACK,
   LESSON_GATHERER,
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
@@ -20,6 +21,7 @@ import {
   REPOSITORIES,
 } from "../tokens";
 import { createEvidenceGatherer } from "./evidence-gatherer";
+import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
 import { LessonService } from "./lesson.service";
 
@@ -61,7 +63,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
 
 @Module({
   imports: [TaxonomyModule],
-  controllers: [LessonController],
+  controllers: [LessonController, LessonFeedbackController],
   providers: [
     LessonService,
     {
@@ -73,6 +75,11 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       provide: LESSONS,
       inject: [REPOSITORIES],
       useFactory: (repos: Repositories) => repos.lessons,
+    },
+    {
+      provide: LESSON_FEEDBACK,
+      inject: [REPOSITORIES],
+      useFactory: (repos: Repositories) => repos.lessonFeedback,
     },
     {
       provide: LESSON_REVIEW_AUDIT,
