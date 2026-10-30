@@ -7,6 +7,7 @@ const FOOTER_GROUPS = [
     links: [
       { href: "/capture", label: "Start a lesson" },
       { href: "/#how", label: "How it works" },
+      { href: "/#inside", label: "What's in a lesson" },
     ],
   },
   {

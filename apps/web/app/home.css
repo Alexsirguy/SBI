@@ -1,19 +1,42 @@
 /* Home page and plain-text pages (privacy, about). */
-.home {
+main.home {
+  max-width: 72rem;
   display: grid;
   gap: var(--sbi-space-7);
 }
 
-.home__hero {
-  display: grid;
-  gap: var(--sbi-space-3);
-}
-
 .home h1,
 .prose-page h1 {
-  font-size: clamp(2.125rem, 7vw, 3.25rem);
+  font-size: clamp(2.125rem, 7vw, 3.5rem);
   line-height: 1.05;
   margin: 0;
+}
+
+.home h2,
+.prose-page h2 {
+  font-size: var(--sbi-text-title);
+  margin: var(--sbi-space-5) 0 var(--sbi-space-3);
+}
+
+.home h2 {
+  font-size: clamp(var(--sbi-text-title), 4vw, 2.25rem);
+  margin-top: 0;
+}
+
+.home h3 {
+  font-size: var(--sbi-text-heading);
+  margin: 0;
+}
+
+.home__hero {
+  display: grid;
+  gap: var(--sbi-space-6);
+  align-items: center;
+}
+
+.home__pitch {
+  display: grid;
+  gap: var(--sbi-space-3);
 }
 
 .home__lead {
@@ -30,7 +53,7 @@
   margin-top: var(--sbi-space-2);
 }
 
-.home__actions .sbi-button {
+.home .sbi-button {
   text-decoration: none;
 }
 
@@ -40,20 +63,95 @@
   color: var(--sbi-ink-soft);
 }
 
-.home__how h2,
-.prose-page h2 {
-  font-size: var(--sbi-text-title);
-  margin: var(--sbi-space-5) 0 var(--sbi-space-3);
+.home__tag {
+  display: block;
+  margin: 0;
+  font-family: var(--sbi-font-mono);
+  font-weight: 500;
+  font-size: var(--sbi-text-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sbi-ink-soft);
 }
 
-/* The steps are a real sequence, so they are numbered. */
-.home__steps {
+/* The example is a slice of a real lesson, laid on the bench like a worksheet. */
+.home__example {
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-4);
+  padding: var(--sbi-space-5);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  box-shadow: var(--sbi-lift);
+}
+
+.home__object {
+  display: flex;
+  align-items: center;
+  gap: var(--sbi-space-3);
+  color: var(--sbi-action);
+}
+
+.home__object p {
+  margin: 0;
+  color: var(--sbi-ink);
+}
+
+.home__answer {
+  padding: var(--sbi-space-4);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+}
+
+.home__answer p:last-child {
+  margin: var(--sbi-space-1) 0 0;
+  font-family: var(--sbi-font-display);
+  font-weight: 600;
+  font-size: var(--sbi-text-heading);
+  line-height: 1.35;
+}
+
+.home__reasons {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.home__sources {
+  margin: 0;
+  padding-top: var(--sbi-space-3);
+  border-top: 1px solid var(--sbi-rule);
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.home__band {
+  display: grid;
+  gap: var(--sbi-space-4);
+}
+
+.home__intro {
+  margin: 0;
+  max-width: var(--sbi-measure);
+  color: var(--sbi-ink-soft);
+}
+
+.home__steps,
+.home__modules,
+.home__trust,
+.home__depths {
   list-style: none;
-  counter-reset: step;
   margin: 0;
   padding: 0;
   display: grid;
   gap: var(--sbi-space-4);
+}
+
+/* The steps are a real sequence, so they are numbered. */
+.home__steps {
+  counter-reset: step;
 }
 
 .home__steps li {
@@ -64,7 +162,8 @@
   align-items: start;
 }
 
-.home__steps li::before {
+.home__steps li::before,
+.home__modules li::before {
   content: counter(step) / "";
   display: grid;
   place-items: center;
@@ -75,6 +174,92 @@
   color: var(--sbi-action);
   font-family: var(--sbi-font-mono);
   font-weight: 500;
+}
+
+.home__modules {
+  counter-reset: step;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--sbi-space-3);
+}
+
+.home__modules li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: var(--sbi-space-3);
+  padding: var(--sbi-space-4);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+}
+
+.home__modules li::before {
+  grid-row: span 2;
+}
+
+.home__modules span {
+  color: var(--sbi-ink-soft);
+}
+
+.home__trust {
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+
+.home__trust svg {
+  color: var(--sbi-action);
+}
+
+.home__trust p,
+.home__depths p {
+  margin: 0;
+}
+
+.home__band > p:last-child {
+  margin: 0;
+}
+
+.home__depths {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.home__depths li {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding-top: var(--sbi-space-3);
+  border-top: 3px solid var(--sbi-action);
+}
+
+.home__cta {
+  display: grid;
+  justify-items: start;
+  gap: var(--sbi-space-3);
+  padding: var(--sbi-space-6) var(--sbi-space-5);
+  border-radius: var(--sbi-radius-l);
+  background: var(--sbi-ink);
+  color: var(--sbi-paper);
+}
+
+.home__cta h2,
+.home__cta p {
+  margin: 0;
+}
+
+/* On the ink panel the action colours swap so the button keeps its contrast. */
+.home__cta .sbi-button--primary {
+  background: var(--sbi-marker);
+  color: var(--sbi-marker-ink);
+  border-color: var(--sbi-marker);
+}
+
+@media (min-width: 900px) {
+  .home__hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    padding-block: var(--sbi-space-6);
+  }
+
+  .home__steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .prose-page {
