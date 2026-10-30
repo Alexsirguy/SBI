@@ -1,6 +1,6 @@
 # 0010. Disclose doubts on lessons instead of holding them
 
-- Status: accepted
+- Status: accepted; amended by 0011 (evidence gaps are filled from model knowledge)
 - Date: 2026-10-30
 - Issue: #211
 

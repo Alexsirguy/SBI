@@ -108,7 +108,7 @@ const LESSON_DRAFT_PROMPT_V4: PromptVersion = {
 };
 
 // v5 asks each section for a heading that names its idea, so the lesson reads as more than modules.
-export const LESSON_DRAFT_PROMPT: PromptVersion = {
+const LESSON_DRAFT_PROMPT_V5: PromptVersion = {
   ...LESSON_DRAFT_PROMPT_V4,
   version: "5",
   system:
@@ -116,12 +116,30 @@ export const LESSON_DRAFT_PROMPT: PromptVersion = {
     "names its idea in plain words, states nothing its claims do not, and cites nothing.",
 };
 
+// v6 (ADR 0011): every lesson has every module, and general-knowledge claims are taught plainly.
+const LESSON_DRAFT_PROMPT_V6: PromptVersion = {
+  ...LESSON_DRAFT_PROMPT_V5,
+  version: "6",
+  system:
+    `${LESSON_DRAFT_PROMPT_V5.system} Write every required module, in that order, every time; ` +
+    "when the claims are thin, keep a section short rather than leaving it out. Claims marked " +
+    "general-knowledge come from the AI's own knowledge, not a source: teach them plainly, " +
+    "without may, might or other hedges, since the lesson's own notice already says where they " +
+    "come from; never as open questions, and add nothing beyond them. Never mention claims, " +
+    "sources or citations in the lesson text. try-an-idea is a safe thought " +
+    "experiment or everyday observation; on a high-risk topic it is a thought experiment only, " +
+    "with nothing to do, touch or handle.",
+};
+
+export const LESSON_DRAFT_PROMPT: PromptVersion = LESSON_DRAFT_PROMPT_V6;
+
 export function createDraftPromptRegistry(): PromptRegistry {
   return createPromptRegistry([
     LESSON_DRAFT_PROMPT_V1,
     LESSON_DRAFT_PROMPT_V2,
     LESSON_DRAFT_PROMPT_V3,
     LESSON_DRAFT_PROMPT_V4,
+    LESSON_DRAFT_PROMPT_V5,
     LESSON_DRAFT_PROMPT,
   ]);
 }
@@ -153,7 +171,9 @@ const FRAGMENT_SCHEMA: Record<string, unknown> = {
     misconceptionNotes: { type: "array", items: { type: "string" } },
     sections: {
       type: "array",
-      minItems: 1,
+      // One section per module (ADR 0011); duplicates still fail Lesson.parse.
+      minItems: LessonModule.options.length,
+      maxItems: LessonModule.options.length,
       items: {
         type: "object",
         properties: {
@@ -193,7 +213,12 @@ export function sectionHeading(heading: string | undefined): string | undefined 
 }
 
 function renderClaims(claims: Claim[]): string {
-  return claims.map((claim) => `- ${claim.claimId} [${claim.status}]: ${claim.text}`).join("\n");
+  return claims
+    .map(
+      (claim) =>
+        `- ${claim.claimId} [${claim.origin === "model" ? "general-knowledge" : claim.status}]: ${claim.text}`,
+    )
+    .join("\n");
 }
 
 // A lesson carries only the claims its sections cite, plus what those build on;
@@ -274,6 +299,7 @@ async function assemble(
 export async function generateDraft(input: DraftInput, deps: DraftDeps): Promise<Lesson> {
   const prompts = deps.prompts ?? createDraftPromptRegistry();
   const prompt = prompts.get(LESSON_DRAFT_PROMPT.id, input.promptVersion);
+  const everyModule = Number(prompt.version) >= 6;
   const messages = prompts.render(
     LESSON_DRAFT_PROMPT.id,
     {
@@ -285,10 +311,11 @@ export async function generateDraft(input: DraftInput, deps: DraftDeps): Promise
       readingLevel: input.readingLevel,
       locale: input.locale,
       safetyClass: input.safetyClass,
-      modules: REQUIRED_MODULES.join(", "),
-      optionalModules: LessonModule.options
-        .filter((module) => !REQUIRED_MODULES.includes(module))
-        .join(", "),
+      // From v6 the lesson's shape no longer depends on the evidence (ADR 0011).
+      modules: (everyModule ? LessonModule.options : REQUIRED_MODULES).join(", "),
+      optionalModules: everyModule
+        ? "none"
+        : LessonModule.options.filter((module) => !REQUIRED_MODULES.includes(module)).join(", "),
       claims: renderClaims(input.claims),
     },
     prompt.version,

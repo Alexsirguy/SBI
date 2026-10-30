@@ -121,6 +121,14 @@ export interface RouteOptions {
   safetyNotice?: string;
 }
 
+// One notice for the whole lesson, by the owner's choice (ADR 0011); it also says no one reviewed it.
+export const MODEL_KNOWLEDGE_DISCLAIMER: LessonDisclaimer = {
+  kind: "model-knowledge",
+  message:
+    "Parts of this lesson come from the AI's general knowledge because no trusted source was found for them, and no reviewer has checked it yet. Report anything that looks wrong.",
+  sectionIds: [],
+};
+
 const AWAITING_REVIEW: LessonDisclaimer = {
   kind: "awaiting-review",
   message:
@@ -144,7 +152,8 @@ function disclaimersFor(
     lesson.safetyClass === "high"
       ? [{ kind: "safety", message: options.safetyNotice ?? GENERIC_SAFETY_NOTICE, sectionIds: [] }]
       : [];
-  notes.push(AWAITING_REVIEW);
+  const fromModel = lesson.claims.some((claim) => claim.origin === "model");
+  notes.push(fromModel ? MODEL_KNOWLEDGE_DISCLAIMER : AWAITING_REVIEW);
   const failed = new Map(
     (report?.results ?? []).filter((item) => !item.passed).map((item) => [item.name, item]),
   );
@@ -164,8 +173,9 @@ function disclaimersFor(
       sectionIds: [],
     });
   }
+  const sourced = lesson.claims.filter((claim) => claim.origin !== "model");
   const unsettled = new Set(
-    lesson.claims
+    sourced
       .filter((claim) => claim.status === "disputed" || claim.status === "unsupported")
       .map((claim) => claim.claimId),
   );
@@ -177,7 +187,7 @@ function disclaimersFor(
     });
   }
   const weak = new Set(
-    lesson.claims.filter((claim) => claim.confidence === "low").map((claim) => claim.claimId),
+    sourced.filter((claim) => claim.confidence === "low").map((claim) => claim.claimId),
   );
   if (weak.size > 0) {
     notes.push({
@@ -209,7 +219,9 @@ export function routeLesson(
     reasons.push(`automated checks failed: ${failed.map((item) => item.name).join(", ")}`);
   }
   if (lesson.safetyClass === "high") reasons.push("safety class high");
-  for (const claim of lesson.claims) {
+  const fromModel = lesson.claims.filter((claim) => claim.origin === "model").length;
+  if (fromModel > 0) reasons.push(`${fromModel} claims from model knowledge`);
+  for (const claim of lesson.claims.filter((item) => item.origin !== "model")) {
     if (claim.confidence === "low") reasons.push(`claim ${claim.claimId} confidence low`);
     if (claim.status === "disputed" || claim.status === "unsupported") {
       reasons.push(`claim ${claim.claimId} is ${claim.status}`);

@@ -96,6 +96,12 @@ export const ClaimVerification = z.object({
 
 export const ClaimStatus = z.enum(["supported", "qualified", "disputed", "unsupported"]);
 
+/** Where a claim comes from: checked evidence, or the AI's general knowledge (ADR 0011). */
+export const ClaimOrigin = z.enum(["evidence", "model"]);
+
+export const MODEL_KNOWLEDGE_NOTE =
+  "From the AI's general knowledge; not yet checked against a source.";
+
 export const Claim = z
   .object({
     claimId: Uuid,
@@ -112,7 +118,14 @@ export const Claim = z
     significance: z.enum(["basic", "non-trivial"]).optional(),
     limitations: z.string().min(1).max(300).optional(),
     verification: ClaimVerification.optional(),
+    // Optional, not defaulted, so evidence claims keep their lesson content hash; absent is evidence.
+    origin: ClaimOrigin.optional(),
   })
+  .refine(
+    (claim) =>
+      claim.origin !== "model" || (claim.status === "unsupported" && claim.sourceIds.length === 0),
+    { message: "Model-knowledge claims have no sources and stay unsupported", path: ["origin"] },
+  )
   .refine((claim) => claim.status === "unsupported" || claim.sourceIds.length > 0, {
     message: "Only unsupported claims may have no sources",
     path: ["sourceIds"],
@@ -149,5 +162,6 @@ export type RightsStatus = z.infer<typeof RightsStatus>;
 export type SourceType = z.infer<typeof SourceType>;
 export type Claim = z.infer<typeof Claim>;
 export type ClaimStatus = z.infer<typeof ClaimStatus>;
+export type ClaimOrigin = z.infer<typeof ClaimOrigin>;
 export type ExcerptRef = z.infer<typeof ExcerptRef>;
 export type ClaimVerification = z.infer<typeof ClaimVerification>;
