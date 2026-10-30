@@ -19,7 +19,12 @@ export type PipelineOutcome =
   | { kind: "fallback"; lesson: Lesson; reason: string; detail?: string }
   | { kind: "retry"; reason: string; detail?: string };
 
-export type GenerationAttempt = () => Promise<{ lesson: Lesson; report: CheckReport }>;
+export type GenerationAttempt = () => Promise<{
+  lesson: Lesson;
+  report: CheckReport;
+  /** Set when failed checks were disclosed on the lesson rather than holding it back. */
+  disclosed?: boolean;
+}>;
 
 function failureKind(error: LlmError): string {
   if (/timed out after/.test(error.message)) return "The language model timed out";
@@ -57,8 +62,11 @@ export async function runWithFallback(
   let failure: string;
   let detail: string | undefined;
   try {
-    const { lesson, report } = await attempt();
-    if (report.passed) return { kind: "fresh", lesson, report };
+    const { lesson, report, disclosed } = await attempt();
+    // A disclosed lesson carries its disclaimers, so it never passes as validated.
+    if (report.passed || (disclosed && (lesson.disclaimers?.length ?? 0) > 0)) {
+      return { kind: "fresh", lesson, report };
+    }
     const failed = report.results.filter((item) => !item.passed).map((item) => item.name);
     failure = `Automated checks failed: ${failed.join(", ")}`;
   } catch (error) {

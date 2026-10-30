@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Lesson } from "@sbi/contracts";
+import { Lesson } from "@sbi/contracts";
 import {
   createMemoryReviewAuditLog,
   createPublisher,
@@ -50,7 +50,7 @@ describe("transitionLesson", () => {
 });
 
 describe("routeLesson", () => {
-  it("sends risky or failed lessons to review", () => {
+  it("holds high-risk lessons and integrity failures, and discloses softer doubts", () => {
     expect(routeLesson(autoValidated()).action).toBe("approve");
     expect(routeLesson(makeLesson({ safetyClass: "high" })).action).toBe("review");
 
@@ -61,18 +61,36 @@ describe("routeLesson", () => {
       ...lesson,
       claims: [{ ...first, confidence: "low" }, second],
     };
-    expect(routeLesson(lowConfidence).action).toBe("review");
+    const weak = routeLesson(lowConfidence);
+    expect(weak.action).toBe("disclose");
+    expect(weak.disclaimers.map((item) => item.kind)).toEqual([
+      "awaiting-review",
+      "limited-evidence",
+    ]);
+    expect(weak.disclaimers[1]?.sectionIds.length).toBeGreaterThan(0);
 
-    const report = {
+    const failing = (name: string, sections?: { sectionId: string; reason: string }[]) => ({
       lessonId: lesson.lessonId,
       version: 1,
       passed: false,
-      results: [{ name: "entailment", passed: false, details: ["unsupported"] }],
+      results: [{ name, passed: false, details: ["x"], sections }],
       checkedAt: new Date().toISOString(),
-    };
-    const routed = routeLesson(autoValidated(), report);
-    expect(routed.action).toBe("review");
-    expect(routed.reasons.join(";")).toContain("entailment");
+    });
+    const unverified = routeLesson(
+      autoValidated(),
+      failing("entailment", [{ sectionId: "first-principles-3", reason: "adds detail" }]),
+    );
+    expect(unverified.action).toBe("disclose");
+    expect(
+      unverified.disclaimers.find((item) => item.kind === "unverified-sections")?.sectionIds,
+    ).toEqual(["first-principles-3"]);
+    expect(routeLesson(autoValidated(), failing("reading-level")).action).toBe("disclose");
+    for (const name of ["schema", "citations", "evidence", "something-new"]) {
+      expect(routeLesson(autoValidated(), failing(name)).action).toBe("review");
+    }
+    expect(routeLesson(makeLesson({ safetyClass: "high" }), failing("reading-level")).action).toBe(
+      "review",
+    );
   });
 });
 
@@ -101,9 +119,41 @@ describe("createPublisher", () => {
 
     const { lesson, decision } = await publisher.route(autoValidated());
 
-    expect(decision).toEqual({ action: "review", reasons: ["rights: licence pending"] });
+    expect(decision).toEqual({
+      action: "review",
+      reasons: ["rights: licence pending"],
+      disclaimers: [],
+    });
     expect(lesson.reviewStatus).toBe("needs-review");
     expect(audits[0]).toMatchObject({ from: "auto-validated", to: "needs-review" });
+  });
+
+  it("serves a disclosed lesson as needs-review with its disclaimers, audited", async () => {
+    const audits: PublishAudit[] = [];
+    const lesson = makeLesson();
+    const [first, second] = lesson.claims;
+    if (!first || !second) throw new Error("Fixture needs two claims");
+    const { lesson: routed, decision } = await createPublisher({
+      rights: cleared,
+      onAudit: (audit) => void audits.push(audit),
+    }).route({ ...lesson, claims: [{ ...first, confidence: "low" }, second] });
+    expect(decision.action).toBe("disclose");
+    expect(routed.reviewStatus).toBe("needs-review");
+    expect(routed.disclaimers?.[0]?.kind).toBe("awaiting-review");
+    expect(Lesson.parse(routed)).toEqual(routed);
+    expect(audits[0]).toMatchObject({ to: "needs-review" });
+  });
+
+  it("holds instead of disclosing when rights are not cleared", async () => {
+    const lesson = makeLesson();
+    const [first, second] = lesson.claims;
+    if (!first || !second) throw new Error("Fixture needs two claims");
+    const { lesson: routed, decision } = await createPublisher({ rights: blocked }).route({
+      ...lesson,
+      claims: [{ ...first, confidence: "low" }, second],
+    });
+    expect(decision.action).toBe("review");
+    expect(routed.disclaimers).toBeUndefined();
   });
 
   it("lets a clean lesson through when its rights clear", async () => {
