@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:screenshots:update": "bash scripts/screenshots.sh"
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",
