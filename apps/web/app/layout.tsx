@@ -5,7 +5,9 @@ import type { ReactNode } from "react";
 import "../env";
 import "@sbi/ui/styles.css";
 import "./globals.css";
+import "./site-chrome.css";
 import { Providers } from "./providers";
+import { SiteFooter, SiteHeader } from "./site-chrome";
 
 // Self-hosted at build time, so learners' browsers never contact a font host (ADR 0012).
 const bodyFace = Atkinson_Hyperlegible_Next({
@@ -29,7 +31,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${bodyFace.variable} ${displayFace.variable}`}>
       <body>
+        <SiteHeader />
         <Providers>{children}</Providers>
+        <SiteFooter />
       </body>
     </html>
   );

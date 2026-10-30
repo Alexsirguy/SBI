@@ -87,7 +87,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const progressIndex = currentSection ? anchors.indexOf(currentSection) : -1;
 
   return (
-    <main className="lesson">
+    <main id="main" className="lesson">
       <header className="lesson-head">
         <p className="module-label">
           {label} · {DEPTHS[chosen.depth].label}

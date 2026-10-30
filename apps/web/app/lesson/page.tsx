@@ -25,7 +25,7 @@ export default async function LessonPage({
   });
   if (!request) {
     return (
-      <main>
+      <main id="main">
         <h1>Choose an object first</h1>
         <p>
           <Link href="/capture">Photograph or describe an object</Link> to start a lesson about it.
