@@ -3,7 +3,7 @@
 import type { ApiRequest, TaxonomyMatch } from "@sbi/contracts";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNoticeObject } from "../use-recognition";
-import { Button } from "@sbi/ui";
+import { Button, Notice, TextField } from "@sbi/ui";
 
 type Notes = Required<{ [K in keyof ApiRequest<"noticeObject">]: string }>;
 
@@ -49,23 +49,21 @@ export function NoticeForm({ onResults }: NoticeFormProps) {
       <fieldset>
         <legend id={`${id}-legend`}>Tell us what you notice</legend>
         {PROMPTS.map(({ key, label, hint }, index) => (
-          <div key={key}>
-            <label htmlFor={`${id}-${key}`}>{label}</label>
-            <input
-              id={`${id}-${key}`}
-              ref={index === 0 ? firstRef : undefined}
-              name={key}
-              maxLength={100}
-              autoComplete="off"
-              aria-describedby={`${id}-${key}-hint`}
-              value={notes[key]}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setNotes((current) => ({ ...current, [key]: value }));
-              }}
-            />
-            <span id={`${id}-${key}-hint`}> {hint}</span>
-          </div>
+          <TextField
+            key={key}
+            id={`${id}-${key}`}
+            ref={index === 0 ? firstRef : undefined}
+            label={label}
+            hint={hint}
+            name={key}
+            maxLength={100}
+            autoComplete="off"
+            value={notes[key]}
+            onChange={(event) => {
+              const value = event.currentTarget.value;
+              setNotes((current) => ({ ...current, [key]: value }));
+            }}
+          />
         ))}
         <Button
           variant="quiet"
@@ -75,8 +73,16 @@ export function NoticeForm({ onResults }: NoticeFormProps) {
         >
           Find matches
         </Button>
-        {empty ? <p id={`${id}-empty`}>Fill in at least one answer.</p> : null}
-        {notice.isError ? <p role="alert">{notice.error.message}</p> : null}
+        {empty ? (
+          <p id={`${id}-empty`} className="sbi-field__hint">
+            Fill in at least one answer.
+          </p>
+        ) : null}
+        {notice.isError ? (
+          <Notice kind="error" live>
+            {notice.error.message}
+          </Notice>
+        ) : null}
       </fieldset>
     </form>
   );
