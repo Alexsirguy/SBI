@@ -5,7 +5,7 @@ import { TutorTurn } from "./tutor";
 import { VisualAsset, VisualManifest, VisualRef } from "./visual";
 
 /** Semver for the published contracts; bump per docs/contracts-versioning.md. */
-export const CONTRACTS_VERSION = "0.18.0";
+export const CONTRACTS_VERSION = "0.19.0";
 
 export const CONTRACT_SCHEMAS = {
   Claim,
