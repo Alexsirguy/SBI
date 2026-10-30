@@ -41,6 +41,8 @@ export const Concept = z.object({
 export const LessonSection = z.object({
   sectionId: Id,
   module: LessonModule,
+  // Optional so lessons drafted before headings existed still parse.
+  heading: z.string().trim().min(1).max(120).optional(),
   text: Text,
   claimIds: z.array(Uuid).default([]),
 });

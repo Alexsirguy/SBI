@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.18.0"
+    "version": "0.19.0"
   },
   "paths": {
     "/uploads": {
@@ -1209,6 +1209,11 @@
                               "go-further"
                             ]
                           },
+                          "heading": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 120
+                          },
                           "text": {
                             "type": "string",
                             "minLength": 1
@@ -2147,6 +2152,11 @@
                     "check-thinking",
                     "go-further"
                   ]
+                },
+                "heading": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
                 },
                 "text": {
                   "type": "string",
