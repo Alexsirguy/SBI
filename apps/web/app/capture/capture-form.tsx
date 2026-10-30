@@ -153,7 +153,9 @@ export function CaptureForm() {
       setCrop(fullFrame(image));
     } catch (error) {
       if (run === runRef.current) {
-        setProblem(error instanceof Error ? error.message : "Could not read that photo.");
+        setProblem(
+          error instanceof Error ? error.message : "We couldn't read that photo. Try another one.",
+        );
       }
     } finally {
       if (run === runRef.current) {
@@ -178,7 +180,11 @@ export function CaptureForm() {
       }
     } catch (error) {
       if (run === runRef.current) {
-        setProblem(error instanceof Error ? error.message : "Could not crop that photo.");
+        setProblem(
+          error instanceof Error
+            ? error.message
+            : "We couldn't crop that photo. Try again, or upload it without cropping.",
+        );
       }
     } finally {
       if (run === runRef.current) {
@@ -226,7 +232,7 @@ export function CaptureForm() {
         : kept
           ? "Kept. This photo will not be deleted automatically."
           : uploaded
-            ? "Uploaded and privacy-checked. Your lesson can begin."
+            ? "Uploaded, with location and camera details removed. Your lesson can begin."
             : prepared
               ? `Ready: ${describe(prepared)}.`
               : fileName
@@ -345,7 +351,7 @@ export function CaptureForm() {
                   ))}
                 </ul>
               ) : (
-                <p>Photo checks could not run — you can still upload.</p>
+                <p>We couldn&apos;t check this photo, but you can still upload it.</p>
               )}
             </section>
           ) : null}
