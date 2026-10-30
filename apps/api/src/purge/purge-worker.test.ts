@@ -6,6 +6,7 @@ const RESULT: PurgePassResult = {
   deleted: ["photos/a.jpg"],
   recognitionPurged: 3,
   stagingDeleted: 2,
+  feedbackDetailsCleared: 4,
 };
 
 function logger() {
@@ -29,7 +30,13 @@ describe("startPurgeWorker", () => {
 
     expect(runPass).toHaveBeenCalledTimes(3);
     expect(log.info).toHaveBeenCalledWith(
-      { auditPurged: 1, deleted: 1, recognitionPurged: 3, stagingDeleted: 2 },
+      {
+        auditPurged: 1,
+        deleted: 1,
+        recognitionPurged: 3,
+        stagingDeleted: 2,
+        feedbackDetailsCleared: 4,
+      },
       "media purge pass",
     );
   });

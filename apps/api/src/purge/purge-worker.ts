@@ -8,6 +8,7 @@ import {
 
 export interface PurgePassResult extends DeletionPassResult {
   recognitionPurged: number;
+  feedbackDetailsCleared: number;
 }
 
 export interface PurgeWorkerOptions {
@@ -22,11 +23,18 @@ export function startPurgeWorker(options: PurgeWorkerOptions): PurgeWorker {
   return startIntervalWorker({
     ...options,
     name: "media purge pass",
-    summarise: ({ auditPurged, deleted, recognitionPurged, stagingDeleted }) => ({
+    summarise: ({
+      auditPurged,
+      deleted,
+      recognitionPurged,
+      stagingDeleted,
+      feedbackDetailsCleared,
+    }) => ({
       auditPurged,
       deleted: deleted.length,
       recognitionPurged,
       stagingDeleted,
+      feedbackDetailsCleared,
     }),
   });
 }

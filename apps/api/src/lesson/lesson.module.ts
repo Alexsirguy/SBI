@@ -13,6 +13,7 @@ import {
   API_ENV,
   DATABASE,
   LESSON_EVIDENCE,
+  FEEDBACK_LIMITER,
   LESSON_FEEDBACK,
   LESSON_GATHERER,
   LESSON_LLM,
@@ -20,6 +21,7 @@ import {
   LESSONS,
   REPOSITORIES,
 } from "../tokens";
+import { createRateLimiter } from "../common/rate-limiter";
 import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
@@ -75,6 +77,12 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       provide: LESSONS,
       inject: [REPOSITORIES],
       useFactory: (repos: Repositories) => repos.lessons,
+    },
+    {
+      provide: FEEDBACK_LIMITER,
+      inject: [API_ENV],
+      useFactory: (env: Pick<ApiEnv, "FEEDBACK_MAX_PER_HOUR">) =>
+        createRateLimiter({ limit: env.FEEDBACK_MAX_PER_HOUR, windowMs: 3_600_000 }),
     },
     {
       provide: LESSON_FEEDBACK,
