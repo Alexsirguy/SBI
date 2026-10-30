@@ -40,3 +40,43 @@ for (const path of ["/", "/privacy", "/about"]) {
     await expectNoAxeViolations(page);
   });
 }
+
+test("on phones the navigation folds behind a menu button that keyboards can use", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/about");
+  const menu = page.getByRole("button", { name: "Menu" });
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  await expect(nav).toBeHidden();
+
+  await menu.focus();
+  await page.keyboard.press("Enter");
+  const close = page.getByRole("button", { name: "Close menu" });
+  await expect(close).toHaveAttribute("aria-expanded", "true");
+  await expect(nav.getByRole("link", { name: "Privacy" })).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  await page.keyboard.press("Escape");
+  await expect(nav).toBeHidden();
+  await expect(page.getByRole("button", { name: "Menu" })).toBeFocused();
+
+  await page.getByRole("button", { name: "Menu" }).click();
+  await nav.getByRole("link", { name: "Privacy" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy");
+  await expect(nav).toBeHidden();
+});
+
+test("the logo names the product and the footer groups its links", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("banner").getByRole("link", { name: "Science Behind It", exact: true }),
+  ).toBeVisible();
+  const footer = page.getByRole("navigation", { name: "Footer" });
+  for (const name of ["Start a lesson", "How lessons are checked", "Privacy", "Report a mistake"]) {
+    await expect(footer.getByRole("link", { name })).toBeVisible();
+  }
+  await footer.getByRole("link", { name: "How lessons are checked" }).click();
+  await expect(page).toHaveURL(/\/about#checks$/);
+});

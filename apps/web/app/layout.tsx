@@ -7,7 +7,8 @@ import "@sbi/ui/styles.css";
 import "./globals.css";
 import "./site-chrome.css";
 import { Providers } from "./providers";
-import { SiteFooter, SiteHeader } from "./site-chrome";
+import { SiteHeader } from "./site-chrome";
+import { SiteFooter } from "./site-footer";
 
 // Self-hosted at build time, so learners' browsers never contact a font host (ADR 0012).
 const bodyFace = Atkinson_Hyperlegible_Next({

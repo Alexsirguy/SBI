@@ -26,7 +26,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <section aria-labelledby="how-heading" className="home__how">
+      <section id="how" aria-labelledby="how-heading" className="home__how">
         <h2 id="how-heading">How a lesson works</h2>
         <ol className="home__steps" role="list">
           <li>
