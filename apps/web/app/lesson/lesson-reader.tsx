@@ -1,6 +1,7 @@
 "use client";
 
 import type { LessonDisclaimer, LessonRequest } from "@sbi/contracts";
+import { Button, Mark, Notice, Placeholder, StatusLine, VisuallyHidden } from "@sbi/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AskQuestion } from "./ask-question";
@@ -29,14 +30,11 @@ function Disclaimers({ items }: { items: LessonDisclaimer[] }) {
   if (items.length === 0) return null;
   return (
     <aside aria-label="Before you read" className="lesson-notices">
-      <ul>
-        {items.map((item) => (
-          <li key={item.kind} className={`notice notice-${item.kind}`}>
-            <strong>{item.kind === "safety" ? "Safety: " : "Note: "}</strong>
-            {item.message}
-          </li>
-        ))}
-      </ul>
+      {items.map((item) => (
+        <Notice key={item.kind} kind={item.kind === "safety" ? "safety" : "note"}>
+          {item.message}
+        </Notice>
+      ))}
     </aside>
   );
 }
@@ -73,26 +71,28 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
     <main className="lesson">
       <h1>{lesson?.title ?? answer?.title ?? `Lesson: ${label}`}</h1>
       <DepthControls prefs={chosen} onChange={choose} />
-      <p role="status" className="lesson-status">
+      <StatusLine>
         {status === "ready"
           ? "Lesson ready."
           : loading
             ? (progress?.message ?? "Starting your lesson…")
             : ""}
-      </p>
+      </StatusLine>
       {error ? (
-        <div role="alert" className="lesson-error">
+        <Notice kind="error" live>
           <p>{error}</p>
-          <button type="button" onClick={retry}>
+          <Button size="small" onClick={retry}>
             Try again
-          </button>
-        </div>
+          </Button>
+        </Notice>
       ) : null}
       <Disclaimers items={disclaimers} />
       {answer ? (
         <section aria-labelledby="quick-answer-heading" className="quick-answer">
           <h2 id="quick-answer-heading">Quick answer</h2>
-          <p>{answer.shortAnswer}</p>
+          <p className="short-answer">
+            <Mark>{answer.shortAnswer}</Mark>
+          </p>
           {answer.note ? <p className="note">{answer.note}</p> : null}
           <p className="provenance">
             {answer.kind === "cached" && written
@@ -101,9 +101,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
                 ? "This is a related lesson, shown because a new one could not be written. "
                 : null}
             {status === "ready" && !request.fresh ? (
-              <button type="button" onClick={askFresh}>
+              <Button variant="quiet" size="small" onClick={askFresh}>
                 Get a fresh answer
-              </button>
+              </Button>
             ) : null}
           </p>
         </section>
@@ -133,7 +133,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
                     ) : (
                       <span>
                         {MODULE_LABELS[module]}
-                        <span className="visually-hidden"> (loading)</span>
+                        <VisuallyHidden> (loading)</VisuallyHidden>
                       </span>
                     )}
                   </li>
@@ -158,10 +158,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
               </CitationProvider>
             ) : (
               MODULES.map((module) => (
-                <div key={module} className="lesson-section skeleton" aria-hidden="true">
+                <div key={module} className="lesson-section" aria-hidden="true">
                   <p className="module-label">{MODULE_LABELS[module]}</p>
-                  <span className="skeleton-line" />
-                  <span className="skeleton-line short" />
+                  <Placeholder lines={2} />
                 </div>
               ))
             )}
