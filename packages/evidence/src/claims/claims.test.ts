@@ -399,6 +399,22 @@ describe("claim graph", () => {
 });
 
 describe("saveClaimGraph", () => {
+  it("links a claim to a stored source once, even when two copies of it supported the claim", async () => {
+    const repos = createMemoryEvidenceRepositories();
+    const built = await buildClaims(
+      [{ key: "ice", text: "Ice is less dense than liquid water.", scope: "water" }],
+      [USGS, { ...USGS }],
+      { judge: supportsAll },
+    );
+    expect(built.claims[0]?.sourceIds).toHaveLength(2);
+    const { claims } = await saveClaimGraph(repos, built);
+    expect(claims[0]?.sourceIds).toHaveLength(1);
+    const citations = claims[0]?.citations ?? [];
+    expect(new Set(citations.map((item) => `${item.sourceId}/${item.excerptId}`)).size).toBe(
+      citations.length,
+    );
+  });
+
   it("merges a re-fetched source into the stored one and remaps citations", async () => {
     const repos = createMemoryEvidenceRepositories();
     const first = await buildClaims(
