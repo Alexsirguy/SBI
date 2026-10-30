@@ -60,8 +60,10 @@
 }
 
 /* File pickers keep the native input, so keyboard, screen readers and camera capture all work. */
+/* A file input's natural width (button plus file name) is wider than a 360px phone. */
 .file-pick {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sbi-space-2);
 }
 
@@ -70,6 +72,8 @@
 }
 
 .file-pick input[type="file"] {
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
   font-size: var(--sbi-text-small);
   color: var(--sbi-ink-soft);
