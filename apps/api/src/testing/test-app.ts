@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { FastifyAdapter, type NestFastifyApplication } from "@nestjs/platform-fastify";
-import { Test } from "@nestjs/testing";
+import { Test, type TestingModuleBuilder } from "@nestjs/testing";
 import {
   ObjectMissingError,
   type MalwareScanner,
@@ -108,8 +108,10 @@ export async function startTestApp(
   media = fakeMedia(),
   recognition = fakeRecognition(),
   gaps = fakeGaps(),
+  /** Extra overrides for a test that needs one more provider replaced. */
+  configure: (builder: TestingModuleBuilder) => TestingModuleBuilder = (builder) => builder,
 ): Promise<TestApp> {
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+  const base = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(API_ENV)
     .useValue(testEnv)
     .overrideProvider(DATABASE)
@@ -129,8 +131,8 @@ export async function startTestApp(
     .overrideProvider(PURGE_PASS)
     .useValue(async () => ({ acquired: false }))
     .overrideProvider(FRESHNESS_PASS)
-    .useValue(async () => ({ acquired: false }))
-    .compile();
+    .useValue(async () => ({ acquired: false }));
+  const moduleRef = await configure(base).compile();
   const app = configureApp(
     moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
       logger: false,

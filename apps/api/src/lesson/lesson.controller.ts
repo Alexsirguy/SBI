@@ -7,6 +7,16 @@ import { LessonService, type LessonStreamEvent } from "./lesson.service";
 
 interface RawResponse {
   raw: ServerResponse;
+  /** Headers Fastify's hooks already set on the reply, CORS among them. */
+  getHeaders(): Record<string, string | string[] | number | undefined>;
+}
+
+// Writing to the raw response skips Fastify's own send, so its headers must be carried over.
+function streamHeaders(res: RawResponse): Record<string, string | string[] | number> {
+  const carried = Object.entries(res.getHeaders()).filter(
+    (entry): entry is [string, string | string[] | number] => entry[1] !== undefined,
+  );
+  return { ...Object.fromEntries(carried), ...STREAM_HEADERS };
 }
 
 const STREAM_HEADERS = {
@@ -32,7 +42,7 @@ export class LessonController {
     const events = this.lessons.streamLesson(body);
     const first = await events.next();
     // Headers wait for the first event, so pre-stream failures still map to HTTP errors.
-    res.raw.writeHead(200, STREAM_HEADERS);
+    res.raw.writeHead(200, streamHeaders(res));
     try {
       if (!first.done) res.raw.write(frame(first.value));
       for await (const event of events) res.raw.write(frame(event));
