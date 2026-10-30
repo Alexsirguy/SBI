@@ -86,3 +86,27 @@ input[type="number"] {
     opacity: 0.5;
   }
 }
+
+/* Observation and explanation differ in border style and in words, never by colour alone. */
+.lesson-section {
+  margin: 1.5rem 0;
+}
+
+.evidence-observation {
+  border-left: 4px solid currentColor;
+  padding-left: 0.75rem;
+}
+
+.evidence-inference {
+  border-left: 4px dashed currentColor;
+  padding-left: 0.75rem;
+}
+
+.short-answer {
+  font-size: 1.125rem;
+}
+
+.causal-steps li,
+.concepts li {
+  margin-bottom: 0.25rem;
+}
