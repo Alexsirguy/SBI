@@ -122,6 +122,47 @@ test("explains a failure and tries again on request", async ({ page }) => {
   await expect(alert).toHaveCount(0);
 });
 
+test("depth and age band request the matching lesson and last for the session", async ({
+  page,
+}) => {
+  const requests: { readingLevel: string; audience: string }[] = [];
+  await page.route("**/lessons", async (route) => {
+    if (route.request().method() === "OPTIONS") {
+      return route.fulfill({
+        headers: {
+          "access-control-allow-origin": "*",
+          "access-control-allow-headers": "content-type",
+          "access-control-allow-methods": "GET, POST",
+        },
+        status: 204,
+      });
+    }
+    requests.push(route.request().postDataJSON() as { readingLevel: string; audience: string });
+    return route.fulfill({
+      body: FULL,
+      headers: { "access-control-allow-origin": "*", "content-type": "text/event-stream" },
+    });
+  });
+  await page.goto(LESSON_URL);
+  const settings = page.getByRole("form", { name: "Lesson settings" });
+  await expect(settings.getByRole("radio", { name: /Explore/ })).toBeChecked();
+  await expect(settings.getByLabel("Age band (optional)")).toHaveValue("none");
+
+  await settings.getByRole("radio", { name: /Deeper/ }).check();
+  await expect(page).toHaveURL(/depth=deeper/);
+  await settings.getByLabel("Age band (optional)").selectOption("teen");
+  await expect(page).toHaveURL(/age=teen/);
+  await expect
+    .poll(() => requests.at(-1))
+    .toMatchObject({ readingLevel: "technical", audience: "teen" });
+  expect(requests[0]).toMatchObject({ readingLevel: "plain", audience: "general" });
+
+  // A link with no settings still gets the session's choice when a lesson is started again.
+  const remembered = await page.evaluate(() => sessionStorage.getItem("sbi.lesson-prefs"));
+  expect(JSON.parse(remembered ?? "{}")).toEqual({ depth: "deeper", age: "teen" });
+  await expectNoAxeViolations(page);
+});
+
 test("asks for an object when the link names none", async ({ page }) => {
   await page.goto("/lesson");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Choose an object first");

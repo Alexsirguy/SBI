@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LessonReader } from "./lesson-reader";
 import { lessonRequestFrom } from "./lesson-request";
+import { parsePrefs } from "./prefs";
 
 const param = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
 
@@ -11,10 +12,14 @@ export default async function LessonPage({
 }) {
   const params = await searchParams;
   const label = param(params.label)?.trim() || "this object";
+  const question = param(params.q)?.trim() || undefined;
+  const prefs = parsePrefs(param(params.depth), param(params.age));
   const request = lessonRequestFrom({
     taxonomyId: param(params.taxonomyId),
     label,
-    q: param(params.q),
+    q: question,
+    depth: prefs.depth,
+    age: prefs.age,
   });
   if (!request) {
     return (
@@ -27,5 +32,13 @@ export default async function LessonPage({
     );
   }
   // Keyed by the request so a new object or question starts a fresh stream.
-  return <LessonReader key={JSON.stringify(request)} request={request} label={label} />;
+  return (
+    <LessonReader
+      key={JSON.stringify(request)}
+      request={request}
+      label={label}
+      prefs={prefs}
+      question={question}
+    />
+  );
 }
