@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { webEnv } from "../../env";
+import { CameraView } from "./camera-view";
 import { CropBox } from "./crop-box";
 import {
   ACCEPTED_EXTENSIONS,
@@ -37,6 +38,35 @@ const CROP_FIELDS = [
   { key: "height", label: "Height (px)" },
 ] as const;
 
+function CameraIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M4 8h3l2-3h6l2 3h3v11H4z M12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M12 15V4 M7 9l5-5 5 5 M5 15v5h14v-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function describe(image: ProcessedImage): string {
   const format = image.type === "image/jpeg" || image.type === "" ? "JPEG" : image.type;
   return `${image.width} by ${image.height} pixels, ${format} (${formatBytes(image.size)})`;
@@ -48,13 +78,15 @@ function fullFrame(image: ProcessedImage): CropRect {
 
 export function CaptureForm() {
   const limits = webEnv.capture;
-  const cameraId = useId();
   const uploadId = useId();
   const problemId = useId();
   const checkId = useId();
   const confirmId = useId();
   const uploadHintId = useId();
   const cameraRef = useRef<HTMLInputElement>(null);
+  const takeRef = useRef<HTMLButtonElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraNote, setCameraNote] = useState<{ text: string; offerApp: boolean } | null>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
   // Bumped on every new selection so a slow earlier decode cannot overwrite a newer photo.
   const runRef = useRef(0);
@@ -124,11 +156,29 @@ export function CaptureForm() {
         input.value = "";
       }
     }
-    cameraRef.current?.focus();
+    takeRef.current?.focus();
   }
 
-  async function choose(input: HTMLInputElement) {
-    const selected = input.files?.[0];
+  // A live view needs a secure page and browser support; otherwise the device's own camera app opens.
+  function takePhoto() {
+    if (typeof navigator.mediaDevices?.getUserMedia === "function") {
+      setCameraNote(null);
+      setCameraOpen(true);
+    } else {
+      setCameraNote({
+        text: "This browser can't show a live camera here, so your camera app opens instead.",
+        offerApp: false,
+      });
+      cameraRef.current?.click();
+    }
+  }
+
+  function closeCamera() {
+    setCameraOpen(false);
+    takeRef.current?.focus();
+  }
+
+  async function choose(selected: File | undefined) {
     if (!selected) {
       return;
     }
@@ -250,33 +300,78 @@ export function CaptureForm() {
           upload();
         }}
       >
-        <div className="file-pick file-pick--primary">
-          <label htmlFor={cameraId}>Take a photo</label>
+        <fieldset className="photo-choice">
+          <legend>Add a photo</legend>
+          <div className="photo-choice__actions">
+            <button
+              ref={takeRef}
+              type="button"
+              className="sbi-button sbi-button--primary"
+              aria-expanded={cameraOpen}
+              onClick={takePhoto}
+            >
+              <CameraIcon />
+              Take a photo
+            </button>
+            <span className="photo-choice__upload">
+              <input
+                id={uploadId}
+                ref={uploadRef}
+                name="upload"
+                type="file"
+                className="photo-choice__file"
+                aria-invalid={problem ? true : undefined}
+                aria-describedby={problem ? problemId : undefined}
+                accept={ACCEPTED_EXTENSIONS}
+                onChange={(event) => void choose(event.currentTarget.files?.[0])}
+              />
+              <label htmlFor={uploadId} className="sbi-button sbi-button--quiet">
+                <UploadIcon />
+                Upload a photo
+              </label>
+            </span>
+          </div>
+          {/* The fallback when no live view is possible: the device's own camera app. */}
           <input
-            id={cameraId}
             ref={cameraRef}
             name="camera"
             type="file"
-            aria-invalid={problem ? true : undefined}
-            aria-describedby={problem ? problemId : undefined}
+            hidden
             accept="image/*"
             capture="environment"
-            onChange={(event) => void choose(event.currentTarget)}
+            onChange={(event) => void choose(event.currentTarget.files?.[0])}
           />
-        </div>
-        <div className="file-pick">
-          <label htmlFor={uploadId}>Upload a photo</label>
-          <input
-            id={uploadId}
-            ref={uploadRef}
-            name="upload"
-            type="file"
-            aria-invalid={problem ? true : undefined}
-            aria-describedby={problem ? problemId : undefined}
-            accept={ACCEPTED_EXTENSIONS}
-            onChange={(event) => void choose(event.currentTarget)}
-          />
-        </div>
+          {cameraOpen ? (
+            <CameraView
+              onCancel={closeCamera}
+              onSnap={(photo) => {
+                closeCamera();
+                void choose(photo);
+              }}
+              onUnavailable={(reason) => {
+                setCameraOpen(false);
+                setCameraNote({
+                  text: `${reason} You can use your camera app or upload a photo instead.`,
+                  offerApp: true,
+                });
+              }}
+            />
+          ) : null}
+          {cameraNote ? (
+            <div className="photo-choice__note">
+              <p>{cameraNote.text}</p>
+              {cameraNote.offerApp ? (
+                <button
+                  type="button"
+                  className="sbi-button sbi-button--quiet sbi-button--small"
+                  onClick={() => cameraRef.current?.click()}
+                >
+                  Open camera app
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </fieldset>
         <p className="sbi-field__hint">
           Accepted formats: {ACCEPTED_FORMATS_LABEL}. Maximum size:{" "}
           {uploadLimitLabel(limits.maxUploadBytes)}.
