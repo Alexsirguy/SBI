@@ -24,6 +24,15 @@ export const EvidencePack = z.object({
       question: z.string().min(1),
       claimIds: z.array(z.uuid()),
       sources: z.number().int().nonnegative(),
+      // Optional so packs stored before searches were recorded still parse.
+      searched: z
+        .object({
+          query: z.string(),
+          articles: z.array(z.string()),
+          textbookPages: z.array(z.string()),
+          refs: z.array(z.string()),
+        })
+        .optional(),
       failures: z.array(z.string()),
       completed: z.boolean(),
     }),
@@ -162,6 +171,12 @@ export async function gatherEvidence(
     try {
       const found = await searchSources(question, deps.search, { signal });
       result.failures.push(...found.failures);
+      result.searched = {
+        query: question.searchTerms.join(" "),
+        articles: found.articles,
+        textbookPages: found.textbookPages,
+        refs: found.refs.map((ref) => ref.doi ?? ref.pmid ?? ref.url ?? "unknown"),
+      };
       const fetched: FetchedSource[] = [];
       for (const ref of found.refs) {
         try {
