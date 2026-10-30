@@ -1,4 +1,4 @@
-import { Lesson, MODEL_KNOWLEDGE_NOTE, type QuickAnswer } from "@sbi/contracts";
+import { Lesson, LessonSources, MODEL_KNOWLEDGE_NOTE, type QuickAnswer } from "@sbi/contracts";
 
 // A full lesson in the shape the API streams, for unit tests and mocked end-to-end runs.
 const LESSON_ID = "0192f1a0-0000-7000-8000-00000000a001";
@@ -159,6 +159,45 @@ export const SAMPLE_LESSON: Lesson = Lesson.parse({
       message:
         "Parts of this lesson come from the AI's general knowledge because no trusted source was found for them, and no reviewer has checked it yet. Report anything that looks wrong.",
       sectionIds: [],
+    },
+  ],
+});
+
+export const SAMPLE_SOURCES: LessonSources = LessonSources.parse({
+  lessonId: LESSON_ID,
+  sources: [
+    {
+      sourceId: SOURCE_B,
+      title: "B27: Refraction, Dispersion, Internal Reflection",
+      url: "https://phys.libretexts.org/Bookshelves/University_Physics/Calculus-Based_Physics_(Schnick)/B27",
+      credit:
+        "B27: Refraction, Dispersion, Internal Reflection. Calculus-Based Physics (Schnick), LibreTexts. CC BY-SA 2.5. Accessed 2026-10-30.",
+      license: { label: "CC BY-SA 2.5", url: "https://creativecommons.org/licenses/by-sa/2.5/" },
+      excerpts: [
+        {
+          excerptId: "x1",
+          mode: "quote",
+          text: "Light changes direction at a boundary.",
+          location: "paragraph 3",
+        },
+      ],
+    },
+    {
+      sourceId: SOURCE_A,
+      title: "2.8: The Simple Magnifier",
+      url: "https://phys.libretexts.org/Bookshelves/University_Physics/University_Physics_(OpenStax)/2.08",
+      credit:
+        "2.8: The Simple Magnifier. University Physics (OpenStax), LibreTexts. CC BY 4.0. Accessed 2026-10-30.",
+      license: { label: "CC BY 4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
+      excerpts: [
+        {
+          excerptId: "x1",
+          mode: "quote",
+          text: "Refraction bends light passing into glass.",
+          location: "paragraph 1",
+        },
+        { excerptId: "x2", mode: "link", location: "paragraph 4" },
+      ],
     },
   ],
 });

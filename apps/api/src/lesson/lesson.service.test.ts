@@ -283,8 +283,13 @@ describe("LessonService", () => {
 
     const events = await collect(service);
 
-    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
-    const [answer, full, visuals] = events;
+    expect(events.map((event) => event.type)).toEqual([
+      "quick-answer",
+      "lesson",
+      "sources",
+      "visuals",
+    ]);
+    const [answer, full, sources, visuals] = events;
     expect(answer?.type).toBe("quick-answer");
     if (answer?.type !== "quick-answer") throw new Error("First event must answer first");
     expect(answer.data).toMatchObject({
@@ -298,6 +303,15 @@ describe("LessonService", () => {
     expect(() => Lesson.parse(full.data)).not.toThrow();
     expect(full.data.reuse.policyVersion).toBe(LESSON_POLICY_VERSION);
     expect(visuals).toMatchObject({ type: "visuals", data: { visuals: [] } });
+    if (sources?.type !== "sources") throw new Error("Sources must follow the lesson");
+    expect(sources.data.sources.map((source) => source.credit).sort()).toEqual([
+      expect.stringContaining("NIST"),
+      expect.stringContaining("USGS"),
+    ]);
+    expect(sources.data.sources[0]?.excerpts[0]).toMatchObject({
+      mode: "quote",
+      text: "Bimetallic thermostats snap open when hot.",
+    });
     expect(lessons).toHaveLength(1);
   });
 
@@ -325,7 +339,7 @@ describe("LessonService", () => {
     release();
     const rest: LessonStreamEvent[] = [];
     for await (const event of stream) if (event.type !== "progress") rest.push(event);
-    expect(rest.map((event) => event.type)).toEqual(["lesson", "visuals"]);
+    expect(rest.map((event) => event.type)).toEqual(["lesson", "sources", "visuals"]);
     const lesson = rest[0]?.type === "lesson" ? rest[0].data : undefined;
     expect(lesson?.lessonId).toBe(first.value.data.lessonId);
     expect(lesson?.sections.find((section) => section.module === "short-answer")?.text).toBe(QUICK);
@@ -334,7 +348,12 @@ describe("LessonService", () => {
   it("falls back to the lesson's own short answer when the quick one fails its gate", async () => {
     const { service } = setup(scriptedProvider({ quickEntailment: CONTRADICTS }));
     const events = await collect(service);
-    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    expect(events.map((event) => event.type)).toEqual([
+      "quick-answer",
+      "lesson",
+      "sources",
+      "visuals",
+    ]);
     if (events[0]?.type !== "quick-answer") throw new Error("expected the answer first");
     expect(events[0].data).toMatchObject({
       shortAnswer: "Heat snaps a small switch.",
@@ -368,7 +387,12 @@ describe("LessonService", () => {
       gatherer([EVIDENCE.claim]),
     );
     const events = await collect(target);
-    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    expect(events.map((event) => event.type)).toEqual([
+      "quick-answer",
+      "lesson",
+      "sources",
+      "visuals",
+    ]);
     const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
     expect(lesson?.claims.map((claim) => claim.claimId)).toEqual([EVIDENCE.claim.claimId]);
     expect(lesson?.concepts.map((concept) => concept.label)).toEqual(["Kettle"]);
@@ -406,7 +430,7 @@ describe("LessonService", () => {
       "progress:drafting",
     ]);
     expect(types).toContain("progress:checking");
-    expect(types.slice(-2)).toEqual(["lesson", "visuals"]);
+    expect(types.slice(-3)).toEqual(["lesson", "sources", "visuals"]);
     const researching = events[0]?.type === "progress" ? events[0].data.message : "";
     expect(researching).toContain("How does a bimetallic strip bend?");
   });
@@ -502,7 +526,12 @@ describe("LessonService", () => {
       gatherer([]),
     );
     const events = await collect(target);
-    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    expect(events.map((event) => event.type)).toEqual([
+      "quick-answer",
+      "lesson",
+      "sources",
+      "visuals",
+    ]);
     const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
     expect(lesson?.claims.map((claim) => claim.origin)).toEqual(["model"]);
     expect(lesson?.reviewStatus).toBe("needs-review");
@@ -576,7 +605,12 @@ describe("LessonService", () => {
       throw new LlmError("stub: timed out after 10ms");
     });
     const events = await collect(service);
-    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    expect(events.map((event) => event.type)).toEqual([
+      "quick-answer",
+      "lesson",
+      "sources",
+      "visuals",
+    ]);
   });
 
   it("leaves disputed gathered claims out of the lesson", async () => {
@@ -659,7 +693,7 @@ describe("LessonService", () => {
 
     if (events[0]?.type !== "quick-answer") throw new Error("First event must answer first");
     expect(events[0].data.kind).toBe("fallback");
-    expect(events).toHaveLength(3);
+    expect(events).toHaveLength(4);
   });
 
   it("asks for a retry when timeouts leave no fallback", async () => {
@@ -695,7 +729,12 @@ describe("LessonService", () => {
       }),
     );
     const events = await collect(service);
-    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    expect(events.map((event) => event.type)).toEqual([
+      "quick-answer",
+      "lesson",
+      "sources",
+      "visuals",
+    ]);
     const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
     expect(lesson?.reviewStatus).toBe("auto-validated");
     expect(
@@ -717,7 +756,12 @@ describe("LessonService", () => {
     };
     const { service } = setup(provider);
     const events = await collect(service);
-    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    expect(events.map((event) => event.type)).toEqual([
+      "quick-answer",
+      "lesson",
+      "sources",
+      "visuals",
+    ]);
     const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
     expect(lesson?.reviewStatus).toBe("needs-review");
     expect(lesson?.disclaimers?.map((item) => item.kind)).toContain("unverified-sections");
@@ -745,7 +789,12 @@ describe("LessonService", () => {
       safetyClass: "low",
     });
 
-    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    expect(events.map((event) => event.type)).toEqual([
+      "quick-answer",
+      "lesson",
+      "sources",
+      "visuals",
+    ]);
     const [answer, lesson] = events;
     if (answer?.type !== "quick-answer" || lesson?.type !== "lesson") throw new Error("order");
     expect(lesson.data).toMatchObject({ safetyClass: "high", reviewStatus: "needs-review" });

@@ -3,6 +3,7 @@ import {
   Lesson,
   LessonProgress,
   LessonVisuals,
+  type LessonSources,
   QuickAnswer,
   newId,
   type Claim,
@@ -57,6 +58,7 @@ import {
   TAXONOMY,
 } from "../tokens";
 import { createEventQueue } from "./event-queue";
+import { lessonSources } from "./sources";
 import { UserFacingException } from "../common/user-facing.exception";
 
 const UNAVAILABLE = "Lesson generation is unavailable right now. Try again later.";
@@ -123,6 +125,7 @@ export type LessonStreamEvent =
   | { type: "progress"; data: LessonProgress }
   | { type: "quick-answer"; data: QuickAnswer }
   | { type: "lesson"; data: Lesson }
+  | { type: "sources"; data: LessonSources }
   | { type: "visuals"; data: LessonVisuals };
 
 function slug(label: string, taken: Set<string>): string {
@@ -555,6 +558,15 @@ export class LessonService {
       };
     }
     yield { type: "lesson", data: validated };
+    // After the text, so citation markers can name their sources without delaying the lesson.
+    const sourceIds = [...new Set(validated.claims.flatMap((claim) => claim.sourceIds))];
+    yield {
+      type: "sources",
+      data: lessonSources(
+        validated,
+        sourceIds.length > 0 ? await this.evidence.sources.getMany(sourceIds) : [],
+      ),
+    };
     yield {
       type: "visuals",
       data: LessonVisuals.parse({ lessonId: validated.lessonId, visuals: validated.visuals }),

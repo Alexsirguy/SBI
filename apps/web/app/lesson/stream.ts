@@ -4,6 +4,7 @@ import {
   Lesson,
   LessonProgress,
   LessonRequest,
+  LessonSources,
   LessonVisuals,
   QuickAnswer,
 } from "@sbi/contracts";
@@ -13,12 +14,14 @@ export type LessonEvent =
   | { type: "progress"; data: LessonProgress }
   | { type: "quick-answer"; data: QuickAnswer }
   | { type: "lesson"; data: Lesson }
+  | { type: "sources"; data: LessonSources }
   | { type: "visuals"; data: LessonVisuals };
 
 const PARSERS = {
   progress: LessonProgress,
   "quick-answer": QuickAnswer,
   lesson: Lesson,
+  sources: LessonSources,
   visuals: LessonVisuals,
 } as const;
 
