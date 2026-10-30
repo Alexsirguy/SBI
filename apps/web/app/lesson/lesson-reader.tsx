@@ -1,8 +1,9 @@
 "use client";
 
-import type { LessonDisclaimer, LessonRequest, LessonSection } from "@sbi/contracts";
-import { useId } from "react";
-import { MODULE_LABELS, MODULES } from "./modules";
+import type { LessonDisclaimer, LessonRequest } from "@sbi/contracts";
+import { sectionAnchor } from "./modules/frame";
+import { MODULE_LABELS, MODULES } from "./modules/labels";
+import { SectionView } from "./modules/section-view";
 import { useLessonStream } from "./use-lesson-stream";
 
 interface LessonReaderProps {
@@ -11,8 +12,6 @@ interface LessonReaderProps {
   label: string;
   fetcher?: typeof fetch;
 }
-
-const sectionAnchor = (section: Pick<LessonSection, "module">) => `section-${section.module}`;
 
 function Disclaimers({ items }: { items: LessonDisclaimer[] }) {
   if (items.length === 0) return null;
@@ -27,17 +26,6 @@ function Disclaimers({ items }: { items: LessonDisclaimer[] }) {
         ))}
       </ul>
     </aside>
-  );
-}
-
-function SectionView({ section }: { section: LessonSection }) {
-  const headingId = useId();
-  return (
-    <section id={sectionAnchor(section)} aria-labelledby={headingId} className="lesson-section">
-      <p className="module-label">{MODULE_LABELS[section.module]}</p>
-      <h2 id={headingId}>{section.heading ?? MODULE_LABELS[section.module]}</h2>
-      <p>{section.text}</p>
-    </section>
   );
 }
 
@@ -100,7 +88,7 @@ export function LessonReader({ request, label, fetcher }: LessonReaderProps) {
           <div aria-busy={!lesson} className="lesson-sections">
             {lesson
               ? lesson.sections.map((section) => (
-                  <SectionView key={section.sectionId} section={section} />
+                  <SectionView key={section.sectionId} section={section} lesson={lesson} />
                 ))
               : MODULES.map((module) => (
                   <div key={module} className="lesson-section skeleton" aria-hidden="true">
