@@ -1,9 +1,9 @@
 "use client";
 
-import type { LessonDisclaimer, LessonRequest } from "@sbi/contracts";
+import type { LessonDisclaimer, LessonRequest, LessonVisuals } from "@sbi/contracts";
 import { Button, Mark, Notice, Placeholder, StatusLine, VisuallyHidden } from "@sbi/ui";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { AskQuestion } from "./ask-question";
 import { CitationProvider, citationIndex, SourceList } from "./citations";
 import { DepthControls } from "./depth-controls";
@@ -12,7 +12,8 @@ import { lessonHref } from "./lesson-request";
 import { sectionAnchor } from "./modules/frame";
 import { MODULE_LABELS, MODULES } from "./modules/labels";
 import { SectionView } from "./modules/section-view";
-import { type LessonPrefs, writePrefs } from "./prefs";
+import { DEPTHS, type LessonPrefs, writePrefs } from "./prefs";
+import { useCurrentSection } from "./use-current-section";
 import { useLessonStream } from "./use-lesson-stream";
 
 interface LessonReaderProps {
@@ -36,6 +37,21 @@ function Disclaimers({ items }: { items: LessonDisclaimer[] }) {
         </Notice>
       ))}
     </aside>
+  );
+}
+
+// Reserved from the start so diagrams arrive without moving the text the learner is reading.
+function VisualsSlot({ visuals }: { visuals: LessonVisuals["visuals"] }) {
+  if (visuals.length === 0) return null;
+  return (
+    <section aria-labelledby="visuals-heading" className="lesson-visuals">
+      <h2 id="visuals-heading">Pictures</h2>
+      <ul>
+        {visuals.map((visual) => (
+          <li key={visual.visualId}>{visual.alt}</li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -66,11 +82,19 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const loading = status === "loading";
   const disclaimers = lesson?.disclaimers ?? answer?.disclaimers ?? [];
   const sections = new Map(lesson?.sections.map((section) => [section.module, section]));
+  const anchors = lesson?.sections.map((section) => sectionAnchor(section)) ?? [];
+  const currentSection = useCurrentSection(anchors);
+  const progressIndex = currentSection ? anchors.indexOf(currentSection) : -1;
 
   return (
     <main className="lesson">
-      <h1>{lesson?.title ?? answer?.title ?? `Lesson: ${label}`}</h1>
-      <DepthControls prefs={chosen} onChange={choose} />
+      <header className="lesson-head">
+        <p className="module-label">
+          {label} · {DEPTHS[chosen.depth].label}
+        </p>
+        <h1>{lesson?.title ?? answer?.title ?? `Lesson: ${label}`}</h1>
+        <DepthControls prefs={chosen} onChange={choose} />
+      </header>
       <StatusLine>
         {status === "ready"
           ? "Lesson ready."
@@ -119,15 +143,23 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
         </section>
       ) : null}
       {error && !lesson ? null : (
-        <>
+        <div className="reader-layout">
           <nav aria-label="Lesson sections" className="lesson-nav">
             <ol>
-              {MODULES.map((module) => {
+              {MODULES.map((module, index) => {
                 const section = sections.get(module);
                 return (
                   <li key={module}>
+                    <span className="nav-number" aria-hidden="true">
+                      {index + 1}
+                    </span>
                     {section ? (
-                      <a href={`#${sectionAnchor(section)}`}>
+                      <a
+                        href={`#${sectionAnchor(section)}`}
+                        aria-current={
+                          currentSection === sectionAnchor(section) ? "location" : undefined
+                        }
+                      >
                         {section.heading ?? MODULE_LABELS[module]}
                       </a>
                     ) : (
@@ -141,43 +173,59 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
               })}
             </ol>
           </nav>
-          <div aria-busy={!lesson} className="lesson-sections">
-            {lesson ? (
-              <CitationProvider value={citationIndex(lesson, sources)}>
-                {lesson.sections.map((section) => (
-                  <SectionView
-                    key={section.sectionId}
-                    section={section}
-                    lesson={lesson}
-                    objectLabel={label}
-                    askQuestion={
-                      <AskQuestion taxonomyId={request.taxonomyId} label={label} prefs={prefs} />
-                    }
-                  />
-                ))}
-              </CitationProvider>
-            ) : (
-              MODULES.map((module) => (
-                <div key={module} className="lesson-section" aria-hidden="true">
-                  <p className="module-label">{MODULE_LABELS[module]}</p>
-                  <Placeholder lines={2} />
-                </div>
-              ))
-            )}
+          <div className="reader-main">
+            <div aria-busy={!lesson} className="lesson-sections">
+              {lesson ? (
+                <CitationProvider value={citationIndex(lesson, sources)}>
+                  {lesson.sections.map((section) => (
+                    <Fragment key={section.sectionId}>
+                      <SectionView
+                        section={section}
+                        lesson={lesson}
+                        objectLabel={label}
+                        askQuestion={
+                          <AskQuestion
+                            taxonomyId={request.taxonomyId}
+                            label={label}
+                            prefs={prefs}
+                          />
+                        }
+                      />
+                      {/* Pictures sit beside the mechanism they show, after the text (#83). */}
+                      {section.module === "how-parts-work" ? (
+                        <VisualsSlot visuals={visuals?.visuals ?? []} />
+                      ) : null}
+                    </Fragment>
+                  ))}
+                </CitationProvider>
+              ) : (
+                MODULES.map((module) => (
+                  <div key={module} className="lesson-section" aria-hidden="true">
+                    <p className="module-label">{MODULE_LABELS[module]}</p>
+                    <Placeholder lines={2} />
+                  </div>
+                ))
+              )}
+            </div>
+            {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
+            {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
           </div>
-          {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
-          {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
-        </>
+        </div>
       )}
-      {lesson && visuals && visuals.visuals.length > 0 ? (
-        <section aria-labelledby="visuals-heading" className="lesson-visuals">
-          <h2 id="visuals-heading">Pictures</h2>
-          <ul>
-            {visuals.visuals.map((visual) => (
-              <li key={visual.visualId}>{visual.alt}</li>
-            ))}
-          </ul>
-        </section>
+      {lesson && progressIndex >= 0 ? (
+        <div className="reading-progress" aria-hidden="true">
+          <span>
+            {progressIndex + 1} of {lesson.sections.length} ·{" "}
+            {lesson.sections[progressIndex]?.heading ??
+              MODULE_LABELS[lesson.sections[progressIndex]?.module ?? "what-youre-seeing"]}
+          </span>
+          <span className="reading-progress__track">
+            <span
+              className="reading-progress__fill"
+              style={{ width: `${((progressIndex + 1) / lesson.sections.length) * 100}%` }}
+            />
+          </span>
+        </div>
       ) : null}
     </main>
   );

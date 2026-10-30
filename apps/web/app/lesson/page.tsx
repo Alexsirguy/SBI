@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LessonReader } from "./lesson-reader";
+import "./lesson.css";
 import { lessonRequestFrom } from "./lesson-request";
 import { parsePrefs } from "./prefs";
 

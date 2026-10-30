@@ -109,6 +109,19 @@ test("feedback moves focus to its confirmation, and to the field a report is mis
   await expect(page.getByText("Thanks. A reviewer will look at this lesson.")).toBeFocused();
 });
 
+test("the section list marks the section being read", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(LESSON_URL);
+  await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+  const nav = page.getByRole("navigation", { name: "Lesson sections" });
+  await nav.getByRole("link", { name: "Reading stones" }).click();
+  await expect(nav.getByRole("link", { name: "Reading stones" })).toHaveAttribute(
+    "aria-current",
+    "location",
+  );
+  await expect(nav.locator('[aria-current="location"]')).toHaveCount(1);
+});
+
 test("every reader control shows a clear focus outline", async ({ page }) => {
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
@@ -164,6 +177,6 @@ test("while loading, the section list says which sections are still coming", asy
   await mockLesson(page, null);
   await page.goto(LESSON_URL);
   const nav = page.getByRole("navigation", { name: "Lesson sections" });
-  await expect(nav.getByRole("listitem").first()).toHaveText("What you're seeing (loading)");
+  await expect(nav.getByRole("listitem").first()).toContainText("What you're seeing (loading)");
   await expectNoAxeViolations(page);
 });
