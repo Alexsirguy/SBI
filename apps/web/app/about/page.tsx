@@ -12,7 +12,7 @@ export default function AboutPage() {
         A way to understand how everyday things work, starting from what you can see.
       </p>
 
-      <h2>How lessons are made</h2>
+      <h2 id="checks">How lessons are made</h2>
       <ol>
         <li>You show us an object and confirm what it is.</li>
         <li>
@@ -30,14 +30,14 @@ export default function AboutPage() {
         <li>Lessons that have not been checked by a reviewer say that too.</li>
       </ol>
 
-      <h2>What it is not</h2>
+      <h2 id="safety">What it is not</h2>
       <p>
         Lessons explain the science behind an object. They are not advice on using, repairing,
         eating or taking anything. Lessons about medicines, chemicals, electricity and wild
         mushrooms start with a safety note and stay with the ideas.
       </p>
 
-      <h2>Spotted a mistake?</h2>
+      <h2 id="report">Spotted a mistake?</h2>
       <p>
         Every lesson ends with a way to report a problem. Reports go to a reviewer with the exact
         version of the lesson you read.
