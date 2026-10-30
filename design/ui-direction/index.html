@@ -1,0 +1,1306 @@
+<title>Workbench Design Direction</title>
+<meta name="claude:viewport-fit-sides" content="cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap"
+/>
+<style>
+  /* Layout: a "bench" page holding a phone walk-through beside the direction's rules, then the desktop reader below. */
+  :root {
+    --bench: #eaf0ee;
+    --paper: #ffffff;
+    --paper-sunk: #f4f7f6;
+    --ink: #142a33;
+    --ink-soft: #4d6470;
+    --rule: #c7d3d3;
+    --action: #0b6a64;
+    --action-ink: #ffffff;
+    --marker: #ffd84d;
+    --marker-ink: #2a2200;
+    --caution: #a63a1f;
+    --caution-wash: #fbe9e3;
+    --note-wash: #eef4f9;
+    --note: #2a5a86;
+    --focus: #1f5fd1;
+    --display: "Bricolage Grotesque", "Atkinson Hyperlegible Next", system-ui, sans-serif;
+    --body:
+      "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI",
+      sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --s1: 4px;
+    --s2: 8px;
+    --s3: 12px;
+    --s4: 16px;
+    --s5: 24px;
+    --s6: 32px;
+    --s7: 48px;
+    --r-s: 6px;
+    --r-m: 12px;
+    --r-l: 20px;
+    --lift: 0 1px 2px rgb(20 42 51 / 0.08), 0 6px 20px rgb(20 42 51 / 0.06);
+    --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bench: #0e191d;
+      --paper: #16242a;
+      --paper-sunk: #1b2c33;
+      --ink: #e6eef0;
+      --ink-soft: #a6b8be;
+      --rule: #2e434b;
+      --action: #4cc4b9;
+      --action-ink: #04211f;
+      --marker: #e7c43a;
+      --marker-ink: #1d1700;
+      --caution: #ff917a;
+      --caution-wash: #3a1e17;
+      --note-wash: #182a39;
+      --note: #93c2ee;
+      --focus: #8fb4ff;
+      --lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bench: #0e191d;
+    --paper: #16242a;
+    --paper-sunk: #1b2c33;
+    --ink: #e6eef0;
+    --ink-soft: #a6b8be;
+    --rule: #2e434b;
+    --action: #4cc4b9;
+    --action-ink: #04211f;
+    --marker: #e7c43a;
+    --marker-ink: #1d1700;
+    --caution: #ff917a;
+    --caution-wash: #3a1e17;
+    --note-wash: #182a39;
+    --note: #93c2ee;
+    --focus: #8fb4ff;
+    --lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.3);
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bench);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.55;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 32px 64px;
+  }
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--display);
+    font-weight: 800;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0;
+  }
+  p {
+    margin: 0;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    gap: var(--s7);
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  /* A full fill with its own ink: light text on the highlighter is unreadable in dark mode. */
+  .mark {
+    background: var(--marker);
+    color: var(--marker-ink);
+    padding-inline: 3px;
+    border-radius: 3px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  /* Masthead */
+  .mast {
+    display: grid;
+    gap: var(--s4);
+    max-width: 760px;
+  }
+  .mast h1 {
+    font-size: clamp(34px, 6vw, 56px);
+    letter-spacing: -0.01em;
+  }
+  .mast p {
+    font-size: 19px;
+    color: var(--ink-soft);
+  }
+  .mast .toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s2);
+    align-items: center;
+  }
+  .chip-btn {
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    border-radius: 999px;
+    padding: 6px 14px;
+    min-height: 40px;
+    cursor: pointer;
+  }
+  .chip-btn[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  /* Studio: phone + rules */
+  .studio {
+    display: grid;
+    grid-template-columns: 400px minmax(0, 1fr);
+    gap: var(--s7);
+    align-items: start;
+  }
+  @media (max-width: 920px) {
+    .studio {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .phone {
+    width: 100%;
+    max-width: 400px;
+    justify-self: center;
+    background: var(--paper);
+    border-radius: 36px;
+    box-shadow: var(--lift);
+    border: 10px solid var(--ink);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 780px;
+  }
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 22px 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .screen {
+    overflow-y: auto;
+    padding: var(--s4) var(--s4) var(--s6);
+    display: grid;
+    gap: var(--s4);
+    align-content: start;
+    background: var(--paper);
+  }
+  .phone-foot {
+    border-top: 1px solid var(--rule);
+    padding: var(--s3) var(--s4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--s2);
+    background: var(--paper);
+  }
+  .steps {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  /* Shared components */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s2);
+    min-height: 48px;
+    padding: 0 20px;
+    border-radius: var(--r-m);
+    border: 2px solid var(--action);
+    background: var(--action);
+    color: var(--action-ink);
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn.quiet {
+    background: transparent;
+    color: var(--action);
+  }
+  .btn.small {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 15px;
+  }
+  .btn.block {
+    width: 100%;
+  }
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+  .field label {
+    font-weight: 700;
+  }
+  .field input,
+  .field textarea,
+  .field select {
+    min-height: 48px;
+    border: 2px solid var(--rule);
+    border-radius: var(--r-m);
+    padding: 10px 14px;
+    background: var(--paper);
+  }
+  .field input:focus,
+  .field textarea:focus {
+    border-color: var(--action);
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--action) 30%, transparent);
+  }
+  .hint {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-l);
+    padding: var(--s4);
+    display: grid;
+    gap: var(--s3);
+  }
+  .sunk {
+    background: var(--paper-sunk);
+    border-radius: var(--r-m);
+    padding: var(--s3) var(--s4);
+  }
+
+  .notice {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--s3);
+    align-items: start;
+    border-radius: var(--r-m);
+    padding: var(--s3) var(--s4);
+    font-size: 15px;
+  }
+  .notice b {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 4px;
+  }
+  .notice.safety {
+    background: var(--caution-wash);
+    border-left: 6px solid var(--caution);
+  }
+  .notice.safety b {
+    background: var(--caution);
+    color: var(--paper);
+  }
+  .notice.note {
+    background: var(--note-wash);
+    border-left: 6px double var(--note);
+  }
+  .notice.note b {
+    border: 1.5px solid var(--note);
+    color: var(--note);
+  }
+
+  /* Capture */
+  .hero-ask {
+    display: grid;
+    gap: var(--s3);
+  }
+  .hero-ask h2 {
+    font-size: 30px;
+  }
+  .viewfinder {
+    aspect-ratio: 4 / 3;
+    max-width: 100%;
+    border-radius: var(--r-l);
+    background: radial-gradient(
+      circle at 50% 45%,
+      color-mix(in srgb, var(--marker) 35%, var(--paper-sunk)) 0 22%,
+      var(--paper-sunk) 23%
+    );
+    position: relative;
+    display: grid;
+    place-items: center;
+    border: 2px dashed var(--rule);
+  }
+  .viewfinder svg {
+    width: 46%;
+    height: auto;
+  }
+  .corner {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 3px solid var(--ink);
+  }
+  .c1 {
+    top: 12px;
+    left: 12px;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 8px 0 0 0;
+  }
+  .c2 {
+    top: 12px;
+    right: 12px;
+    border-left: 0;
+    border-bottom: 0;
+    border-radius: 0 8px 0 0;
+  }
+  .c3 {
+    bottom: 12px;
+    left: 12px;
+    border-right: 0;
+    border-top: 0;
+    border-radius: 0 0 0 8px;
+  }
+  .c4 {
+    bottom: 12px;
+    right: 12px;
+    border-left: 0;
+    border-top: 0;
+    border-radius: 0 0 8px 0;
+  }
+  .check-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--s3);
+    align-items: center;
+    font-size: 15px;
+  }
+  .tick {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .tick.ok {
+    background: var(--action);
+    color: var(--action-ink);
+  }
+  .tick.warn {
+    background: var(--marker);
+    color: var(--marker-ink);
+  }
+  .candidates {
+    display: grid;
+    gap: var(--s2);
+  }
+  .candidate {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--s2);
+    align-items: center;
+    text-align: left;
+    border: 2px solid var(--rule);
+    border-radius: var(--r-m);
+    padding: 12px 14px;
+    background: var(--paper);
+    cursor: pointer;
+    min-height: 56px;
+  }
+  .candidate[aria-pressed="true"] {
+    border-color: var(--action);
+    box-shadow: inset 0 0 0 1px var(--action);
+  }
+  .certainty {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .privacy {
+    display: flex;
+    gap: var(--s2);
+    font-size: 14px;
+    color: var(--ink-soft);
+    align-items: flex-start;
+  }
+
+  /* Lesson */
+  .lesson-head {
+    display: grid;
+    gap: var(--s2);
+  }
+  .lesson-head h2 {
+    font-size: 27px;
+  }
+  .depth {
+    display: inline-grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 2px solid var(--rule);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+    width: 100%;
+  }
+  .depth button {
+    border: 0;
+    background: transparent;
+    border-radius: 999px;
+    min-height: 40px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .depth button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .quick {
+    background: var(--paper-sunk);
+    border-radius: var(--r-l);
+    padding: var(--s4);
+    display: grid;
+    gap: var(--s2);
+  }
+  .quick p.answer {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.3;
+  }
+  .provenance {
+    font-size: 14px;
+    color: var(--ink-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s2);
+    align-items: center;
+  }
+  .module {
+    display: grid;
+    gap: var(--s2);
+    padding-left: var(--s4);
+  }
+  .module.obs {
+    border-left: 4px solid var(--ink);
+  }
+  .module.why {
+    border-left: 4px dashed var(--ink-soft);
+  }
+  .module .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .module h3 {
+    font-size: 21px;
+  }
+  .num {
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--action);
+  }
+  .cite {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--action);
+    border: 1.5px solid currentColor;
+    border-radius: 4px;
+    padding: 0 4px;
+    margin-left: 2px;
+    vertical-align: 2px;
+  }
+  .status {
+    font-size: 14px;
+    border-top: 1px solid var(--rule);
+    padding-top: var(--s2);
+    color: var(--ink-soft);
+  }
+  .status strong {
+    color: var(--ink);
+  }
+  .steps-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    display: grid;
+    gap: var(--s2);
+  }
+  .steps-list li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: var(--s2);
+  }
+  .steps-list li::before {
+    content: counter(step);
+    font-family: var(--mono);
+    font-weight: 600;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--action);
+    color: var(--action);
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+  }
+  .ideas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s2);
+    align-items: center;
+    font-size: 15px;
+  }
+  .idea {
+    border: 1.5px solid var(--rule);
+    border-radius: 999px;
+    padding: 3px 10px;
+    background: var(--paper);
+  }
+  .arrow {
+    color: var(--ink-soft);
+  }
+  .progress-bar {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .progress-bar .track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--paper-sunk);
+    overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: var(--action);
+    width: 37.5%;
+  }
+  .progress-bar .label {
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    color: var(--ink-soft);
+  }
+  .skel {
+    display: grid;
+    gap: 8px;
+    padding-left: var(--s4);
+    border-left: 4px solid var(--paper-sunk);
+  }
+  .skel span {
+    height: 14px;
+    border-radius: 4px;
+    background: var(--paper-sunk);
+  }
+  .skel span:nth-child(2) {
+    width: 80%;
+  }
+  .skel span:nth-child(3) {
+    width: 55%;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .skel span {
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    .screen > * {
+      animation: rise 0.35s var(--ease) both;
+    }
+  }
+  @keyframes pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+  @keyframes rise {
+    from {
+      transform: translateY(6px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  .scale {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+  }
+  .scale button {
+    min-height: 44px;
+    border: 2px solid var(--rule);
+    border-radius: var(--r-s);
+    background: var(--paper);
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .scale button[aria-pressed="true"] {
+    border-color: var(--action);
+    background: var(--action);
+    color: var(--action-ink);
+  }
+  .scale-words {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .source {
+    display: grid;
+    gap: 4px;
+    font-size: 14px;
+  }
+  .source a {
+    color: var(--action);
+    font-weight: 600;
+  }
+  .source blockquote {
+    margin: 0;
+    padding-left: var(--s3);
+    border-left: 3px solid var(--marker);
+    color: var(--ink-soft);
+  }
+
+  /* Rules column */
+  .rules {
+    display: grid;
+    gap: var(--s6);
+    min-width: 0;
+  }
+  .rules h2 {
+    font-size: 28px;
+  }
+  .principles {
+    display: grid;
+    gap: var(--s4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .principles li {
+    display: grid;
+    gap: 2px;
+  }
+  .principles strong {
+    font-family: var(--display);
+    font-size: 19px;
+  }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--s3);
+  }
+  .swatch {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .swatch i {
+    display: block;
+    height: 56px;
+    border-radius: var(--r-m);
+    border: 1px solid var(--rule);
+  }
+  .swatch code {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .typescale {
+    display: grid;
+    gap: var(--s3);
+  }
+  .typescale div {
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr);
+    gap: var(--s3);
+    align-items: baseline;
+  }
+  .typescale code {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .tokens-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .tokens-table th,
+  .tokens-table td {
+    text-align: left;
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .tokens-table th {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .scroll {
+    overflow-x: auto;
+  }
+  .screen-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Desktop reader */
+  .desk {
+    display: grid;
+    gap: var(--s4);
+  }
+  .desk-frame {
+    border: 10px solid var(--ink);
+    border-radius: 16px;
+    background: var(--paper);
+    box-shadow: var(--lift);
+    overflow: hidden;
+    min-width: 980px;
+  }
+  .desk-bar {
+    display: flex;
+    gap: 6px;
+    padding: 10px 14px;
+    background: var(--paper-sunk);
+    border-bottom: 1px solid var(--rule);
+  }
+  .desk-bar i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--rule);
+  }
+  .desk-body {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 640px) 260px;
+    gap: var(--s6);
+    padding: var(--s6);
+    justify-content: center;
+  }
+  .toc {
+    position: sticky;
+    top: 0;
+    display: grid;
+    gap: 4px;
+    align-content: start;
+    font-size: 15px;
+  }
+  .toc a {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: var(--r-s);
+    text-decoration: none;
+    color: var(--ink-soft);
+  }
+  .toc a[aria-current="true"] {
+    background: var(--paper-sunk);
+    color: var(--ink);
+    font-weight: 700;
+    box-shadow: inset 3px 0 0 var(--action);
+  }
+  .desk-main {
+    display: grid;
+    gap: var(--s5);
+  }
+  .desk-side {
+    display: grid;
+    gap: var(--s4);
+    align-content: start;
+    font-size: 15px;
+  }
+  .foot {
+    font-size: 14px;
+    color: var(--ink-soft);
+    max-width: 760px;
+  }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <span class="eyebrow">Science Behind It · design direction proposal · E15-1</span>
+    <h1>Workbench</h1>
+    <p>
+      The object sits on the bench; the lesson is a clean page of notes beside it. Calm paper
+      surfaces, one teal for anything you can press, and a
+      <span class="mark">highlighter</span> reserved for the single thing worth remembering.
+    </p>
+    <div class="toggles" role="group" aria-label="Preview theme">
+      <span class="eyebrow">Theme</span>
+      <button class="chip-btn" type="button" data-theme-choice="system" aria-pressed="true">
+        Device
+      </button>
+      <button class="chip-btn" type="button" data-theme-choice="light" aria-pressed="false">
+        Light
+      </button>
+      <button class="chip-btn" type="button" data-theme-choice="dark" aria-pressed="false">
+        Dark
+      </button>
+    </div>
+  </header>
+
+  <section class="studio" aria-label="Phone walk-through and rules">
+    <div style="display: grid; gap: var(--s3); justify-items: center; min-width: 0">
+      <div class="screen-picker" role="tablist" aria-label="Screens" id="picker"></div>
+      <div class="phone" aria-label="Phone preview">
+        <div class="statusbar" aria-hidden="true">
+          <span>9:41</span><span>science behind it</span><span>5G ▮▮▮</span>
+        </div>
+        <div class="screen" id="screen" aria-live="polite"></div>
+        <div class="phone-foot">
+          <button class="btn quiet small" type="button" id="prev">Back</button>
+          <span class="steps" id="stepno">1 / 6</span>
+          <button class="btn small" type="button" id="next">Next screen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="rules">
+      <div style="display: grid; gap: var(--s4)">
+        <h2>Five rules that do not bend</h2>
+        <ol class="principles">
+          <li>
+            <strong>One colour means “press me”.</strong
+            ><span
+              >Teal is for actions only. Information never uses it, so a learner always knows what
+              is tappable.</span
+            >
+          </li>
+          <li>
+            <strong>The highlighter marks one thing.</strong
+            ><span
+              >Yellow underlines the quick answer and quoted evidence. Nowhere else, so it keeps its
+              meaning.</span
+            >
+          </li>
+          <li>
+            <strong>Every signal is also a word.</strong
+            ><span
+              >Safety, notes, observation versus explanation and claim status each carry a label and
+              a shape (solid, dashed, double rule), never colour alone.</span
+            >
+          </li>
+          <li>
+            <strong>Text first, always readable.</strong
+            ><span
+              >Atkinson Hyperlegible for reading, set at 17px with a 65-character measure. The quick
+              answer arrives before anything heavy loads.</span
+            >
+          </li>
+          <li>
+            <strong>Grown-up, not childish.</strong
+            ><span
+              >Bricolage Grotesque gives headings warmth without cartoon. No mascots, no confetti,
+              no streaks: progress is shown, not rewarded.</span
+            >
+          </li>
+        </ol>
+      </div>
+
+      <div style="display: grid; gap: var(--s3)">
+        <h2>Colour</h2>
+        <p class="hint">
+          Every pair below meets WCAG AA for its use; dark mode is its own palette, not an
+          inversion.
+        </p>
+        <div class="swatches">
+          <div class="swatch">
+            <i style="background: var(--bench)"></i><span>Bench</span><code>--bench · page</code>
+          </div>
+          <div class="swatch">
+            <i style="background: var(--paper)"></i><span>Paper</span
+            ><code>--paper · surfaces</code>
+          </div>
+          <div class="swatch">
+            <i style="background: var(--ink)"></i><span>Ink</span><code>--ink · text</code>
+          </div>
+          <div class="swatch">
+            <i style="background: var(--action)"></i><span>Action</span
+            ><code>--action · buttons, links</code>
+          </div>
+          <div class="swatch">
+            <i style="background: var(--marker)"></i><span>Highlighter</span
+            ><code>--marker · the answer</code>
+          </div>
+          <div class="swatch">
+            <i style="background: var(--caution)"></i><span>Caution</span
+            ><code>--caution · safety only</code>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; gap: var(--s3)">
+        <h2>Type</h2>
+        <div class="typescale">
+          <div>
+            <code>display 34</code
+            ><span
+              style="
+                font-family: var(--display);
+                font-weight: 800;
+                font-size: 34px;
+                line-height: 1.1;
+              "
+              >How a lens bends light</span
+            >
+          </div>
+          <div>
+            <code>answer 22</code
+            ><span style="font-family: var(--display); font-weight: 600; font-size: 22px"
+              ><span class="mark">The image fills more of your eye.</span></span
+            >
+          </div>
+          <div>
+            <code>heading 21</code
+            ><span style="font-family: var(--display); font-weight: 800; font-size: 21px"
+              >Glass bends light</span
+            >
+          </div>
+          <div>
+            <code>body 17</code
+            ><span>Light changes direction when it passes from air into glass.</span>
+          </div>
+          <div><code>label 12</code><span class="eyebrow">Explanation · 3 of 8</span></div>
+        </div>
+      </div>
+
+      <div style="display: grid; gap: var(--s3)">
+        <h2>Tokens</h2>
+        <div class="scroll">
+          <table class="tokens-table">
+            <thead>
+              <tr>
+                <th>Group</th>
+                <th>Values</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Space</td>
+                <td>4 · 8 · 12 · 16 · 24 · 32 · 48</td>
+                <td>One 4px rhythm across phone and desktop.</td>
+              </tr>
+              <tr>
+                <td>Radius</td>
+                <td>6 · 12 · 20 · pill</td>
+                <td>Soft, but not bubbly; pills only for choices.</td>
+              </tr>
+              <tr>
+                <td>Touch</td>
+                <td>48px buttons, 44px minimum</td>
+                <td>WCAG 2.5.8 with room to spare on a phone.</td>
+              </tr>
+              <tr>
+                <td>Motion</td>
+                <td>150–350ms, one ease, rise and pulse only</td>
+                <td>Shows that things changed; off under reduced motion.</td>
+              </tr>
+              <tr>
+                <td>Measure</td>
+                <td>65ch reading column</td>
+                <td>Comfortable for long explanations and read-aloud.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="desk" aria-labelledby="desk-h">
+    <div style="display: grid; gap: var(--s2); max-width: 760px">
+      <span class="eyebrow">Desktop · lesson reader</span>
+      <h2 id="desk-h" style="font-size: 30px">
+        On a wide screen the bench gets a margin for notes
+      </h2>
+      <p class="hint">
+        Section list on the left stays put and shows where you are; the reading column keeps its
+        measure; sources and settings live in the right margin instead of interrupting the text.
+      </p>
+    </div>
+    <div class="scroll">
+      <div class="desk-frame">
+        <div class="desk-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="desk-body">
+          <nav class="toc" aria-label="Lesson sections (example)">
+            <span class="eyebrow" style="padding: 0 8px 6px">In this lesson</span>
+            <a href="#d1"><span class="num">1</span>What you're seeing</a>
+            <a href="#d2"><span class="num">2</span>The short answer</a>
+            <a href="#d3" aria-current="true"><span class="num">3</span>From first principles</a>
+            <a href="#d4"><span class="num">4</span>How the parts work</a>
+            <a href="#d5"><span class="num">5</span>Try an idea</a>
+            <a href="#d6"><span class="num">6</span>History</a>
+            <a href="#d7"><span class="num">7</span>Check your thinking</a>
+            <a href="#d8"><span class="num">8</span>Go further</a>
+          </nav>
+          <div class="desk-main">
+            <div class="lesson-head">
+              <span class="eyebrow">Magnifying glass · explore</span>
+              <h3 style="font-size: 34px">Why a magnifying glass makes things look bigger</h3>
+            </div>
+            <div class="quick">
+              <span class="eyebrow">Quick answer</span>
+              <p class="answer">
+                <span class="mark"
+                  >The lens makes a larger, upright image that fills more of your eye.</span
+                >
+              </p>
+            </div>
+            <article class="module why" id="d3">
+              <span class="tag">Explanation · 3 of 8</span>
+              <h3>Glass bends light</h3>
+              <p>
+                Light changes direction when it passes from air into glass.<a
+                  class="cite"
+                  href="#ds1"
+                  aria-label="Source 1: Refraction"
+                  >1</a
+                >
+                A curved lens bends rays so they seem to come from a larger object.<a
+                  class="cite"
+                  href="#ds2"
+                  aria-label="Source 2: The Simple Magnifier"
+                  >2</a
+                >
+              </p>
+              <div class="ideas" aria-label="Key ideas in order">
+                <span class="idea">refraction</span><span class="arrow">→</span
+                ><span class="idea">focal length</span><span class="arrow">→</span
+                ><span class="idea">angular magnification</span>
+              </div>
+              <p class="status">
+                <strong>Based on limited evidence:</strong> the larger-image claim rests on one
+                textbook so far.
+              </p>
+            </article>
+            <article class="module why">
+              <span class="tag">Explanation · 4 of 8</span>
+              <h3>The lens and your eye work together</h3>
+              <ol class="steps-list">
+                <li>The lens bends light from the word.</li>
+                <li>The rays reach your eye as if from a bigger word.</li>
+                <li>The image takes up a wider angle, so it looks larger.</li>
+              </ol>
+            </article>
+          </div>
+          <aside class="desk-side" aria-label="Margin (example)">
+            <div class="notice note">
+              <b>Note</b
+              ><span
+                >Parts of this lesson come from the AI's general knowledge and no reviewer has
+                checked it yet.</span
+              >
+            </div>
+            <div class="card">
+              <span class="eyebrow">Depth</span>
+              <div class="depth" role="group" aria-label="Depth (example)">
+                <button type="button">Quick</button
+                ><button type="button" aria-pressed="true">Explore</button
+                ><button type="button">Deeper</button>
+              </div>
+            </div>
+            <div class="card">
+              <span class="eyebrow">Sources</span>
+              <div class="source" id="ds1">
+                <span><span class="num">1</span> <a href="#ds1">B27: Refraction</a></span
+                ><span class="hint">Calculus-Based Physics (Schnick), LibreTexts · CC BY-SA</span>
+              </div>
+              <div class="source" id="ds2">
+                <span><span class="num">2</span> <a href="#ds2">2.8: The Simple Magnifier</a></span
+                ><span class="hint">University Physics (OpenStax), LibreTexts · CC BY</span>
+                <blockquote>
+                  An object inside the focal length forms a virtual, upright, larger image.
+                </blockquote>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">
+    This page is a proposal for issue #254. Nothing here is final: approve, or say what to change
+    (for example a different accent, a serif for reading, or a denser layout), and the agreed
+    version becomes the tokens and components in <code>packages/ui</code>.
+  </p>
+</div>
+
+<script>
+  const LENS =
+    '<svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="50" cy="50" r="26" fill="var(--marker)" opacity=".35"/><path d="M75 75 L108 108" stroke="currentColor" stroke-width="12" stroke-linecap="round"/></svg>';
+  const SCREENS = [
+    {
+      name: "Home",
+      html: `
+    <div class="hero-ask">
+      <span class="eyebrow">Science behind it</span>
+      <h2>What's the science behind that?</h2>
+      <p>Point your camera at an everyday object, or describe it. You get a short answer first, then the reasons, step by step.</p>
+    </div>
+    <button class="btn block" type="button" data-go="1">Take a photo</button>
+    <button class="btn quiet block" type="button" data-go="1">Describe it instead</button>
+    <div class="privacy"><span aria-hidden="true">◎</span><span>Photos are only used to recognise the object and are deleted within 7 days.</span></div>`,
+    },
+    {
+      name: "Capture",
+      html: `
+    <span class="eyebrow">Step 1 of 3 · Photo</span>
+    <h2 style="font-size:24px">Fill the frame with the object</h2>
+    <div class="viewfinder">${LENS}<i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i></div>
+    <div class="card">
+      <div class="check-row"><span class="tick ok" aria-hidden="true">✓</span><span><strong>Sharp enough</strong></span></div>
+      <div class="check-row"><span class="tick ok" aria-hidden="true">✓</span><span><strong>Bright enough</strong></span></div>
+      <div class="check-row"><span class="tick warn" aria-hidden="true">!</span><span><strong>Object looks small.</strong> Move closer or crop.</span></div>
+    </div>
+    <button class="btn block" type="button" data-go="2">Use this photo</button>
+    <button class="btn quiet block" type="button">Crop</button>`,
+    },
+    {
+      name: "Confirm",
+      html: `
+    <span class="eyebrow">Step 2 of 3 · Check</span>
+    <h2 style="font-size:24px">Is this what you photographed?</h2>
+    <div class="candidates" role="group" aria-label="Suggestions">
+      <button class="candidate" type="button" aria-pressed="true"><span><strong>Magnifying glass</strong><br><span class="hint">Round lens in a handle</span></span><span class="certainty">Likely</span></button>
+      <button class="candidate" type="button" aria-pressed="false"><span><strong>Eyeglasses</strong></span><span class="certainty">Possibly</span></button>
+      <button class="candidate" type="button" aria-pressed="false"><span><strong>Something else</strong><br><span class="hint">Describe it in your own words</span></span><span class="certainty">→</span></button>
+    </div>
+    <div class="field"><label for="q">Your question (optional)</label><input id="q" value="Why does it make things look bigger?"><span class="hint">We'll answer this one first.</span></div>
+    <button class="btn block" type="button" data-go="3">Start lesson</button>`,
+    },
+    {
+      name: "Loading",
+      html: `
+    <div class="lesson-head"><span class="eyebrow">Magnifying glass</span><h2>Finding the science…</h2></div>
+    <p class="status" role="status"><strong>Checking sources.</strong> 11 facts checked so far.</p>
+    <div class="quick"><span class="eyebrow">Quick answer</span><p class="answer"><span class="mark">The lens makes a larger, upright image that fills more of your eye.</span></p></div>
+    <div class="skel" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="skel" aria-hidden="true"><span></span><span></span><span></span></div>
+    <p class="hint">The full lesson usually takes under a minute. The short answer is already checked against its sources.</p>`,
+    },
+    {
+      name: "Lesson",
+      html: `
+    <div class="lesson-head"><span class="eyebrow">Magnifying glass</span><h2>Why a magnifying glass makes things look bigger</h2></div>
+    <div class="depth" role="group" aria-label="How deep?"><button type="button">Quick</button><button type="button" aria-pressed="true">Explore</button><button type="button">Deeper</button></div>
+    <div class="notice note"><b>Note</b><span>Parts of this lesson come from the AI's general knowledge. A reviewer hasn't checked it yet.</span></div>
+    <div class="quick"><span class="eyebrow">Quick answer</span><p class="answer"><span class="mark">The lens makes a larger, upright image that fills more of your eye.</span></p>
+      <div class="provenance">Written today · <button class="btn quiet small" type="button">Get a fresh answer</button></div></div>
+    <article class="module obs"><span class="tag">You can see · 1 of 8</span><h3>Small print looks larger</h3><p>Hold the glass close over a word: it looks bigger and still the right way up.<a class="cite" href="#s2" aria-label="Source 2">2</a></p><p class="hint"><strong>Assumes:</strong> the word is closer than the lens's focal length.</p></article>
+    <article class="module why"><span class="tag">Explanation · 3 of 8</span><h3>Glass bends light</h3><p>Light changes direction passing from air into glass.<a class="cite" href="#s1" aria-label="Source 1">1</a></p>
+      <div class="ideas" aria-label="Key ideas in order"><span class="idea">refraction</span><span class="arrow">→</span><span class="idea">focal length</span><span class="arrow">→</span><span class="idea">magnification</span></div></article>
+    <div class="progress-bar"><div class="label"><span>3 of 8 · From first principles</span><span>Sections ▴</span></div><div class="track"><div class="fill"></div></div></div>`,
+    },
+    {
+      name: "Check & feedback",
+      html: `
+    <article class="module why"><span class="tag">Check your thinking · 7 of 8</span><h3>Does the word grow?</h3><p>A friend says the glass makes the letters themselves bigger. What would you tell them?</p>
+      <div class="field"><label for="t">Your thinking</label><textarea id="t" rows="3">The letters stay the same, it only looks bigger.</textarea><span class="hint">Not saved or marked. No timer.</span></div>
+      <button class="btn small" type="button">Compare with the explanation</button>
+      <div class="sunk"><strong>The explanation.</strong> The lens makes a larger image for your eye; the object itself does not change.</div></article>
+    <div class="card"><h3 style="font-size:19px">How helpful was it?</h3>
+      <div class="scale" role="group" aria-label="How helpful, 1 to 5"><button type="button">1</button><button type="button">2</button><button type="button">3</button><button type="button" aria-pressed="true">4</button><button type="button">5</button></div>
+      <div class="scale-words"><span>Not at all</span><span>Very</span></div>
+      <button class="btn quiet small" type="button">Report a problem</button></div>`,
+    },
+  ];
+  const screen = document.getElementById("screen");
+  const picker = document.getElementById("picker");
+  const stepno = document.getElementById("stepno");
+  let current = 0;
+  SCREENS.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip-btn";
+    b.textContent = s.name;
+    b.setAttribute("role", "tab");
+    b.addEventListener("click", () => show(i));
+    picker.appendChild(b);
+  });
+  function show(i) {
+    current = (i + SCREENS.length) % SCREENS.length;
+    screen.innerHTML = SCREENS[current].html;
+    screen.scrollTop = 0;
+    stepno.textContent = `${current + 1} / ${SCREENS.length}`;
+    [...picker.children].forEach((b, j) => b.setAttribute("aria-selected", String(j === current)));
+    [...picker.children].forEach((b, j) => b.setAttribute("aria-pressed", String(j === current)));
+    screen
+      .querySelectorAll("[data-go]")
+      .forEach((b) => b.addEventListener("click", () => show(Number(b.dataset.go))));
+    screen.querySelectorAll(".depth button, .candidate, .scale button").forEach((b) =>
+      b.addEventListener("click", () => {
+        b.parentElement
+          .querySelectorAll("button")
+          .forEach((o) => o.setAttribute("aria-pressed", "false"));
+        b.setAttribute("aria-pressed", "true");
+      }),
+    );
+  }
+  document.getElementById("next").addEventListener("click", () => show(current + 1));
+  document.getElementById("prev").addEventListener("click", () => show(current - 1));
+  document.querySelectorAll("[data-theme-choice]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const choice = b.dataset.themeChoice;
+      if (choice === "system") document.documentElement.removeAttribute("data-theme");
+      else document.documentElement.setAttribute("data-theme", choice);
+      document
+        .querySelectorAll("[data-theme-choice]")
+        .forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+    }),
+  );
+  document.querySelectorAll(".desk-frame .depth button").forEach((b) =>
+    b.addEventListener("click", () => {
+      b.parentElement
+        .querySelectorAll("button")
+        .forEach((o) => o.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+    }),
+  );
+  show(0);
+</script>
