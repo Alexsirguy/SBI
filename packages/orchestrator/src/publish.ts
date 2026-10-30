@@ -113,6 +113,14 @@ const DISCLOSABLE_CHECKS = new Set([
   "reading-level",
 ]);
 
+export const GENERIC_SAFETY_NOTICE =
+  "Safety first: this lesson explains the science only. It is not advice on using, handling or testing anything. Do not try this yourself; ask a responsible adult or a professional, and in an emergency call your local emergency number.";
+
+export interface RouteOptions {
+  /** Topic-specific safety wording for high-risk lessons; a generic notice is used otherwise. */
+  safetyNotice?: string;
+}
+
 const AWAITING_REVIEW: LessonDisclaimer = {
   kind: "awaiting-review",
   message:
@@ -126,8 +134,17 @@ function sectionsCiting(lesson: Lesson, claimIds: Set<string>): string[] {
     .map((section) => section.sectionId);
 }
 
-function disclaimersFor(lesson: Lesson, report: CheckReport | undefined): LessonDisclaimer[] {
-  const notes: LessonDisclaimer[] = [AWAITING_REVIEW];
+function disclaimersFor(
+  lesson: Lesson,
+  report: CheckReport | undefined,
+  options: RouteOptions,
+): LessonDisclaimer[] {
+  // The safety notice leads, so it is the first thing shown with a risky topic.
+  const notes: LessonDisclaimer[] =
+    lesson.safetyClass === "high"
+      ? [{ kind: "safety", message: options.safetyNotice ?? GENERIC_SAFETY_NOTICE, sectionIds: [] }]
+      : [];
+  notes.push(AWAITING_REVIEW);
   const failed = new Map(
     (report?.results ?? []).filter((item) => !item.passed).map((item) => [item.name, item]),
   );
@@ -179,8 +196,13 @@ function disclaimersFor(lesson: Lesson, report: CheckReport | undefined): Lesson
   return notes;
 }
 
-// High-risk topics and integrity failures wait for a human; other doubts are disclosed instead.
-export function routeLesson(lesson: Lesson, report?: CheckReport): RouteDecision {
+// Integrity failures wait for a human; other doubts, high-risk topics included (owner's
+// decision, ADR 0010), are served with disclaimers while the lesson awaits review.
+export function routeLesson(
+  lesson: Lesson,
+  report?: CheckReport,
+  options: RouteOptions = {},
+): RouteDecision {
   const reasons: string[] = [];
   const failed = report && !report.passed ? report.results.filter((item) => !item.passed) : [];
   if (failed.length > 0) {
@@ -194,16 +216,19 @@ export function routeLesson(lesson: Lesson, report?: CheckReport): RouteDecision
     }
   }
   if (reasons.length === 0) return { action: "approve", reasons, disclaimers: [] };
-  const hold =
-    lesson.safetyClass === "high" || failed.some((item) => !DISCLOSABLE_CHECKS.has(item.name));
+  const hold = failed.some((item) => !DISCLOSABLE_CHECKS.has(item.name));
   return hold
     ? { action: "review", reasons, disclaimers: [] }
-    : { action: "disclose", reasons, disclaimers: disclaimersFor(lesson, report) };
+    : { action: "disclose", reasons, disclaimers: disclaimersFor(lesson, report, options) };
 }
 
 export interface Publisher {
   /** Moves disclosed and held lessons to needs-review; disclosed ones carry their disclaimers. */
-  route(lesson: Lesson, report?: CheckReport): Promise<{ lesson: Lesson; decision: RouteDecision }>;
+  route(
+    lesson: Lesson,
+    report?: CheckReport,
+    options?: RouteOptions,
+  ): Promise<{ lesson: Lesson; decision: RouteDecision }>;
   approve(lesson: Lesson, by: string): Promise<Lesson>;
   reject(lesson: Lesson, by: string, reason: string): Promise<Lesson>;
 }
@@ -213,8 +238,8 @@ export function createPublisher(deps: {
   onAudit?: PublishAuditSink;
 }): Publisher {
   return {
-    async route(lesson, report) {
-      let decision = routeLesson(lesson, report);
+    async route(lesson, report, options = {}) {
+      let decision = routeLesson(lesson, report, options);
       // Anything served, validated or disclosed, must clear rights just as approvals do.
       if (decision.action !== "review") {
         const rights = await deps.rights.check(lesson);

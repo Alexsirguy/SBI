@@ -3,6 +3,7 @@ import { Lesson } from "@sbi/contracts";
 import {
   createMemoryReviewAuditLog,
   createPublisher,
+  GENERIC_SAFETY_NOTICE,
   RightsBlockedError,
   routeLesson,
   transitionLesson,
@@ -50,9 +51,12 @@ describe("transitionLesson", () => {
 });
 
 describe("routeLesson", () => {
-  it("holds high-risk lessons and integrity failures, and discloses softer doubts", () => {
+  it("holds integrity failures and discloses everything else, safety first on risky topics", () => {
     expect(routeLesson(autoValidated()).action).toBe("approve");
-    expect(routeLesson(makeLesson({ safetyClass: "high" })).action).toBe("review");
+    const risky = routeLesson(makeLesson({ safetyClass: "high" }));
+    expect(risky.action).toBe("disclose");
+    expect(risky.disclaimers.map((item) => item.kind)).toEqual(["safety", "awaiting-review"]);
+    expect(risky.disclaimers[0]?.message).toBe(GENERIC_SAFETY_NOTICE);
 
     const lesson = makeLesson();
     const [first, second] = lesson.claims;
@@ -89,6 +93,9 @@ describe("routeLesson", () => {
       expect(routeLesson(autoValidated(), failing(name)).action).toBe("review");
     }
     expect(routeLesson(makeLesson({ safetyClass: "high" }), failing("reading-level")).action).toBe(
+      "disclose",
+    );
+    expect(routeLesson(makeLesson({ safetyClass: "high" }), failing("evidence")).action).toBe(
       "review",
     );
   });
@@ -102,10 +109,21 @@ describe("createPublisher", () => {
       onAudit: (audit) => void audits.push(audit),
     });
 
-    const { lesson, decision } = await publisher.route(makeLesson({ safetyClass: "high" }));
+    const { lesson, decision } = await publisher.route(
+      makeLesson({ safetyClass: "high" }),
+      undefined,
+      {
+        safetyNotice: "Medicines: never take or give medicine because of this lesson.",
+      },
+    );
 
-    expect(decision.action).toBe("review");
+    expect(decision.action).toBe("disclose");
     expect(lesson.reviewStatus).toBe("needs-review");
+    expect(lesson.disclaimers?.[0]).toEqual({
+      kind: "safety",
+      message: "Medicines: never take or give medicine because of this lesson.",
+      sectionIds: [],
+    });
     expect(audits).toHaveLength(1);
     expect(audits[0]).toMatchObject({ from: "generated", to: "needs-review", by: "system" });
   });

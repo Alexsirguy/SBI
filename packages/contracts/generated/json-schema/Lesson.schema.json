@@ -442,6 +442,7 @@
           "kind": {
             "type": "string",
             "enum": [
+              "safety",
               "awaiting-review",
               "unverified-sections",
               "sources-disagree",

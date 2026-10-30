@@ -21,6 +21,7 @@ import { UserFacingException } from "../common/user-facing.exception";
 import {
   effectiveSafetyClass,
   LESSON_POLICY_VERSION,
+  safetyNoticeFor,
   LessonService,
   type EvidenceGatherer,
   type LessonStreamEvent,
@@ -573,15 +574,24 @@ describe("LessonService", () => {
     expect(failure.message).toContain("timed out");
   });
 
-  it("holds a lesson on a high-risk topic for review even when the client says low", async () => {
+  it("serves a high-risk topic with its safety notice first, even when the client says low", async () => {
     const { lessons, service: target } = setup(scriptedProvider());
 
-    const failure = await userFacing(() =>
-      collect(target, { ...REQUEST, taxonomyId: "object.cleaning-products", safetyClass: "low" }),
-    );
+    const events = await collect(target, {
+      ...REQUEST,
+      taxonomyId: "object.cleaning-products",
+      safetyClass: "low",
+    });
 
-    expect(failure.message).toContain("reviewer needs to check");
-    expect(lessons[0]).toMatchObject({ safetyClass: "high", reviewStatus: "needs-review" });
+    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    const [answer, lesson] = events;
+    if (answer?.type !== "quick-answer" || lesson?.type !== "lesson") throw new Error("order");
+    expect(lesson.data).toMatchObject({ safetyClass: "high", reviewStatus: "needs-review" });
+    const [notice] = lesson.data.disclaimers ?? [];
+    expect(notice?.kind).toBe("safety");
+    expect(notice?.message).toContain("Never mix cleaning products");
+    expect(answer.data.disclaimers?.[0]).toEqual(notice);
+    expect(lessons.at(-1)?.disclaimers?.[0]?.kind).toBe("safety");
   });
 
   it("holds a draft whose cited excerpt has gone stale", async () => {
@@ -669,6 +679,21 @@ describe("LessonService", () => {
 function share(lessons: LessonType[]) {
   for (const lesson of lessons) lesson.reuse = { ...lesson.reuse, cacheScope: "shared" };
 }
+
+describe("safetyNoticeFor", () => {
+  it("gives each high-risk topic its own notice and nothing to ordinary topics", () => {
+    expect(safetyNoticeFor({ id: "object.mushroom" })).toContain(
+      "Never eat or taste a wild mushroom",
+    );
+    expect(safetyNoticeFor({ id: "object.electrical-socket" })).toContain("switch off the power");
+    expect(
+      safetyNoticeFor({ id: "object.other-chemical", parentId: "category.household-chemicals" }),
+    ).toContain("Household chemicals");
+    expect(
+      safetyNoticeFor({ id: "object.bicycle", parentId: "category.mechanisms" }),
+    ).toBeUndefined();
+  });
+});
 
 describe("effectiveSafetyClass", () => {
   it("raises flagged topics and their children to high, and never lowers a request", () => {
