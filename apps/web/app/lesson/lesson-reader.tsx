@@ -101,7 +101,10 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
                         {section.heading ?? MODULE_LABELS[module]}
                       </a>
                     ) : (
-                      <span aria-disabled="true">{MODULE_LABELS[module]}</span>
+                      <span>
+                        {MODULE_LABELS[module]}
+                        <span className="visually-hidden"> (loading)</span>
+                      </span>
                     )}
                   </li>
                 );
