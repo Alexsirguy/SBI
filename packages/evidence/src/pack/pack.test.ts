@@ -172,6 +172,48 @@ describe("gatherEvidence", () => {
     );
   });
 
+  it("lets a page found for one sub-question corroborate another's claim", async () => {
+    const url = "https://bio.libretexts.org/boiling";
+    const second = book(
+      url,
+      "While water boils, the added heat becomes latent heat, so it stays at one temperature.",
+    );
+    const pages: Record<string, FetchedSource> = { ...PAGES, [url]: second };
+    const topical: SupportJudge = {
+      version: "t",
+      judge: async ({ claim, excerpt }) => ({
+        verdict:
+          claim.includes("latent") === excerpt.includes("latent") ? "supports" : "insufficient",
+        reason: "ok",
+        quote: excerpt,
+      }),
+    };
+    const base = deps();
+    const result = await gatherEvidence(
+      input,
+      deps({
+        judge: topical,
+        retriever: {
+          ...base.retriever,
+          retrieve: vi.fn(async (ref) => pages[ref.url ?? ""] as FetchedSource),
+        },
+        search: {
+          ...base.search,
+          libretexts: {
+            search: async (query) =>
+              query.includes("current heat")
+                ? ["https://phys.libretexts.org/heat", url]
+                : ["https://chem.libretexts.org/boil"],
+          },
+        },
+      }),
+      { concurrency: 1 },
+    );
+    const boiling = result.claims.find((claim) => claim.text.startsWith("Boiling"));
+    expect(boiling?.sourceIds).toHaveLength(2);
+    expect(boiling).toMatchObject({ status: "supported", confidence: "high" });
+  });
+
   it("reuses a stored pack while its claims still resolve to fresh excerpts", async () => {
     const target = deps();
     await gatherEvidence(input, target);

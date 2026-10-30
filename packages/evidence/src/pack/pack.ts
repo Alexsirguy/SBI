@@ -143,6 +143,8 @@ export async function gatherEvidence(
   const lock = deps.lock ?? ((task) => task());
   const results = new Map<string, EvidencePack["questions"][number]>();
   const gathered: Claim[] = [];
+  // Every source fetched so far in this request, so one sub-question's page can back another's claim.
+  const pool: FetchedSource[] = [];
   for (const question of plan.questions) {
     results.set(question.key, {
       key: question.key,
@@ -170,11 +172,13 @@ export async function gatherEvidence(
         }
       }
       result.sources = fetched.filter((source) => source.passages.length > 0).length;
+      pool.push(...fetched);
       const built = await extractAndVerify(question, fetched, {
         provider: deps.provider,
         judge: deps.judge,
         now: deps.now,
         signal,
+        corroborating: [...pool],
       });
       const saved = await lock(() => saveClaimGraph(deps.repositories, built));
       result.claimIds = saved.claims.map((claim) => claim.claimId);
