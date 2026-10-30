@@ -1,0 +1,290 @@
+/* Capture flow (E15-3): phone first; every value comes from the Workbench tokens. */
+.capture {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sbi-space-5);
+}
+
+.capture h1 {
+  font-size: var(--sbi-text-display);
+  margin: var(--sbi-space-1) 0 var(--sbi-space-2);
+}
+
+.capture h2 {
+  font-size: var(--sbi-text-title);
+  margin: 0 0 var(--sbi-space-3);
+}
+
+.capture h3 {
+  font-size: var(--sbi-text-heading);
+  margin: 0 0 var(--sbi-space-2);
+}
+
+.capture__intro p {
+  margin: 0;
+  color: var(--sbi-ink-soft);
+}
+
+.capture .eyebrow {
+  font-family: var(--sbi-font-mono);
+  font-size: var(--sbi-text-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sbi-ink-soft);
+}
+
+/* The privacy cue reads as a note pinned to the bench, not small print. */
+.privacy-cue {
+  background: var(--sbi-note-wash);
+  border-left: 6px double var(--sbi-note);
+  border-radius: var(--sbi-radius-m);
+  padding: var(--sbi-space-3) var(--sbi-space-4);
+  font-size: var(--sbi-text-small);
+}
+
+.privacy-cue h2 {
+  font-size: var(--sbi-text-body);
+  margin-bottom: var(--sbi-space-2);
+}
+
+.privacy-cue ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.capture-path {
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  padding: var(--sbi-space-4);
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.capture-path > * {
+  min-width: 0;
+}
+
+/* File pickers keep the native input, so keyboard, screen readers and camera capture all work. */
+.file-pick {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.file-pick label {
+  font-weight: 700;
+}
+
+.file-pick input[type="file"] {
+  max-width: 100%;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.file-pick input[type="file"]::file-selector-button {
+  min-height: var(--sbi-touch);
+  margin-right: var(--sbi-space-3);
+  padding: 0 20px;
+  border-radius: var(--sbi-radius-m);
+  border: 2px solid var(--sbi-action);
+  background: transparent;
+  color: var(--sbi-action);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.file-pick--primary input[type="file"]::file-selector-button {
+  background: var(--sbi-action);
+  color: var(--sbi-action-ink);
+}
+
+/* Kept in the DOM so its alert is announced; styled only once it has something to say. */
+.capture-problem:not(:empty) {
+  background: var(--sbi-caution-wash);
+  border-left: 6px dashed var(--sbi-caution);
+  border-radius: var(--sbi-radius-m);
+  padding: var(--sbi-space-3) var(--sbi-space-4);
+  font-weight: 700;
+}
+
+.crop-panel {
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+  padding: var(--sbi-space-3);
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-3);
+  min-width: 0;
+}
+
+.crop-panel legend {
+  font-weight: 700;
+  padding: 0 var(--sbi-space-1);
+}
+
+.crop-panel .crop-box {
+  max-width: 100%;
+  border-radius: var(--sbi-radius-s);
+}
+
+.crop-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+}
+
+.crop-fields > div {
+  display: grid;
+  gap: var(--sbi-space-1);
+  font-size: var(--sbi-text-small);
+}
+
+.crop-fields input[type="number"] {
+  width: 100%;
+  min-height: var(--sbi-touch-min);
+  border: 2px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-s);
+  padding: 0 var(--sbi-space-2);
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+}
+
+.crop-actions,
+.confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+}
+
+/* Each check says pass or fix in words; the mark is extra and hidden from screen readers. */
+.photo-check h2 {
+  font-size: var(--sbi-text-heading);
+}
+
+.photo-check ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.photo-check li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: var(--sbi-space-3);
+  align-items: center;
+}
+
+.photo-check li::before {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+}
+
+.photo-check .check--pass::before {
+  content: "✓" / "";
+  background: var(--sbi-action);
+  color: var(--sbi-action-ink);
+}
+
+.photo-check .check--fix::before {
+  content: "!" / "";
+  background: var(--sbi-marker);
+  color: var(--sbi-marker-ink);
+}
+
+/* Confirmation */
+.confirm {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.confirm__card {
+  border: 2px solid var(--sbi-action);
+  border-radius: var(--sbi-radius-l);
+  padding: var(--sbi-space-4);
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.confirm__card p {
+  margin: 0;
+}
+
+.choice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.choice-list li {
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.sbi-button.choice {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 56px;
+  border-color: var(--sbi-control-edge);
+  color: var(--sbi-ink);
+  text-align: left;
+}
+
+.choice__why {
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+  padding-left: var(--sbi-space-2);
+}
+
+.chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+}
+
+.chip-list .sbi-button {
+  border-radius: var(--sbi-radius-pill);
+}
+
+.search-row {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+@media (min-width: 560px) {
+  .search-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .search-row .sbi-field {
+    margin-bottom: 0;
+  }
+}
+
+/* Live regions stay mounted so they announce, so the form spaces only children with content. */
+.capture-form {
+  display: block;
+}
+
+.capture-form > * {
+  margin: 0;
+}
+
+.capture-form > :not(:empty) + * {
+  margin-top: var(--sbi-space-3);
+}

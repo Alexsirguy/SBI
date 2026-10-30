@@ -1,13 +1,18 @@
 import { CaptureForm } from "./capture-form";
 import { PHOTO_RETENTION_DAYS } from "./limits";
 import { ConfirmLesson } from "./confirm/confirm-lesson";
+import "./capture.css";
 
 export default function CapturePage() {
   return (
-    <main>
-      <h1>Photograph an object</h1>
-      <p>Take a photo of an everyday object, or upload one from your device.</p>
-      <section aria-labelledby="privacy-cue">
+    <main className="capture">
+      <header className="capture__intro">
+        <p className="eyebrow">Start a lesson</p>
+        <h1>Photograph an object</h1>
+        <p>Take a photo of an everyday object, or upload one from your device.</p>
+      </header>
+      {/* Shown before any photo is taken, so learners decide knowing what happens to it. */}
+      <section aria-labelledby="privacy-cue" className="privacy-cue">
         <h2 id="privacy-cue">How your photo is handled</h2>
         <ul>
           <li>We use your photo only to recognise the object for your lesson.</li>
@@ -23,7 +28,7 @@ export default function CapturePage() {
         </ul>
       </section>
       <CaptureForm />
-      <section aria-labelledby="text-entry">
+      <section aria-labelledby="text-entry" className="capture-path">
         <h2 id="text-entry">No camera? Describe it instead</h2>
         <ConfirmLesson headingLevel={3} />
       </section>
