@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { withoutInlineIds } from "./quick-answer";
 import {
   Lesson,
   LessonModule,
@@ -67,7 +68,7 @@ const LESSON_DRAFT_PROMPT_V1: PromptVersion = {
 };
 
 // v2 fences the learner's question as data and separates required from optional modules.
-export const LESSON_DRAFT_PROMPT: PromptVersion = {
+const LESSON_DRAFT_PROMPT_V2: PromptVersion = {
   id: "lesson-draft",
   version: "2",
   system:
@@ -86,8 +87,22 @@ export const LESSON_DRAFT_PROMPT: PromptVersion = {
     "Claims (cite by id):\n{{claims}}",
 };
 
+export const HIGH_RISK_DRAFT_RULE =
+  "Safety: this is a high-risk topic. Explain only what it is and why it behaves as it does. Never give steps, amounts or tips for preparing, mixing, using, dosing, eating, handling, testing or repairing it, and never suggest trying anything.";
+
+// v3 adds a safety rule that is filled in only for high-risk topics.
+export const LESSON_DRAFT_PROMPT: PromptVersion = {
+  ...LESSON_DRAFT_PROMPT_V2,
+  version: "3",
+  template: `{{safetyRule}}${LESSON_DRAFT_PROMPT_V2.template}`,
+};
+
 export function createDraftPromptRegistry(): PromptRegistry {
-  return createPromptRegistry([LESSON_DRAFT_PROMPT_V1, LESSON_DRAFT_PROMPT]);
+  return createPromptRegistry([
+    LESSON_DRAFT_PROMPT_V1,
+    LESSON_DRAFT_PROMPT_V2,
+    LESSON_DRAFT_PROMPT,
+  ]);
 }
 
 // A per-call tag the question cannot close, so it cannot pose as instructions.
@@ -153,6 +168,21 @@ function renderClaims(claims: Claim[]): string {
   return claims.map((claim) => `- ${claim.claimId} [${claim.status}]: ${claim.text}`).join("\n");
 }
 
+// A lesson carries only the claims its sections cite, plus what those build on;
+// a large evidence pack would otherwise fail the "every claim is cited" check.
+function citedClaims(fragment: DraftFragment, claims: Claim[]): Claim[] {
+  const byId = new Map(claims.map((claim) => [claim.claimId, claim]));
+  const keep = new Set<string>();
+  const visit = (id: string) => {
+    if (keep.has(id) || !byId.has(id)) return;
+    keep.add(id);
+    for (const dependency of byId.get(id)?.dependsOn ?? []) visit(dependency);
+  };
+  for (const section of fragment.sections) for (const id of section.claimIds) visit(id);
+  // Nothing cited means nothing to show, and Lesson.parse rejects the draft as it should.
+  return claims.filter((claim) => keep.has(claim.claimId));
+}
+
 // IDs are assigned, not generated, so one fewer model output can break validation.
 async function assemble(
   providerId: string,
@@ -161,6 +191,7 @@ async function assemble(
   modelVersion: string,
   promptVersion: string,
 ): Promise<Lesson> {
+  const known = new Set(input.claims.map((claim) => claim.claimId));
   const draft = {
     lessonId: input.lessonId ?? newId(),
     version: 1,
@@ -177,8 +208,12 @@ async function assemble(
     sections: fragment.sections.map((section, index) => ({
       sectionId: `${section.module}-${index + 1}`,
       ...section,
+      text: withoutInlineIds(section.text),
+      // Models sometimes mangle an id; an unknown citation is dropped, never trusted, and a
+      // section left uncited then fails the citation check.
+      claimIds: section.claimIds.filter((id) => known.has(id)),
     })),
-    claims: input.claims,
+    claims: citedClaims(fragment, input.claims),
     visuals: [],
     safetyClass: input.safetyClass,
     reviewStatus: "generated",
@@ -214,6 +249,7 @@ export async function generateDraft(input: DraftInput, deps: DraftDeps): Promise
     LESSON_DRAFT_PROMPT.id,
     {
       question: fencedQuestion(input.question, prompt.version),
+      safetyRule: input.safetyClass === "high" ? `${HIGH_RISK_DRAFT_RULE}\n` : "",
       taxonomyId: input.taxonomyId,
       concepts: input.concepts.map((concept) => concept.label).join(", "),
       audience: input.audience.join(", "),

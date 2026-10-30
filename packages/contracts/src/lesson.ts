@@ -45,6 +45,24 @@ export const LessonSection = z.object({
   claimIds: z.array(Uuid).default([]),
 });
 
+export const DisclaimerKind = z.enum([
+  "safety",
+  "awaiting-review",
+  "unverified-sections",
+  "sources-disagree",
+  "open-questions",
+  "limited-evidence",
+  "reading-level",
+]);
+
+/** Shown with a lesson served before review, so learners know what was not fully checked. */
+export const LessonDisclaimer = z.object({
+  kind: DisclaimerKind,
+  message: Text.max(300),
+  /** Sections the notice applies to; empty for the whole lesson. */
+  sectionIds: z.array(Id).default([]),
+});
+
 export const LessonReuse = z.object({
   intentSignature: Text,
   matchDimensions: z.array(Text).default([]),
@@ -83,6 +101,8 @@ const LessonShape = z.object({
   reviewedAt: IsoDateTime.optional(),
   reviewedBy: Text.optional(),
   reuse: LessonReuse,
+  // Optional and outside the content hash: it reflects review state, not what is taught.
+  disclaimers: z.array(LessonDisclaimer).optional(),
 });
 
 interface Issue {
@@ -114,6 +134,16 @@ function lessonIssues(lesson: z.output<typeof LessonShape>): Issue[] {
     for (const id of duplicates(ids))
       issues.push({ message: `Duplicate id "${id}"`, path: [field] });
   }
+
+  const sectionIds = new Set(lesson.sections.map((section) => section.sectionId));
+  (lesson.disclaimers ?? []).forEach((disclaimer, index) => {
+    for (const id of disclaimer.sectionIds.filter((sectionId) => !sectionIds.has(sectionId))) {
+      issues.push({
+        message: `Disclaimer names unknown section "${id}"`,
+        path: ["disclaimers", index],
+      });
+    }
+  });
 
   lesson.sections.forEach((section, index) => {
     const path = ["sections", index, "claimIds"];
@@ -174,3 +204,5 @@ export type AudienceBand = z.infer<typeof AudienceBand>;
 export type LessonModule = z.infer<typeof LessonModule>;
 export type LessonSection = z.infer<typeof LessonSection>;
 export type Lesson = z.infer<typeof Lesson>;
+export type LessonDisclaimer = z.infer<typeof LessonDisclaimer>;
+export type DisclaimerKind = z.infer<typeof DisclaimerKind>;

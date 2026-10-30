@@ -1,6 +1,7 @@
 import type { Database } from "../client";
 import { createCatalogGapRepository } from "./catalog-gaps";
 import { createClaimRepository, createEvidenceSourceRepository } from "./evidence";
+import { createEvidencePackRepository } from "./evidence-packs";
 import { createLessonRepository } from "./lessons";
 import { createDeletionAuditLog, createMediaRegistry } from "./media";
 import { createRecognitionResultRepository } from "./recognition-results";
@@ -15,6 +16,7 @@ export function createRepositories(db: Database) {
     lessons: createLessonRepository(db),
     mediaRegistry: createMediaRegistry(db),
     evidenceSources: createEvidenceSourceRepository(db),
+    evidencePacks: createEvidencePackRepository(db),
     claims: createClaimRepository(db),
     visualAssets: createVisualAssetRepository(db),
     recognitionResults: createRecognitionResultRepository(db),

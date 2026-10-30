@@ -77,6 +77,7 @@ describe("runWithFallback", () => {
     expect(outcome).toEqual({
       kind: "retry",
       reason: "The language model timed out; try again",
+      detail: "stub: timed out after 20ms",
     });
   });
 
@@ -107,6 +108,7 @@ describe("runWithFallback", () => {
     expect(outcome).toEqual({
       kind: "retry",
       reason: "The draft failed validation; try again",
+      detail: "stub: invalid structured output (oops)",
     });
   });
 
@@ -158,5 +160,33 @@ describe("runWithFallback", () => {
     };
     const outcome = await runWithFallback(memoryLookup(stored), attempt, fallbackQuery);
     if (outcome.kind === "fallback") expect(outcome.lesson.taxonomyId).toBe("home.kettle");
+  });
+
+  it("serves a disclosed lesson as fresh only when it carries disclaimers", async () => {
+    const disclosed = makeLesson({
+      reviewStatus: "needs-review",
+      disclaimers: [{ kind: "awaiting-review", message: "Not reviewed yet.", sectionIds: [] }],
+    });
+    const served = await runWithFallback(
+      memoryLookup(),
+      async () => ({
+        lesson: disclosed,
+        report: report(false, ["entailment"]),
+        disclosed: true,
+      }),
+      fallbackQuery,
+    );
+    expect(served.kind).toBe("fresh");
+
+    const bare = await runWithFallback(
+      memoryLookup(),
+      async () => ({
+        lesson: makeLesson({ reviewStatus: "needs-review" }),
+        report: report(false, ["entailment"]),
+        disclosed: true,
+      }),
+      fallbackQuery,
+    );
+    expect(bare.kind).toBe("retry");
   });
 });

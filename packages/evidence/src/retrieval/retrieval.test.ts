@@ -1,10 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { EvidenceSource } from "@sbi/contracts";
+import { licenseInfo } from "../citations/display";
 import { describe, expect, it, vi } from "vitest";
 import { createCrossrefConnector, fullDate } from "./crossref";
 import { createEuropePmcConnector } from "./europe-pmc";
-import { getText, SourceFetchError } from "./http";
+import { getText, SourceFetchError, USER_AGENT, userAgentWith } from "./http";
 import {
   createDefaultRetriever,
   createRetriever,
@@ -13,7 +14,7 @@ import {
 } from "./retriever";
 import { rightsFromLicense } from "./rights";
 import { abstractPassages, htmlParagraphs, htmlTablePassages, jatsPassages } from "./text";
-import { createUsGovConnector, usGovDomain } from "./us-gov";
+import { createInstitutionConnector, institutionFor } from "./institutions";
 import { discoverReferences, refFromLink } from "./wikipedia";
 
 const fixture = (name: string) => readFileSync(join(import.meta.dirname, "fixtures", name), "utf8");
@@ -178,20 +179,54 @@ describe("Europe PMC connector", () => {
   });
 });
 
+describe("institution registry", () => {
+  it.each([
+    ["https://www.fda.gov/consumers/consumer-updates/x", "U.S. Food and Drug Administration"],
+    ["https://www.ars.usda.gov/news-events/x", "USDA Agricultural Research Service"],
+    ["https://www.usda.gov/topics/x", "U.S. Department of Agriculture"],
+    ["https://www.gov.uk/guidance/x", "GOV.UK"],
+    ["https://joint-research-centre.ec.europa.eu/x", "European Commission"],
+    ["https://www.ga.gov.au/education/x", "Geoscience Australia"],
+    ["https://www.eso.org/public/news/eso2601/", "European Southern Observatory"],
+  ])("credits %s to %s", (url, publisher) => {
+    expect(institutionFor(url)?.publisher).toBe(publisher);
+  });
+
+  it.each([
+    "https://catalog.archives.gov/id/123",
+    "https://ppubs.uspto.gov/pubwebapp/",
+    "https://www.eso.org/public/about-eso/",
+    "https://europa.eu/european-union/x",
+    "https://www.llnl.gov/news/x",
+    "https://www.csiro.au/en/research/x",
+  ])("refuses %s", (url) => {
+    expect(institutionFor(url)).toBeUndefined();
+  });
+
+  it("labels the UK licence for credit lines", () => {
+    expect(licenseInfo(institutionFor("https://www.gov.uk/x")?.grant.license)).toEqual({
+      label: "Open Government Licence v3.0",
+      url: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    });
+  });
+});
+
 describe("US government connector", () => {
   it("accepts only https pages on allowlisted federal science domains", () => {
-    expect(usGovDomain(USGS)).toBe("usgs.gov");
-    expect(usGovDomain("https://science.nasa.gov/sun")).toBe("nasa.gov");
-    expect(usGovDomain("https://home.nps.gov/romo/learn/nature/fall.htm")).toBe("nps.gov");
-    expect(usGovDomain("https://www.energy.gov/energysaver/heating")).toBe("energy.gov");
-    expect(usGovDomain("http://www.usgs.gov/page")).toBeUndefined();
-    expect(usGovDomain("https://usgs.gov.example.com/page")).toBeUndefined();
-    expect(usGovDomain("https://pubmed.ncbi.nlm.nih.gov/10066724")).toBeUndefined();
-    expect(usGovDomain("https://www.whitehouse.gov/")).toBeUndefined();
+    expect(institutionFor(USGS)?.domain).toBe("usgs.gov");
+    expect(institutionFor("https://science.nasa.gov/sun")?.domain).toBe("nasa.gov");
+    expect(institutionFor("https://home.nps.gov/romo/learn/nature/fall.htm")?.domain).toBe(
+      "nps.gov",
+    );
+    expect(institutionFor("https://www.energy.gov/energysaver/heating")?.domain).toBe("energy.gov");
+    expect(institutionFor("http://www.usgs.gov/page")).toBeUndefined();
+    expect(institutionFor("https://usgs.gov.example.com/page")).toBeUndefined();
+    expect(institutionFor("https://pubmed.ncbi.nlm.nih.gov/10066724")).toBeUndefined();
+    expect(institutionFor("https://www.whitehouse.gov/")).toBeUndefined();
   });
 
   it("keeps body paragraphs and drops site chrome and scripts", async () => {
-    const connector = createUsGovConnector(http(fakeFetch(ROUTES)));
+    const connector = createInstitutionConnector(http(fakeFetch(ROUTES)));
     const source = await connector.fetch({ url: USGS });
 
     expect(source.title).toBe("Water Density");
@@ -214,7 +249,7 @@ describe("US government connector", () => {
       Object.defineProperty(response, "url", { value: "https://example.com/landing" });
       return response;
     });
-    const connector = createUsGovConnector(http(fetchImpl));
+    const connector = createInstitutionConnector(http(fetchImpl));
     await expect(connector.fetch({ url: USGS })).rejects.toThrow(/outside the allowlist/);
   });
 });
@@ -286,7 +321,7 @@ describe("retriever", () => {
 
 describe("toEvidenceSource", () => {
   it("stores the chosen passages with the fetch record", async () => {
-    const fetched = await createUsGovConnector(http(fakeFetch(ROUTES))).fetch({ url: USGS });
+    const fetched = await createInstitutionConnector(http(fakeFetch(ROUTES))).fetch({ url: USGS });
     const source = toEvidenceSource(fetched, { passages: fetched.passages.slice(0, 1) });
 
     expect(EvidenceSource.parse(source)).toEqual(source);
@@ -295,7 +330,7 @@ describe("toEvidenceSource", () => {
       lastCheckedAt: "2026-10-29T09:00:00.000Z",
       evidenceQuality: "high",
       excerpts: [{ excerptId: "x1", location: "paragraph 1" }],
-      retrieval: { connector: "us-gov", access: "full-text" },
+      retrieval: { connector: "institution", access: "full-text" },
     });
   });
 });
@@ -387,5 +422,24 @@ describe("getText", () => {
     await expect(
       getText("https://api.example/x", { fetchImpl, maxBytes: 10 }),
     ).rejects.toBeInstanceOf(SourceFetchError);
+  });
+});
+
+describe("User-Agent", () => {
+  it("names a contact by default and lets EVIDENCE_CONTACT override it", () => {
+    expect(USER_AGENT).toBe("SBI-evidence/0.1 (alex@moonsatech.com)");
+    expect(userAgentWith("https://example.org/contact")).toBe(
+      "SBI-evidence/0.1 (https://example.org/contact)",
+    );
+    expect(userAgentWith("")).toBe(USER_AGENT);
+  });
+
+  it("sends it on every request", async () => {
+    const fetchImpl = vi.fn(
+      async (_url: string | URL | Request, _init?: RequestInit) => new Response("ok"),
+    );
+    await getText("https://api.example/x", { fetchImpl });
+    const headers = fetchImpl.mock.calls[0]?.[1]?.headers as Record<string, string>;
+    expect(headers["User-Agent"]).toBe(USER_AGENT);
   });
 });

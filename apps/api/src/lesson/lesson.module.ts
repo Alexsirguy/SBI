@@ -1,5 +1,5 @@
 import { Logger, Module } from "@nestjs/common";
-import type { Repositories } from "@sbi/db";
+import type { DatabaseHandle, Repositories } from "@sbi/db";
 import {
   META_MODEL_API_BASE_URL,
   OPENAI_BASE_URL,
@@ -11,12 +11,15 @@ import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
 import {
   API_ENV,
+  DATABASE,
   LESSON_EVIDENCE,
+  LESSON_GATHERER,
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
   REPOSITORIES,
 } from "../tokens";
+import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonController } from "./lesson.controller";
 import { LessonService } from "./lesson.service";
 
@@ -35,6 +38,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       baseUrl: META_MODEL_API_BASE_URL,
       apiKey: META_MODEL_API_KEY,
       model: LESSON_MODEL,
+      extraBody: { reasoning_effort: "low" },
       timeoutMs: 60_000,
       onEvent: logEvent,
     });
@@ -46,6 +50,8 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       apiKey: OPENAI_API_KEY,
       model: LESSON_MODEL,
       maxTokensParam: "max_completion_tokens",
+      // ADR 0006: OpenAI must not keep learner questions or lesson drafts.
+      extraBody: { reasoning_effort: "low", store: false },
       timeoutMs: 60_000,
       onEvent: logEvent,
     });
@@ -72,6 +78,16 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       provide: LESSON_REVIEW_AUDIT,
       inject: [REPOSITORIES],
       useFactory: (repos: Repositories) => repos.reviewAudit,
+    },
+    {
+      provide: LESSON_GATHERER,
+      inject: [LESSON_LLM, API_ENV, REPOSITORIES, DATABASE],
+      useFactory: (
+        provider: LlmProvider | null,
+        env: ApiEnv,
+        repositories: Repositories,
+        database: DatabaseHandle,
+      ) => createEvidenceGatherer({ provider, env, repositories, database }),
     },
     {
       provide: LESSON_EVIDENCE,

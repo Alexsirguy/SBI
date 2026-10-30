@@ -41,6 +41,14 @@ export interface QuickAnswerInput {
   claims: Claim[];
 }
 
+// Models sometimes cite inline as "[<claim id>]"; learners must never see raw ids.
+export function withoutInlineIds(text: string): string {
+  return text
+    .replace(/\s*[[(]\s*[0-9a-f]{8}-[0-9a-f-]{27}\s*[\])]/gi, "")
+    .replace(/\s+([.,;:])/g, "$1")
+    .trim();
+}
+
 function parse(text: string): QuickAnswerDraft {
   const value = JSON.parse(text) as Partial<QuickAnswerDraft>;
   if (typeof value.text !== "string" || value.text.trim().length === 0) {
@@ -49,7 +57,7 @@ function parse(text: string): QuickAnswerDraft {
   if (!Array.isArray(value.claimIds) || !value.claimIds.every((id) => typeof id === "string")) {
     throw new Error("a quick answer needs claim ids");
   }
-  return { text: value.text.trim(), claimIds: [...new Set(value.claimIds)] };
+  return { text: withoutInlineIds(value.text), claimIds: [...new Set(value.claimIds)] };
 }
 
 /** A one-or-two sentence answer from the same claims as the lesson, ready long before it. */
@@ -89,6 +97,7 @@ export interface QuickAnswerGate {
 
 export interface QuickGateDeps {
   provider: LlmProvider;
+  objectLabel?: string;
   resolver: CitationResolver;
   claims: Claim[];
   safetyClass: Lesson["safetyClass"];
@@ -117,20 +126,38 @@ export async function gateQuickAnswer(
     });
   }
   if (reasons.length > 0) return { passed: false, reasons };
-  const verdict = await judgeEntailment(deps.provider, answer.text, cited, deps.signal);
+  const verdict = await judgeEntailment(deps.provider, answer.text, cited, deps.signal, {
+    objectLabel: deps.objectLabel,
+    module: "short-answer",
+  });
   return verdict.verdict === "supports"
     ? { passed: true, reasons: [] }
     : { passed: false, reasons: [`entailment ${verdict.verdict}: ${verdict.reason}`] };
 }
 
 /** Puts the streamed answer into the draft, so the learner never sees two different answers. */
-export async function withShortAnswer(lesson: Lesson, answer: QuickAnswerDraft): Promise<Lesson> {
+export async function withShortAnswer(
+  lesson: Lesson,
+  answer: QuickAnswerDraft,
+  /** Claims the answer may cite that the draft itself did not use. */
+  available: Claim[] = [],
+): Promise<Lesson> {
   const sections = lesson.sections.map((section) =>
     section.module === "short-answer"
       ? { ...section, text: answer.text, claimIds: answer.claimIds }
       : section,
   );
-  const updated = Lesson.parse({ ...lesson, sections });
+  // Keep exactly the cited claims and what they build on, as the draft did.
+  const pool = new Map([...available, ...lesson.claims].map((claim) => [claim.claimId, claim]));
+  const keep = new Set<string>();
+  const visit = (id: string) => {
+    if (keep.has(id) || !pool.has(id)) return;
+    keep.add(id);
+    for (const dependency of pool.get(id)?.dependsOn ?? []) visit(dependency);
+  };
+  for (const section of sections) for (const id of section.claimIds) visit(id);
+  const claims = [...pool.values()].filter((claim) => keep.has(claim.claimId));
+  const updated = Lesson.parse({ ...lesson, sections, claims });
   const contentHash = await lessonContentHash(updated);
   return Lesson.parse({ ...updated, reuse: { ...updated.reuse, contentHash } });
 }

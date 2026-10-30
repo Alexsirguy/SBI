@@ -5,8 +5,10 @@ import {
   buildClaims,
   createMemoryEvidenceRepositories,
   saveClaimGraph,
+  type EvidencePack,
   type EvidenceRepositories,
   type FetchedSource,
+  type GatherEvent,
 } from "@sbi/evidence";
 import { LlmError, type Completion, type CompletionRequest, type LlmProvider } from "@sbi/llm";
 import {
@@ -19,7 +21,9 @@ import { UserFacingException } from "../common/user-facing.exception";
 import {
   effectiveSafetyClass,
   LESSON_POLICY_VERSION,
+  safetyNoticeFor,
   LessonService,
+  type EvidenceGatherer,
   type LessonStreamEvent,
 } from "./lesson.service";
 
@@ -107,6 +111,19 @@ const FRAGMENT = {
   ],
 };
 
+// A factual section with no citation: an integrity failure that is held, never disclosed.
+const UNCITED_FRAGMENT = {
+  ...FRAGMENT,
+  sections: [
+    ...FRAGMENT.sections,
+    {
+      module: "how-parts-work",
+      text: "A spring inside pops the switch.",
+      claimIds: [] as string[],
+    },
+  ],
+};
+
 const SUPPORTS = JSON.stringify({ verdict: "supports", reason: "Claims state it." });
 const CONTRADICTS = JSON.stringify({ verdict: "contradicts", reason: "Section flips the cause." });
 const AGREE = JSON.stringify({ contradiction: false, reason: "", claimIds: [] });
@@ -118,7 +135,12 @@ interface Script {
   quickEntailment?: string;
   /** Held open until the test releases it, to prove the answer streams first. */
   draftGate?: Promise<void>;
+  /** When set, revised sections are judged as supported, so a repair succeeds. */
+  revisionPasses?: boolean;
+  fragment?: typeof FRAGMENT;
 }
+
+const REVISED = "Revised to state only what the claims support.";
 
 const QUICK = "A warm metal strip bends and flips the switch off.";
 
@@ -132,9 +154,13 @@ function scriptedProvider(options: Script = {}): LlmProvider {
       let payload: string;
       if (request.prompt?.id === "quick-answer") {
         payload = JSON.stringify({ text: QUICK, claimIds: [CLAIM_A] });
+      } else if (request.prompt?.id === "lesson-revise") {
+        payload = JSON.stringify({ text: REVISED });
       } else if (request.prompt?.id === "lesson-draft") {
         await options.draftGate;
-        payload = JSON.stringify(FRAGMENT);
+        payload = JSON.stringify(options.fragment ?? FRAGMENT);
+      } else if (text.includes("<section-") && options.revisionPasses && text.includes(REVISED)) {
+        payload = SUPPORTS;
       } else if (text.includes("<section-")) {
         const quick = text.includes(QUICK) && options.quickEntailment;
         payload = quick ? (options.quickEntailment ?? SUPPORTS) : (options.entailment ?? SUPPORTS);
@@ -189,17 +215,44 @@ function memoryLessons(stored: LessonType[] = []) {
   return { lessons, repo };
 }
 
-function setup(provider: LlmProvider | null, stored: LessonType[] = []) {
+// Replays the given gather events and returns the given claims, standing in for gatherEvidence.
+function gatherer(claims: Claim[] = [], events: GatherEvent[] = []): EvidenceGatherer {
+  return async (_input, options) => {
+    for (const event of events) options.onEvent?.(event);
+    return { claims, reused: false, pack: {} as EvidencePack };
+  };
+}
+
+function setup(
+  provider: LlmProvider | null,
+  stored: LessonType[] = [],
+  gather: EvidenceGatherer = gatherer(),
+) {
   const { lessons, repo } = memoryLessons(stored);
   const audit = createMemoryReviewAuditLog();
   return {
     lessons,
     audit,
-    service: new LessonService(provider, taxonomy(), repo, EVIDENCE.evidence, audit),
+    service: new LessonService(provider, taxonomy(), repo, EVIDENCE.evidence, audit, gather),
   };
 }
 
+async function nextLessonEvent(stream: AsyncGenerator<LessonStreamEvent>) {
+  for (;;) {
+    const next = await stream.next();
+    if (next.done || next.value.type !== "progress") return next;
+  }
+}
+
+/** Lesson events only; progress events are covered by their own tests. */
 async function collect(
+  target: LessonService,
+  request: LessonRequest = REQUEST,
+): Promise<LessonStreamEvent[]> {
+  return (await collectAll(target, request)).filter((event) => event.type !== "progress");
+}
+
+async function collectAll(
   target: LessonService,
   request: LessonRequest = REQUEST,
 ): Promise<LessonStreamEvent[]> {
@@ -253,7 +306,7 @@ describe("LessonService", () => {
     const { service } = setup(scriptedProvider({ draftGate }));
     const stream = service.streamLesson(REQUEST);
 
-    const first = await stream.next();
+    const first = await nextLessonEvent(stream);
     expect(first.value).toMatchObject({
       type: "quick-answer",
       data: {
@@ -268,7 +321,7 @@ describe("LessonService", () => {
 
     release();
     const rest: LessonStreamEvent[] = [];
-    for await (const event of stream) rest.push(event);
+    for await (const event of stream) if (event.type !== "progress") rest.push(event);
     expect(rest.map((event) => event.type)).toEqual(["lesson", "visuals"]);
     const lesson = rest[0]?.type === "lesson" ? rest[0].data : undefined;
     expect(lesson?.lessonId).toBe(first.value.data.lessonId);
@@ -286,18 +339,117 @@ describe("LessonService", () => {
     });
   });
 
-  it("ends the stream with a clear message when the lesson is held after the answer", async () => {
+  it("ends the stream with a clear message when an integrity failure holds the lesson after the answer", async () => {
     const { service } = setup(
-      scriptedProvider({ entailment: CONTRADICTS, quickEntailment: SUPPORTS }),
+      scriptedProvider({ quickEntailment: SUPPORTS, fragment: UNCITED_FRAGMENT }),
     );
     const stream = service.streamLesson(REQUEST);
-    expect((await stream.next()).value?.type).toBe("quick-answer");
-    const failure = await userFacing(() => stream.next());
+    expect((await nextLessonEvent(stream)).value?.type).toBe("quick-answer");
+    const failure = await userFacing(() => nextLessonEvent(stream));
     expect(failure.message).toContain("short answer above is checked");
     expect(failure.message).toContain("reviewer");
   });
 
-  it("stores the review trail for served and held lessons", async () => {
+  it("teaches an object with no pre-sourced facts from evidence gathered at request time", async () => {
+    const bare = createTaxonomy([
+      { id: "test.home", kind: "category", label: "Home" },
+      { id: "test.kettle", kind: "object", label: "Kettle", parentId: "test.home" },
+    ]);
+    const { lessons, repo } = memoryLessons();
+    const target = new LessonService(
+      scriptedProvider(),
+      bare,
+      repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([EVIDENCE.claim]),
+    );
+    const events = await collect(target);
+    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
+    expect(lesson?.claims.map((claim) => claim.claimId)).toEqual([EVIDENCE.claim.claimId]);
+    expect(lesson?.concepts.map((concept) => concept.label)).toEqual(["Kettle"]);
+    expect(lessons).toHaveLength(1);
+  });
+
+  it("streams research progress and the first checked answer while evidence is gathered", async () => {
+    const plan = {
+      key: "q1",
+      discipline: "physics" as const,
+      question: "How does a bimetallic strip bend?",
+      searchTerms: ["bimetallic strip"],
+      wikipediaArticles: [],
+      dependsOn: [],
+    };
+    const { service } = setup(
+      scriptedProvider(),
+      [],
+      gatherer(
+        [EVIDENCE.claim],
+        [
+          { type: "planned", questions: [plan] },
+          { type: "verified", key: "q1", claims: [EVIDENCE.claim] },
+        ],
+      ),
+    );
+    const events = await collectAll(service);
+    const types = events.map((event) =>
+      event.type === "progress" ? `progress:${event.data.stage}` : event.type,
+    );
+    expect(types.slice(0, 4)).toEqual([
+      "progress:researching",
+      "progress:verified",
+      "quick-answer",
+      "progress:drafting",
+    ]);
+    expect(types).toContain("progress:checking");
+    expect(types.slice(-2)).toEqual(["lesson", "visuals"]);
+    const researching = events[0]?.type === "progress" ? events[0].data.message : "";
+    expect(researching).toContain("How does a bimetallic strip bend?");
+  });
+
+  it("says no trusted sources were found when gathering finds nothing and no facts exist", async () => {
+    const bare = createTaxonomy([
+      { id: "test.home", kind: "category", label: "Home" },
+      { id: "test.kettle", kind: "object", label: "Kettle", parentId: "test.home" },
+    ]);
+    const target = new LessonService(
+      scriptedProvider(),
+      bare,
+      memoryLessons().repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([]),
+    );
+    const failure = await userFacing(() => collect(target));
+    expect(failure.status).toBe(HttpStatus.NOT_FOUND);
+    expect(failure.message).toContain("could not find trusted sources");
+  });
+
+  it("falls back to sourced taxonomy facts when gathering fails at the provider", async () => {
+    const { service } = setup(scriptedProvider(), [], async () => {
+      throw new LlmError("stub: timed out after 10ms");
+    });
+    const events = await collect(service);
+    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+  });
+
+  it("leaves disputed gathered claims out of the lesson", async () => {
+    const disputed = {
+      ...EVIDENCE.claim,
+      claimId: "0192f1a0-0000-7000-8000-0000000000d1",
+      status: "disputed" as const,
+      uncertainty: "Sources disagree.",
+    };
+    const { service } = setup(scriptedProvider(), [], gatherer([disputed]));
+    const events = await collect(service);
+    const lesson = events.find((event) => event.type === "lesson");
+    expect(
+      lesson?.type === "lesson" && lesson.data.claims.map((claim) => claim.claimId),
+    ).not.toContain(disputed.claimId);
+  });
+
+  it("stores the review trail for validated, disclosed and held lessons", async () => {
     const served = setup(scriptedProvider());
     await collect(served.service);
     const lesson = served.lessons[0];
@@ -309,11 +461,16 @@ describe("LessonService", () => {
       })),
     ).toEqual([{ from: "generated", to: "auto-validated", by: "system" }]);
 
-    const held = setup(scriptedProvider({ entailment: CONTRADICTS }));
-    await userFacing(() => collect(held.service));
-    const [move] = await held.audit.history(held.lessons[0]?.lessonId ?? "");
+    const disclosed = setup(scriptedProvider({ entailment: CONTRADICTS }));
+    await collect(disclosed.service);
+    const [move] = await disclosed.audit.history(disclosed.lessons[0]?.lessonId ?? "");
     expect(move).toMatchObject({ from: "generated", to: "needs-review", by: "system" });
     expect(move?.reason).toContain("entailment");
+
+    const held = setup(scriptedProvider({ fragment: UNCITED_FRAGMENT }));
+    await userFacing(() => collect(held.service));
+    const [hold] = await held.audit.history(held.lessons[0]?.lessonId ?? "");
+    expect(hold?.reason).toContain("citations");
   });
 
   it("serves aligned shared lessons from cache without calling the provider", async () => {
@@ -370,14 +527,38 @@ describe("LessonService", () => {
     expect(failure.message).toContain("timed out");
   });
 
-  it("holds a draft the judges reject for review instead of serving it", async () => {
-    const { lessons, service: target } = setup(scriptedProvider({ entailment: CONTRADICTS }));
+  it("serves a draft the judges doubt with disclaimers, and keeps it awaiting review", async () => {
+    const { lessons, service } = setup(scriptedProvider({ entailment: CONTRADICTS }));
 
-    const failure = await userFacing(() => collect(target));
+    const events = await collect(service);
 
-    expect(failure.status).toBe(HttpStatus.SERVICE_UNAVAILABLE);
-    expect(failure.message).toContain("reviewer needs to check");
-    expect(lessons.map((lesson) => lesson.reviewStatus)).toEqual(["needs-review"]);
+    const lesson = events.find((event) => event.type === "lesson");
+    if (lesson?.type !== "lesson") throw new Error("expected the lesson to be served");
+    expect(lesson.data.reviewStatus).toBe("needs-review");
+    const kinds = lesson.data.disclaimers?.map((item) => item.kind);
+    expect(kinds).toEqual(["awaiting-review", "unverified-sections"]);
+    expect(lesson.data.disclaimers?.[1]?.sectionIds.length).toBeGreaterThan(0);
+    expect(lessons.at(-1)?.reviewStatus).toBe("needs-review");
+  });
+
+  it("serves a lesson once a rewrite fixes the sections the judge rejected", async () => {
+    const { lessons, service } = setup(
+      scriptedProvider({
+        entailment: CONTRADICTS,
+        quickEntailment: SUPPORTS,
+        revisionPasses: true,
+      }),
+    );
+    const events = await collect(service);
+    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
+    expect(lesson?.reviewStatus).toBe("auto-validated");
+    expect(
+      lesson?.sections
+        .filter((section) => section.module !== "short-answer")
+        .every((section) => section.text === REVISED),
+    ).toBe(true);
+    expect(lessons.at(-1)?.reviewStatus).toBe("auto-validated");
   });
 
   it("never serves another learner's private lesson from cache or as a fallback", async () => {
@@ -393,15 +574,24 @@ describe("LessonService", () => {
     expect(failure.message).toContain("timed out");
   });
 
-  it("holds a lesson on a high-risk topic for review even when the client says low", async () => {
+  it("serves a high-risk topic with its safety notice first, even when the client says low", async () => {
     const { lessons, service: target } = setup(scriptedProvider());
 
-    const failure = await userFacing(() =>
-      collect(target, { ...REQUEST, taxonomyId: "object.cleaning-products", safetyClass: "low" }),
-    );
+    const events = await collect(target, {
+      ...REQUEST,
+      taxonomyId: "object.cleaning-products",
+      safetyClass: "low",
+    });
 
-    expect(failure.message).toContain("reviewer needs to check");
-    expect(lessons[0]).toMatchObject({ safetyClass: "high", reviewStatus: "needs-review" });
+    expect(events.map((event) => event.type)).toEqual(["quick-answer", "lesson", "visuals"]);
+    const [answer, lesson] = events;
+    if (answer?.type !== "quick-answer" || lesson?.type !== "lesson") throw new Error("order");
+    expect(lesson.data).toMatchObject({ safetyClass: "high", reviewStatus: "needs-review" });
+    const [notice] = lesson.data.disclaimers ?? [];
+    expect(notice?.kind).toBe("safety");
+    expect(notice?.message).toContain("Never mix cleaning products");
+    expect(answer.data.disclaimers?.[0]).toEqual(notice);
+    expect(lessons.at(-1)?.disclaimers?.[0]?.kind).toBe("safety");
   });
 
   it("holds a draft whose cited excerpt has gone stale", async () => {
@@ -433,6 +623,7 @@ describe("LessonService", () => {
       repo,
       evidence,
       createMemoryReviewAuditLog(),
+      gatherer(),
     );
 
     const failure = await userFacing(() => collect(target));
@@ -467,6 +658,7 @@ describe("LessonService", () => {
       repo,
       createMemoryEvidenceRepositories(),
       createMemoryReviewAuditLog(),
+      gatherer(),
     );
     const missing = await userFacing(() =>
       collect(uncovered, { ...REQUEST, taxonomyId: "test.rock" }),
@@ -487,6 +679,21 @@ describe("LessonService", () => {
 function share(lessons: LessonType[]) {
   for (const lesson of lessons) lesson.reuse = { ...lesson.reuse, cacheScope: "shared" };
 }
+
+describe("safetyNoticeFor", () => {
+  it("gives each high-risk topic its own notice and nothing to ordinary topics", () => {
+    expect(safetyNoticeFor({ id: "object.mushroom" })).toContain(
+      "Never eat or taste a wild mushroom",
+    );
+    expect(safetyNoticeFor({ id: "object.electrical-socket" })).toContain("switch off the power");
+    expect(
+      safetyNoticeFor({ id: "object.other-chemical", parentId: "category.household-chemicals" }),
+    ).toContain("Household chemicals");
+    expect(
+      safetyNoticeFor({ id: "object.bicycle", parentId: "category.mechanisms" }),
+    ).toBeUndefined();
+  });
+});
 
 describe("effectiveSafetyClass", () => {
   it("raises flagged topics and their children to high, and never lowers a request", () => {
