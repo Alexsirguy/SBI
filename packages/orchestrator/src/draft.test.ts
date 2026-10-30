@@ -91,7 +91,7 @@ describe("generateDraft", () => {
       cacheScope: "private",
       sourceFreshness: "fresh",
       modelVersion: "stub-1",
-      promptVersion: "lesson-draft@3",
+      promptVersion: "lesson-draft@4",
       policyVersion: "safety-1",
       evidenceSnapshotId: SNAPSHOT,
       reuseCount: 0,
@@ -132,7 +132,8 @@ describe("generateDraft", () => {
     expect(userText).toContain("child");
     expect(userText).toContain("simple");
     expect(seen[0]?.jsonSchema?.name).toBe("LessonDraft");
-    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "3" });
+    expect(seen[0]?.prompt).toEqual({ id: "lesson-draft", version: "4" });
+    expect(String(seen[0]?.messages[0]?.content)).toContain("not background");
     expect(lesson.audience).toEqual(["child"]);
     expect(lesson.readingLevel).toBe("simple");
   });
