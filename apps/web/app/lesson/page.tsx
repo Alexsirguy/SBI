@@ -20,6 +20,7 @@ export default async function LessonPage({
     q: question,
     depth: prefs.depth,
     age: prefs.age,
+    fresh: param(params.fresh),
   });
   if (!request) {
     return (

@@ -7,19 +7,22 @@ export interface LessonParams {
   q?: string;
   depth?: string;
   age?: string;
+  /** "1" asks for a newly written lesson instead of a reused one. */
+  fresh?: string;
 }
 
 /** Where "Start lesson" leads; the question defaults to the object's science. */
 export function lessonHref(
   taxonomyId: string,
   label: string,
-  options: { question?: string; prefs?: LessonPrefs } = {},
+  options: { question?: string; prefs?: LessonPrefs; fresh?: boolean } = {},
 ): string {
   const params = new URLSearchParams({ taxonomyId, label });
   if (options.question) params.set("q", options.question);
   const prefs = options.prefs ?? DEFAULT_PREFS;
   params.set("depth", prefs.depth);
   if (prefs.age !== "none") params.set("age", prefs.age);
+  if (options.fresh) params.set("fresh", "1");
   return `/lesson?${params}`;
 }
 
@@ -38,6 +41,7 @@ export function lessonRequestFrom(params: LessonParams): LessonRequest | undefin
     taxonomyId: taxonomyId.data,
     audience: prefs.age === "none" ? "general" : prefs.age,
     readingLevel: DEPTHS[prefs.depth].readingLevel,
+    fresh: params.fresh === "1",
     locale: "en",
     safetyClass: "low",
   });
