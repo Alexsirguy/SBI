@@ -134,3 +134,44 @@ export {
   type PoliteFetcherOptions,
   type RobotsRules,
 } from "./retrieval/robots";
+export {
+  Discipline,
+  INQUIRY_PROMPT_VERSION,
+  InquiryPlan,
+  InquiryQuestion,
+  planInquiry,
+  type InquiryInput,
+} from "./plan/inquiry";
+export { OPEN_LIBRETEXTS_BOOKS } from "./search/libretexts-books";
+export {
+  createLibreTextsIndex,
+  type LibreTextsIndex,
+  type LibreTextsIndexOptions,
+} from "./search/libretexts-index";
+export {
+  searchSources,
+  searchWikipedia,
+  type SourceSearchDeps,
+  type SourceSearchOptions,
+  type SourceSearchResult,
+} from "./search/search";
+export { searchTokens } from "./search/tokens";
+export {
+  EXTRACT_PROMPT_VERSION,
+  extractAndVerify,
+  extractClaims,
+  relevantPassages,
+  type CandidatePassage,
+  type ExtractOptions,
+} from "./extract/extract";
+export {
+  createMemoryEvidencePackRepository,
+  EvidencePack,
+  evidencePackKey,
+  gatherEvidence,
+  type EvidencePackRepository,
+  type GatherDeps,
+  type GatheredEvidence,
+  type GatherEvent,
+  type GatherOptions,
+} from "./pack/pack";
