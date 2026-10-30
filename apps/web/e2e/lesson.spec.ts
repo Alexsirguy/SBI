@@ -47,6 +47,23 @@ test("reads the quick answer, notices and every section in order once streamed",
   await expectNoAxeViolations(page);
 });
 
+test("check your thinking explains after the learner has had a go, without scoring", async ({
+  page,
+}) => {
+  await mockLesson(page, FULL);
+  await page.goto(LESSON_URL);
+  const check = page.getByRole("region", { name: "Does the word grow?" });
+  await check
+    .getByLabel("Your thinking (optional, not saved or marked)")
+    .fill("It only looks bigger.");
+  await check.getByRole("button", { name: "Compare with the explanation" }).click();
+  await expect(check.getByRole("heading", { name: "The explanation" })).toBeVisible();
+  await expect(check).toContainText(SAMPLE_LESSON.misconceptionNotes[0] ?? "");
+  // The feedback explains; it never grades the learner's answer.
+  await expect(check.locator(".check-feedback")).not.toContainText(/score|correct|wrong|points/i);
+  await expectNoAxeViolations(page);
+});
+
 test("explains a failure and tries again on request", async ({ page }) => {
   let calls = 0;
   await page.route("**/lessons", async (route) => {
