@@ -46,6 +46,7 @@ test("reads the quick answer, notices and every section in order once streamed",
   const headings = SAMPLE_LESSON.sections.map((section) => section.heading ?? "");
   await expect(page.getByRole("heading", { level: 2 })).toHaveText([
     "Quick answer",
+    "In this lesson",
     ...headings,
     "Sources",
     "Tell us what you think",
@@ -201,6 +202,59 @@ test("rates the lesson and reports a problem tied to its version", async ({ page
     },
   ]);
   await expectNoAxeViolations(page);
+});
+
+test("names the object, its assumptions and objectives, and says when a lesson is reused", async ({
+  page,
+}) => {
+  const requests: { fresh?: boolean; question: string }[] = [];
+  const cached = sseFrames([
+    { type: "quick-answer", data: { ...SAMPLE_ANSWER, kind: "cached" } },
+    { type: "lesson", data: SAMPLE_LESSON },
+    { type: "sources", data: SAMPLE_SOURCES },
+    { type: "visuals", data: { lessonId: SAMPLE_LESSON.lessonId, visuals: [] } },
+  ]);
+  await page.route("**/lessons", async (route) => {
+    if (route.request().method() === "OPTIONS") {
+      return route.fulfill({
+        headers: {
+          "access-control-allow-origin": "*",
+          "access-control-allow-headers": "content-type",
+          "access-control-allow-methods": "GET, POST",
+        },
+        status: 204,
+      });
+    }
+    requests.push(route.request().postDataJSON() as { fresh?: boolean; question: string });
+    return route.fulfill({
+      body: cached,
+      headers: { "access-control-allow-origin": "*", "content-type": "text/event-stream" },
+    });
+  });
+  await page.goto(LESSON_URL);
+  const seeing = page.getByRole("region", { name: "Small print looks larger" });
+  await expect(seeing).toContainText("Object: Magnifying glass");
+  await expect(seeing).toContainText(SAMPLE_LESSON.assumptions[0] ?? "");
+  await expect(page.getByRole("region", { name: "In this lesson" })).toContainText(
+    SAMPLE_LESSON.learningObjectives[0] ?? "",
+  );
+  const answer = page.getByRole("region", { name: "Quick answer" });
+  await expect(answer).toContainText("written earlier for a similar question, on 30 October 2026");
+  await expectNoAxeViolations(page);
+
+  await answer.getByRole("button", { name: "Get a fresh answer" }).click();
+  await expect(page).toHaveURL(/fresh=1/);
+  await expect.poll(() => requests.at(-1)?.fresh).toBe(true);
+
+  const ask = page.getByRole("form", { name: "Ask your own question" });
+  await ask.getByRole("button", { name: "Ask" }).click();
+  await expect(ask.getByRole("alert")).toHaveText("Write a question of at least 3 characters.");
+  await ask
+    .getByLabel("Ask your own question about the magnifying glass")
+    .fill("Can it start a fire?");
+  await ask.getByRole("button", { name: "Ask" }).click();
+  await expect(page).toHaveURL(/q=Can\+it\+start\+a\+fire/);
+  await expect.poll(() => requests.at(-1)?.question).toBe("Can it start a fire?");
 });
 
 test("asks for an object when the link names none", async ({ page }) => {

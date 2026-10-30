@@ -40,6 +40,16 @@ describe("depth and age band", () => {
   });
 });
 
+describe("fresh answers", () => {
+  it("ask for a newly written lesson only when the link says so", () => {
+    const base = { taxonomyId: "object.kite", label: "Kite" };
+    expect(lessonRequestFrom(base)?.fresh).toBe(false);
+    const href = lessonHref("object.kite", "Kite", { fresh: true });
+    const params = Object.fromEntries(new URL(href, "http://web.test").searchParams);
+    expect(lessonRequestFrom(params)?.fresh).toBe(true);
+  });
+});
+
 describe("lessonHref", () => {
   it("round-trips through the search params", () => {
     const href = lessonHref("object.bicycle", "Bicycle: chain", {

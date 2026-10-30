@@ -1,4 +1,5 @@
 import type { Lesson, LessonSection } from "@sbi/contracts";
+import type { ReactNode } from "react";
 import { CheckThinkingSection } from "./check-thinking";
 import { FirstPrinciplesSection } from "./first-principles";
 import { GoFurtherSection } from "./go-further";
@@ -9,10 +10,27 @@ import { ShortAnswerSection } from "./short-answer";
 import { TryAnIdeaSection } from "./try-an-idea";
 
 /** Picks the component for a section's module; every module has one. */
-export function SectionView({ section, lesson }: { section: LessonSection; lesson: Lesson }) {
+export function SectionView({
+  section,
+  lesson,
+  objectLabel,
+  askQuestion,
+}: {
+  section: LessonSection;
+  lesson: Lesson;
+  /** The object the learner confirmed, named in What you're seeing. */
+  objectLabel?: string;
+  askQuestion?: ReactNode;
+}) {
   switch (section.module) {
     case "what-youre-seeing":
-      return <SeeingSection section={section} />;
+      return (
+        <SeeingSection
+          section={section}
+          objectLabel={objectLabel}
+          assumptions={lesson.assumptions}
+        />
+      );
     case "short-answer":
       return <ShortAnswerSection section={section} />;
     case "first-principles":
@@ -34,6 +52,6 @@ export function SectionView({ section, lesson }: { section: LessonSection; lesso
         />
       );
     case "go-further":
-      return <GoFurtherSection section={section} />;
+      return <GoFurtherSection section={section} askQuestion={askQuestion} />;
   }
 }
