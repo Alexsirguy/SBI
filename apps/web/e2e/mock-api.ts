@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { createTaxonomy, SEED_TAXONOMY, searchObservations } from "@sbi/taxonomy";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/+$/, "");
@@ -82,4 +82,28 @@ export async function mockObservations(page: Page) {
     return { json: { results: searchObservations(taxonomy, Object.values(notes)) } };
   });
   return sent;
+}
+
+/** Answers POST /lessons with server-sent event frames, or holds it open when `frames` is null. */
+export async function mockLesson(page: Page, frames: string | null, status = 200) {
+  await page.route(`${API_URL}/lessons`, async (route) => {
+    if (route.request().method() === "OPTIONS") {
+      return route.fulfill({ headers: CORS, status: 204 });
+    }
+    if (frames === null) return;
+    return route.fulfill({
+      body: frames,
+      headers: {
+        ...CORS,
+        "content-type": status === 200 ? "text/event-stream" : "application/json",
+      },
+      status,
+    });
+  });
+}
+
+/** Asserts that starting a lesson opened the reader for `label`. */
+export async function expectLessonOpened(page: Page, label: string) {
+  await expect(page).toHaveURL(/\/lesson\?/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Lesson: ${label}`);
 }

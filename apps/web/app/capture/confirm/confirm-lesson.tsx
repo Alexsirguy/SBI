@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   TAXONOMY_QUERY_MIN_LENGTH,
@@ -9,6 +10,7 @@ import {
   type TaxonomyMatch,
 } from "@sbi/contracts";
 import type { z } from "zod";
+import { lessonHref } from "../../lesson/lesson-request";
 import { useTaxonomySearch } from "../use-taxonomy-search";
 import { NoticeForm } from "./notice-form";
 
@@ -59,6 +61,7 @@ export function ConfirmLesson({
   onStart,
   onCorrection,
 }: ConfirmLessonProps) {
+  const router = useRouter();
   const othersId = useId();
   const inputId = useId();
   const confirmHeadingId = useId();
@@ -146,6 +149,7 @@ export function ConfirmLesson({
     if (selected) {
       onStart?.(selected);
       setStarted(true);
+      router.push(lessonHref(selected.taxonomyId, selected.label));
     }
   }
 
