@@ -7,6 +7,7 @@ import type { Retriever } from "../retrieval/retriever";
 import type { FetchedSource } from "../retrieval/types";
 import {
   createMemoryEvidencePackRepository,
+  EvidencePack,
   evidencePackKey,
   gatherEvidence,
   type GatherDeps,
@@ -173,6 +174,12 @@ describe("gatherEvidence", () => {
       "When electric current flows through a resistance, electrical energy turns into heat.",
     ]);
     expect(result.pack.questions.every((question) => question.completed)).toBe(true);
+    expect(result.pack.questions.find((question) => question.key === "q1")?.searched).toEqual({
+      query: "electric current heat resistance",
+      articles: [],
+      textbookPages: ["https://phys.libretexts.org/heat"],
+      refs: ["https://phys.libretexts.org/heat"],
+    });
     expect(events.map((event) => event.type)).toEqual([
       "planned",
       "verified",
@@ -229,6 +236,15 @@ describe("gatherEvidence", () => {
     const boiling = result.claims.find((claim) => claim.text.startsWith("Boiling"));
     expect(boiling?.sourceIds).toHaveLength(2);
     expect(boiling).toMatchObject({ status: "supported", confidence: "high" });
+  });
+
+  it("still reads packs stored before searches were recorded", async () => {
+    const { pack } = await gatherEvidence(input, deps());
+    const older = {
+      ...pack,
+      questions: pack.questions.map(({ searched: _searched, ...question }) => question),
+    };
+    expect(EvidencePack.parse(older).questions[0]?.searched).toBeUndefined();
   });
 
   it("reuses a stored pack while its claims still resolve to fresh excerpts", async () => {
