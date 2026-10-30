@@ -63,6 +63,7 @@ main.lesson {
 
 .quick-answer h2 {
   font-family: var(--sbi-font-mono);
+  font-weight: 500;
   font-size: var(--sbi-text-label);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -141,7 +142,7 @@ main.lesson {
 
 .nav-number {
   font-family: var(--sbi-font-mono);
-  font-weight: 600;
+  font-weight: 500;
   font-size: var(--sbi-text-small);
   color: var(--sbi-ink-soft);
   text-align: center;
@@ -265,7 +266,7 @@ main.lesson {
   min-height: var(--sbi-touch-min);
   margin-left: var(--sbi-space-1);
   font-family: var(--sbi-font-mono);
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
 }
 
