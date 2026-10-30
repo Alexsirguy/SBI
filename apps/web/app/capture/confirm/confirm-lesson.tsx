@@ -14,7 +14,7 @@ import { lessonHref } from "../../lesson/lesson-request";
 import { readPrefs } from "../../lesson/prefs";
 import { useTaxonomySearch } from "../use-taxonomy-search";
 import { NoticeForm } from "./notice-form";
-import { Button } from "@sbi/ui";
+import { Button, TextField } from "@sbi/ui";
 
 export type Suggestion = TaxonomyMatch &
   Partial<Pick<LearnerCandidate, "certainty" | "reasons" | "parts">>;
@@ -157,8 +157,8 @@ export function ConfirmLesson({
 
   if (started && selected) {
     return (
-      <div>
-        <p ref={startedRef} tabIndex={-1} role="status">
+      <div className="confirm">
+        <p ref={startedRef} tabIndex={-1} role="status" className="sbi-status">
           Starting lesson: {selected.label}.
         </p>
       </div>
@@ -166,23 +166,26 @@ export function ConfirmLesson({
   }
 
   return (
-    <div>
+    <div className="confirm">
       {selected ? (
-        <section aria-labelledby={confirmHeadingId}>
+        <section aria-labelledby={confirmHeadingId} className="confirm__card">
           <Heading id={confirmHeadingId} ref={confirmRef} tabIndex={-1}>
             Start this lesson?
           </Heading>
           <p>Lesson about: {selected.label}.</p>
-          {assumed ? <p>{assumed.assumption}</p> : null}
-          <Button onClick={start}>Start lesson</Button>
-          <Button variant="quiet" type="button" onClick={chooseAgain}>
-            Choose again
-          </Button>
+          {assumed ? <p className="sbi-field__hint">{assumed.assumption}</p> : null}
+          <div className="confirm__actions">
+            <Button onClick={start}>Start lesson</Button>
+            <Button variant="quiet" type="button" onClick={chooseAgain}>
+              Choose again
+            </Button>
+          </div>
         </section>
       ) : (
         <>
           {candidates.length > 0 ? (
             <ul
+              className="choice-list"
               ref={listRef}
               aria-label={
                 suggesting && primary?.certainty ? "What we think it is" : "Matching objects"
@@ -195,13 +198,17 @@ export function ConfirmLesson({
                     <Button
                       variant="quiet"
                       type="button"
+                      className="choice"
                       aria-describedby={description ? `${describedById}-${index}` : undefined}
                       onClick={() => setSelected(candidate)}
                     >
                       {candidate.label}
                     </Button>
                     {description ? (
-                      <span id={`${describedById}-${index}`}> {description}</span>
+                      <span id={`${describedById}-${index}`} className="choice__why">
+                        {" "}
+                        {description}
+                      </span>
                     ) : null}
                   </li>
                 );
@@ -211,7 +218,7 @@ export function ConfirmLesson({
           {parts.length > 0 && primary ? (
             <>
               <p id={partsId}>Is it only part of a {primary.label.toLowerCase()}? Pick the part:</p>
-              <ul aria-labelledby={partsId}>
+              <ul aria-labelledby={partsId} className="chip-list">
                 {parts.map((part) => (
                   <li key={part.taxonomyId}>
                     <Button
@@ -234,7 +241,7 @@ export function ConfirmLesson({
           {suggesting && otherLabels.length > 0 ? (
             <>
               <p id={othersId}>Or something we cannot teach yet:</p>
-              <ul aria-labelledby={othersId}>
+              <ul aria-labelledby={othersId} className="chip-list">
                 {otherLabels.map((label) => (
                   <li key={label}>
                     <Button
@@ -257,32 +264,32 @@ export function ConfirmLesson({
               Not sure? Learn about {fallback.label.toLowerCase()}
             </Button>
           ) : null}
-          <label htmlFor={inputId}>
-            {onCorrection ? "Not right? Tell us what it is" : "Describe the object"}
-          </label>
-          <input
-            id={inputId}
-            ref={inputRef}
-            name="object-query"
-            type="search"
-            autoComplete="off"
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setSubmitted(null);
-              setNoticed(null);
-              setMessage("");
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                runSearch();
-              }
-            }}
-          />
-          <Button variant="quiet" type="button" onClick={() => runSearch()}>
-            Search objects
-          </Button>
+          <div className="search-row">
+            <TextField
+              id={inputId}
+              ref={inputRef}
+              label={onCorrection ? "Not right? Tell us what it is" : "Describe the object"}
+              name="object-query"
+              type="search"
+              autoComplete="off"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setSubmitted(null);
+                setNoticed(null);
+                setMessage("");
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  runSearch();
+                }
+              }}
+            />
+            <Button variant="quiet" type="button" onClick={() => runSearch()}>
+              Search objects
+            </Button>
+          </div>
           {noticing ? (
             <NoticeForm onResults={showNoticed} />
           ) : candidates.length === 0 && !search.isFetching ? (
@@ -292,7 +299,9 @@ export function ConfirmLesson({
           ) : null}
         </>
       )}
-      <p role="status">{searchMessage ?? message}</p>
+      <p role="status" className="sbi-status">
+        {searchMessage ?? message}
+      </p>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import type { ApiRequest, ApiResponse } from "@sbi/contracts";
 import type { UseMutationResult } from "@tanstack/react-query";
+import { StatusLine } from "@sbi/ui";
 import { ConfirmLesson } from "./confirm-lesson";
 
 interface RecognitionStepProps {
@@ -31,7 +32,7 @@ function promptFor(reply: ApiResponse<"recognisePhoto">): string {
 // Recognition only suggests: the learner still confirms, and every choice is recorded as feedback.
 export function RecognitionStep({ recognition, onSelect }: RecognitionStepProps) {
   if (recognition.isPending) {
-    return <p role="status">Recognising the object…</p>;
+    return <StatusLine>Recognising the object…</StatusLine>;
   }
   if (!recognition.data) {
     return (
