@@ -1,16 +1,25 @@
 "use client";
 
 import type { LessonDisclaimer, LessonRequest } from "@sbi/contracts";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { CitationProvider, citationIndex, SourceList } from "./citations";
+import { DepthControls } from "./depth-controls";
+import { lessonHref } from "./lesson-request";
 import { sectionAnchor } from "./modules/frame";
 import { MODULE_LABELS, MODULES } from "./modules/labels";
 import { SectionView } from "./modules/section-view";
+import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
 
 interface LessonReaderProps {
   request: LessonRequest;
   /** The confirmed object's name, shown until the lesson brings its own title. */
   label: string;
+  /** The depth and age band this request was built from. */
+  prefs: LessonPrefs;
+  /** The learner's own question, when they asked one. */
+  question?: string;
   fetcher?: typeof fetch;
 }
 
@@ -31,7 +40,18 @@ function Disclaimers({ items }: { items: LessonDisclaimer[] }) {
 }
 
 // Text first: the quick answer, then sections as they arrive; visuals load only after the text.
-export function LessonReader({ request, label, fetcher }: LessonReaderProps) {
+export function LessonReader({ request, label, prefs, question, fetcher }: LessonReaderProps) {
+  const router = useRouter();
+  // The choice in the URL is the learner's latest, so it is what the session remembers.
+  useEffect(() => writePrefs(prefs), [prefs]);
+  // Shown at once, so the control answers the click while the matching lesson is requested.
+  const [chosen, setChosen] = useState(prefs);
+  const choose = (next: LessonPrefs) => {
+    setChosen(next);
+    router.replace(lessonHref(request.taxonomyId, label, { question, prefs: next }), {
+      scroll: false,
+    });
+  };
   const { status, progress, answer, lesson, sources, visuals, error, retry } = useLessonStream(
     request,
     fetcher,
@@ -43,6 +63,7 @@ export function LessonReader({ request, label, fetcher }: LessonReaderProps) {
   return (
     <main className="lesson">
       <h1>{lesson?.title ?? answer?.title ?? `Lesson: ${label}`}</h1>
+      <DepthControls prefs={chosen} onChange={choose} />
       <p role="status" className="lesson-status">
         {status === "ready"
           ? "Lesson ready."
