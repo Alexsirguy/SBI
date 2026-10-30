@@ -32,6 +32,14 @@ const PLAN = {
       wikipediaArticles: [],
       dependsOn: [],
     },
+    {
+      key: "q3",
+      discipline: "history",
+      question: "Who invented the electric kettle?",
+      searchTerms: ["kettle invention"],
+      wikipediaArticles: [],
+      dependsOn: [],
+    },
   ],
 };
 
@@ -132,9 +140,11 @@ function deps(overrides: Partial<GatherDeps> = {}) {
       discoverReferences: async () => [],
       libretexts: {
         search: async (query) =>
-          query.includes("current heat")
-            ? ["https://phys.libretexts.org/heat"]
-            : ["https://chem.libretexts.org/boil"],
+          query.includes("kettle invention")
+            ? []
+            : query.includes("current heat")
+              ? ["https://phys.libretexts.org/heat"]
+              : ["https://chem.libretexts.org/boil"],
       },
     },
     now: () => new Date("2026-10-29T09:00:00Z"),
@@ -184,7 +194,12 @@ describe("gatherEvidence", () => {
       textbookPages: ["https://phys.libretexts.org/heat"],
       refs: ["https://phys.libretexts.org/heat"],
     });
-    expect(events.map((event) => event.type)).toEqual(["planned", "verified", "verified"]);
+    expect(events.map((event) => event.type)).toEqual([
+      "planned",
+      "verified",
+      "verified",
+      "verified",
+    ]);
     for (const claim of result.claims) {
       expect(await target.repositories.claims.get(claim.claimId)).toEqual(claim);
     }
@@ -222,9 +237,11 @@ describe("gatherEvidence", () => {
           ...base.search,
           libretexts: {
             search: async (query) =>
-              query.includes("current heat")
-                ? ["https://phys.libretexts.org/heat", url]
-                : ["https://chem.libretexts.org/boil"],
+              query.includes("kettle invention")
+                ? []
+                : query.includes("current heat")
+                  ? ["https://phys.libretexts.org/heat", url]
+                  : ["https://chem.libretexts.org/boil"],
           },
         },
       }),
@@ -288,6 +305,7 @@ describe("gatherEvidence", () => {
         libretexts: {
           search: async (query) => {
             if (query.includes("current heat")) throw new Error("index down");
+            if (query.includes("kettle invention")) return [];
             return ["https://chem.libretexts.org/boil"];
           },
         },
@@ -313,7 +331,12 @@ describe("gatherEvidence", () => {
     const target = deps({ retriever: slow });
     const result = await gatherEvidence(input, target, { budgetMs: 50 });
     expect(result.claims).toEqual([]);
-    expect(result.pack.questions.every((question) => !question.completed)).toBe(true);
+    // q3 finds no sources, so it finishes at once; the others are cut off while fetching.
+    expect(result.pack.questions.map((question) => question.completed)).toEqual([
+      false,
+      false,
+      true,
+    ]);
     // Stages that finished are timed; the cut-off fetch never records one.
     expect(result.pack.questions[0]?.timings?.searchMs).toBeGreaterThanOrEqual(0);
     expect(result.pack.questions[0]?.timings?.fetchMs).toBeUndefined();
