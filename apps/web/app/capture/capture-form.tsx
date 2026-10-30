@@ -237,13 +237,14 @@ export function CaptureForm() {
     <>
       <form
         aria-label="Photo capture"
+        className="capture-path capture-form"
         aria-busy={busy}
         onSubmit={(event) => {
           event.preventDefault();
           upload();
         }}
       >
-        <div>
+        <div className="file-pick file-pick--primary">
           <label htmlFor={cameraId}>Take a photo</label>
           <input
             id={cameraId}
@@ -257,7 +258,7 @@ export function CaptureForm() {
             onChange={(event) => void choose(event.currentTarget)}
           />
         </div>
-        <div>
+        <div className="file-pick">
           <label htmlFor={uploadId}>Upload a photo</label>
           <input
             id={uploadId}
@@ -270,16 +271,18 @@ export function CaptureForm() {
             onChange={(event) => void choose(event.currentTarget)}
           />
         </div>
-        <p>
+        <p className="sbi-field__hint">
           Accepted formats: {ACCEPTED_FORMATS_LABEL}. Maximum size:{" "}
           {uploadLimitLabel(limits.maxUploadBytes)}.
         </p>
-        <div role="alert" id={problemId}>
+        <div role="alert" id={problemId} className="capture-problem">
           {problem}
         </div>
-        <div role="status">{status ? <p>{status}</p> : null}</div>
+        <div role="status" className="sbi-status">
+          {status ? <p>{status}</p> : null}
+        </div>
         {original && previewUrl && crop ? (
-          <fieldset>
+          <fieldset className="crop-panel">
             <legend>Crop (optional)</legend>
             <CropBox
               src={previewUrl}
@@ -288,44 +291,53 @@ export function CaptureForm() {
               rect={crop}
               onChange={setCrop}
             />
-            {CROP_FIELDS.map(({ key, label }) => (
-              <div key={key}>
-                <label htmlFor={`${uploadId}-crop-${key}`}>{label}</label>
-                <input
-                  id={`${uploadId}-crop-${key}`}
-                  type="number"
-                  min={key === "width" || key === "height" ? 1 : 0}
-                  max={key === "x" || key === "width" ? original.width : original.height}
-                  value={crop[key]}
-                  onChange={(event) => setField(key, event.currentTarget.valueAsNumber)}
-                />
-              </div>
-            ))}
-            <Button
-              variant="quiet"
-              type="button"
-              onClick={() => setCrop(fullFrame(original))}
-              disabled={busy}
-            >
-              Reset crop
-            </Button>
-            <Button variant="quiet" type="button" onClick={() => void applyCrop()} disabled={busy}>
-              Apply crop
-            </Button>
-            <Button variant="quiet" type="button" onClick={retake}>
-              Retake or choose another
-            </Button>
+            <div className="crop-fields">
+              {CROP_FIELDS.map(({ key, label }) => (
+                <div key={key}>
+                  <label htmlFor={`${uploadId}-crop-${key}`}>{label}</label>
+                  <input
+                    id={`${uploadId}-crop-${key}`}
+                    type="number"
+                    min={key === "width" || key === "height" ? 1 : 0}
+                    max={key === "x" || key === "width" ? original.width : original.height}
+                    value={crop[key]}
+                    onChange={(event) => setField(key, event.currentTarget.valueAsNumber)}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="crop-actions">
+              <Button
+                variant="quiet"
+                type="button"
+                onClick={() => setCrop(fullFrame(original))}
+                disabled={busy}
+              >
+                Reset crop
+              </Button>
+              <Button
+                variant="quiet"
+                type="button"
+                onClick={() => void applyCrop()}
+                disabled={busy}
+              >
+                Apply crop
+              </Button>
+              <Button variant="quiet" type="button" onClick={retake}>
+                Retake or choose another
+              </Button>
+            </div>
           </fieldset>
         ) : null}
         {/* Kept mounted so screen readers announce guidance when it appears. */}
         <div aria-live="polite">
           {prepared && !busy ? (
-            <section aria-labelledby={checkId}>
+            <section aria-labelledby={checkId} className="photo-check">
               <h2 id={checkId}>Photo check</h2>
               {quality ? (
                 <ul>
                   {quality.checks.map((check) => (
-                    <li key={check.id}>
+                    <li key={check.id} className={check.passed ? "check--pass" : "check--fix"}>
                       {check.passed
                         ? `${CHECK_LABELS[check.id]}: good`
                         : (check.guidance ?? "Retake the photo.")}
@@ -345,19 +357,20 @@ export function CaptureForm() {
         ) : null}
         <Button
           type="submit"
+          block
           disabled={!prepared || busy}
           aria-describedby={!prepared || busy ? uploadHintId : undefined}
         >
           Upload photo
         </Button>
         {!prepared || busy ? (
-          <p id={uploadHintId}>
+          <p id={uploadHintId} className="sbi-field__hint">
             {busy ? "Wait until your photo is ready." : "Take or choose a photo first."}
           </p>
         ) : null}
       </form>
       {uploaded ? (
-        <section aria-labelledby={confirmId}>
+        <section aria-labelledby={confirmId} className="capture-path">
           <h2 id={confirmId}>What is in your photo?</h2>
           <RecognitionStep
             recognition={recognition}
