@@ -1,8 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { GALLERY_FIXTURES } from "@sbi/visuals";
 import { expectNoAxeViolations } from "./a11y";
+import { mockPlaygrounds } from "./mock-api";
 
 const DRAWN = new Set(["graph", "process", "mechanism", "molecule", "playground"]);
+
+test.beforeEach(async ({ page }) => {
+  await mockPlaygrounds(page);
+});
 
 test.describe("visual gallery", () => {
   test("shows every kind, and the text fallback for kinds not drawn yet", async ({ page }) => {

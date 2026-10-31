@@ -78,6 +78,15 @@ Amended by #293 when it was built: the frame is a `srcdoc` document with a meta 
   - A second model pass then reviews the code against the lesson's claims.
 - **Messages to the page:** only `ready` and `error`, accepted only from the frame's own window. An error, a second load (the frame navigated itself) or no `ready` within 5 s replaces the frame with the text fallback.
 
+### Delivery and the page's CSP (#90)
+
+- **The playground frame** is served by the API at `GET /playgrounds?visualId=…`, not as `srcdoc`. A `srcdoc` frame would inherit the lesson page's CSP, whose nonce would block the frame's own scripts. The header CSP adds two things a meta tag can't express: `sandbox allow-scripts`, and `frame-ancestors` limited to the web origins.
+- **Checksums:** a manifest or playground whose spec no longer matches the sha256 in its rights record is refused with 409.
+- **The page CSP** on `/lesson` and `/visuals`:
+  - `script-src 'self'` with a per-request nonce and `'strict-dynamic'`, plus `'wasm-unsafe-eval'`. No injected script can run.
+  - `connect-src` and `frame-src` limited to the API, `object-src 'none'`, `base-uri 'none'` and `frame-ancestors 'none'`.
+  - It also needs `'unsafe-eval'`, because MuJoCo's Emscripten bindings build functions at run time. This weakens the policy against eval-based gadgets in code the page already runs, but not against injected scripts. Revisit if MuJoCo ships bindings built without dynamic execution.
+
 ### Loading
 
 The figures below are gzipped, measured from the published packages on 2026-10-31.

@@ -123,23 +123,39 @@ async function sha256Base64(text: string): Promise<string> {
   return btoa(String.fromCharCode(...new Uint8Array(digest)));
 }
 
-/** The whole frame document; its CSP allows only these two scripts, so no eval and no network. */
-export async function playgroundDocument(code: string): Promise<string> {
+export interface PlaygroundDocument {
+  html: string;
+  /** For the HTTP header, which can also sandbox the document and say who may frame it. */
+  csp: string;
+}
+
+/** The frame document; its CSP allows only these two scripts, so no eval and no network. */
+export async function playgroundDocument(
+  code: string,
+  { frameAncestors = [] }: { frameAncestors?: readonly string[] } = {},
+): Promise<PlaygroundDocument> {
   // Only a closing script tag could end the code early; the hash covers the escaped text.
   const user = `(function (kit) {\n"use strict";\n${code}\n})(self.kit);`.replace(
     /<\/script/gi,
     "<\\/script",
   );
   const hashes = await Promise.all([KIT_SOURCE, user].map(sha256Base64));
-  const csp = [
+  const policy = [
     "default-src 'none'",
     `script-src ${hashes.map((hash) => `'sha256-${hash}'`).join(" ")}`,
     "style-src 'unsafe-inline'",
     "img-src data:",
     "form-action 'none'",
     "base-uri 'none'",
-  ].join("; ");
-  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${csp}">
+  ];
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy.join("; ")}">
 <style>html,body{margin:0;height:100%;overflow:hidden;background:transparent}canvas{display:block;width:100%;height:100%}</style>
 </head><body><canvas id="stage"></canvas><script>${KIT_SOURCE}</script><script>${user}</script></body></html>`;
+  const header = [
+    ...policy,
+    // Meta tags cannot sandbox or limit framing, so the header adds both.
+    "sandbox allow-scripts",
+    `frame-ancestors ${frameAncestors.length > 0 ? frameAncestors.join(" ") : "'none'"}`,
+  ];
+  return { html, csp: header.join("; ") };
 }

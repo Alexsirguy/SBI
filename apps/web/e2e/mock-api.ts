@@ -101,3 +101,24 @@ export async function expectLessonOpened(page: Page, label: string) {
 export async function pressDone(page: Page) {
   await page.getByRole("button", { name: "Done" }).click({ timeout: 15000 });
 }
+
+/** Serves the gallery's playgrounds as the API would: the frame document with its own CSP. */
+export async function mockPlaygrounds(page: Page) {
+  const { GALLERY_FIXTURES } = await import("@sbi/visuals");
+  const { playgroundDocument } = await import("@sbi/visuals/playground-document");
+  await page.route(`${API_URL}/playgrounds?*`, async (route) => {
+    const visualId = new URL(route.request().url()).searchParams.get("visualId");
+    const manifest = GALLERY_FIXTURES.find((item) => item.visualId === visualId);
+    const code = (manifest?.spec as { code?: string } | undefined)?.code;
+    if (!code) return route.fulfill({ status: 404, body: "" });
+    // Framed by the page under test, as the API allows the web origins it is configured with.
+    const { html, csp } = await playgroundDocument(code, {
+      frameAncestors: [new URL(page.url()).origin],
+    });
+    return route.fulfill({
+      status: 200,
+      body: html,
+      headers: { "content-type": "text/html; charset=utf-8", "content-security-policy": csp },
+    });
+  });
+}

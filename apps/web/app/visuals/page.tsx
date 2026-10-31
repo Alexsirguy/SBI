@@ -1,5 +1,6 @@
 import { GALLERY_FIXTURES } from "@sbi/visuals";
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import "../home.css";
 import { VisualMount } from "./visual-mount";
 
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function VisualsGalleryPage() {
+export default async function VisualsGalleryPage() {
+  // Rendered per request, so its scripts carry the nonce the CSP proxy sets.
+  await connection();
   return (
     <main id="main" className="prose-page">
       <h1>Visual kinds</h1>

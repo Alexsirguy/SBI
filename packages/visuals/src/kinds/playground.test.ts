@@ -44,8 +44,13 @@ async function sha256Base64(text: string) {
 
 describe("playgroundDocument", () => {
   it("allows exactly its two scripts, and no network, eval, forms or base URL", async () => {
-    const html = await playgroundDocument("kit.onFrame(() => {});");
+    const { html, csp: header } = await playgroundDocument("kit.onFrame(() => {});", {
+      frameAncestors: ["https://sbi.example"],
+    });
     const csp = /content="([^"]+)"/.exec(html)?.[1] ?? "";
+    expect(header).toContain("sandbox allow-scripts");
+    expect(header).toContain("frame-ancestors https://sbi.example");
+    expect(header.startsWith(csp)).toBe(true);
     expect(csp).toContain("default-src 'none'");
     expect(csp).toContain("form-action 'none'");
     expect(csp).toContain("base-uri 'none'");
@@ -59,7 +64,7 @@ describe("playgroundDocument", () => {
   });
 
   it("keeps code that mentions a closing script tag inside its own script", async () => {
-    const html = await playgroundDocument('kit.onFrame(() => "</script><img src=x>");');
+    const { html } = await playgroundDocument('kit.onFrame(() => "</script><img src=x>");');
     expect(html.match(/<\/script>/g)).toHaveLength(2);
   });
 });

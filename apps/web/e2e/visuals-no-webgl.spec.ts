@@ -1,8 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { expectNoAxeViolations } from "./a11y";
+import { mockPlaygrounds } from "./mock-api";
 
 // Its own file, because a browser without WebGL needs its own launch.
 test.use({ launchOptions: { args: ["--disable-webgl", "--disable-3d-apis"] } });
+
+test.beforeEach(async ({ page }) => {
+  await mockPlaygrounds(page);
+});
 
 test("shows the text for 3D kinds and still draws the 2D ones", async ({ page }) => {
   await page.goto("/visuals");
