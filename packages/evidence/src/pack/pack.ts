@@ -144,6 +144,23 @@ async function inParallel<T>(items: T[], size: number, task: (item: T) => Promis
   );
 }
 
+/** A stored pack for this request while it is young and its claims still resolve. */
+export async function storedEvidence(
+  input: { taxonomyId: string; question: string },
+  deps: Pick<GatherDeps, "packs" | "resolver" | "now">,
+  options: Pick<GatherOptions, "maxAgeDays" | "minFreshClaims" | "onEvent"> = {},
+): Promise<GatheredEvidence | undefined> {
+  const now = deps.now ?? (() => new Date());
+  const stored = await deps.packs.get(evidencePackKey(input.taxonomyId, input.question));
+  const maxAgeMs = (options.maxAgeDays ?? 30) * 86_400_000;
+  if (!stored || now().getTime() - Date.parse(stored.createdAt) >= maxAgeMs) return undefined;
+  // Claims whose sources changed no longer resolve, so freshness invalidation reaches packs.
+  const claims = await freshClaims(stored, deps.resolver);
+  if (claims.length < (options.minFreshClaims ?? 3)) return undefined;
+  options.onEvent?.({ type: "reused", claims });
+  return { pack: stored, claims, reused: true };
+}
+
 /** Plans, searches, fetches, extracts and verifies evidence for one request, or reuses a pack. */
 export async function gatherEvidence(
   input: InquiryInput & { taxonomyId: string },
@@ -152,16 +169,8 @@ export async function gatherEvidence(
 ): Promise<GatheredEvidence> {
   const now = deps.now ?? (() => new Date());
   const packKey = evidencePackKey(input.taxonomyId, input.question);
-  const stored = await deps.packs.get(packKey);
-  const maxAgeMs = (options.maxAgeDays ?? 30) * 86_400_000;
-  if (stored && now().getTime() - Date.parse(stored.createdAt) < maxAgeMs) {
-    // Claims whose sources changed no longer resolve, so freshness invalidation reaches packs.
-    const claims = await freshClaims(stored, deps.resolver);
-    if (claims.length >= (options.minFreshClaims ?? 3)) {
-      options.onEvent?.({ type: "reused", claims });
-      return { pack: stored, claims, reused: true };
-    }
-  }
+  const reused = await storedEvidence(input, deps, options);
+  if (reused) return reused;
 
   const budget = AbortSignal.timeout(options.budgetMs ?? 120_000);
   const signal = options.signal ? AbortSignal.any([options.signal, budget]) : budget;

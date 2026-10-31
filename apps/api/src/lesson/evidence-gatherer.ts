@@ -6,8 +6,11 @@ import {
   createLibreTextsIndex,
   createPoliteFetcher,
   discoverReferences,
+  evidencePackKey,
   gatherEvidence,
   searchWikipedia,
+  storedEvidence,
+  type GatheredEvidence,
   userAgentWith,
 } from "@sbi/evidence";
 import type { LlmProvider } from "@sbi/llm";
@@ -53,46 +56,82 @@ export function createEvidenceGatherer(deps: GathererDeps): EvidenceGatherer {
   });
   libretexts.warm();
   const retriever = createDefaultRetriever(sourceHttp);
+  const gatherDeps = (provider: LlmProvider) => ({
+    provider,
+    judge: createEvidenceJudge(deps.env.lessonSource),
+    retriever,
+    repositories,
+    resolver: createCitationResolver(repositories),
+    packs: deps.repositories.evidencePacks,
+    lock: waitingLock(deps.database),
+    search: {
+      libretexts,
+      searchWikipedia: (query: string, limit: number, signal?: AbortSignal) =>
+        searchWikipedia(query, limit, sourceHttp, signal),
+      discoverReferences: (title: string, signal?: AbortSignal) =>
+        discoverReferences(title, sourceHttp, signal),
+    },
+  });
   return async (input, options) => {
     if (!deps.provider) throw new Error("Lesson generation has no provider configured.");
-    const gathered = await gatherEvidence(
-      input,
-      {
-        provider: deps.provider,
-        judge: createEvidenceJudge(deps.env.lessonSource),
-        retriever,
-        repositories,
-        resolver: createCitationResolver(repositories),
-        packs: deps.repositories.evidencePacks,
-        lock: waitingLock(deps.database),
-        search: {
-          libretexts,
-          searchWikipedia: (query, limit, signal) =>
-            searchWikipedia(query, limit, sourceHttp, signal),
-          discoverReferences: (title, signal) => discoverReferences(title, sourceHttp, signal),
-        },
-      },
-      { budgetMs: deps.env.EVIDENCE_BUDGET_MS, concurrency: 3, ...options },
-    );
-    // Keys, counts and failure reasons only; sub-questions that find nothing are otherwise silent.
-    for (const question of gathered.pack.questions ?? []) {
-      logger.log(
-        JSON.stringify({
-          key: question.key,
-          sources: question.sources,
-          claims: question.claimIds.length,
-          completed: question.completed,
-          timings: question.timings,
-          yield: question.yield,
-          searched: question.searched && {
-            textbookPages: question.searched.textbookPages.length,
-            articles: question.searched.articles,
-            refs: question.searched.refs.length,
-          },
-          failures: question.failures.map((failure) => failure.slice(0, 200)),
-        }),
-      );
-    }
-    return gathered;
+    const gatherer = gatherDeps(deps.provider);
+    return lessonFirst(evidencePackKey(input.taxonomyId, input.question), {
+      stored: () => storedEvidence(input, gatherer, { onEvent: options.onEvent }),
+      gather: () =>
+        gatherEvidence(input, gatherer, { budgetMs: deps.env.EVIDENCE_BUDGET_MS, concurrency: 3 }),
+    });
   };
+}
+
+// One background gather per pack, however many learners ask the same question meanwhile.
+const running = new Map<string, Promise<void>>();
+
+/**
+ * ADR 0016: a stored pack is used at once; otherwise the lesson is drafted from model knowledge
+ * while sources are gathered in the background for the next learner.
+ */
+export async function lessonFirst(
+  packKey: string,
+  steps: {
+    stored: () => Promise<GatheredEvidence | undefined>;
+    gather: () => Promise<GatheredEvidence>;
+  },
+): Promise<GatheredEvidence | undefined> {
+  const stored = await steps.stored();
+  if (stored) return stored;
+  if (!running.has(packKey)) {
+    const background = steps
+      .gather()
+      .then(logGathered, (error: unknown) => logger.warn(`Background gather failed: ${error}`))
+      .finally(() => running.delete(packKey));
+    running.set(packKey, background);
+  }
+  return undefined;
+}
+
+/** Settles once every background gather has finished. */
+export async function backgroundGathers(): Promise<void> {
+  await Promise.all(running.values());
+}
+
+// Keys, counts and failure reasons only; sub-questions that find nothing are otherwise silent.
+function logGathered(gathered: GatheredEvidence) {
+  for (const question of gathered.pack.questions ?? []) {
+    logger.log(
+      JSON.stringify({
+        key: question.key,
+        sources: question.sources,
+        claims: question.claimIds.length,
+        completed: question.completed,
+        timings: question.timings,
+        yield: question.yield,
+        searched: question.searched && {
+          textbookPages: question.searched.textbookPages.length,
+          articles: question.searched.articles,
+          refs: question.searched.refs.length,
+        },
+        failures: question.failures.map((failure) => failure.slice(0, 200)),
+      }),
+    );
+  }
 }

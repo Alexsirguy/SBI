@@ -116,11 +116,11 @@ const VISUAL_RIGHTS: RightsGate = {
       : { cleared: false, reason: "visual rights are not checked yet" },
 };
 
-/** Gathers (or reuses) request-time evidence for a lesson; see gatherEvidence in @sbi/evidence. */
+/** Evidence ready for this lesson, or undefined while it is gathered for later ones (ADR 0016). */
 export type EvidenceGatherer = (
   input: InquiryInput & { taxonomyId: string },
   options: GatherOptions,
-) => Promise<GatheredEvidence>;
+) => Promise<GatheredEvidence | undefined>;
 
 export type LessonStreamEvent =
   | { type: "progress"; data: LessonProgress }
@@ -330,7 +330,7 @@ export class LessonService {
         safetyClass,
       };
 
-      // Evidence is gathered now; progress and the first checked answer stream as it arrives.
+      // A stored pack streams a checked early answer; otherwise the model teaches (ADR 0016).
       const events = createEventQueue<LessonStreamEvent>();
       let early: QuickAnswerDraft | undefined;
       let answering: Promise<void> | undefined;

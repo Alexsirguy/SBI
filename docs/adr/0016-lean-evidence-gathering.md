@@ -1,41 +1,48 @@
-# 0016. Gather less evidence, faster, and let model knowledge fill the rest
+# 0016. Teach first, gather fewer sources in the background
 
 - Status: accepted
 - Date: 2026-10-31
 - Issue: #
-- Amends: 0009 (search depth); relies on 0011
+- Amends: 0009 (search depth) and 0011 (when evidence is gathered)
 
 ## Context
 
-A cold lesson took about three minutes. Measured on 31 October 2026 (kettle, swing and guitar, fresh, three at once), the lesson arrived 184 to 194 s after the request. A single swing lesson alone took 180 s.
+A cold lesson took about three minutes. On 31 October 2026, kettle, swing and guitar lessons, fresh and three at once, arrived 184 to 194 s after the request. The API log showed where the time went:
 
-The API log showed where the time went:
+- **Fetching:** each sub-question fetched up to 8 references one after another (16 to 46 s).
+- **Index:** the first search after start-up spent about 20 s building the LibreTexts index.
+- **Sub-questions:** there were 3 to 6, run 3 at a time.
 
-- **Fetching:** each sub-question fetched up to 8 references one after another, taking 16 to 46 s.
-- **Search:** the first search after start-up spent about 20 s building the LibreTexts index.
-- **Sub-questions:** 3 to 6 of them, run 3 at a time, so most lessons needed two rounds.
-- **LLM calls:** about 16 per lesson after gathering. The draft alone took up to 20 s.
-
-ADR 0011 already lets model knowledge fill any gap and says so in one disclaimer. Chasing more sources therefore makes a lesson slower without making it possible.
+Fewer sources fetched in parallel under a 25 s budget brought lessons down to 56 to 73 s, but **verified no claims at all**. LibreTexts sets `Crawl-delay: 5`, and ADR 0009 says we honour it. Every sub-question's textbook pages share one queue spaced 5 s apart, and that queue alone outlasts any budget a learner would wait for. ADR 0011 already lets model knowledge fill any gap, so waiting for sources made lessons slow without making them possible.
 
 ## Decision
 
-- **Sub-questions:** the inquiry plan asks for 2 or 3 (was 3 to 6), and all of them run at once.
-- **Sources per sub-question:**
-  - 2 open-textbook pages, 2 Wikipedia articles and 1 reference from each, at most 3 references in all (were 3, 4, 3 and 8).
-  - Textbook pages still come first.
-- **Fetching:** a sub-question's sources are fetched in parallel. The polite fetcher still spaces requests to any one host.
-- **Slow sources are dropped, not waited for:**
-  - Source requests time out after 8 s with 2 attempts (were 15 s and 3).
-  - Gathering stops after `EVIDENCE_BUDGET_MS`, 25 s by default (was 150 s). The lesson is drafted with whatever was verified.
-- **Judging:** each claim is judged against 2 passages (was 3): its own source and the best other source. One passage would make a second, independent source impossible, so no claim could be `supported` or `disputed`.
+- **A lesson never waits for sources.**
+  - If a stored evidence pack for the question is fresh (ADR 0011's rules), it is used at once. Its claims cite sources, and its early checked answer streams first.
+  - Otherwise the lesson is drafted straight from model knowledge, with the model-knowledge disclaimer, and gathering starts in the background.
+  - The finished pack is stored, so the next learner who asks gets a sourced lesson.
+  - Only one background gather runs per pack.
+- **Fewer sources per lesson:**
+  - 2 or 3 sub-questions (were 3 to 6), all run at once.
+  - Per sub-question: 2 open-textbook pages, 2 Wikipedia articles, 1 reference from each article, and at most 3 references in all (were 3, 4, 3 and 8).
+  - Fetched in parallel. The polite fetcher still spaces requests to each host.
+  - Source requests time out after 8 s and try twice (were 15 s and three tries).
+  - A background gather stops after `EVIDENCE_BUDGET_MS`, 120 s by default.
+- **Judging:** each claim is judged against 2 passages (was 3): its own source and the best other source. With one passage, no claim could ever reach `supported` or `disputed`.
 - **Start-up:** the LibreTexts index starts building when the API starts.
 - **Timing log:** each lesson logs one line with milliseconds to `gatheredMs`, `modelKnowledgeMs`, `draftedMs` and `checkedMs`.
 
-**Target:** a cold lesson in 30 s or less at p50.
-
 ## Consequences
 
-- More claims come from model knowledge, so more lessons carry the model-knowledge disclaimer. Fewer claims reach two independent sources.
-- A pack cut short by the budget is still not stored for reuse, so a topic whose sources are slow is gathered again next time.
-- Every number above is an option or an environment setting, so it can be tuned against the timing log without a code change.
+**Measured on 31 October 2026, five at once:**
+
+- **Cold lessons** arrived in 29 to 33 s. Of that, 4 to 6 s was model knowledge, about 8 s the draft and 15 to 19 s the checks.
+- **Background gathers** verified 5 to 14 claims per topic.
+- **Repeat questions** reused the stored pack: 10 to 16 claims, the early answer at 5 to 10 s, and the lesson at 40 to 44 s.
+
+**Trade-offs:**
+
+- The first learner to ask a new question always gets a model-knowledge lesson. Sources only reach later learners.
+- Model-knowledge lessons are not reused (ADR 0011), so the second learner's lesson is drafted again, this time from the stored pack.
+- Lessons that reuse a pack are slower than cold ones, because the early checked answer now runs before the draft instead of alongside gathering. Overlapping the two is a follow-up.
+- The checks are now the largest stage. They are the next place to look for speed.
