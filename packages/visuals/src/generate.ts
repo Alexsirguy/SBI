@@ -3,7 +3,7 @@ import { projectOutputAsset } from "@sbi/rights";
 import { z } from "zod";
 import { REFERENCE_MECHANISMS } from "./references";
 
-export const VISUAL_PROMPT = { id: "visual-generate", version: "v2" } as const;
+export const VISUAL_PROMPT = { id: "visual-generate", version: "v3" } as const;
 
 const Named = z.string();
 // One flat object with a field per format, because strict JSON schema mode allows no free-form spec.
@@ -99,7 +99,8 @@ Kinds:
 - mechanism: moving parts (engines, gears, levers, hinges, pumps, springs, pendulums, wheels). Write "mjcf", a MuJoCo model:
   start with <mujoco>; z is up; metres and kilograms; use only primitive geoms (box, sphere, capsule, cylinder, ellipsoid, plane);
   never use files, meshes, <include> or plugins; at most 30 bodies; give joints damping; turn gravity off unless gravity is the point;
-  add a motor actuator for each slider that drives something and list it in "bindings" ({control: slider id, actuator: actuator name});
+  add a <motor name=".." joint=".." gear=".."/> actuator for each slider that drives something and list it in "bindings"
+  ({control: slider id, actuator: actuator name}); the slider sets the motor's control, so never write ctrl= or ctrlrange= yourself;
   name bodies with short camelCase names, and use those names as label ids so labels point at parts. Colour parts with rgba;
   make casings, cylinders and housings see-through (alpha 0.25) so the moving parts inside stay visible; add no floor plane.
   Example (a lever):
@@ -118,6 +119,7 @@ Every kind:
 - labels: up to 6 named parts; text is the part's name in 1 to 3 words ("Piston", "Exhaust valve");
   claimId must be one of the lesson's claim ids given below, or leave the label out.
 - controls: up to 4 sliders with a camelCase id, label, unit, and min < value < max; step divides the range into at most 100 steps.
+- every label, control and readout id is different from all the others.
 - readouts: up to 3 numbers worked out from slider ids with plain arithmetic (mathjs syntax: + - * / ^, min, max, sqrt, sin, cos, pi).
 Use real physical values and units. Be correct: a learner will trust it.`;
 
@@ -163,7 +165,14 @@ export function toManifest(
     longDescription: output.longDescription || undefined,
     fallback: { text: output.fallbackText || output.alt || lesson.summary },
     assumptions: output.assumptions.filter(Boolean),
-    labels: output.labels.filter((label) => claims.has(label.claimId)),
+    labels: output.labels.filter(
+      (label, index) =>
+        claims.has(label.claimId) &&
+        // A repeated label is a duplicate, not a mistake worth a repair round.
+        output.labels.findIndex((other) => other.id === label.id) === index &&
+        !output.controls.some((control) => control.id === label.id) &&
+        !output.readouts.some((readout) => readout.id === label.id),
+    ),
     controls: output.controls,
     readouts: output.readouts,
     spec,

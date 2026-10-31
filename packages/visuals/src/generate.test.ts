@@ -41,6 +41,7 @@ const PROCESS: GeneratedVisual = {
   labels: [
     { id: "chloroplast", text: "Chloroplast", claimId: CLAIM },
     { id: "stoma", text: "Stoma", claimId: OTHER },
+    { id: "chloroplast", text: "Chloroplast again", claimId: CLAIM },
   ],
   mermaid: "flowchart LR\n  light[Light] --> leaf[Leaf]\n  leaf --> sugar[Sugar]",
 };
@@ -70,7 +71,7 @@ const pubchem = {
 };
 
 describe("generateVisual", () => {
-  it("returns a checked manifest with our own rights record, dropping labels on foreign claims", async () => {
+  it("returns a checked manifest with our own rights record, dropping repeated labels and foreign claims", async () => {
     const { provider, requests } = scripted(PROCESS);
     const result = await generateVisual({ provider, lesson, pubchem });
     if (!result || !("manifest" in result)) throw new Error(JSON.stringify(result));
