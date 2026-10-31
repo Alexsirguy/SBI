@@ -205,12 +205,16 @@ export async function gatherEvidence(
         textbookPages: found.textbookPages,
         refs: found.refs.map((ref) => ref.doi ?? ref.pmid ?? ref.url ?? "unknown"),
       };
+      // Parallel across hosts; the polite fetcher still spaces requests to any one host.
+      const settled = await Promise.allSettled(
+        found.refs.map((ref) => deps.retriever.retrieve(ref, { signal })),
+      );
+      if (signal.aborted) throw signal.reason;
       const fetched: FetchedSource[] = [];
-      for (const ref of found.refs) {
-        try {
-          fetched.push(await deps.retriever.retrieve(ref, { signal }));
-        } catch (error) {
-          if (signal.aborted) throw error;
+      for (const outcome of settled) {
+        if (outcome.status === "fulfilled") fetched.push(outcome.value);
+        else {
+          const error: unknown = outcome.reason;
           result.failures.push(`fetch: ${error instanceof Error ? error.message : String(error)}`);
         }
       }

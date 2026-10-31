@@ -104,9 +104,12 @@ describe("planInquiry", () => {
     );
   });
 
-  it("rejects a malformed plan, or one with fewer than three sub-questions, as a provider error", async () => {
-    const tooFew = { questions: [question("q1", "physics"), question("q2", "maths")] };
-    for (const answer of ["not json", tooFew, { questions: [{ key: "x" }] }]) {
+  it("rejects a malformed plan, or one outside two to three sub-questions, as a provider error", async () => {
+    const tooFew = { questions: [question("q1", "physics")] };
+    const tooMany = {
+      questions: ["q1", "q2", "q3", "q4"].map((key) => question(key, "physics")),
+    };
+    for (const answer of ["not json", tooFew, tooMany, { questions: [{ key: "x" }] }]) {
       await expect(planInquiry(input, { provider: provider(answer) })).rejects.toBeInstanceOf(
         LlmError,
       );

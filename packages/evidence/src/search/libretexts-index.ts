@@ -12,6 +12,8 @@ interface IndexedPage {
 export interface LibreTextsIndex {
   /** `preferSites` are origins, such as the sub-question's discipline site, ranked first on ties. */
   search(query: string, limit: number, options?: { preferSites?: string[] }): Promise<string[]>;
+  /** Starts building the index now, so the first lesson does not spend its budget on it. */
+  warm(): void;
 }
 
 export interface LibreTextsIndexOptions {
@@ -89,6 +91,9 @@ export function createLibreTextsIndex(options: LibreTextsIndexOptions): LibreTex
   }
 
   return {
+    warm() {
+      void pages();
+    },
     async search(query, limit, searchOptions = {}) {
       const preferred = new Set(searchOptions.preferSites ?? []);
       const wanted = [...new Set(searchTokens(query))];

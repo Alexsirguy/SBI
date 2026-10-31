@@ -266,6 +266,10 @@ export class LessonService {
   async *streamLesson(request: LessonRequest): AsyncGenerator<LessonStreamEvent> {
     const provider = this.provider;
     if (!provider) throw new UserFacingException(UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
+    // Milliseconds from the request to each stage, logged once so cold-lesson latency is visible.
+    const started = performance.now();
+    const timings: Record<string, number> = {};
+    const mark = (stage: string) => (timings[stage] = Math.round(performance.now() - started));
     const entry = resolveSubject(request, this.taxonomy);
     if (!entry) throw new UserFacingException(UNKNOWN_CATEGORY, HttpStatus.NOT_FOUND);
     const taxonomyId = entry.id;
@@ -376,6 +380,7 @@ export class LessonService {
         yield event;
       }
       const gathered = await gathering;
+      mark("gatheredMs");
       // Evidence gaps never hold a lesson back or change its shape; the model fills them, and the
       // lesson says so (ADR 0011).
       const gaps = evidenceGaps(request.question, entry.label, gathered, usable);
@@ -393,6 +398,7 @@ export class LessonService {
         if (error instanceof LlmError) return [];
         throw error;
       });
+      mark("modelKnowledgeMs");
       const claims = lessonClaims(usable, gathered?.claims ?? [], fromModel);
       if (claims.length === 0) {
         throw new UserFacingException(
@@ -450,6 +456,7 @@ export class LessonService {
         async () => {
           const generated = await pendingDraft;
           const draft = early ? await withShortAnswer(generated, early, claims) : generated;
+          mark("draftedMs");
           checkingStarted?.();
           const checks = [
             schemaCheck,
@@ -517,6 +524,16 @@ export class LessonService {
         };
       }
       const outcome = await outcomePending;
+      mark("checkedMs");
+      this.logger.log(
+        JSON.stringify({
+          outcome: outcome.kind,
+          ...timings,
+          reusedPack: gathered?.reused ?? false,
+          claims: claims.length,
+          modelClaims: fromModel.length,
+        }),
+      );
       if (outcome.kind !== "fresh") {
         // Reasons name checks, fields and ids, never the learner's words.
         this.logger.warn(
