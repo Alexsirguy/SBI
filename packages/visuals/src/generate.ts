@@ -2,9 +2,9 @@ import { canonicalJson, newId, sha256Hex, VisualManifest, type VisualAsset } fro
 import { projectOutputAsset } from "@sbi/rights";
 import { z } from "zod";
 import { RAINBOW_CODE } from "./kinds/rainbow";
-import { REFERENCE_MECHANISMS } from "./references";
+import { REFERENCE_MECHANISMS, REFERENCE_VISUALS } from "./references";
 
-export const VISUAL_PROMPT = { id: "visual-generate", version: "v4" } as const;
+export const VISUAL_PROMPT = { id: "visual-generate", version: "v5" } as const;
 
 const Named = z.string();
 // One flat object with a field per format, because strict JSON schema mode allows no free-form spec.
@@ -94,6 +94,7 @@ export const GENERATED_VISUAL_SCHEMA = object({
 });
 
 const LEVER_MJCF = (REFERENCE_MECHANISMS.lever.spec as { mjcf: string }).mjcf;
+const HEATING_SERIES = (REFERENCE_VISUALS.heating.spec as { series: unknown }).series;
 
 export const VISUAL_SYSTEM_PROMPT = `You design one interactive picture that shows how an everyday thing works, for a science lesson.
 Pick the kind that best shows the lesson's mechanism, and fill only that kind's fields; leave the others empty ("" or []).
@@ -112,7 +113,8 @@ ${LEVER_MJCF}
 - process: stages or flows (photosynthesis, the water cycle, digestion, the four strokes). Write "mermaid": a "flowchart LR" with at most 12 short nodes;
   plain words only, no links, HTML, click lines or %% directives.
 - graph: one quantity changing with another (temperature over time, speed against gear). Fill "graph": an x range and up to 4 series
-  whose formulas use x's name and slider ids.
+  whose formulas use x's name and slider ids. Example (a kettle; sliders power, mass and height):
+  ${JSON.stringify({ x: { name: "t", label: "Time", unit: "s", from: 0, to: 600 }, series: HEATING_SERIES, mark: "line" })}
 - playground: only when none of the kinds above can show it (light, colour, heat, particles, weather, cells).
   Write "code": JavaScript that calls kit.onFrame((ctx, state) => { ... }) and draws on a 2D canvas with ctx.
   state has width, height, time (seconds), dt and values (slider values by id). kit.colors has ink, soft, action,

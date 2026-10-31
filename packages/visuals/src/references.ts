@@ -1,4 +1,5 @@
-import { VisualManifest } from "@sbi/contracts";
+import { canonicalJson, sha256Hex, VisualManifest, type VisualAsset } from "@sbi/contracts";
+import { projectOutputAsset } from "@sbi/rights";
 
 /** Crank radius and connecting-rod length of the reference engine, in metres. */
 export const ENGINE = { crank: 0.05, rod: 0.15 };
@@ -63,6 +64,7 @@ const leverMjcf = `<mujoco model="lever">
 export const REFERENCE_MECHANISMS = {
   engine: VisualManifest.parse({
     visualId: "0192f1a0-0000-7000-8000-0000000000d1",
+    assetIds: ["2ea12299-6698-4b2c-9e20-16ff55f2f441"],
     kind: "mechanism",
     alt: "A piston engine: the crankshaft turns as the piston slides up and down",
     fallback: {
@@ -92,6 +94,7 @@ export const REFERENCE_MECHANISMS = {
   }),
   gears: VisualManifest.parse({
     visualId: "0192f1a0-0000-7000-8000-0000000000d2",
+    assetIds: ["4a786b4b-4478-4c32-9d8f-3af65e5d5289"],
     kind: "mechanism",
     alt: "Bicycle gears: the small back sprocket turns twice for each turn of the pedals",
     fallback: {
@@ -106,6 +109,7 @@ export const REFERENCE_MECHANISMS = {
   }),
   lever: VisualManifest.parse({
     visualId: "0192f1a0-0000-7000-8000-0000000000d3",
+    assetIds: ["80fd1a5f-c024-41c6-96a5-aa5264b3c250"],
     kind: "mechanism",
     alt: "A lever: a 10 kg load half a metre from the pivot, lifted by pushing 1 m from it",
     fallback: {
@@ -121,3 +125,86 @@ export const REFERENCE_MECHANISMS = {
     spec: { mjcf: leverMjcf, bindings: [{ control: "effort", actuator: "effort" }] },
   }),
 };
+
+/** Water's heat capacity and the fall in boiling point per kilometre of height used by the heating reference. */
+export const HEATING = { capacity: 4190, start: 20, boil: 100, perKm: 3.3 };
+
+const heating = VisualManifest.parse({
+  visualId: "0192f1a0-0000-7000-8000-0000000000d4",
+  assetIds: ["70a893b3-4a2e-4d6b-a7da-2ce4d32e08a7"],
+  kind: "graph",
+  alt: "Water temperature in a kettle over time, flattening at the boiling point",
+  fallback: {
+    text: "The water warms steadily, then stays at its boiling point, which is lower high up a mountain.",
+  },
+  assumptions: [
+    "No heat lost",
+    "Starts at 20 °C",
+    "Boiling point falls about 3.3 °C per km of height",
+  ],
+  controls: [
+    { id: "power", label: "Heater power", unit: "W", min: 500, max: 3000, step: 100, value: 2000 },
+    { id: "mass", label: "Water", unit: "kg", min: 0.2, max: 1.7, step: 0.1, value: 1 },
+    {
+      id: "height",
+      label: "Height above the sea",
+      unit: "km",
+      min: 0,
+      max: 5,
+      step: 0.5,
+      value: 0,
+    },
+  ],
+  readouts: [
+    {
+      id: "boilsAt",
+      label: "Boils at",
+      unit: "°C",
+      formula: `${HEATING.boil} - ${HEATING.perKm} * height`,
+    },
+    {
+      id: "timeToBoil",
+      label: "Time to start boiling",
+      unit: "s",
+      formula: `mass * ${HEATING.capacity} * (${HEATING.boil} - ${HEATING.perKm} * height - ${HEATING.start}) / power`,
+    },
+  ],
+  spec: {
+    x: { name: "t", label: "Time", unit: "s", from: 0, to: 600, samples: 61 },
+    series: [
+      {
+        name: "temperature",
+        label: "Temperature",
+        unit: "°C",
+        formula: `min(${HEATING.start} + power * t / (mass * ${HEATING.capacity}), ${HEATING.boil} - ${HEATING.perKm} * height)`,
+      },
+    ],
+    vegaLite: { mark: "line" },
+  },
+});
+
+/** The prototype's four labs, checked by hand: the generator's examples and the regression set (#87). */
+export const REFERENCE_VISUALS = { ...REFERENCE_MECHANISMS, heating };
+
+/** Rights records for the references: our own work, with checksums of their specs. */
+export async function referenceAssets(): Promise<VisualAsset[]> {
+  return Promise.all(
+    Object.values(REFERENCE_VISUALS).map(async (manifest) => {
+      const body = canonicalJson(manifest.spec ?? null);
+      return {
+        ...projectOutputAsset({
+          assetId: manifest.assetIds[0] ?? "",
+          kind: manifest.kind === "mechanism" ? "simulation" : "data",
+          format: manifest.kind,
+          sha256: await sha256Hex(body),
+          sizeBytes: new TextEncoder().encode(body).length,
+          accessibilityFallback: manifest.fallback.text,
+        }),
+        creator: "Science Behind It (hand-checked reference)",
+        attribution: "Made by Science Behind It from the prototype's labs",
+        // Hand-checked once; a yearly review keeps them honest as the renderers change.
+        reviewDueOn: "2027-10-31",
+      };
+    }),
+  );
+}

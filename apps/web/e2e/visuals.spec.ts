@@ -23,16 +23,17 @@ test.describe("visual gallery", () => {
 
   test("draws a graph whose sliders change the readout and the line", async ({ page }) => {
     await page.goto("/visuals");
-    const graph = page.getByRole("figure", { name: /Water temperature over time/ });
+    const graph = page.getByRole("figure", { name: /Water temperature in a kettle/ });
     await expect(graph.locator(".visual-graph svg path").first()).toBeVisible();
-    await expect(graph.locator("dd output")).toHaveText("168 s");
+    const timeToBoil = graph.locator("dd output").nth(1);
+    await expect(timeToBoil).toHaveText("168 s");
 
     const before = await graph.locator(".visual-graph svg").innerHTML();
     const power = graph.getByRole("slider", { name: "Heater power" });
     await power.focus();
     for (let i = 0; i < 10; i += 1) await page.keyboard.press("ArrowLeft");
     await expect(power).toHaveAttribute("aria-valuetext", "1,000 W");
-    await expect(graph.locator("dd output")).toHaveText("335 s");
+    await expect(timeToBoil).toHaveText("335 s");
     await expect.poll(() => graph.locator(".visual-graph svg").innerHTML()).not.toBe(before);
   });
 

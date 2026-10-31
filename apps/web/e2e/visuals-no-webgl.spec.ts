@@ -17,7 +17,7 @@ test("shows the text for 3D kinds and still draws the 2D ones", async ({ page })
   const water = page.getByRole("figure", { name: /water molecule/ });
   await expect(water).toContainText("Water is one oxygen atom");
   await expect(water.locator("canvas")).toHaveCount(0);
-  const graph = page.getByRole("figure", { name: /Water temperature over time/ });
+  const graph = page.getByRole("figure", { name: /Water temperature in a kettle/ });
   await expect(graph.locator(".visual-graph svg")).toBeVisible();
   await expectNoAxeViolations(page);
 });
