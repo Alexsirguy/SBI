@@ -167,7 +167,7 @@ describe("recognition routes", () => {
     expect(recogniser.recognise).toHaveBeenCalledTimes(3);
   });
 
-  it("asks again for a photo stored before the model's labels were kept", async () => {
+  it("asks again for a stored result with no names, and reuses one that has them", async () => {
     const recogniser = answering({
       candidates: [
         { label: "car engine", certainty: "likely", calibratedConfidence: 0.9, reasons: [] },
@@ -178,19 +178,20 @@ describe("recognition routes", () => {
     const first = RecognisedPhoto.parse(
       await (await test.post("/recognitions", { key: KEY })).json(),
     );
-    const older = RecognitionResult.parse(recognition.saved.get(first.resultId));
-    delete older.labels;
-    recognition.saved.set(first.resultId, older);
+    // Copies made before the fix stored an empty list, not a missing one; neither is reused.
+    for (const labels of [undefined, []]) {
+      const older = RecognitionResult.parse(recognition.saved.get(first.resultId));
+      recognition.saved.clear();
+      recognition.saved.set(first.resultId, { ...older, labels });
+      const again = RecognisedPhoto.parse(
+        await (await test.post("/recognitions", { key: KEY })).json(),
+      );
+      expect(again.options).toEqual([{ label: "Car engine", certainty: "likely" }]);
+    }
+    expect(recogniser.recognise).toHaveBeenCalledTimes(3);
 
-    const again = RecognisedPhoto.parse(
-      await (await test.post("/recognitions", { key: KEY })).json(),
-    );
-    expect(recogniser.recognise).toHaveBeenCalledTimes(2);
-    expect(again.options).toEqual([{ label: "Car engine", certainty: "likely" }]);
-
-    // Once labels are stored, even a photo the model named nothing in is reused, not re-paid.
     await test.post("/recognitions", { key: KEY });
-    expect(recogniser.recognise).toHaveBeenCalledTimes(2);
+    expect(recogniser.recognise).toHaveBeenCalledTimes(3);
   });
 
   it("issues a session id when none is sent", async () => {

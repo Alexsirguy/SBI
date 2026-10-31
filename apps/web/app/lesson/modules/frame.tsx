@@ -34,10 +34,7 @@ export function SectionFrame({
         {MODULE_LABELS[section.module]}
         {evidence ? <span className="evidence-tag"> · {EVIDENCE_LABELS[evidence]}</span> : null}
       </p>
-      {/* Focusable, so revealing the next step can move the reader to it. */}
-      <h2 id={headingId} tabIndex={-1}>
-        {section.heading ?? MODULE_LABELS[section.module]}
-      </h2>
+      <h2 id={headingId}>{section.heading ?? MODULE_LABELS[section.module]}</h2>
       {children}
     </section>
   );

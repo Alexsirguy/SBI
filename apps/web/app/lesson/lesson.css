@@ -217,25 +217,21 @@ main.lesson {
   scroll-margin-top: 80px;
 }
 
-.rail .lesson-section h2:focus {
-  outline: none;
-}
-
 .rail__step--answer .short-answer {
   font-size: var(--sbi-text-answer);
   line-height: 1.5;
 }
 
-/* Kept in view while reading, as in the prototype, so the next step is always one tap away. */
-.lesson-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sbi-space-2);
-  padding: var(--sbi-space-3) 0 calc(var(--sbi-space-3) + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(transparent, var(--sbi-bench) 30%);
+/* Says what the faint titles are, so a learner waiting on them knows more is coming. */
+.rail-pending {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.rail-pending__note {
+  margin: 0;
+  font-weight: 700;
+  color: var(--sbi-ink-soft);
 }
 
 .lesson-section h2 {
@@ -283,47 +279,16 @@ main.lesson {
   border-top: 1px solid var(--sbi-rule);
 }
 
-/* Evidence and sources come last, so the lesson reads as reasoning rather than citations. */
-.lesson-evidence,
+/* Sources come last, so the lesson reads as reasoning rather than citations. */
 .lesson-sources {
   border-top: 1px solid var(--sbi-rule);
   padding-top: var(--sbi-space-5);
 }
 
-.lesson-evidence h2,
 .lesson-sources h2,
 .lesson-feedback h2 {
   font-size: var(--sbi-text-title);
   margin: 0 0 var(--sbi-space-2);
-}
-
-.lesson-evidence h3 {
-  font-size: var(--sbi-text-heading);
-  margin: var(--sbi-space-4) 0 var(--sbi-space-1);
-}
-
-.lesson-evidence ul {
-  margin: 0;
-  padding-left: 1.2rem;
-  display: grid;
-  gap: var(--sbi-space-2);
-}
-
-.evidence-origin {
-  color: var(--sbi-ink-soft);
-  font-size: var(--sbi-text-small);
-}
-
-/* A boxed number reads as a reference, and its name comes from aria-label. */
-.citation-marker {
-  display: inline-grid;
-  place-items: center;
-  min-width: var(--sbi-touch-min);
-  min-height: var(--sbi-touch-min);
-  margin-left: var(--sbi-space-1);
-  font-family: var(--sbi-font-mono);
-  font-weight: 500;
-  text-decoration: none;
 }
 
 .lesson-visuals {
@@ -403,4 +368,60 @@ main.lesson {
 .rail .evidence-inference {
   border-left: 0;
   padding-left: 0;
+}
+
+/* Sources open on request; the summary carries the heading and a count. */
+.lesson-fold > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+  min-height: var(--sbi-touch-min);
+  cursor: pointer;
+  list-style-position: outside;
+}
+
+.lesson-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The flex summary drops the native arrow, so the open state is drawn and written in the count. */
+.lesson-fold > summary::before {
+  content: "▸" / "";
+  align-self: center;
+  font-size: var(--sbi-text-title);
+  line-height: 1;
+  color: var(--sbi-action);
+}
+
+.lesson-fold[open] > summary::before {
+  content: "▾" / "";
+}
+
+.lesson-fold > summary h2 {
+  display: inline;
+  margin: 0;
+}
+
+.lesson-fold__count {
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.lesson-fold[open] > summary {
+  margin-bottom: var(--sbi-space-3);
+}
+
+.source-quotes {
+  margin-top: var(--sbi-space-1);
+  font-size: var(--sbi-text-small);
+}
+
+.source-quotes > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sbi-touch-min);
+  color: var(--sbi-action);
+  font-weight: 700;
+  cursor: pointer;
 }

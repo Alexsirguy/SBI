@@ -312,15 +312,18 @@ export function CaptureForm() {
               <Button type="button" onClick={() => void finishCrop()} disabled={processing}>
                 Done
               </Button>
-              <Button
-                variant="quiet"
-                type="button"
-                onClick={() =>
-                  setCrop({ x: 0, y: 0, width: original.width, height: original.height })
-                }
-              >
-                Use the whole photo
-              </Button>
+              {/* Offered only when it would change something; on a whole-photo crop it cannot. */}
+              {crop.width < original.width || crop.height < original.height ? (
+                <Button
+                  variant="quiet"
+                  type="button"
+                  onClick={() =>
+                    setCrop({ x: 0, y: 0, width: original.width, height: original.height })
+                  }
+                >
+                  Use the whole photo
+                </Button>
+              ) : null}
               <Button variant="quiet" type="button" onClick={retake}>
                 Choose another photo
               </Button>

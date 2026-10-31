@@ -12,3 +12,4 @@ export * from "./registry";
 export * from "./taxonomy-api";
 export * from "./tutor";
 export * from "./visual";
+export * from "./readable-text";

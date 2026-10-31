@@ -64,6 +64,8 @@ test("a photo the object fills keeps the whole photo", async ({ page }) => {
   await expect(page.getByRole("button", { name: /^Crop area, the whole photo/ })).toBeVisible({
     timeout: 15000,
   });
+  // Already the whole photo, so the reset would do nothing and is not offered.
+  await expect(page.getByRole("button", { name: "Use the whole photo" })).toHaveCount(0);
   await pressDone(page);
   await expect(page.getByAltText("Your photo")).toHaveAttribute("data-width", "800");
 });
@@ -81,6 +83,7 @@ test("the crop works from the keyboard, resets to the whole photo, and can be re
 
   await page.getByRole("button", { name: "Use the whole photo" }).click();
   await expect(area).toHaveAccessibleName(/the whole photo/);
+  await expect(page.getByRole("button", { name: "Use the whole photo" })).toHaveCount(0);
   await pressDone(page);
   await expect(page.getByAltText("Your photo")).toHaveAttribute("data-width", "800");
 

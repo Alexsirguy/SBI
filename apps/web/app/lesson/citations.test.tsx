@@ -1,14 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { citationIndex, EvidenceList, SourceList } from "./citations";
+import { citationIndex, SourceList } from "./citations";
 import { SectionView } from "./modules/section-view";
 import { SAMPLE_LESSON, SAMPLE_SOURCES } from "./sample-lesson";
 
 const index = citationIndex(SAMPLE_LESSON, SAMPLE_SOURCES);
-const evidence = renderToStaticMarkup(
-  <EvidenceList lesson={SAMPLE_LESSON} sources={SAMPLE_SOURCES} />,
-);
-
 describe("citationIndex", () => {
   it("numbers sources in the order the lesson first cites them", () => {
     // The first section cites the magnifier page (A); refraction (both) comes later.
@@ -17,20 +13,8 @@ describe("citationIndex", () => {
   });
 });
 
-describe("EvidenceList", () => {
-  it("links each statement to its numbered sources, at the end of the lesson", () => {
-    expect(evidence).toContain("How do we know?");
-    expect(evidence).toContain('href="#source-1"');
-    expect(evidence).toContain('aria-label="Source 1: 2.8: The Simple Magnifier"');
-    expect(evidence).toContain("Based on limited evidence:");
-    expect(evidence).toContain("Sources disagree:");
-  });
-
-  it("names model knowledge plainly instead of inventing a source", () => {
-    expect(evidence).toContain("the AI&#x27;s general knowledge");
-  });
-
-  it("puts nothing about sources inside the sections themselves", () => {
+describe("lesson sections", () => {
+  it("carry no source markers or claim notes; sources are listed once, at the end", () => {
     for (const section of SAMPLE_LESSON.sections) {
       const html = renderToStaticMarkup(<SectionView section={section} lesson={SAMPLE_LESSON} />);
       expect(html).not.toContain("citation-marker");

@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import type { Lesson, LessonDisclaimer, LessonRequest, LessonVisuals } from "@sbi/contracts";
+import type { LessonDisclaimer, LessonRequest } from "@sbi/contracts";
 import { Button, Mark, Notice, StatusLine } from "@sbi/ui";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { handedOffPhoto } from "../photo-handoff";
 import { Scanner } from "../scanner";
 import { AskQuestion } from "./ask-question";
-import { EvidenceList, SourceList } from "./citations";
+import { SourceList } from "./citations";
 import { DepthControls } from "./depth-controls";
 import { LessonFeedback } from "./feedback";
 import { lessonHref } from "./lesson-request";
-import { sectionAnchor } from "./modules/frame";
-import { MODULE_LABELS, MODULES } from "./modules/labels";
-import { SectionView } from "./modules/section-view";
+import { cautionText } from "./notice-text";
+import { LessonRail } from "./lesson-rail";
 import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
 
@@ -29,38 +28,18 @@ interface LessonReaderProps {
   fetcher?: typeof fetch;
 }
 
-/** The prototype opens on what you're seeing and the short answer; the rest is one tap each. */
-const FIRST_OPEN = 2;
-
 // One notice, whatever the lesson carries, with any safety text first (owner decision, #281).
 function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
-  if (items.length === 0) return null;
-  const ordered = [...items].sort(
-    (a, b) => Number(b.kind === "safety") - Number(a.kind === "safety"),
-  );
+  const safety = items.find((item) => item.kind === "safety");
+  const caution = cautionText(items);
+  if (!safety && !caution) return null;
   return (
     <aside aria-label="Before you read" className="lesson-notices">
-      <Notice kind={ordered[0]?.kind === "safety" ? "safety" : "note"}>
-        {ordered.map((item) => (
-          <p key={item.kind}>{item.message}</p>
-        ))}
+      <Notice kind={safety ? "safety" : "note"}>
+        {safety ? <p>{safety.message}</p> : null}
+        {caution ? <p>{caution}</p> : null}
       </Notice>
     </aside>
-  );
-}
-
-// Reserved from the start so diagrams arrive without moving the text the learner is reading.
-function VisualsSlot({ visuals }: { visuals: LessonVisuals["visuals"] }) {
-  if (visuals.length === 0) return null;
-  return (
-    <section aria-labelledby="visuals-heading" className="lesson-visuals">
-      <h2 id="visuals-heading">Pictures</h2>
-      <ul>
-        {visuals.map((visual) => (
-          <li key={visual.visualId}>{visual.alt}</li>
-        ))}
-      </ul>
-    </section>
   );
 }
 
@@ -69,90 +48,6 @@ const noSubscription = () => () => undefined;
 /** The learner's photo from the capture step, if this visit came from one; never on the server. */
 function useHandedOffPhoto() {
   return useSyncExternalStore(noSubscription, handedOffPhoto, () => null);
-}
-
-/** The prototype's rail: open steps in full, the rest as faint titles until the learner asks. */
-function LessonRail({
-  lesson,
-  label,
-  askQuestion,
-  visuals,
-  shown,
-  onOpen,
-}: {
-  lesson?: Lesson;
-  label: string;
-  askQuestion: ReactNode;
-  visuals: LessonVisuals["visuals"];
-  shown: number;
-  onOpen: (count: number) => void;
-}) {
-  const [focusOn, setFocusOn] = useState<string>();
-  const sections = lesson?.sections ?? [];
-  const next = sections[shown];
-
-  useEffect(() => {
-    if (focusOn) document.getElementById(focusOn)?.focus();
-  }, [focusOn]);
-
-  function reveal(count: number) {
-    const target = sections[shown];
-    onOpen(count);
-    if (target) setFocusOn(`${sectionAnchor(target)}-heading`);
-  }
-
-  if (!lesson) {
-    return (
-      <ol className="rail" aria-hidden="true">
-        {MODULES.map((module) => (
-          <li key={module} className="rail__step rail__step--ghost">
-            {MODULE_LABELS[module]}
-          </li>
-        ))}
-      </ol>
-    );
-  }
-  return (
-    <>
-      <ol
-        className="rail"
-        aria-label={`Lesson, ${Math.min(shown, sections.length)} of ${sections.length} steps open`}
-      >
-        {sections.slice(0, shown).map((section) => (
-          <li
-            key={section.sectionId}
-            className={`rail__step${section.module === "short-answer" ? " rail__step--answer" : ""}`}
-          >
-            <SectionView
-              section={section}
-              lesson={lesson}
-              objectLabel={label}
-              askQuestion={askQuestion}
-            />
-            {/* Pictures sit beside the mechanism they show, after the text (#83). */}
-            {section.module === "how-parts-work" ? <VisualsSlot visuals={visuals} /> : null}
-          </li>
-        ))}
-        {sections.slice(shown).map((section) => (
-          <li key={section.sectionId} className="rail__step rail__step--ghost" aria-hidden="true">
-            {section.heading ?? MODULE_LABELS[section.module]}
-          </li>
-        ))}
-      </ol>
-      {next ? (
-        <div className="lesson-actions">
-          <Button onClick={() => reveal(shown + 1)}>
-            {shown === FIRST_OPEN
-              ? "Show me why"
-              : `Next: ${(next.heading ?? MODULE_LABELS[next.module]).toLowerCase()}`}
-          </Button>
-          <Button variant="quiet" onClick={() => reveal(sections.length)}>
-            Show the whole lesson
-          </Button>
-        </div>
-      ) : null}
-    </>
-  );
 }
 
 // The prototype's order: a loader until the quick answer, then the answer, then the steps.
@@ -183,15 +78,6 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const loading = status === "loading";
   const disclaimers = lesson?.disclaimers ?? answer?.disclaimers ?? [];
   const writing = loading && !answer && !lesson;
-  const [opened, setOpened] = useState(FIRST_OPEN);
-  const total = lesson?.sections.length ?? 0;
-  // A link into a step or a source (or a reader who asked for everything) opens the whole lesson.
-  const linked =
-    typeof window !== "undefined" && /^#(section|source)-/.test(window.location.hash) ? total : 0;
-  const shown = Math.max(opened, linked);
-  // As in the prototype, evidence, sources and feedback follow the last step once it is open.
-  const finished = lesson !== undefined && shown >= total;
-
   return (
     <main id="main" className="lesson">
       <header className="lesson-head">
@@ -258,14 +144,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
             label={label}
             askQuestion={<AskQuestion subject={subject} prefs={prefs} />}
             visuals={visuals?.visuals ?? []}
-            shown={shown}
-            onOpen={setOpened}
           />
-          {lesson && finished ? <EvidenceList lesson={lesson} sources={sources} /> : null}
-          {lesson && finished && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
-          {lesson && finished ? (
-            <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} />
-          ) : null}
+          {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
+          {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
         </div>
       )}
     </main>

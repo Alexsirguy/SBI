@@ -31,15 +31,6 @@ test("the whole lesson can be read and used from the keyboard alone", async ({ p
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
 
-  // "Show me why" opens the next step and moves the reader to it; the rest open in one go.
-  await tabTo(page, page.getByRole("button", { name: "Show me why" }));
-  await page.keyboard.press("Enter");
-  await expect(
-    page.locator(".rail").getByRole("heading", { name: "Glass bends light" }),
-  ).toBeFocused();
-  await tabTo(page, page.getByRole("button", { name: "Show the whole lesson" }));
-  await page.keyboard.press("Enter");
-
   // Check your thinking: type, submit with Enter on the button, and focus moves to the explanation.
   const check = page.getByRole("region", { name: "Does the word grow?" });
   await tabTo(page, check.getByLabel("Your thinking (optional, not saved or marked)"));
@@ -48,14 +39,13 @@ test("the whole lesson can be read and used from the keyboard alone", async ({ p
   await page.keyboard.press("Enter");
   await expect(check.locator(".check-feedback")).toBeFocused();
 
-  // A marker in the evidence at the end leads to the source it names.
-  const marker = page
-    .getByRole("region", { name: "How do we know?" })
-    .getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" })
-    .first();
-  await tabTo(page, marker);
+  // The source list at the end opens from the keyboard.
+  const sourcesToggle = page.getByRole("region", { name: "Sources" }).locator("summary").first();
+  await tabTo(page, sourcesToggle);
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/#source-1$/);
+  await expect(
+    page.getByRole("region", { name: "Sources" }).locator("details").first(),
+  ).toHaveAttribute("open", "");
 
   // Ratings use arrow keys inside each group, as radio groups should.
   const rate = page.getByRole("form", { name: "Rate this lesson" });
@@ -97,7 +87,6 @@ test("feedback moves focus to its confirmation, and to the field a report is mis
   page,
 }) => {
   await page.goto(LESSON_URL);
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   const rate = page.getByRole("form", { name: "Rate this lesson" });
   await rate.getByRole("group", { name: "How helpful was it?" }).getByLabel("5 Very").check();
   await rate.getByRole("group", { name: "How clear was it?" }).getByLabel("5 Very").check();
@@ -119,11 +108,12 @@ test("every reader control shows a clear focus outline", async ({ page }) => {
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
   await page.getByText("Age band", { exact: true }).click();
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
+  await page.getByRole("region", { name: "Sources" }).locator("summary").first().click();
   for (const target of [
     page.getByRole("radio", { name: /Explore/ }),
     page.getByLabel("Age band (optional)"),
-    page.getByRole("link", { name: /^Source 1/ }).first(),
+    page.getByRole("region", { name: "Sources" }).locator("summary").first(),
+    page.getByRole("link", { name: "2.8: The Simple Magnifier" }),
     page.getByLabel("Your thinking (optional, not saved or marked)"),
     page.getByRole("button", { name: "Compare with the explanation" }),
     page.getByLabel("What is wrong?"),
@@ -137,16 +127,12 @@ test("meaning never rests on colour alone", async ({ page }) => {
   await page.emulateMedia({ forcedColors: "active" });
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   // Each distinction the styling makes is also written out in words.
   await expect(page.getByRole("region", { name: "Small print looks larger" })).toContainText(
     "What you can observe",
   );
   await expect(page.getByRole("region", { name: "Glass bends light" })).toContainText(
     "Explanation",
-  );
-  await expect(page.getByRole("region", { name: "How do we know?" })).toContainText(
-    "Based on limited evidence:",
   );
   await expect(page.getByRole("complementary", { name: "Before you read" })).toContainText("Note");
   await expectNoAxeViolations(page);
@@ -155,17 +141,14 @@ test("meaning never rests on colour alone", async ({ page }) => {
 test("landmarks and headings give screen readers the lesson's outline", async ({ page }) => {
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   await expect(page.getByRole("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("list", { name: /Lesson, 8 of 8 steps open/ })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Lesson steps" })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "Before you read" })).toBeVisible();
   // Every module is its own named region, so a screen reader can jump between them.
   for (const section of SAMPLE_LESSON.sections) {
     await expect(page.getByRole("region", { name: section.heading ?? "" })).toHaveCount(1);
   }
-  // Citation markers are announced by source, not as bare bracketed numbers.
-  await expect(page.getByRole("link", { name: "[1]" })).toHaveCount(0);
 });
 
 test("while writing, the loader is announced and passes accessibility checks", async ({ page }) => {

@@ -103,10 +103,10 @@ export class RecognitionService {
     let result: RecognitionResult;
     let labels: NonNullable<RecognitionResult["labels"]>;
     // Each recognition is a paid call that sends the photo out, so a repeat reuses the stored answer.
-    // A result stored before labels were kept would offer no options, so it is asked again.
+    // Only a result with names is worth reusing; older copies stored none, and asking again is cheap.
     if (
       earlier?.modelVersion.endsWith(`+${RECOGNITION_PROMPT_VERSION}`) &&
-      earlier.labels !== undefined
+      (earlier.labels?.length ?? 0) > 0
     ) {
       result = copyRecognitionResult(earlier, { now, retention, sessionId });
       ranked = {

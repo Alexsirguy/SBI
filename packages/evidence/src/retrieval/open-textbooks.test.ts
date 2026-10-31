@@ -128,6 +128,17 @@ describe("createOpenTextbookConnector", () => {
     expect(licenseInfo(source.retrieval.license)?.label).toBe("CC BY 4.0");
   });
 
+  it("keeps the book's maths as plain text, never LaTeX source", async () => {
+    const page = fixture("libretexts-open.html").replace(
+      '<p class="lt-geo-7710">',
+      '<p>Figure \\(\\PageIndex{1}\\) shows that the gas does work \\(dW = pdV\\) as it expands.</p><p class="lt-geo-7710">',
+    );
+    const source = await connector({ [EARLE]: page }).fetch({ url: EARLE });
+    const text = source.passages.map((passage) => passage.text).join("\n");
+    expect(text).toContain("Figure 1 shows that the gas does work dW = pdV as it expands.");
+    expect(text).not.toMatch(/\\[([]|PageIndex/);
+  });
+
   it("reads a linked author credit as a plain name", async () => {
     const linked = fixture("libretexts-open.html").replace(
       "curated by Steven Earle (BCCampus).",
