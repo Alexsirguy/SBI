@@ -46,9 +46,7 @@ test("shows the quick answer as soon as it is ready, while the rest is written",
   await expect(page.getByRole("heading", { name: "Writing your lesson…" })).toHaveCount(0);
 });
 
-test("reads like the prototype: one notice, two open steps, then one step at a time", async ({
-  page,
-}) => {
+test("reads like the prototype: one notice, then every step open on the rail", async ({ page }) => {
   await mockLesson(page, FULL);
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status")).toHaveText("Lesson ready.");
@@ -61,28 +59,16 @@ test("reads like the prototype: one notice, two open steps, then one step at a t
   await expect(notices.locator(".sbi-notice")).toHaveCount(1);
   await expect(notices).toContainText("general knowledge");
 
-  const [first, second, third, fourth] = SAMPLE_LESSON.sections;
+  // The whole lesson is open: the learner only scrolls, with no buttons to reveal more.
+  const [, second] = SAMPLE_LESSON.sections;
   const rail = page.locator(".rail");
-  await expect(rail.getByRole("heading", { level: 2 })).toHaveText([
-    first?.heading ?? "",
-    second?.heading ?? "",
-  ]);
-  // Evidence, sources and feedback wait until the last step is open.
-  await expect(page.getByRole("region", { name: "How do we know?" })).toHaveCount(0);
-  await expect(rail.locator("mark")).toContainText(second?.text ?? "");
-
-  await page.getByRole("button", { name: "Show me why" }).click();
-  await expect(rail.getByRole("heading", { name: third?.heading ?? "" })).toBeFocused();
-  await page
-    .getByRole("button", { name: `Next: ${(fourth?.heading ?? "").toLowerCase()}` })
-    .click();
-  await expect(rail.getByRole("heading", { name: fourth?.heading ?? "" })).toBeFocused();
-
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   await expect(rail.getByRole("heading", { level: 2 })).toHaveText(
     SAMPLE_LESSON.sections.map((section) => section.heading ?? ""),
   );
-  await expect(page.getByRole("button", { name: "Show the whole lesson" })).toHaveCount(0);
+  await expect(rail.locator("mark")).toContainText(second?.text ?? "");
+  await expect(
+    page.getByRole("button", { name: /Show me why|Show the whole lesson|^Next:/ }),
+  ).toHaveCount(0);
   await expectNoAxeViolations(page);
 });
 
@@ -91,7 +77,6 @@ test("evidence and sources sit together at the end, and nowhere inside the steps
 }) => {
   await mockLesson(page, FULL);
   await page.goto(LESSON_URL);
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   await expect(page.locator(".rail .citation-marker")).toHaveCount(0);
 
   await expect(page.locator(".lesson-body > section").last()).toHaveClass(/lesson-feedback/);
@@ -110,7 +95,6 @@ test("check your thinking explains after the learner has had a go, without scori
 }) => {
   await mockLesson(page, FULL);
   await page.goto(LESSON_URL);
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   const check = page.getByRole("region", { name: "Does the word grow?" });
   await check
     .getByLabel("Your thinking (optional, not saved or marked)")
@@ -213,7 +197,6 @@ test("rates the lesson and reports a problem tied to its version", async ({ page
     };
   });
   await page.goto(LESSON_URL);
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   const rate = page.getByRole("form", { name: "Rate this lesson" });
   await expect(rate.getByRole("button", { name: "Send rating" })).toBeDisabled();
   await rate.getByRole("group", { name: "How helpful was it?" }).getByLabel("4 Mostly").check();
@@ -279,7 +262,6 @@ test("names the object and its assumptions, and says when a lesson is reused", a
   await expect(page).toHaveURL(/fresh=1/);
   await expect.poll(() => requests.at(-1)?.fresh).toBe(true);
 
-  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   const ask = page.getByRole("form", { name: "Ask your own question" });
   await ask.getByRole("button", { name: "Ask" }).click();
   await expect(ask.getByRole("alert")).toHaveText("Write a question of at least 3 characters.");

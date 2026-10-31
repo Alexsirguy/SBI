@@ -217,25 +217,21 @@ main.lesson {
   scroll-margin-top: 80px;
 }
 
-.rail .lesson-section h2:focus {
-  outline: none;
-}
-
 .rail__step--answer .short-answer {
   font-size: var(--sbi-text-answer);
   line-height: 1.5;
 }
 
-/* Kept in view while reading, as in the prototype, so the next step is always one tap away. */
-.lesson-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sbi-space-2);
-  padding: var(--sbi-space-3) 0 calc(var(--sbi-space-3) + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(transparent, var(--sbi-bench) 30%);
+/* Says what the faint titles are, so a learner waiting on them knows more is coming. */
+.rail-pending {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.rail-pending__note {
+  margin: 0;
+  font-weight: 700;
+  color: var(--sbi-ink-soft);
 }
 
 .lesson-section h2 {
