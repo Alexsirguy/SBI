@@ -83,12 +83,12 @@ describe("routeLesson", () => {
     });
     const unverified = routeLesson(
       autoValidated(),
-      failing("entailment", [{ sectionId: "first-principles-3", reason: "adds detail" }]),
+      failing("entailment", [{ sectionId: "demonstrate-3", reason: "adds detail" }]),
     );
     expect(unverified.action).toBe("disclose");
     expect(
       unverified.disclaimers.find((item) => item.kind === "unverified-sections")?.sectionIds,
-    ).toEqual(["first-principles-3"]);
+    ).toEqual(["demonstrate-3"]);
     expect(routeLesson(autoValidated(), failing("reading-level")).action).toBe("disclose");
     for (const name of ["schema", "citations", "evidence", "something-new"]) {
       expect(routeLesson(autoValidated(), failing(name)).action).toBe("review");

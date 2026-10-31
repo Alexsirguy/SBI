@@ -1,10 +1,11 @@
 import { canonicalJson, newId, sha256Hex, VisualManifest, type VisualAsset } from "@sbi/contracts";
 import { projectOutputAsset } from "@sbi/rights";
 import { z } from "zod";
+import { alignedControls, type ExperimentForVisual } from "./experiment";
 import { RAINBOW_CODE } from "./kinds/rainbow";
 import { REFERENCE_MECHANISMS, REFERENCE_VISUALS } from "./references";
 
-export const VISUAL_PROMPT = { id: "visual-generate", version: "v6" } as const;
+export const VISUAL_PROMPT = { id: "visual-generate", version: "v7" } as const;
 
 const Named = z.string();
 // One flat object with a field per format, because strict JSON schema mode allows no free-form spec.
@@ -98,13 +99,13 @@ const HEATING_SERIES = (REFERENCE_VISUALS.heating.spec as { series: unknown }).s
 
 /** A string's pitch against its length (Mersenne's law), so sound topics get a graph, not a playground. */
 export const PITCH_EXAMPLE = {
-  x: { name: "L", label: "String length", unit: "m", from: 0.3, to: 0.9 },
+  x: { name: "length", label: "String length", unit: "m", from: 0.3, to: 0.9 },
   series: [
     {
       name: "pitch",
       label: "Pitch",
       unit: "Hz",
-      formula: "sqrt(tension / massPerMetre) / (2 * L)",
+      formula: "sqrt(tension / massPerMetre) / (2 * length)",
     },
   ],
   mark: "line",
@@ -153,6 +154,9 @@ Every kind:
 - controls: 1 to 4 sliders (none only for molecule and process) with a camelCase id, label, unit, and min < value < max; step divides the range into at most 100 steps.
 - every label, control and readout id is different from all the others.
 - readouts: 1 to 3 numbers (none only for molecule and process) worked out from slider ids with plain arithmetic (mathjs syntax: + - * / ^, min, max, sqrt, sin, cos, pi).
+The lesson's experiment, when given, is what the learner will be asked to change and watch, so pick a kind with sliders.
+For every kind except molecule, process and none: give a control for each experiment control with the SAME id, min, max and value,
+and a readout for each experiment readout with the SAME id, writing its formula yourself from the controls. Keep within the limits above.
 Use real physical values and units. Be correct: a learner will trust it.`;
 
 export interface LessonForVisual {
@@ -161,11 +165,26 @@ export interface LessonForVisual {
   summary: string;
   readingLevel: string;
   claims: { claimId: string; text: string }[];
+  /** The sliders and readouts the lesson's demonstration and challenges name. */
+  experiment?: ExperimentForVisual;
+}
+
+function renderExperiment(experiment: ExperimentForVisual | undefined): string {
+  if (!experiment) return "";
+  const unit = (text: string) => text || "no unit";
+  const controls = experiment.controls.map(
+    (control) =>
+      `- control ${control.id} (${control.label}, ${unit(control.unit)}): min ${control.min}, max ${control.max}, value ${control.value}`,
+  );
+  const readouts = experiment.readouts.map(
+    (readout) => `- readout ${readout.id} (${readout.label}, ${unit(readout.unit)})`,
+  );
+  return `\nExperiment (keep these ids):\n${[...controls, ...readouts].join("\n")}`;
 }
 
 export function visualUserPrompt(lesson: LessonForVisual): string {
   const claims = lesson.claims.map((claim) => `- ${claim.claimId}: ${claim.text}`).join("\n");
-  return `Lesson: ${lesson.title}\nReading level: ${lesson.readingLevel}\nSummary: ${lesson.summary}\nClaims:\n${claims}`;
+  return `Lesson: ${lesson.title}\nReading level: ${lesson.readingLevel}\nSummary: ${lesson.summary}\nClaims:\n${claims}${renderExperiment(lesson.experiment)}`;
 }
 
 /** Turns the AI's flat answer into a manifest; labels citing claims outside the lesson are dropped. */
@@ -206,7 +225,7 @@ export function toManifest(
         !output.controls.some((control) => control.id === label.id) &&
         !output.readouts.some((readout) => readout.id === label.id),
     ),
-    controls: output.controls,
+    controls: alignedControls(output.controls, lesson.experiment),
     readouts: output.readouts,
     spec,
   });

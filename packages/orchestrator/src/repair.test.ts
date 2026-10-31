@@ -32,8 +32,8 @@ const report = (results: CheckReport["results"]): CheckReport => ({
 const entailmentFailure = {
   name: "entailment",
   passed: false,
-  details: ['Section "first-principles-3" is insufficient: adds uncited detail'],
-  sections: [{ sectionId: "first-principles-3", reason: "insufficient: adds uncited detail" }],
+  details: ['Section "demonstrate-3" is insufficient: adds uncited detail'],
+  sections: [{ sectionId: "demonstrate-3", reason: "insufficient: adds uncited detail" }],
 };
 
 describe("repairable", () => {
@@ -54,13 +54,15 @@ describe("reviseSections", () => {
       provider: provider("Metals expand when heated [123e4567-e89b-12d3-a456-426614174001].", seen),
       objectLabel: "Electric kettle",
     });
-    const before = lesson.sections.find((section) => section.sectionId === "first-principles-3");
-    const after = revised.sections.find((section) => section.sectionId === "first-principles-3");
+    const before = lesson.sections.find((section) => section.sectionId === "demonstrate-3");
+    const after = revised.sections.find((section) => section.sectionId === "demonstrate-3");
     expect(after?.text).toBe("Metals expand when heated.");
     expect(after?.claimIds).toEqual(before?.claimIds);
-    expect(
-      revised.sections.filter((section) => section.sectionId !== "first-principles-3"),
-    ).toEqual(lesson.sections.filter((section) => section.sectionId !== "first-principles-3"));
+    expect(after?.steps).toEqual(before?.steps);
+    expect(after?.steps).toHaveLength(2);
+    expect(revised.sections.filter((section) => section.sectionId !== "demonstrate-3")).toEqual(
+      lesson.sections.filter((section) => section.sectionId !== "demonstrate-3"),
+    );
     expect(revised.reuse.contentHash).not.toBe(lesson.reuse.contentHash);
     expect(seen[0]?.prompt).toEqual({ id: "lesson-revise", version: REVISE_PROMPT_VERSION });
     expect(String(seen[0]?.messages[1]?.content)).toContain("adds uncited detail");
@@ -71,7 +73,7 @@ describe("reviseSections", () => {
     const lesson = {
       ...base,
       sections: base.sections.map((section) =>
-        section.sectionId === "first-principles-3"
+        section.sectionId === "demonstrate-3"
           ? { ...section, heading: "Steam pressure lifts the lid" }
           : section,
       ),
@@ -83,7 +85,7 @@ describe("reviseSections", () => {
       provider: provider("Metals expand when heated."),
     });
     const heading = (target: typeof lesson) =>
-      target.sections.find((section) => section.sectionId === "first-principles-3")?.heading;
+      target.sections.find((section) => section.sectionId === "demonstrate-3")?.heading;
     expect(heading(fixed)).toBe("Warm metal expands");
     expect(heading(kept)).toBe("Steam pressure lifts the lid");
   });

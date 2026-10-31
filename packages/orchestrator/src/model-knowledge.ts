@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { Claim, MODEL_KNOWLEDGE_NOTE, newId } from "@sbi/contracts";
 import { completeStructured, type LlmProvider } from "@sbi/llm";
 import { HIGH_RISK_DRAFT_RULE } from "./draft";
-import { withoutInlineIds } from "./quick-answer";
+import { withoutInlineIds } from "./inline-ids";
 
 export const MODEL_KNOWLEDGE_PROMPT_VERSION = "model-knowledge-p0.1";
 

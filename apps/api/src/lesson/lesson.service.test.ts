@@ -1,6 +1,12 @@
 import { HttpStatus } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
-import { Lesson, type Claim, type Lesson as LessonType, type LessonRequest } from "@sbi/contracts";
+import {
+  isMerrillLesson,
+  Lesson,
+  type Claim,
+  type Lesson as LessonType,
+  type LessonRequest,
+} from "@sbi/contracts";
 import {
   buildClaims,
   createMemoryEvidenceRepositories,
@@ -13,6 +19,7 @@ import {
 import { LlmError, type Completion, type CompletionRequest, type LlmProvider } from "@sbi/llm";
 import {
   createMemoryReviewAuditLog,
+  LESSON_DRAFT_PROMPT_VERSION,
   type LessonRepository,
   type TaxonomyLessonLookup,
 } from "@sbi/orchestrator";
@@ -105,28 +112,90 @@ function taxonomy(): Taxonomy {
   ]);
 }
 
+const NO_GOAL = { readoutId: "", op: "atLeast", value: 0, tolerance: 0 };
+
+function challenge(prompt: string, value: number) {
+  return {
+    module: "apply",
+    prompt,
+    options: ["More power", "Less power"],
+    answerIndex: 0,
+    feedback: ["Right: more power heats it faster.", "Less power heats it more slowly."],
+    setup: [{ controlId: "power", value: 1000 }],
+    goal: { readoutId: "boilTime", op: "atMost", value, tolerance: 0 },
+    claimIds: [] as string[],
+  };
+}
+
+// A Merrill draft (ADR 0017), as the model returns it for the v7 prompt.
 const FRAGMENT = {
   title: "Why kettles click off",
   summary: "A thermostat snaps the kettle off.",
   learningObjectives: ["Explain the click"],
+  assumptions: [],
+  misconceptionNotes: [],
   sections: [
-    { module: "what-youre-seeing", text: "The switch flips up.", claimIds: [CLAIM_A] },
-    { module: "short-answer", text: "Heat snaps a small switch.", claimIds: [CLAIM_A] },
-    { module: "first-principles", text: "Metals bend as they warm.", claimIds: [CLAIM_A] },
+    {
+      module: "problem",
+      heading: "Your kettle stops itself",
+      text: "Your kettle clicks off on its own. What tells it to stop?",
+      claimIds: [] as string[],
+      steps: [],
+    },
+    {
+      module: "activate",
+      text: "Think of a spoon in hot tea.",
+      claimIds: [] as string[],
+      steps: [],
+    },
+    {
+      module: "demonstrate",
+      text: "Heat snaps a small switch.",
+      claimIds: [CLAIM_A],
+      steps: [
+        { text: "The water heats a metal strip.", settings: [{ controlId: "power", value: 2000 }] },
+        { text: "The strip bends, so the switch opens.", settings: [] },
+      ],
+    },
+    {
+      module: "apply",
+      text: "Now try a travel kettle.",
+      claimIds: [CLAIM_A],
+      steps: [],
+    },
+    {
+      module: "integrate",
+      text: "Listen for the click this week. What else stops when it is warm?",
+      claimIds: [] as string[],
+      steps: [],
+    },
   ],
+  tasks: [
+    {
+      module: "activate",
+      prompt: "What makes the kettle switch off?",
+      options: ["A timer", "The heat"],
+      answerIndex: 1,
+      feedback: ["No timer is involved.", "Yes: heat bends a strip."],
+      setup: [],
+      goal: NO_GOAL,
+      claimIds: [] as string[],
+    },
+    challenge("Boil it in under two minutes.", 120),
+    challenge("Boil it in under three minutes.", 180),
+  ],
+  experiment: {
+    controls: [{ id: "power", label: "Power", unit: "W", min: 500, max: 3000, value: 2000 }],
+    readouts: [{ id: "boilTime", label: "Time to boil", unit: "s" }],
+  },
 };
 
 // A factual section with no citation: an integrity failure that is held, never disclosed.
 const UNCITED_FRAGMENT = {
   ...FRAGMENT,
-  sections: [
-    ...FRAGMENT.sections,
-    {
-      module: "how-parts-work",
-      text: "A spring inside pops the switch.",
-      claimIds: [] as string[],
-    },
-  ],
+  sections: FRAGMENT.sections.map((section) =>
+    section.module === "apply" ? { ...section, claimIds: [] as string[] } : section,
+  ),
 };
 
 const SUPPORTS = JSON.stringify({ verdict: "supports", reason: "Claims state it." });
@@ -136,20 +205,12 @@ const AGREE = JSON.stringify({ contradiction: false, reason: "", claimIds: [] })
 // Routes by prompt shape so parallel judge calls cannot steal each other's verdicts.
 interface Script {
   entailment?: string;
-  /** Verdict for the quick answer only; the lesson's sections use `entailment`. */
-  quickEntailment?: string;
-  /** Held open until the test releases it, to prove the answer streams first. */
-  draftGate?: Promise<void>;
-  /** Whether each successive quick answer says it answers the question; true once exhausted. */
-  quickAnswers?: boolean[];
   /** When set, revised sections are judged as supported, so a repair succeeds. */
   revisionPasses?: boolean;
   fragment?: typeof FRAGMENT;
 }
 
 const REVISED = "Revised to state only what the claims support.";
-
-const QUICK = "A warm metal strip bends and flips the switch off.";
 
 // Routes by prompt id and shape so parallel calls cannot steal each other's answers.
 function scriptedProvider(options: Script = {}): LlmProvider {
@@ -159,19 +220,14 @@ function scriptedProvider(options: Script = {}): LlmProvider {
     async complete(request: CompletionRequest): Promise<Completion> {
       const text = JSON.stringify(request.messages);
       let payload: string;
-      if (request.prompt?.id === "quick-answer") {
-        const answersQuestion = options.quickAnswers?.shift() ?? true;
-        payload = JSON.stringify({ text: QUICK, claimIds: [CLAIM_A], answersQuestion });
-      } else if (request.prompt?.id === "lesson-revise") {
+      if (request.prompt?.id === "lesson-revise") {
         payload = JSON.stringify({ text: REVISED });
       } else if (request.prompt?.id === "lesson-draft") {
-        await options.draftGate;
         payload = JSON.stringify(options.fragment ?? FRAGMENT);
       } else if (text.includes("<section-") && options.revisionPasses && text.includes(REVISED)) {
         payload = SUPPORTS;
       } else if (text.includes("<section-")) {
-        const quick = text.includes(QUICK) && options.quickEntailment;
-        payload = quick ? (options.quickEntailment ?? SUPPORTS) : (options.entailment ?? SUPPORTS);
+        payload = options.entailment ?? SUPPORTS;
       } else {
         payload = AGREE;
       }
@@ -223,11 +279,29 @@ function memoryLessons(stored: LessonType[] = []) {
   return { lessons, repo };
 }
 
+type ResearchQuestion = EvidencePack["questions"][number];
+
+function researched(key: string, question: string, claimIds: string[] = []): ResearchQuestion {
+  return {
+    key,
+    discipline: "physics",
+    question,
+    claimIds,
+    sources: claimIds.length,
+    failures: [],
+    completed: true,
+  };
+}
+
 // Replays the given gather events and returns the given claims, standing in for gatherEvidence.
-function gatherer(claims: Claim[] = [], events: GatherEvent[] = []): EvidenceGatherer {
+function gatherer(
+  claims: Claim[] = [],
+  events: GatherEvent[] = [],
+  pack: Partial<EvidencePack> = {},
+): EvidenceGatherer {
   return async (_input, options) => {
     for (const event of events) options.onEvent?.(event);
-    return { claims, reused: false, pack: {} as EvidencePack };
+    return { claims, reused: false, pack: pack as EvidencePack };
   };
 }
 
@@ -251,13 +325,6 @@ function setup(
       CLEARED,
     ),
   };
-}
-
-async function nextLessonEvent(stream: AsyncGenerator<LessonStreamEvent>) {
-  for (;;) {
-    const next = await stream.next();
-    if (next.done || next.value.type !== "progress") return next;
-  }
 }
 
 /** Lesson events only; progress events are covered by their own tests. */
@@ -291,7 +358,7 @@ async function userFacing(
 }
 
 describe("LessonService", () => {
-  it("streams the quick answer before the full lesson and visuals", async () => {
+  it("streams a Merrill lesson after its answer event, then sources and visuals", async () => {
     const { lessons, service } = setup(scriptedProvider());
 
     const events = await collect(service);
@@ -305,15 +372,23 @@ describe("LessonService", () => {
     const [answer, full, sources, visuals] = events;
     expect(answer?.type).toBe("quick-answer");
     if (answer?.type !== "quick-answer") throw new Error("First event must answer first");
+    if (full?.type !== "lesson") throw new Error("Second event must be the lesson");
+    // No short-answer section any more, so the summary stands in for it.
     expect(answer.data).toMatchObject({
       kind: "fresh",
-      shortAnswer: QUICK,
-      claimIds: [CLAIM_A],
+      lessonId: full.data.lessonId,
+      shortAnswer: FRAGMENT.summary,
+      claimIds: [],
       reviewStatus: "auto-validated",
     });
     expect(answer.data.note).toBeUndefined();
-    if (full?.type !== "lesson") throw new Error("Second event must be the lesson");
     expect(() => Lesson.parse(full.data)).not.toThrow();
+    expect(isMerrillLesson(full.data)).toBe(true);
+    expect(full.data.tasks.map((task) => task.module)).toEqual(["activate", "apply", "apply"]);
+    expect(full.data.experiment?.readouts.map((readout) => readout.id)).toEqual(["boilTime"]);
+    expect(full.data.sections.find((section) => section.module === "demonstrate")?.steps).toEqual(
+      FRAGMENT.sections[2]?.steps,
+    );
     expect(full.data.reuse.policyVersion).toBe(LESSON_POLICY_VERSION);
     expect(visuals).toMatchObject({ type: "visuals", data: { visuals: [] } });
     if (sources?.type !== "sources") throw new Error("Sources must follow the lesson");
@@ -328,61 +403,35 @@ describe("LessonService", () => {
     expect(lessons).toHaveLength(1);
   });
 
-  it("streams the checked short answer while the full draft is still being written", async () => {
-    let release: () => void = () => undefined;
-    const draftGate = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    const { service } = setup(scriptedProvider({ draftGate }));
-    const stream = service.streamLesson(REQUEST);
-
-    const first = await nextLessonEvent(stream);
-    expect(first.value).toMatchObject({
-      type: "quick-answer",
-      data: {
-        kind: "fresh",
-        shortAnswer: QUICK,
-        claimIds: [CLAIM_A],
-        reviewStatus: "auto-validated",
+  it("never answers before the lesson, so the learner can guess first", async () => {
+    const asked: string[] = [];
+    const base = scriptedProvider();
+    const provider: LlmProvider = {
+      ...base,
+      complete: (request) => {
+        asked.push(request.prompt?.id ?? "");
+        return base.complete(request);
       },
-    });
-    if (first.value?.type !== "quick-answer") throw new Error("expected the answer first");
-    expect(first.value.data.title).toBeUndefined();
-
-    release();
-    const rest: LessonStreamEvent[] = [];
-    for await (const event of stream) if (event.type !== "progress") rest.push(event);
-    expect(rest.map((event) => event.type)).toEqual(["lesson", "sources", "visuals"]);
-    const lesson = rest[0]?.type === "lesson" ? rest[0].data : undefined;
-    expect(lesson?.lessonId).toBe(first.value.data.lessonId);
-    expect(lesson?.sections.find((section) => section.module === "short-answer")?.text).toBe(QUICK);
-  });
-
-  it("falls back to the lesson's own short answer when the quick one fails its gate", async () => {
-    const { service } = setup(scriptedProvider({ quickEntailment: CONTRADICTS }));
-    const events = await collect(service);
-    expect(events.map((event) => event.type)).toEqual([
-      "quick-answer",
-      "lesson",
-      "sources",
-      "visuals",
-    ]);
-    if (events[0]?.type !== "quick-answer") throw new Error("expected the answer first");
-    expect(events[0].data).toMatchObject({
-      shortAnswer: "Heat snaps a small switch.",
-      title: "Why kettles click off",
-    });
-  });
-
-  it("ends the stream with a clear message when an integrity failure holds the lesson after the answer", async () => {
+    };
     const { service } = setup(
-      scriptedProvider({ quickEntailment: SUPPORTS, fragment: UNCITED_FRAGMENT }),
+      provider,
+      [],
+      gatherer([EVIDENCE.claim], [{ type: "verified", key: "q1", claims: [EVIDENCE.claim] }]),
     );
-    const stream = service.streamLesson(REQUEST);
-    expect((await nextLessonEvent(stream)).value?.type).toBe("quick-answer");
-    const failure = await userFacing(() => nextLessonEvent(stream));
-    expect(failure.message).toContain("short answer above is checked");
-    expect(failure.message).toContain("reviewer");
+    const events = await collectAll(service);
+    expect(asked).not.toContain("quick-answer");
+    const firstAnswer = events.findIndex((event) => event.type === "quick-answer");
+    const lesson = events.findIndex((event) => event.type === "lesson");
+    expect(events.filter((event) => event.type === "quick-answer")).toHaveLength(1);
+    expect(firstAnswer).toBe(lesson - 1);
+    expect(events.slice(0, firstAnswer).every((event) => event.type === "progress")).toBe(true);
+  });
+
+  it("ends the stream with a clear message when an integrity failure holds the lesson", async () => {
+    const { service } = setup(scriptedProvider({ fragment: UNCITED_FRAGMENT }));
+    const failure = await userFacing(() => collect(service));
+    expect(failure.status).toBe(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(failure.message).toContain("reviewer needs to check");
   });
 
   it("teaches an object with no pre-sourced facts from evidence gathered at request time", async () => {
@@ -447,7 +496,7 @@ describe("LessonService", () => {
     expect(lesson.data.disclaimers?.[0]?.message).toContain("Household chemicals");
   });
 
-  it("streams research progress and the first checked answer while evidence is gathered", async () => {
+  it("streams research progress while evidence is gathered", async () => {
     const plan = {
       key: "q1",
       discipline: "physics" as const,
@@ -471,57 +520,15 @@ describe("LessonService", () => {
     const types = events.map((event) =>
       event.type === "progress" ? `progress:${event.data.stage}` : event.type,
     );
-    expect(types.slice(0, 4)).toEqual([
+    expect(types.slice(0, 3)).toEqual([
       "progress:researching",
       "progress:verified",
-      "quick-answer",
       "progress:drafting",
     ]);
     expect(types).toContain("progress:checking");
-    expect(types.slice(-3)).toEqual(["lesson", "sources", "visuals"]);
+    expect(types.slice(-4)).toEqual(["quick-answer", "lesson", "sources", "visuals"]);
     const researching = events[0]?.type === "progress" ? events[0].data.message : "";
     expect(researching).toContain("How does a bimetallic strip bend?");
-  });
-
-  it("retries the early answer on later evidence when the first claims only give background", async () => {
-    const extra = { ...EVIDENCE.claim, claimId: "0192f1a0-0000-7000-8000-0000000000b2" };
-    const seen: string[] = [];
-    const base = scriptedProvider({ quickAnswers: [false, true] });
-    const provider: LlmProvider = {
-      ...base,
-      complete: (request) => {
-        if (request.prompt?.id === "quick-answer") seen.push(JSON.stringify(request.messages));
-        return base.complete(request);
-      },
-    };
-    const { service } = setup(
-      provider,
-      [],
-      gatherer(
-        [EVIDENCE.claim, extra],
-        [
-          { type: "verified", key: "q1", claims: [EVIDENCE.claim] },
-          { type: "verified", key: "q2", claims: [extra] },
-        ],
-      ),
-    );
-    const events = await collectAll(service);
-    expect(events.filter((event) => event.type === "quick-answer")).toHaveLength(1);
-    expect(seen).toHaveLength(2);
-    expect(seen[1]).toContain(extra.claimId);
-  });
-
-  it("keeps the draft's own short answer when no quick answer answers the question", async () => {
-    const { service } = setup(scriptedProvider({ quickAnswers: [false, false, false] }));
-    const events = await collectAll(service);
-    const answers = events.flatMap((event) => (event.type === "quick-answer" ? [event.data] : []));
-    expect(answers.map((answer) => answer.shortAnswer)).toEqual(["Heat snaps a small switch."]);
-    const lesson = events.find((event) => event.type === "lesson");
-    const short =
-      lesson?.type === "lesson"
-        ? lesson.data.sections.find((section) => section.module === "short-answer")
-        : undefined;
-    expect(short?.text).toBe("Heat snaps a small switch.");
   });
 
   it("teaches from model knowledge with one disclaimer when no source or fact exists", async () => {
@@ -549,16 +556,13 @@ describe("LessonService", () => {
         }
         if (request.prompt?.id === "lesson-draft") {
           const id = /- ([0-9a-f-]{36}) \[general-knowledge\]/.exec(user)?.[1] ?? "";
-          const cite = (module: string, text: string) => ({ module, text, claimIds: [id] });
           return {
             ...(await base.complete(request)),
             text: JSON.stringify({
               ...FRAGMENT,
-              sections: [
-                cite("what-youre-seeing", "The kettle switches itself off."),
-                cite("short-answer", "A heat-sensitive switch opens."),
-                cite("first-principles", "The switch reacts to heat."),
-              ],
+              sections: FRAGMENT.sections.map((section) =>
+                section.claimIds.length > 0 ? { ...section, claimIds: [id] } : section,
+              ),
             }),
           };
         }
@@ -588,10 +592,35 @@ describe("LessonService", () => {
     const answer = events[0]?.type === "quick-answer" ? events[0].data : undefined;
     expect(answer?.disclaimers?.map((item) => item.kind)).toEqual(["model-knowledge"]);
     expect(asked[0]).toContain(REQUEST.question);
-    expect(asked[0]).toContain("How was the kettle invented");
+    expect(asked[0]).not.toContain("invented");
   });
 
-  it("shares the model-claim cap across gaps, so history is never crowded out", async () => {
+  it("asks model knowledge only about unanswered research questions, never history", async () => {
+    const asked: string[] = [];
+    const base = scriptedProvider();
+    const provider: LlmProvider = {
+      ...base,
+      complete: async (request) => {
+        if (request.prompt?.id === "model-knowledge")
+          asked.push(String(request.messages[1]?.content));
+        return base.complete(request);
+      },
+    };
+    const pack = {
+      questions: [
+        researched("q1", "How does a bimetallic strip bend?", [CLAIM_A]),
+        researched("q2", "Why does steam carry heat?"),
+      ],
+    };
+    const { service } = setup(provider, [], gatherer([EVIDENCE.claim], [], pack));
+    await collect(service);
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).toContain("Why does steam carry heat?");
+    expect(asked[0]).not.toContain("How does a bimetallic strip bend?");
+    expect(asked[0]).not.toMatch(/invented|discovered|history/i);
+  });
+
+  it("shares the model-claim cap across gaps, so later gaps are not crowded out", async () => {
     const bare = createTaxonomy([
       { id: "test.home", kind: "category", label: "Home" },
       { id: "test.kettle", kind: "object", label: "Kettle", parentId: "test.home" },
@@ -618,13 +647,19 @@ describe("LessonService", () => {
         return base.complete(request);
       },
     };
+    const gaps = {
+      questions: [
+        researched("q1", "What heats the water?"),
+        researched("q2", "When did kettles appear?"),
+      ],
+    };
     const target = new LessonService(
       provider,
       bare,
       memoryLessons().repo,
       EVIDENCE.evidence,
       createMemoryReviewAuditLog(),
-      gatherer([]),
+      gatherer([], [], gaps),
       CLEARED,
     );
     // The scripted draft cites a claim this lesson lacks; only the prompt it was given matters.
@@ -717,6 +752,22 @@ describe("LessonService", () => {
     expect(events[0].data.kind).toBe("cached");
   });
 
+  it("never serves a cached lesson drafted before the Merrill prompt", async () => {
+    const first = setup(scriptedProvider());
+    await collect(first.service);
+    share(first.lessons);
+    for (const lesson of first.lessons) {
+      lesson.reuse = { ...lesson.reuse, promptVersion: "lesson-draft@6" };
+    }
+    const { service: next, lessons } = setup(scriptedProvider(), first.lessons);
+
+    const events = await collect(next);
+
+    if (events[0]?.type !== "quick-answer") throw new Error("First event must answer first");
+    expect(events[0].data.kind).toBe("fresh");
+    expect(lessons).toHaveLength(2);
+  });
+
   it("regenerates on a fresh-answer override", async () => {
     const first = setup(scriptedProvider());
     await collect(first.service);
@@ -773,11 +824,7 @@ describe("LessonService", () => {
 
   it("serves a lesson once a rewrite fixes the sections the judge rejected", async () => {
     const { lessons, service } = setup(
-      scriptedProvider({
-        entailment: CONTRADICTS,
-        quickEntailment: SUPPORTS,
-        revisionPasses: true,
-      }),
+      scriptedProvider({ entailment: CONTRADICTS, revisionPasses: true }),
     );
     const events = await collect(service);
     expect(events.map((event) => event.type)).toEqual([
@@ -788,16 +835,15 @@ describe("LessonService", () => {
     ]);
     const lesson = events[1]?.type === "lesson" ? events[1].data : undefined;
     expect(lesson?.reviewStatus).toBe("auto-validated");
-    expect(
-      lesson?.sections
-        .filter((section) => section.module !== "short-answer")
-        .every((section) => section.text === REVISED),
-    ).toBe(true);
+    const cited = lesson?.sections.filter((section) => section.claimIds.length > 0) ?? [];
+    expect(cited.map((section) => section.module)).toEqual(["demonstrate", "apply"]);
+    expect(cited.every((section) => section.text === REVISED)).toBe(true);
+    expect(cited[0]?.steps).toEqual(FRAGMENT.sections[2]?.steps);
     expect(lessons.at(-1)?.reviewStatus).toBe("auto-validated");
   });
 
   it("serves the unrepaired draft with its doubts disclosed when the rewrite itself fails", async () => {
-    const base = scriptedProvider({ entailment: CONTRADICTS, quickEntailment: SUPPORTS });
+    const base = scriptedProvider({ entailment: CONTRADICTS });
     const provider: LlmProvider = {
       ...base,
       complete: async (request) => {
@@ -974,6 +1020,11 @@ describe("effectiveSafetyClass", () => {
 });
 
 function firstLesson(): LessonType {
+  const sections = FRAGMENT.sections.map(({ steps, ...section }, index) => ({
+    ...section,
+    sectionId: `${section.module}-${index + 1}`,
+    ...(steps.length > 0 ? { steps } : {}),
+  }));
   return Lesson.parse({
     lessonId: "123e4567-e89b-12d3-a456-426614174020",
     version: 1,
@@ -987,26 +1038,13 @@ function firstLesson(): LessonType {
     assumptions: [],
     concepts: [{ conceptId: "heat-transfer", label: "heat transfer", prerequisites: [] }],
     misconceptionNotes: [],
-    sections: [
-      {
-        sectionId: "short-answer-1",
-        module: "short-answer",
-        text: "Seeded answer.",
-        claimIds: [CLAIM_A],
-      },
-      {
-        sectionId: "what-youre-seeing-2",
-        module: "what-youre-seeing",
-        text: "Seeded seeing.",
-        claimIds: [CLAIM_A],
-      },
-      {
-        sectionId: "first-principles-3",
-        module: "first-principles",
-        text: "Seeded principles.",
-        claimIds: [CLAIM_A],
-      },
-    ],
+    sections,
+    tasks: FRAGMENT.tasks.map(({ goal, ...task }, index) => ({
+      ...task,
+      taskId: `${task.module}-${index + 1}`,
+      ...(task.module === "apply" ? { goal: { ...goal, tolerance: undefined } } : {}),
+    })),
+    experiment: FRAGMENT.experiment,
     claims: [EVIDENCE.claim],
     visuals: [],
     safetyClass: "low",
@@ -1019,7 +1057,7 @@ function firstLesson(): LessonType {
       evidenceSnapshotId: "123e4567-e89b-12d3-a456-426614174003",
       sourceFreshness: "fresh",
       modelVersion: "stub-1",
-      promptVersion: "lesson-draft@1",
+      promptVersion: LESSON_DRAFT_PROMPT_VERSION,
       policyVersion: LESSON_POLICY_VERSION,
       reuseCount: 0,
       contentHash: "b".repeat(64),

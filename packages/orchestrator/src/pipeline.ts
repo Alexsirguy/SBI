@@ -11,6 +11,8 @@ export interface FallbackQuery {
   safetyClass: Lesson["safetyClass"];
   audience: Lesson["audience"][number];
   policyVersion: string;
+  /** Only lessons drafted with this prompt stand in, so an older lesson shape never returns. */
+  promptVersion: string;
 }
 
 // `reason` is for learners; `detail` names fields, checks and ids for operators' logs.
@@ -48,6 +50,7 @@ function fallbackLesson(candidates: Lesson[], query: FallbackQuery): Lesson | un
       .filter((lesson) => lesson.locale === query.locale)
       .filter((lesson) => lesson.audience.length === 1 && lesson.audience[0] === query.audience)
       .filter((lesson) => lesson.reuse.policyVersion === query.policyVersion)
+      .filter((lesson) => lesson.reuse.promptVersion === query.promptVersion)
       .sort((left, right) => right.version - left.version)
       .at(0)
   );

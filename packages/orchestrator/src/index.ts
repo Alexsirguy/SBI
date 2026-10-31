@@ -14,6 +14,7 @@ export {
   generateDraft,
   HIGH_RISK_DRAFT_RULE,
   LESSON_DRAFT_PROMPT,
+  LESSON_DRAFT_PROMPT_VERSION,
   REUSE_MATCH_DIMENSIONS,
   type DraftDeps,
   type DraftInput,
@@ -67,14 +68,4 @@ export {
   type GenerationAttempt,
   type PipelineOutcome,
 } from "./pipeline";
-export {
-  gateQuickAnswer,
-  generateQuickAnswer,
-  QUICK_ANSWER_PROMPT,
-  withShortAnswer,
-  type QuickAnswerDraft,
-  type QuickAnswerGate,
-  type QuickAnswerInput,
-  type QuickGateDeps,
-} from "./quick-answer";
 export { repairable, REVISE_PROMPT_VERSION, reviseSections } from "./repair";

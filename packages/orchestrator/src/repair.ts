@@ -3,7 +3,7 @@ import { type Claim, Lesson, lessonContentHash } from "@sbi/contracts";
 import { completeStructured, type LlmProvider } from "@sbi/llm";
 import type { CheckReport } from "./checks";
 import { sectionHeading } from "./draft";
-import { withoutInlineIds } from "./quick-answer";
+import { withoutInlineIds } from "./inline-ids";
 
 export const REVISE_PROMPT_VERSION = "lesson-revise-p0.2";
 

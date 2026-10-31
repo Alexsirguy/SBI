@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import type { MainModule } from "@mujoco/mujoco";
 import type mermaidApi from "mermaid";
 import { commonLayerProblems } from "./common/validate";
+import { experimentProblems } from "./experiment";
 import {
   GENERATED_VISUAL_SCHEMA,
   GeneratedVisual,
@@ -107,6 +108,8 @@ export interface GeneratedResult {
   /** Rights records for the spec and any PubChem structures; save them before the lesson shows it. */
   assets: VisualAsset[];
   attempts: number;
+  /** Experiment ids still missing after the repair; the lesson's tasks then fall back to choices. */
+  missing: string[];
 }
 
 /**
@@ -124,19 +127,32 @@ export async function generateVisual(input: {
     { role: "user", content: visualUserPrompt(input.lesson) },
   ];
   let problems: string[] = [];
+  // A picture that misses only experiment ids is still worth showing if the repair does no better.
+  let kept: GeneratedResult | undefined;
   for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const { value, completion } = await completeStructured(input.provider, {
+    const answer = await completeStructured(input.provider, {
       messages,
       jsonSchema: { name: "Visual", schema: GENERATED_VISUAL_SCHEMA },
       maxTokens: 8000,
       prompt: VISUAL_PROMPT,
       signal: input.signal,
       parse: (text) => GeneratedVisual.parse(JSON.parse(text)),
+    }).catch((error: unknown) => {
+      if (kept && error instanceof LlmError) return undefined;
+      throw error;
     });
+    if (!answer) break;
+    const { value, completion } = answer;
     const checked = await check(value, input);
-    if (checked === undefined) return undefined;
-    if ("manifest" in checked) return { ...checked, attempts: attempt };
-    problems = checked.problems;
+    if (checked === undefined) return kept && { ...kept, attempts: attempt };
+    if ("manifest" in checked) {
+      if (checked.missing.length === 0) return { ...checked, attempts: attempt };
+      if (!kept || checked.missing.length <= kept.missing.length)
+        kept = { ...checked, attempts: attempt };
+      problems = checked.missing;
+    } else {
+      problems = checked.problems;
+    }
     messages.push(
       { role: "assistant", content: completion.text },
       {
@@ -145,7 +161,7 @@ export async function generateVisual(input: {
       },
     );
   }
-  return { problems, attempts: 2 };
+  return kept ? { ...kept, attempts: 2 } : { problems, attempts: 2 };
 }
 
 interface CheckInput {
@@ -185,7 +201,9 @@ async function check(
   output: GeneratedVisual,
   input: CheckInput,
 ): Promise<
-  { manifest: VisualManifest; assets: VisualAsset[] } | { problems: string[] } | undefined
+  | { manifest: VisualManifest; assets: VisualAsset[]; missing: string[] }
+  | { problems: string[] }
+  | undefined
 > {
   let manifest: VisualManifest | undefined;
   try {
@@ -205,15 +223,17 @@ async function check(
     if ("problems" in resolved) return resolved;
     ({ manifest, assets } = resolved);
   }
+  const missing = experimentProblems(manifest, input.lesson.experiment);
   const problems = await manifestProblems(manifest);
-  if (problems.length > 0) return { problems };
+  if (problems.length > 0) return { problems: [...problems, ...missing] };
   if (manifest.kind === "playground") {
     const review = await reviewPlayground(input, manifest);
-    if (review.length > 0) return { problems: review };
+    if (review.length > 0) return { problems: [...review, ...missing] };
   }
   const own = await generatedSpecAsset(manifest, input.lesson.lessonId);
   return {
     manifest: { ...manifest, assetIds: [own.assetId, ...manifest.assetIds] },
     assets: [own, ...assets],
+    missing,
   };
 }

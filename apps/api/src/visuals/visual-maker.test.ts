@@ -80,6 +80,20 @@ describe("createVisualMaker", () => {
     expect(store.lessons[0]?.reuse.contentHash).not.toBe(lesson.reuse.contentHash);
   });
 
+  it("asks for a visual on the lesson's own experiment", async () => {
+    const guitar = Lesson.parse(
+      loadFixtures(
+        join(import.meta.dirname, "../../../../packages/contracts/src/fixtures/lesson"),
+      ).valid.find((item) => item.name === "merrill-guitar.json")?.data,
+    );
+    const llm = provider({ ...PROCESS, labels: [] });
+    await createVisualMaker({ provider: llm, rights: cleared, ...stores().deps })(guitar);
+    const [request] = vi.mocked(llm.complete).mock.calls[0] ?? [];
+    const user = String(request?.messages[1]?.content);
+    expect(user).toContain("- control tension (Tension, N): min 40, max 200, value 110");
+    expect(user).toContain("- readout pitch (Pitch, Hz)");
+  });
+
   it("keeps the visual a reused lesson already has, without asking the model", async () => {
     const llm = provider(PROCESS);
     const make = createVisualMaker({ provider: llm, rights: cleared, ...stores().deps });

@@ -21,10 +21,21 @@ export function readingEase(text: string): number {
 // Technical sets no ceiling: complexity is allowed there, not required.
 const FLOOR: Record<Lesson["readingLevel"], number> = { simple: 55, plain: 30, technical: -1000 };
 
+// Steps, task prompts and feedback are read by the learner too; ". " keeps each its own sentence.
+function lessonProse(lesson: Lesson): string {
+  return [
+    ...lesson.sections.flatMap((section) => [
+      section.text,
+      ...(section.steps ?? []).map((step) => step.text),
+    ]),
+    ...lesson.tasks.flatMap((task) => [task.prompt, ...task.feedback]),
+  ].join(". ");
+}
+
 export const readingLevelCheck: LessonCheck = {
   name: "reading-level",
   async run(lesson) {
-    const ease = readingEase(lesson.sections.map((section) => section.text).join(" "));
+    const ease = readingEase(lessonProse(lesson));
     if (ease >= FLOOR[lesson.readingLevel]) {
       return { name: readingLevelCheck.name, passed: true, details: [] };
     }

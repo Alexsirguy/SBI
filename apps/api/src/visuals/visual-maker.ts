@@ -33,6 +33,7 @@ export function createVisualMaker(deps: {
           summary: lesson.summary,
           readingLevel: lesson.readingLevel,
           claims: lesson.claims.map(({ claimId, text }) => ({ claimId, text })),
+          experiment: lesson.experiment,
         },
         pubchem: { cache: deps.pubchem },
         signal: AbortSignal.timeout(deps.timeoutMs ?? 150_000),
@@ -49,6 +50,12 @@ export function createVisualMaker(deps: {
         return [];
       }
       const { manifest } = result;
+      if (result.missing.length > 0) {
+        // Kept anyway: tasks whose ids the visual lacks fall back to their options (ADR 0017).
+        logger.warn(
+          `Visual for lesson ${lesson.lessonId} misses experiment ids: ${result.missing.join(" | ").slice(0, 1500)}`,
+        );
+      }
       for (const asset of result.assets) await deps.assets.save(asset);
       await deps.manifests.save(manifest);
       const ref = VisualRef.parse({

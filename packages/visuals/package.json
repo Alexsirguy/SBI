@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./formula": "./src/formula.ts",
     "./graph": "./src/kinds/graph.ts",
     "./mechanism": "./src/kinds/mechanism.ts",
     "./molecule": "./src/kinds/molecule.ts",

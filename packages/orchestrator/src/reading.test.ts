@@ -40,4 +40,27 @@ describe("readingLevelCheck", () => {
       expect(result.details.join("\n")).toContain(level);
     }
   });
+
+  it("reads the demonstration's steps and the tasks' prompts and feedback too", async () => {
+    const lesson = lessonWithText("Tea is hot.", "plain");
+    const hardTasks = {
+      ...lesson,
+      tasks: lesson.tasks.map((task) => ({
+        ...task,
+        prompt: HARD,
+        feedback: task.feedback.map(() => HARD),
+      })),
+    };
+    const hardSteps = {
+      ...lesson,
+      sections: lesson.sections.map((section) =>
+        section.steps
+          ? { ...section, steps: Array(8).fill({ text: HARD, settings: [] }) }
+          : section,
+      ),
+    };
+    expect((await readingLevelCheck.run(lesson)).passed).toBe(true);
+    expect((await readingLevelCheck.run(hardTasks)).passed).toBe(false);
+    expect((await readingLevelCheck.run(hardSteps)).passed).toBe(false);
+  });
 });

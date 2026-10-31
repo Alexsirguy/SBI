@@ -9,6 +9,8 @@ export interface ReuseQuery {
   assumptions: string[];
   /** Lessons generated under another policy are never served. */
   policyVersion: string;
+  /** Lessons drafted with another prompt, such as 8-module ones before ADR 0017, are never served. */
+  promptVersion: string;
   /** 'Get a fresh answer': skip the cache entirely. */
   fresh?: boolean;
 }
@@ -71,6 +73,7 @@ export function createReuseMatcher(
       const ranked = candidates
         .filter((lesson) => isReusable(lesson) && VALIDATED.has(lesson.reviewStatus))
         .filter((lesson) => lesson.reuse.policyVersion === query.policyVersion)
+        .filter((lesson) => lesson.reuse.promptVersion === query.promptVersion)
         // Private lessons have no owner to match yet, so serving one could leak another learner's.
         // TODO(#103) reuse private lessons for their owner once accounts exist.
         .filter((lesson) => lesson.reuse.cacheScope === "shared")

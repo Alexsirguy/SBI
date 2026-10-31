@@ -26,10 +26,9 @@ import {
   createEvidenceCheck,
   createPublisher,
   createReuseMatcher,
-  gateQuickAnswer,
-  generateQuickAnswer,
   generateDraft,
   generateModelClaims,
+  LESSON_DRAFT_PROMPT_VERSION,
   misconceptionCheck,
   readingLevelCheck,
   repairable,
@@ -37,12 +36,8 @@ import {
   runLessonChecks,
   runWithFallback,
   schemaCheck,
-  withShortAnswer,
   type CheckReport,
   type PublishAudit,
-  type QuickAnswerDraft,
-  type QuickAnswerInput,
-  type QuickGateDeps,
   type LessonRepository,
   type ReviewAuditLog,
   type RightsGate,
@@ -73,10 +68,6 @@ const NO_EVIDENCE =
 // Enough to teach from first principles without an unbounded draft prompt.
 const MAX_LESSON_CLAIMS = 30;
 const HELD = "A reviewer needs to check this lesson before we can show it. Try again later.";
-const HELD_AFTER_ANSWER =
-  "The short answer above is checked, but the full lesson needs a reviewer before we can show it.";
-const LESSON_LATER =
-  "The short answer above is checked, but the full lesson is not ready. Try again later.";
 
 // Policy versions come from E8; one stable value keeps reuse matching exact until then.
 export const LESSON_POLICY_VERSION = "1";
@@ -135,48 +126,23 @@ function slug(label: string, taken: Set<string>): string {
   return candidate;
 }
 
-const answerLogger = new Logger("QuickAnswer");
-
-// A short answer that fails generation or its gate is skipped; the lesson's own one follows.
-async function earlyAnswer(
-  provider: LlmProvider,
-  input: QuickAnswerInput & Omit<QuickGateDeps, "provider">,
-): Promise<QuickAnswerDraft | undefined> {
-  try {
-    const answer = await generateQuickAnswer(input, { provider });
-    const gate = await gateQuickAnswer(answer, { ...input, provider });
-    if (!gate.passed) {
-      answerLogger.log(
-        `not streamed from ${input.claims.length} claims: ${gate.reasons.join("; ")}`,
-      );
-    }
-    return gate.passed ? answer : undefined;
-  } catch (error) {
-    if (error instanceof LlmError) return undefined;
-    throw error;
-  }
-}
-
 const isTeachable = (claim: Claim) =>
   claim.status === "supported" || claim.status === "qualified" || claim.origin === "model";
 
-// Research questions no teachable claim answers, plus history when none was found (ADR 0011).
+// Research questions no teachable claim answers (ADR 0011); history is no longer taught (ADR 0017).
 function evidenceGaps(
   question: string,
-  objectLabel: string,
   gathered: GatheredEvidence | undefined,
   usable: Claim[],
 ): string[] {
-  const history = `How was the ${objectLabel.toLowerCase()} invented or discovered, and how did it develop?`;
-  if (!gathered) return usable.length > 0 ? [history] : [question, history];
+  if (!gathered) return usable.length > 0 ? [] : [question];
   const teachable = new Set(gathered.claims.filter(isTeachable).map((claim) => claim.claimId));
   const answered = (item: { claimIds: string[] }) => item.claimIds.some((id) => teachable.has(id));
   const questions = gathered.pack.questions ?? [];
   const gaps = questions.filter((item) => !answered(item)).map((item) => item.question);
-  const hasHistory = questions.some((item) => item.discipline === "history" && answered(item));
   // With nothing to teach from at all, the learner's own question leads.
   const lead = teachable.size === 0 && usable.length === 0 && gaps.length === 0 ? [question] : [];
-  return [...lead, ...gaps, ...(hasHistory ? [] : [history])];
+  return [...lead, ...gaps];
 }
 
 // Model claims fill gaps but never crowd out checked evidence.
@@ -187,7 +153,7 @@ function lessonClaims(facts: Claim[], gathered: Claim[], fromModel: Claim[] = []
   for (const claim of [...facts, ...gathered]) {
     if (isTeachable(claim) && !byId.has(claim.claimId)) byId.set(claim.claimId, claim);
   }
-  // Take one claim per gap in turn, so the last gaps (history) are not crowded out by the first.
+  // Take one claim per gap in turn, so the last gaps are not crowded out by the first.
   const byGap = new Map<string, Claim[]>();
   for (const claim of fromModel) byGap.set(claim.scope, [...(byGap.get(claim.scope) ?? []), claim]);
   const model: Claim[] = [];
@@ -198,17 +164,6 @@ function lessonClaims(facts: Claim[], gathered: Claim[], fromModel: Claim[] = []
     }
   }
   return [...[...byId.values()].slice(0, MAX_LESSON_CLAIMS - model.length), ...model];
-}
-
-function freshAnswer(lessonId: string, answer: QuickAnswerDraft): QuickAnswer {
-  return QuickAnswer.parse({
-    kind: "fresh",
-    lessonId,
-    version: 1,
-    shortAnswer: answer.text,
-    claimIds: answer.claimIds,
-    reviewStatus: "auto-validated",
-  });
 }
 
 function progressOf(event: GatherEvent): LessonProgress {
@@ -258,7 +213,8 @@ export class LessonService {
     @Optional() @Inject(VISUAL_MAKER) private readonly makeVisual?: VisualMaker,
   ) {}
 
-  // Events leave as their stage completes, so the answer streams before the heavier payloads.
+  // Events leave as their stage completes; the answer waits for the lesson, so the learner guesses
+  // before anything gives it away (ADR 0017).
   async *streamLesson(request: LessonRequest): AsyncGenerator<LessonStreamEvent> {
     const provider = this.provider;
     if (!provider) throw new UserFacingException(UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
@@ -302,49 +258,20 @@ export class LessonService {
       intent,
       assumptions: request.assumptions,
       policyVersion: LESSON_POLICY_VERSION,
+      promptVersion: LESSON_DRAFT_PROMPT_VERSION,
       fresh: request.fresh,
     });
     const intentSignature = buildIntentSignature(intent);
     let lesson: Lesson;
     let kind: QuickAnswer["kind"];
-    let answered = false;
     if (hit) {
       lesson = hit.lesson;
       kind = "cached";
     } else {
       let held = false;
       const record = (audit: PublishAudit) => this.reviewAudit.record(audit);
-      const lessonId = newId();
       const resolver = createCitationResolver(this.evidence);
-      const answerInput = {
-        objectLabel: entry.label,
-        question: request.question,
-        audience: [request.audience],
-        readingLevel: request.readingLevel,
-        locale: request.locale,
-        resolver,
-        safetyClass,
-      };
-
-      // A stored pack streams a checked early answer; otherwise the model teaches (ADR 0016).
       const events = createEventQueue<LessonStreamEvent>();
-      let early: QuickAnswerDraft | undefined;
-      let answering: Promise<void> | undefined;
-      const arrived: Claim[] = [];
-      let triedWith = 0;
-      // Early batches are often background; an attempt that cannot answer retries on newer claims.
-      const tryEarlyAnswer = (claims: Claim[]) => {
-        arrived.push(...claims);
-        const ready = [...usable, ...arrived].filter(isTeachable);
-        if (early || answering || ready.length === 0 || ready.length === triedWith) return;
-        triedWith = ready.length;
-        answering = earlyAnswer(provider, { ...answerInput, claims: ready }).then((answer) => {
-          answering = undefined;
-          if (!answer) return tryEarlyAnswer([]);
-          early = answer;
-          events.push({ type: "quick-answer", data: freshAnswer(lessonId, answer) });
-        });
-      };
       const gathering = this.gather(
         {
           taxonomyId,
@@ -356,10 +283,7 @@ export class LessonService {
           safetyClass,
         },
         {
-          onEvent: (event) => {
-            events.push({ type: "progress", data: progressOf(event) });
-            if (event.type !== "planned") tryEarlyAnswer(event.claims);
-          },
+          onEvent: (event) => events.push({ type: "progress", data: progressOf(event) }),
         },
       )
         .catch((error: unknown): GatheredEvidence | undefined => {
@@ -367,19 +291,13 @@ export class LessonService {
           if (error instanceof LlmError) return undefined;
           throw error;
         })
-        .finally(async () => {
-          while (answering) await answering;
-          events.close();
-        });
-      for await (const event of events) {
-        if (event.type === "quick-answer") answered = true;
-        yield event;
-      }
+        .finally(() => events.close());
+      for await (const event of events) yield event;
       const gathered = await gathering;
       mark("gatheredMs");
       // Evidence gaps never hold a lesson back or change its shape; the model fills them, and the
       // lesson says so (ADR 0011).
-      const gaps = evidenceGaps(request.question, entry.label, gathered, usable);
+      const gaps = evidenceGaps(request.question, gathered, usable);
       const fromModel = await generateModelClaims(
         {
           objectLabel: entry.label,
@@ -417,7 +335,6 @@ export class LessonService {
 
       const pendingDraft = generateDraft(
         {
-          lessonId,
           intentSignature,
           question: request.question,
           taxonomyId,
@@ -434,15 +351,6 @@ export class LessonService {
       );
       // Awaited inside the attempt below; this only stops an early exit raising it unhandled.
       pendingDraft.catch(() => undefined);
-      // No early attempt answered; one more try with the full set if it holds anything new.
-      // Model-knowledge claims never pass the quick-answer gate, so only checked ones are tried.
-      if (!early && checkedClaims.length > triedWith) {
-        early = await earlyAnswer(provider, { ...answerInput, claims: checkedClaims });
-        if (early) {
-          answered = true;
-          yield { type: "quick-answer", data: freshAnswer(lessonId, early) };
-        }
-      }
       let checkingStarted: (() => void) | undefined;
       const checking = new Promise<void>((resolve) => {
         checkingStarted = resolve;
@@ -450,8 +358,7 @@ export class LessonService {
       const outcomePending = runWithFallback(
         this.lessons,
         async () => {
-          const generated = await pendingDraft;
-          const draft = early ? await withShortAnswer(generated, early, claims) : generated;
+          const draft = await pendingDraft;
           mark("draftedMs");
           checkingStarted?.();
           const checks = [
@@ -507,6 +414,7 @@ export class LessonService {
           audience: request.audience,
           safetyClass,
           policyVersion: LESSON_POLICY_VERSION,
+          promptVersion: LESSON_DRAFT_PROMPT_VERSION,
         },
       );
       const firstDone = await Promise.race([checking.then(() => "checking"), outcomePending]);
@@ -536,13 +444,6 @@ export class LessonService {
           `Fresh lesson not served (${outcome.kind}): ${outcome.reason}${outcome.detail ? ` | ${outcome.detail.slice(0, 1500)}` : ""}`,
         );
       }
-      // A different cached lesson must not follow a fresh answer, so the stream ends instead.
-      if (answered && outcome.kind !== "fresh") {
-        throw new UserFacingException(
-          held ? HELD_AFTER_ANSWER : LESSON_LATER,
-          HttpStatus.SERVICE_UNAVAILABLE,
-        );
-      }
       if (outcome.kind === "retry") {
         throw new UserFacingException(held ? HELD : outcome.reason, HttpStatus.SERVICE_UNAVAILABLE);
       }
@@ -551,27 +452,25 @@ export class LessonService {
     }
 
     const validated = Lesson.parse(lesson);
-    const short = validated.sections.find((section) => section.module === "short-answer");
-    if (!answered) {
-      yield {
-        type: "quick-answer",
-        data: QuickAnswer.parse({
-          kind,
-          lessonId: validated.lessonId,
-          version: validated.version,
-          title: validated.title,
-          summary: validated.summary,
-          shortAnswer: short?.text ?? validated.summary,
-          claimIds: short?.claimIds ?? [],
-          reviewStatus: validated.reviewStatus,
-          disclaimers: validated.disclaimers,
-          note:
-            kind === "fallback"
-              ? "Fresh generation failed; showing a related cached lesson."
-              : undefined,
-        }),
-      };
-    }
+    // A Merrill lesson has no short-answer section, so the summary stands in for it.
+    yield {
+      type: "quick-answer",
+      data: QuickAnswer.parse({
+        kind,
+        lessonId: validated.lessonId,
+        version: validated.version,
+        title: validated.title,
+        summary: validated.summary,
+        shortAnswer: validated.summary,
+        claimIds: [],
+        reviewStatus: validated.reviewStatus,
+        disclaimers: validated.disclaimers,
+        note:
+          kind === "fallback"
+            ? "Fresh generation failed; showing a related cached lesson."
+            : undefined,
+      }),
+    };
     yield { type: "lesson", data: validated };
     // After the text, so citation markers can name their sources without delaying the lesson.
     const sourceIds = [...new Set(validated.claims.flatMap((claim) => claim.sourceIds))];

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Lesson, type Lesson as LessonType } from "@sbi/contracts";
+import { LESSON_DRAFT_PROMPT_VERSION } from "./draft";
 import { buildIntentSignature, type IntentInput } from "./intent";
 import { createReuseMatcher, type ReuseAudit, type ReuseQuery } from "./reuse";
 import type { LessonRepository } from "./lesson-repository";
@@ -75,7 +76,7 @@ function makeLesson(overrides: Partial<LessonType> = {}): LessonType {
       evidenceSnapshotId: SNAPSHOT,
       sourceFreshness: "fresh",
       modelVersion: "stub-1",
-      promptVersion: "lesson-draft@1",
+      promptVersion: LESSON_DRAFT_PROMPT_VERSION,
       policyVersion: "safety-1",
       reuseCount: 0,
       contentHash: "a".repeat(64),
@@ -115,6 +116,7 @@ const query: ReuseQuery = {
   intent,
   assumptions: ["sea level"],
   policyVersion: "safety-1",
+  promptVersion: LESSON_DRAFT_PROMPT_VERSION,
 };
 
 describe("createReuseMatcher", () => {
@@ -155,6 +157,14 @@ describe("createReuseMatcher", () => {
       const { repo } = memoryRepository([lesson]);
       expect(await createReuseMatcher(repo).match(query)).toBeNull();
     }
+  });
+
+  it("never serves a lesson drafted with an earlier prompt, such as an 8-module one", async () => {
+    const eightModules = makeLesson({
+      reuse: { ...makeLesson().reuse, promptVersion: "lesson-draft@6" },
+    });
+    const { repo } = memoryRepository([eightModules]);
+    expect(await createReuseMatcher(repo).match(query)).toBeNull();
   });
 
   it("rejects lessons when any match dimension differs", async () => {

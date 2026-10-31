@@ -5,6 +5,7 @@ import { compileFormula } from "./formula";
 import {
   GENERATED_VISUAL_SCHEMA,
   PITCH_EXAMPLE,
+  VISUAL_PROMPT,
   VISUAL_SYSTEM_PROMPT,
   type GeneratedVisual,
 } from "./generate";
@@ -221,7 +222,111 @@ describe("generateVisual", () => {
   });
 });
 
+const EXPERIMENT = {
+  controls: [{ id: "tension", label: "Tension", unit: "N", min: 40, max: 200, value: 110 }],
+  readouts: [{ id: "pitch", label: "Pitch", unit: "Hz" }],
+};
+
+const guitar = {
+  ...lesson,
+  title: "Why a tighter string sounds higher",
+  summary: "Pitch rises with tension.",
+  experiment: EXPERIMENT,
+};
+
+const PITCH_GRAPH: GeneratedVisual = {
+  ...EMPTY,
+  kind: "graph",
+  alt: "Pitch against string length",
+  fallbackText: "A shorter or tighter string sounds higher.",
+  controls: [
+    { id: "tension", label: "Tension", unit: "N", min: 50, max: 150, step: 1, value: 100 },
+  ],
+  readouts: [
+    { id: "pitch", label: "Pitch", unit: "Hz", formula: "sqrt(tension / 0.0055) / (2 * 0.65)" },
+  ],
+  graph: {
+    x: { name: "length", label: "String length", unit: "m", from: 0.3, to: 0.9 },
+    series: [
+      { name: "f", label: "Pitch", unit: "Hz", formula: "sqrt(tension / 0.0055) / (2 * length)" },
+    ],
+    mark: "line",
+  },
+};
+
+describe("generateVisual with the lesson's experiment", () => {
+  it("asks for the experiment's ids and gives its controls the experiment's range and start", async () => {
+    const { provider, requests } = scripted(PITCH_GRAPH);
+    const result = await generateVisual({ provider, lesson: guitar, pubchem });
+    if (!result || !("manifest" in result)) throw new Error(JSON.stringify(result));
+    const user = String(requests[0]?.messages[1]?.content);
+    expect(user).toContain("- control tension (Tension, N): min 40, max 200, value 110");
+    expect(user).toContain("- readout pitch (Pitch, Hz)");
+    expect(result.manifest.controls[0]).toMatchObject({
+      id: "tension",
+      min: 40,
+      max: 200,
+      value: 110,
+    });
+    expect(result.missing).toEqual([]);
+    expect(result.attempts).toBe(1);
+  });
+
+  it("sends a missing experiment id back for repair", async () => {
+    const missing = { ...PITCH_GRAPH, readouts: [{ ...PITCH_GRAPH.readouts[0], id: "frequency" }] };
+    const { provider, requests } = scripted(missing, PITCH_GRAPH);
+    const result = await generateVisual({ provider, lesson: guitar, pubchem });
+    expect(result && "manifest" in result && result.attempts).toBe(2);
+    expect(String(requests[1]?.messages.at(-1)?.content)).toContain(
+      'add a readout with id "pitch"',
+    );
+  });
+
+  it("keeps a picture that still misses experiment ids after the repair", async () => {
+    const missing = {
+      ...PITCH_GRAPH,
+      controls: [{ ...PITCH_GRAPH.controls[0], id: "pull" }],
+      readouts: [{ ...PITCH_GRAPH.readouts[0], formula: "sqrt(pull / 0.0055) / 1.3" }],
+      graph: {
+        ...PITCH_GRAPH.graph,
+        series: [{ ...PITCH_GRAPH.graph.series[0], formula: "sqrt(pull / 0.0055) / (2 * length)" }],
+      },
+    } as GeneratedVisual;
+    const { provider } = scripted(missing, missing);
+    const result = await generateVisual({ provider, lesson: guitar, pubchem });
+    if (!result || !("manifest" in result)) throw new Error(JSON.stringify(result));
+    expect(result.attempts).toBe(2);
+    expect(result.missing).toEqual([expect.stringContaining('control with id "tension"')]);
+    expect(result.manifest.controls.map((control) => control.id)).toEqual(["pull"]);
+  });
+
+  it("keeps the first picture when the repair comes back broken", async () => {
+    const missing = { ...PITCH_GRAPH, readouts: [{ ...PITCH_GRAPH.readouts[0], id: "frequency" }] };
+    const broken = { ...PITCH_GRAPH, readouts: [{ ...PITCH_GRAPH.readouts[0], formula: "nope(" }] };
+    const { provider } = scripted(missing, broken);
+    const result = await generateVisual({ provider, lesson: guitar, pubchem });
+    if (!result || !("manifest" in result)) throw new Error(JSON.stringify(result));
+    expect(result.manifest.readouts.map((readout) => readout.id)).toEqual(["frequency"]);
+  });
+
+  it("asks nothing of a process, which has no sliders", async () => {
+    const { provider } = scripted(PROCESS);
+    const result = await generateVisual({
+      provider,
+      lesson: { ...lesson, experiment: EXPERIMENT },
+      pubchem,
+    });
+    expect(result && "manifest" in result && result.missing).toEqual([]);
+  });
+});
+
 describe("visual prompt", () => {
+  it("asks for the experiment's ids in every kind with sliders, under v7", () => {
+    expect(VISUAL_PROMPT.version).toBe("v7");
+    expect(VISUAL_SYSTEM_PROMPT).toContain("SAME id, min, max and value");
+    expect(VISUAL_SYSTEM_PROMPT).toContain("except molecule, process and none");
+  });
+
   it("tries the kinds with sliders before the playground", () => {
     expect(VISUAL_SYSTEM_PROMPT).toContain("mechanism, graph, molecule, process, playground");
     expect(VISUAL_SYSTEM_PROMPT).toContain(PITCH_EXAMPLE.series[0]?.formula);
@@ -229,12 +334,15 @@ describe("visual prompt", () => {
 
   it("teaches a pitch graph with the right physics", () => {
     const formula = compileFormula(PITCH_EXAMPLE.series[0]?.formula ?? "", [
-      "L",
+      "length",
       "tension",
       "massPerMetre",
     ]);
     if ("error" in formula) throw new Error(formula.error);
     // A guitar's open A string: 0.65 m, 112.5 N and 0.0055 kg/m sounds at about 110 Hz.
-    expect(formula.evaluate({ L: 0.65, tension: 112.5, massPerMetre: 0.0055 })).toBeCloseTo(110, 0);
+    expect(formula.evaluate({ length: 0.65, tension: 112.5, massPerMetre: 0.0055 })).toBeCloseTo(
+      110,
+      0,
+    );
   });
 });
