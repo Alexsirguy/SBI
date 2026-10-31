@@ -1,4 +1,4 @@
-import type { Lesson, LessonVisuals } from "@sbi/contracts";
+import { isMerrillLesson, type Lesson, type LessonVisuals } from "@sbi/contracts";
 import type { ReactNode } from "react";
 import { MODULE_LABELS, MODULES } from "./modules/labels";
 import { SectionView } from "./modules/section-view";
@@ -7,20 +7,30 @@ import { SectionView } from "./modules/section-view";
 function VisualsSlot({
   visuals,
   renderVisual,
+  experiment = false,
 }: {
   /** Undefined while the visual is still being made for this lesson. */
   visuals: LessonVisuals["visuals"] | undefined;
   renderVisual: RenderVisual;
+  /** A Merrill lesson's visual is the experiment its steps and challenges drive. */
+  experiment?: boolean;
 }) {
   if (visuals?.length === 0) return null;
   return (
-    <section aria-labelledby="visuals-heading" className="lesson-visuals">
-      <h2 id="visuals-heading">See how it works</h2>
+    <section
+      aria-labelledby="visuals-heading"
+      className={`lesson-visuals${experiment ? " lesson-visuals--experiment" : ""}`}
+    >
+      <h2 id="visuals-heading">{experiment ? "The experiment" : "See how it works"}</h2>
       {visuals ? (
-        visuals.map((visual) => <div key={visual.visualId}>{renderVisual(visual)}</div>)
+        visuals.map((visual) => (
+          <div key={visual.visualId} data-visual-id={visual.visualId}>
+            {renderVisual(visual)}
+          </div>
+        ))
       ) : (
         <p role="status" className="lesson-visuals__pending">
-          Making a picture of how it works…
+          {experiment ? "Setting up the experiment…" : "Making a picture of how it works…"}
         </p>
       )}
     </section>
@@ -60,6 +70,8 @@ export function LessonRail({
       </div>
     );
   }
+  const merrill = isMerrillLesson(lesson);
+  const slot = <VisualsSlot visuals={visuals} renderVisual={renderVisual} experiment={merrill} />;
   return (
     <ol className="rail" aria-label="Lesson steps">
       {lesson.sections.map((section) => (
@@ -72,11 +84,10 @@ export function LessonRail({
             lesson={lesson}
             objectLabel={label}
             askQuestion={askQuestion}
+            pictures={section.module === "demonstrate" ? slot : undefined}
           />
           {/* Pictures sit beside the mechanism they show, after the text (#83). */}
-          {section.module === "how-parts-work" ? (
-            <VisualsSlot visuals={visuals} renderVisual={renderVisual} />
-          ) : null}
+          {!merrill && section.module === "how-parts-work" ? slot : null}
         </li>
       ))}
     </ol>

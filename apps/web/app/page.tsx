@@ -1,10 +1,10 @@
 import { Mark } from "@sbi/ui";
 import Link from "next/link";
 import { PHOTO_RETENTION_DAYS } from "./capture/limits";
-import { MODULE_LABELS } from "./lesson/modules/labels";
+import { LEGACY_MODULES, MODULE_LABELS } from "./lesson/modules/labels";
 import "./home.css";
 
-const MODULE_BLURBS: Record<keyof typeof MODULE_LABELS, string> = {
+const MODULE_BLURBS: Record<(typeof LEGACY_MODULES)[number], string> = {
   "what-youre-seeing": "Starts from what you can see and touch.",
   "short-answer": "The answer in a sentence or two, first.",
   "first-principles": "The basic ideas the answer is built on.",
@@ -148,7 +148,7 @@ export default function HomePage() {
           The same eight sections, in the same order, so you always know where you are.
         </p>
         <ol className="home__modules" role="list">
-          {(Object.keys(MODULE_LABELS) as (keyof typeof MODULE_LABELS)[]).map((module) => (
+          {LEGACY_MODULES.map((module) => (
             <li key={module}>
               <strong>{MODULE_LABELS[module]}</strong>
               <span>{MODULE_BLURBS[module]}</span>

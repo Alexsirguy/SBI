@@ -430,3 +430,114 @@ main.lesson {
   font-weight: 700;
   cursor: pointer;
 }
+
+/* Merrill lessons (ADR 0017): the guess and challenges follow the prototype's .guess and .why. */
+.problem-text {
+  font-size: var(--sbi-text-answer);
+  font-family: var(--sbi-font-display);
+}
+
+.practice-task,
+.guess,
+.challenge__actions {
+  display: grid;
+  gap: var(--sbi-space-3);
+  justify-items: start;
+}
+
+.practice-task .sbi-choice__legend,
+.challenge .sbi-choice__legend {
+  font-weight: 700;
+}
+
+.guess__locked:empty,
+.share__status:empty {
+  display: none;
+}
+
+.guess__locked,
+.guess-reveal,
+.challenge__result:not(:empty) {
+  margin: 0;
+  padding: var(--sbi-space-2) var(--sbi-space-3);
+  border-left: 3px solid var(--sbi-action);
+  background: var(--sbi-paper-sunk);
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.guess-reveal {
+  margin-top: var(--sbi-space-3);
+}
+
+.guess-reveal h3 {
+  margin: 0;
+}
+
+.guess-reveal__prompt {
+  color: var(--sbi-ink-soft);
+}
+
+.demo-steps {
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.demo-steps li > * + * {
+  margin-top: var(--sbi-space-1);
+}
+
+.lesson-visuals--experiment {
+  margin: var(--sbi-space-3) 0;
+}
+
+.challenges {
+  display: grid;
+  gap: var(--sbi-space-4);
+  margin-top: var(--sbi-space-2);
+}
+
+.challenge {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.challenge h3 {
+  margin: 0;
+}
+
+.challenge__note {
+  color: var(--sbi-ink-soft);
+}
+
+.challenge__options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+}
+
+.challenge__options [aria-pressed="true"] {
+  border-color: var(--sbi-action);
+  box-shadow: inset 0 0 0 1px var(--sbi-action);
+}
+
+.challenge__verdict {
+  font-weight: 700;
+}
+
+.challenge__value {
+  font-family: var(--sbi-font-mono);
+  font-weight: 700;
+}
+
+.share {
+  display: grid;
+  gap: var(--sbi-space-2);
+  justify-items: start;
+  margin-top: var(--sbi-space-2);
+}

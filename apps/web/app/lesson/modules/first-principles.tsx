@@ -12,29 +12,35 @@ export function FirstPrinciplesSection({
   section: LessonSection;
   concepts: Concept[];
 }) {
-  const ordered = conceptsInOrder(concepts);
-  const labels = new Map(concepts.map((concept) => [concept.conceptId, concept.label]));
   return (
     <SectionFrame section={section} evidence="inference">
       <p>{section.text}</p>
-      {ordered.length > 0 ? (
-        <>
-          <h3>Key ideas, in order</h3>
-          <ol className="concepts">
-            {ordered.map((concept) => {
-              const builds = concept.prerequisites.flatMap((id) => labels.get(id) ?? []);
-              return (
-                <li key={concept.conceptId}>
-                  {concept.label}
-                  {builds.length > 0 ? (
-                    <span className="builds-on"> (builds on {builds.join(", ")})</span>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ol>
-        </>
-      ) : null}
+      <KeyIdeas concepts={concepts} />
     </SectionFrame>
+  );
+}
+
+/** The key ideas in the order they build on each other, saying what each builds on. */
+export function KeyIdeas({ concepts }: { concepts: Concept[] }) {
+  const ordered = conceptsInOrder(concepts);
+  const labels = new Map(concepts.map((concept) => [concept.conceptId, concept.label]));
+  if (ordered.length === 0) return null;
+  return (
+    <>
+      <h3>Key ideas, in order</h3>
+      <ol className="concepts">
+        {ordered.map((concept) => {
+          const builds = concept.prerequisites.flatMap((id) => labels.get(id) ?? []);
+          return (
+            <li key={concept.conceptId}>
+              {concept.label}
+              {builds.length > 0 ? (
+                <span className="builds-on"> (builds on {builds.join(", ")})</span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+    </>
   );
 }

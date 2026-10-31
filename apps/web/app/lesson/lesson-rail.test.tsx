@@ -9,7 +9,9 @@ describe("LessonRail", () => {
       <LessonRail label="Magnifying glass" askQuestion={null} visuals={[]} />,
     );
     expect(html).toContain("Writing the rest of your lesson…");
-    expect(html.match(/rail__step--ghost/g)).toHaveLength(8);
+    // New lessons follow Merrill's five steps (ADR 0017), so those are the ones sketched.
+    expect(html.match(/rail__step--ghost/g)).toHaveLength(5);
+    expect(html).toContain("The problem");
   });
 
   it("opens every step at once, so the learner only scrolls", () => {

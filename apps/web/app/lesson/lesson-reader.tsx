@@ -14,6 +14,8 @@ import { LessonFeedback } from "./feedback";
 import { lessonHref } from "./lesson-request";
 import { cautionText } from "./notice-text";
 import { LessonRail } from "./lesson-rail";
+import { useLessonExperiment } from "./lesson-experiment";
+import { PracticeProvider } from "./practice";
 import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
 import { VisualFrame } from "./visual-frame";
@@ -79,6 +81,8 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const loading = status === "loading";
   const disclaimers = lesson?.disclaimers ?? answer?.disclaimers ?? [];
   const writing = loading && !answer && !lesson;
+  const railVisuals = visuals?.visuals ?? (status === "loading" ? undefined : []);
+  const experiment = useLessonExperiment(lesson, railVisuals);
   return (
     <main id="main" className="lesson">
       <header className="lesson-head">
@@ -113,6 +117,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
         </div>
       ) : null}
       <LessonNotice items={disclaimers} />
+      {/* Never beside a lesson: a Merrill lesson opens on its problem, and the answer spoils the guess. */}
       {answer && !lesson ? (
         <section aria-labelledby="quick-answer-heading" className="quick-answer">
           <h2 id="quick-answer-heading">Quick answer</h2>
@@ -140,13 +145,15 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
       ) : null}
       {writing || (error && !lesson) ? null : (
         <div aria-busy={!lesson} className="lesson-body">
-          <LessonRail
-            lesson={lesson}
-            label={label}
-            askQuestion={<AskQuestion subject={subject} prefs={prefs} />}
-            visuals={visuals?.visuals ?? (status === "loading" ? undefined : [])}
-            renderVisual={(visual) => <VisualFrame visual={visual} />}
-          />
+          <PracticeProvider experiment={experiment}>
+            <LessonRail
+              lesson={lesson}
+              label={label}
+              askQuestion={<AskQuestion subject={subject} prefs={prefs} />}
+              visuals={railVisuals}
+              renderVisual={(visual) => <VisualFrame visual={visual} />}
+            />
+          </PracticeProvider>
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
           {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
         </div>
