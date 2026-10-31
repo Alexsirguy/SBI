@@ -5,7 +5,7 @@ import {
   SAMPLE_SOURCES,
   sseFrames,
 } from "../app/lesson/sample-lesson";
-import { mockLesson, mockRecognition, mockUploads } from "./mock-api";
+import { mockLesson, mockRecognition, mockUploads, pressDone } from "./mock-api";
 
 // Baselines are Linux renders (the CI runner); macOS draws text differently, so it skips.
 // Regenerate with `pnpm --filter @sbi/web test:screenshots:update` (runs in Playwright's image).
@@ -27,6 +27,35 @@ const THEMES = ["light", "dark"] as const;
 
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
+}
+
+// A pot-like circle on a plain backdrop, drawn in the page: the repo keeps no binary fixtures.
+async function drawPhoto(page: Page) {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 800;
+        canvas.height = 600;
+        const context = canvas.getContext("2d");
+        if (context) {
+          context.fillStyle = "#d8d2c4";
+          context.fillRect(0, 0, 800, 600);
+          context.fillStyle = "#4a5a66";
+          context.beginPath();
+          context.arc(400, 340, 170, 0, Math.PI * 2);
+          context.fill();
+        }
+        canvas.toBlob((blob) => {
+          const transfer = new DataTransfer();
+          if (blob) transfer.items.add(new File([blob], "pot.png", { type: "image/png" }));
+          const input = document.querySelector('input[name="upload"]') as HTMLInputElement;
+          input.files = transfer.files;
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+          resolve();
+        }, "image/png");
+      }),
+  );
 }
 
 const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
@@ -52,6 +81,16 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
     },
   },
   {
+    name: "crop",
+    open: async (page) => {
+      await page.goto("/capture");
+      await drawPhoto(page);
+      await expect(page.getByRole("button", { name: /^Crop area/ })).toBeVisible({
+        timeout: 15000,
+      });
+    },
+  },
+  {
     name: "choices",
     open: async (page) => {
       await mockUploads(page);
@@ -65,32 +104,8 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
         next: { kind: "describe" },
       });
       await page.goto("/capture");
-      // A plain drawn photo: the repo keeps no binary fixtures.
-      await page.evaluate(
-        () =>
-          new Promise<void>((resolve) => {
-            const canvas = document.createElement("canvas");
-            canvas.width = 800;
-            canvas.height = 600;
-            const context = canvas.getContext("2d");
-            if (context) {
-              context.fillStyle = "#d8d2c4";
-              context.fillRect(0, 0, 800, 600);
-              context.fillStyle = "#8a9aa6";
-              context.beginPath();
-              context.arc(400, 340, 170, 0, Math.PI * 2);
-              context.fill();
-            }
-            canvas.toBlob((blob) => {
-              const transfer = new DataTransfer();
-              if (blob) transfer.items.add(new File([blob], "pot.png", { type: "image/png" }));
-              const input = document.querySelector('input[name="upload"]') as HTMLInputElement;
-              input.files = transfer.files;
-              input.dispatchEvent(new Event("change", { bubbles: true }));
-              resolve();
-            }, "image/png");
-          }),
-      );
+      await drawPhoto(page);
+      await pressDone(page);
       await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
       await expect(page.getByRole("heading", { name: "Which one is it?" })).toBeFocused();
     },

@@ -299,3 +299,104 @@
 .capture-form > :not(:empty) + * {
   margin-top: var(--sbi-space-3);
 }
+
+.cropping {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.cropping h2 {
+  margin: 0;
+}
+
+/* The photo fills the frame; the crop is drawn over it in percentages, so any width works. */
+.crop-overlay {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--sbi-radius-l);
+  touch-action: none;
+  user-select: none;
+}
+
+.crop-overlay img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.crop-overlay__area {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 2px dashed #ffffff;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%);
+  cursor: move;
+}
+
+.crop-overlay__area:focus-visible {
+  outline: 3px solid var(--sbi-focus);
+  outline-offset: 2px;
+}
+
+/* Each corner shows a small square just inside the crop, with a finger-sized touch area. */
+.crop-overlay__handle {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+}
+
+.crop-overlay__handle::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #142a33;
+  border-radius: 3px;
+  background: #ffffff;
+}
+
+.crop-overlay__handle--nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+
+.crop-overlay__handle--nw::after {
+  left: 0;
+  top: 0;
+}
+
+.crop-overlay__handle--ne {
+  right: 0;
+  top: 0;
+  cursor: nesw-resize;
+}
+
+.crop-overlay__handle--ne::after {
+  right: 0;
+  top: 0;
+}
+
+.crop-overlay__handle--sw {
+  left: 0;
+  bottom: 0;
+  cursor: nesw-resize;
+}
+
+.crop-overlay__handle--sw::after {
+  left: 0;
+  bottom: 0;
+}
+
+.crop-overlay__handle--se {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}
+
+.crop-overlay__handle--se::after {
+  right: 0;
+  bottom: 0;
+}

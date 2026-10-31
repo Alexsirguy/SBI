@@ -8,6 +8,7 @@ import {
   PHOTO_KEY,
   RECOGNITION_OFF,
   SESSION_ID,
+  pressDone,
 } from "./mock-api";
 
 const tinyPng = Buffer.from(
@@ -20,6 +21,8 @@ async function uploadPhoto(page: Page) {
   await page
     .locator('input[name="upload"]')
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
+
+  await pressDone(page);
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
   return page.locator(".photo-choices");
 }
@@ -98,6 +101,8 @@ test("a retake reuses the session so results stay grouped", async ({ page }) => 
   await page
     .locator('input[name="upload"]')
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "again.png" });
+
+  await pressDone(page);
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
 
   await expect

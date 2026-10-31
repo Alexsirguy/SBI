@@ -96,3 +96,8 @@ export async function expectLessonOpened(page: Page, label: string) {
   await expect(page).toHaveURL(/\/lesson\?/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Lesson: ${label}`);
 }
+
+/** Accepts the suggested crop, the step between choosing a photo and uploading it. */
+export async function pressDone(page: Page) {
+  await page.getByRole("button", { name: "Done" }).click({ timeout: 15000 });
+}

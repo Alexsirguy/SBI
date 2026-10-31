@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { expectNoAxeViolations, expectVisibleFocus, tabTo } from "./a11y";
-import { mockRecognition, mockUploads, expectLessonOpened } from "./mock-api";
+import { mockRecognition, mockUploads, expectLessonOpened, pressDone } from "./mock-api";
 
 async function selectPhoto(page: Page) {
   await page.evaluate(
@@ -42,6 +42,8 @@ test("keyboard focus is clearly visible on every kind of control", async ({ page
   await expectVisibleFocus(page.getByRole("button", { name: "Start lesson" }));
 
   await selectPhoto(page);
+
+  await pressDone(page);
   const upload = page.getByRole("button", { name: "Upload photo" });
   await expect(upload).toBeVisible({ timeout: 15000 });
   await tabTo(page, upload);
@@ -61,6 +63,8 @@ test("the whole photo journey works from the keyboard alone", async ({ page }) =
   await page.goto("/capture");
   await selectPhoto(page);
 
+  await pressDone(page);
+
   await tabTo(page, page.getByRole("button", { name: "Upload photo" }));
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { name: "Which one is it?" })).toBeFocused();
@@ -75,6 +79,8 @@ test("busy states are explained to assistive technology", async ({ page }) => {
   await expect(form).toHaveAttribute("aria-busy", "false");
 
   await selectPhoto(page);
+
+  await pressDone(page);
   await expect(form.getByRole("status")).toHaveText("Photo ready to upload.", { timeout: 15000 });
   await expect(form).toHaveAttribute("aria-busy", "false");
 });
@@ -91,6 +97,8 @@ test("error and recognised states have no accessibility violations", async ({ pa
 
   await mockUploads(page);
   await selectPhoto(page);
+
+  await pressDone(page);
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
   await expect(page.getByRole("region", { name: "What is in your photo?" })).toBeVisible();
   await expectNoAxeViolations(page);

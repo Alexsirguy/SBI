@@ -1,3 +1,4 @@
+import { pressDone } from "./mock-api";
 import { expectNoAxeViolations } from "./a11y";
 import { expect, test } from "@playwright/test";
 
@@ -23,6 +24,8 @@ test("take a photo opens a live camera in the page and the snap goes through the
   await expectNoAxeViolations(page);
 
   await camera.getByRole("button", { name: "Snap" }).click();
+
+  await pressDone(page);
   await expect(camera).toHaveCount(0);
   await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();

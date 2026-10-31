@@ -1,3 +1,4 @@
+import { pressDone } from "./mock-api";
 import { expectNoAxeViolations } from "./a11y";
 import { expect, type Page, test } from "@playwright/test";
 
@@ -78,6 +79,8 @@ test("a large photo is normalised to the size cap as JPEG, without showing the n
   await page.goto("/capture");
   await selectGeneratedPhoto(page, 2000, 1000);
 
+  await pressDone(page);
+
   const preview = page.getByAltText("Your photo");
   await expect(preview).toHaveAttribute("data-width", "1600", { timeout: 15000 });
   await expect(preview).toHaveAttribute("data-height", "800");
@@ -89,6 +92,8 @@ test("a large photo is normalised to the size cap as JPEG, without showing the n
 test("EXIF orientation is applied so sideways photos come out upright", async ({ page }) => {
   await page.goto("/capture");
   await selectRotatedJpeg(page, 400, 200);
+
+  await pressDone(page);
 
   const preview = page.getByAltText("Your photo");
   await expect(preview).toHaveAttribute("data-width", "200", { timeout: 15000 });
@@ -127,6 +132,7 @@ test("normalisation compresses a large photo below its original size", async ({ 
         }, "image/png");
       }),
   );
+  await pressDone(page);
   const preview = page.getByAltText("Your photo");
   await expect(preview).toBeVisible({ timeout: 15000 });
   expect(Number(await preview.getAttribute("data-bytes"))).toBeLessThan(originalBytes);
@@ -135,6 +141,8 @@ test("normalisation compresses a large photo below its original size", async ({ 
 test("choosing another photo goes back to the photo choice", async ({ page }) => {
   await page.goto("/capture");
   await selectGeneratedPhoto(page, 800, 600);
+
+  await pressDone(page);
   await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
 
   await page.getByRole("button", { name: "Choose another photo" }).click();
@@ -145,6 +153,8 @@ test("choosing another photo goes back to the photo choice", async ({ page }) =>
 test("prepared capture page has no detectable accessibility violations", async ({ page }) => {
   await page.goto("/capture");
   await selectGeneratedPhoto(page, 800, 600);
+
+  await pressDone(page);
   await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
   await expectNoAxeViolations(page);
 });

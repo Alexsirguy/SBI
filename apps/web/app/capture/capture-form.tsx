@@ -13,8 +13,16 @@ import {
   uploadLimitLabel,
   validateSelection,
 } from "./limits";
-import { normaliseImage, stripUploadMetadata, type ProcessedImage } from "./processing";
+import { CropOverlay } from "./crop-overlay";
+import {
+  cropImage,
+  normaliseImage,
+  stripUploadMetadata,
+  type CropRect,
+  type ProcessedImage,
+} from "./processing";
 import { assessQuality, readImageData, type QualityCheck } from "./quality";
+import { suggestCrop } from "./suggest-crop";
 import { usePhotoUpload } from "./use-photo-upload";
 import { useRecognisePhoto } from "./use-recognition";
 
@@ -62,6 +70,10 @@ export function CaptureForm() {
   const runRef = useRef(0);
   const [processingProblem, setProblem] = useState<string | null>(null);
   const [processing, setBusy] = useState(false);
+  const [original, setOriginal] = useState<ProcessedImage | null>(null);
+  const [originalUrl, setOriginalUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState<CropRect | null>(null);
+  const [cropping, setCropping] = useState(false);
   const [prepared, setPrepared] = useState<ProcessedImage | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [issues, setIssues] = useState<QualityCheck[]>([]);
@@ -72,7 +84,15 @@ export function CaptureForm() {
   const problem = processingProblem ?? photoUpload.error?.message ?? null;
   const looking = photoUpload.isPending || recognition.isPending;
   const answered = recognition.isSuccess || recognition.isError;
-  const step = answered ? "choices" : looking ? "looking" : previewUrl ? "selected" : "choose";
+  const step = answered
+    ? "choices"
+    : looking
+      ? "looking"
+      : cropping
+        ? "cropping"
+        : previewUrl
+          ? "selected"
+          : "choose";
 
   // One step at a time, as in the prototype: each new step starts at the top of the screen.
   useEffect(() => {
@@ -101,10 +121,35 @@ export function CaptureForm() {
     };
   }, [previewUrl]);
 
+  useEffect(() => {
+    return () => {
+      if (originalUrl) URL.revokeObjectURL(originalUrl);
+    };
+  }, [originalUrl]);
+
+  // Frames what stands out from the photo's edges; any failure leaves the whole photo.
+  async function suggest(image: ProcessedImage): Promise<CropRect> {
+    const whole = { x: 0, y: 0, width: image.width, height: image.height };
+    try {
+      const bitmap = await createImageBitmap(image.blob);
+      try {
+        return suggestCrop(readImageData(bitmap), image.width, image.height);
+      } finally {
+        bitmap.close();
+      }
+    } catch {
+      return whole;
+    }
+  }
+
   function clear() {
     runRef.current += 1;
     setProblem(null);
     setBusy(false);
+    setOriginal(null);
+    setOriginalUrl(null);
+    setCrop(null);
+    setCropping(false);
     setPrepared(null);
     setPreviewUrl(null);
     setIssues([]);
@@ -153,13 +198,45 @@ export function CaptureForm() {
     try {
       const image = await stripUploadMetadata(await normaliseImage(selected, limits));
       if (run !== runRef.current) return;
-      await assess(image);
-      setPrepared(image);
-      setPreviewUrl(URL.createObjectURL(image.blob));
+      const suggested = await suggest(image);
+      if (run !== runRef.current) return;
+      setOriginal(image);
+      setOriginalUrl(URL.createObjectURL(image.blob));
+      setCrop(suggested);
+      setCropping(true);
     } catch (error) {
       if (run === runRef.current) {
         setProblem(
           error instanceof Error ? error.message : "We couldn't read that photo. Try another one.",
+        );
+      }
+    } finally {
+      if (run === runRef.current) setBusy(false);
+    }
+  }
+
+  // Cropping happens on the device, from the normalised original, so metadata stays stripped.
+  async function finishCrop() {
+    if (!original || !crop) return;
+    const run = runRef.current;
+    setBusy(true);
+    setProblem(null);
+    try {
+      const whole = crop.width === original.width && crop.height === original.height;
+      const image = whole
+        ? original
+        : await stripUploadMetadata(await cropImage(original.blob, crop, limits));
+      if (run !== runRef.current) return;
+      await assess(image);
+      setPrepared(image);
+      setPreviewUrl(URL.createObjectURL(image.blob));
+      setCropping(false);
+    } catch (error) {
+      if (run === runRef.current) {
+        setProblem(
+          error instanceof Error
+            ? error.message
+            : "We couldn't crop that photo. Try again, or use the whole photo.",
         );
       }
     } finally {
@@ -190,11 +267,13 @@ export function CaptureForm() {
       ? (photoUpload.stage ?? "Looking closely…")
       : processing
         ? "Preparing your photo…"
-        : prepared && !answered
-          ? issues.length > 0
-            ? "Photo ready to upload, though it may be hard to recognise."
-            : "Photo ready to upload."
-          : null;
+        : cropping
+          ? "We framed what looks like the object. Adjust it if you need to, then press Done."
+          : prepared && !answered
+            ? issues.length > 0
+              ? "Photo ready to upload, though it may be hard to recognise."
+              : "Photo ready to upload."
+            : null;
 
   return (
     <>
@@ -218,6 +297,34 @@ export function CaptureForm() {
             <h2>Looking closely…</h2>
             <Scanner src={previewUrl} />
             <p className="sbi-field__hint">Checking shapes, parts and materials.</p>
+          </div>
+        ) : cropping && original && originalUrl && crop ? (
+          <div className="cropping">
+            <h2>Crop your photo</h2>
+            <CropOverlay
+              src={originalUrl}
+              imageWidth={original.width}
+              imageHeight={original.height}
+              rect={crop}
+              onChange={setCrop}
+            />
+            <div className="selected__actions">
+              <Button type="button" onClick={() => void finishCrop()} disabled={processing}>
+                Done
+              </Button>
+              <Button
+                variant="quiet"
+                type="button"
+                onClick={() =>
+                  setCrop({ x: 0, y: 0, width: original.width, height: original.height })
+                }
+              >
+                Use the whole photo
+              </Button>
+              <Button variant="quiet" type="button" onClick={retake}>
+                Choose another photo
+              </Button>
+            </div>
           </div>
         ) : prepared && previewUrl ? (
           <div className="selected">
@@ -248,6 +355,9 @@ export function CaptureForm() {
             ) : null}
             <div className="selected__actions">
               <Button type="submit">Upload photo</Button>
+              <Button variant="quiet" type="button" onClick={() => setCropping(true)}>
+                Crop again
+              </Button>
               <Button variant="quiet" type="button" onClick={retake}>
                 Choose another photo
               </Button>

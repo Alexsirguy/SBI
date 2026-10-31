@@ -1,5 +1,5 @@
 import { expectNoAxeViolations } from "./a11y";
-import { mockApi, mockUploads } from "./mock-api";
+import { mockApi, mockUploads, pressDone } from "./mock-api";
 import { expect, test } from "@playwright/test";
 
 // 1x1 transparent PNG; content is irrelevant, only name/size/type are validated.
@@ -43,6 +43,8 @@ test("capture page validates the selected photo", async ({ page }) => {
   const alert = form.getByRole("alert");
 
   await upload.setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
+
+  await pressDone(page);
   await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
   await expect(status).toContainText("Photo ready to upload");
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
@@ -81,6 +83,8 @@ test("upload reports honestly when private storage is unavailable", async ({ pag
   await page
     .locator('input[name="upload"]')
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
+
+  await pressDone(page);
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled({ timeout: 15000 });
   await page.getByRole("button", { name: "Upload photo" }).click();
 
@@ -98,6 +102,8 @@ test("uploading shows the prototype's loader over the learner's photo", async ({
   await page
     .locator('input[name="upload"]')
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
+
+  await pressDone(page);
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
 
   await expect(page.getByRole("heading", { name: "Looking closely…" })).toBeVisible();

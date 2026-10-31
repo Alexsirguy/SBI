@@ -1,3 +1,4 @@
+import { pressDone } from "./mock-api";
 import { expectNoAxeViolations } from "./a11y";
 import { expect, type Page, test } from "@playwright/test";
 
@@ -47,6 +48,8 @@ async function selectPatternedPhoto(page: Page, pattern: Pattern) {
 test("a good photo shows no check results at all", async ({ page }) => {
   await page.goto("/capture");
   await selectPatternedPhoto(page, "checker");
+
+  await pressDone(page);
   await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
 
   await expect(page.getByText("This photo may be hard to recognise")).toHaveCount(0);
@@ -56,6 +59,8 @@ test("a good photo shows no check results at all", async ({ page }) => {
 test("a plain photo shows only what to fix, without blocking upload", async ({ page }) => {
   await page.goto("/capture");
   await selectPatternedPhoto(page, "flat");
+
+  await pressDone(page);
   const issues = page.locator(".photo-issues");
 
   await expect(issues).toContainText("Hold the camera still", { timeout: 15000 });
@@ -72,12 +77,16 @@ test("overexposed photo advises against glare", async ({ page }) => {
   await page.goto("/capture");
   await selectPatternedPhoto(page, "white");
 
+  await pressDone(page);
+
   await expect(page.getByText("too bright")).toBeVisible({ timeout: 15000 });
 });
 
 test("underexposed photo advises finding better light", async ({ page }) => {
   await page.goto("/capture");
   await selectPatternedPhoto(page, "black");
+
+  await pressDone(page);
 
   await expect(page.getByText("too dark")).toBeVisible({ timeout: 15000 });
 });
@@ -90,6 +99,8 @@ test("checks that cannot run never stop the photo being used", async ({ page }) 
   });
   await page.goto("/capture");
   await selectPatternedPhoto(page, "checker");
+
+  await pressDone(page);
 
   await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
