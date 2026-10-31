@@ -11,7 +11,6 @@ import type { RightsGate } from "@sbi/orchestrator";
 import { createRightsRegister, LIBRARY_ASSET_IDS } from "@sbi/rights";
 import { RENDERER_LIBRARIES, type VisualManifestRepository } from "@sbi/visuals";
 import { memoryPubChemCache } from "@sbi/visuals/server";
-import type { RightsGate } from "@sbi/orchestrator";
 import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
 import {
