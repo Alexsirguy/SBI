@@ -1,3 +1,4 @@
+export { deviceFallbackReason, readDevice, type DeviceTier } from "./device";
 export { fallbackRenderer } from "./fallback";
 export { GALLERY_FIXTURES } from "./fixtures";
 export { REFERENCE_MECHANISMS } from "./references";

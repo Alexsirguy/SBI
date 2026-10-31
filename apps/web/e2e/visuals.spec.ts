@@ -136,3 +136,17 @@ test.describe("visual gallery", () => {
     await expectNoAxeViolations(page);
   });
 });
+
+test.describe("visual gallery with reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+
+  test("starts the molecule and the playground still", async ({ page }) => {
+    await page.goto("/visuals");
+    await expect(
+      page.getByRole("figure", { name: /water molecule/ }).getByRole("button", { name: "Turn" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    await expect(
+      page.getByRole("figure", { name: /raindrop/ }).getByRole("button", { name: "Play" }),
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+});
