@@ -98,3 +98,14 @@
   font-size: var(--sbi-text-small);
   color: var(--sbi-ink-soft);
 }
+
+.visual-mechanism {
+  display: block;
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+}
+
+.visual-mechanism__buttons {
+  display: flex;
+  gap: var(--sbi-space-2);
+}

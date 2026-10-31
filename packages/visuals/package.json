@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./graph": "./src/kinds/graph.ts",
+    "./mechanism": "./src/kinds/mechanism.ts",
     "./process": "./src/kinds/process.ts",
     "./server": "./src/server.ts"
   },
@@ -16,10 +17,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@mujoco/mujoco": "3.17.0",
     "@sbi/contracts": "workspace:*",
     "happy-dom": "21.0.4",
     "mathjs": "15.2.0",
     "mermaid": "12.2.0",
+    "three": "0.187.0",
     "vega": "6.4.0",
     "vega-embed": "7.3.0",
     "vega-interpreter": "2.3.2",
@@ -27,6 +30,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@sbi/config": "workspace:*"
+    "@sbi/config": "workspace:*",
+    "@types/three": "0.187.0"
   }
 }

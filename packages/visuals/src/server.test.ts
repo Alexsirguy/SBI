@@ -40,6 +40,13 @@ describe("manifestProblems", () => {
     expect(await manifestProblems(manifest)).toEqual([]);
   });
 
+  it("runs a mechanism through MuJoCo", async () => {
+    const { REFERENCE_MECHANISMS } = await import("./references");
+    expect(await manifestProblems(REFERENCE_MECHANISMS.engine)).toEqual([]);
+    const spec = { mjcf: "<mujoco><worldbody><geom type='bogus'/></worldbody></mujoco>" };
+    expect((await manifestProblems({ ...base, kind: "mechanism", spec })).join()).toMatch(/bogus/);
+  });
+
   it("reports contract errors by field", async () => {
     expect(await manifestProblems({ ...base, kind: "process", alt: "" })).toEqual([
       expect.stringMatching(/^alt:/),
@@ -47,8 +54,8 @@ describe("manifestProblems", () => {
   });
 
   it("says a kind without a renderer cannot be drawn yet", async () => {
-    expect(await manifestProblems({ ...base, kind: "mechanism", spec: "<mujoco/>" })).toEqual([
-      "mechanism visuals cannot be drawn yet",
+    expect(await manifestProblems({ ...base, kind: "molecule" })).toEqual([
+      "molecule visuals cannot be drawn yet",
     ]);
   });
 });

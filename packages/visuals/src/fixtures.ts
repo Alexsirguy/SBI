@@ -1,18 +1,11 @@
 import { VisualManifest } from "@sbi/contracts";
+import { REFERENCE_MECHANISMS } from "./references";
 
 const CLAIM = "0192f1a0-0000-7000-8000-0000000000f1";
 
 // One hand-written manifest per kind, for the hidden /visuals gallery and the visual e2e tests.
 export const GALLERY_FIXTURES: readonly VisualManifest[] = [
-  {
-    visualId: "0192f1a0-0000-7000-8000-0000000000a1",
-    kind: "mechanism",
-    alt: "A piston engine: the crankshaft turns as the piston moves up and down",
-    fallback: {
-      text: "Burning fuel pushes the piston down; the connecting rod turns the crankshaft, which turns the wheels.",
-    },
-    assumptions: ["One cylinder", "No friction"],
-  },
+  REFERENCE_MECHANISMS.engine,
   {
     visualId: "0192f1a0-0000-7000-8000-0000000000a2",
     kind: "molecule",

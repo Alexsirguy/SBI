@@ -1,11 +1,14 @@
 import { VisualManifest } from "@sbi/contracts";
+import type { MainModule } from "@mujoco/mujoco";
 import type mermaidApi from "mermaid";
 import { commonLayerProblems } from "./common/validate";
 import { graphProblems, graphRows, planGraph, vegaLiteSpec } from "./kinds/graph-spec";
+import { physicsProblems, readMechanismSpec } from "./kinds/mechanism-sim";
 import { processSpecProblems } from "./kinds/process-spec";
 
 type Mermaid = typeof mermaidApi;
 let mermaid: Promise<Mermaid> | undefined;
+let mujoco: Promise<MainModule> | undefined;
 
 // Mermaid parses through DOMPurify, which needs a window; happy-dom gives it one outside a browser.
 async function loadMermaid(): Promise<Mermaid> {
@@ -46,6 +49,13 @@ async function kindProblems(manifest: VisualManifest): Promise<string[]> {
       } catch (error) {
         return [`Vega-Lite could not read the graph: ${(error as Error).message}`];
       }
+    }
+    case "mechanism": {
+      const spec = readMechanismSpec(manifest);
+      if ("problems" in spec) return spec.problems;
+      const { default: loadMujoco } = await import("@mujoco/mujoco");
+      mujoco ??= loadMujoco();
+      return physicsProblems(await mujoco, manifest);
     }
     default:
       return [`${manifest.kind} visuals cannot be drawn yet`];

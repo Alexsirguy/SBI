@@ -1,5 +1,6 @@
 export { fallbackRenderer } from "./fallback";
 export { GALLERY_FIXTURES } from "./fixtures";
+export { REFERENCE_MECHANISMS } from "./references";
 export { RENDERER_LIBRARIES } from "./libraries";
 export {
   createRegistry,

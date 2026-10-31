@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { GALLERY_FIXTURES } from "@sbi/visuals";
 import { expectNoAxeViolations } from "./a11y";
 
-const DRAWN = new Set(["graph", "process"]);
+const DRAWN = new Set(["graph", "process", "mechanism"]);
 
 test.describe("visual gallery", () => {
   test("shows every kind, and the text fallback for kinds not drawn yet", async ({ page }) => {
@@ -41,5 +41,33 @@ test.describe("visual gallery", () => {
     await expect(process.getByRole("img", { name: /Photosynthesis/ })).toBeVisible();
     await expect(process).toContainText("Oxygen into the air");
     await expectNoAxeViolations(page);
+  });
+
+  test("runs the engine only when asked, and lets the learner pause it", async ({ page }) => {
+    await page.goto("/visuals");
+    const engine = page.getByRole("figure", { name: /piston engine/ });
+    await expect(engine.locator("canvas")).toHaveCount(0);
+
+    await engine.getByRole("button", { name: "See it in action" }).click();
+    await expect(engine.getByRole("img", { name: /piston engine/ })).toBeVisible();
+    const pause = engine.getByRole("button", { name: "Pause" });
+    await expect(pause).toHaveAttribute("aria-pressed", "true");
+    await pause.click();
+    await expect(engine.getByRole("button", { name: "Play" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    await expect(engine.getByRole("button", { name: "Step forward" })).toBeVisible();
+    await expect(engine.locator("dd output")).toHaveText("38.2 rpm");
+    await expectNoAxeViolations(page);
+  });
+
+  test("starts the engine still when the learner prefers less motion", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/visuals");
+    const engine = page.getByRole("figure", { name: /piston engine/ });
+    await engine.getByRole("button", { name: "See it in action" }).click();
+    await expect(engine.getByRole("button", { name: "Play" })).toBeVisible();
+    await expect(engine.getByRole("button", { name: "Step forward" })).toBeVisible();
   });
 });
