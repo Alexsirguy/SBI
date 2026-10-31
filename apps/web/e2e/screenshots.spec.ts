@@ -5,7 +5,7 @@ import {
   SAMPLE_SOURCES,
   sseFrames,
 } from "../app/lesson/sample-lesson";
-import { mockLesson, mockTaxonomy } from "./mock-api";
+import { mockLesson } from "./mock-api";
 
 // Baselines are Linux renders (the CI runner); macOS draws text differently, so it skips.
 // Regenerate with `pnpm --filter @sbi/web test:screenshots:update` (runs in Playwright's image).
@@ -43,15 +43,11 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
     },
   },
   {
-    name: "confirm",
+    name: "describe",
     open: async (page) => {
-      await mockTaxonomy(page);
       await page.goto("/capture");
       const describe = page.getByRole("region", { name: "No image? Describe it instead" });
-      await describe.getByLabel("Describe the object").fill("electric kettles");
-      await describe.getByLabel("Describe the object").press("Enter");
-      await describe.getByRole("button", { name: "Electric kettle" }).click();
-      await expect(describe.getByRole("heading", { name: "Start this lesson?" })).toBeVisible();
+      await describe.getByLabel("What is it?").fill("a rainbow after rain");
       await describe.scrollIntoViewIfNeeded();
     },
   },

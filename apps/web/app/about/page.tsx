@@ -14,7 +14,7 @@ export default function AboutPage() {
 
       <h2 id="checks">How lessons are made</h2>
       <ol>
-        <li>You show us an object and confirm what it is.</li>
+        <li>You show us an object, or type what it is, and we start a lesson about it.</li>
         <li>
           We break your question into smaller ones and look for answers in open textbooks and public
           science institutions.

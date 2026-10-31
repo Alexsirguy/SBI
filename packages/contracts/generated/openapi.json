@@ -343,6 +343,11 @@
                         "maxLength": 60
                       }
                     },
+                    "subject": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
                     "next": {
                       "oneOf": [
                         {
@@ -1165,6 +1170,11 @@
                     "type": "string",
                     "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
                   },
+                  "subject": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
                   "audience": {
                     "type": "string",
                     "enum": [
@@ -1210,7 +1220,6 @@
                 },
                 "required": [
                   "question",
-                  "taxonomyId",
                   "audience",
                   "readingLevel",
                   "locale",

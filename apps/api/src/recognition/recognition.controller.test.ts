@@ -109,6 +109,8 @@ describe("recognition routes", () => {
 
     expect(gaps.recorded).toEqual([{ source: "recognition-label", term: "lava lamp" }]);
     expect(reply.otherLabels).toEqual(["Lava lamp"]);
+    // The lesson starts from the model's strongest name, even one the catalogue lacks.
+    expect(reply.subject).toBe("Lava lamp");
   });
 
   it("recognises the same photo once, giving each session its own record", async () => {
@@ -132,6 +134,7 @@ describe("recognition routes", () => {
     expect(again).toMatchObject({
       sessionId: other,
       candidates: first.candidates,
+      subject: "Bicycle",
       next: first.next,
     });
     expect(again.resultId).not.toBe(first.resultId);

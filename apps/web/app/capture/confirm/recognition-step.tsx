@@ -3,7 +3,11 @@
 import type { ApiRequest, ApiResponse } from "@sbi/contracts";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { StatusLine } from "@sbi/ui";
-import { ConfirmLesson } from "./confirm-lesson";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { lessonHref } from "../../lesson/lesson-request";
+import { readPrefs } from "../../lesson/prefs";
+import { DescribeForm } from "./describe-form";
 
 interface RecognitionStepProps {
   recognition: UseMutationResult<
@@ -11,55 +15,24 @@ interface RecognitionStepProps {
     Error,
     ApiRequest<"recognisePhoto">
   >;
-  onSelect: (request: ApiRequest<"recordSelection">) => void;
 }
 
-const DESCRIBE = "We could not recognise the object. Describe it to start your lesson.";
+const DESCRIBE = "We could not tell what is in the photo. Describe it to start your lesson.";
 
-function promptFor(reply: ApiResponse<"recognisePhoto">): string {
-  switch (reply.next.kind) {
-    case "proceed":
-      return "Is this right? Pick the object in your photo, or tell us what it is.";
-    case "ask":
-      return reply.next.question;
-    case "assume-category":
-      return `${reply.next.fallback.assumption} Pick the object if you know which it is.`;
-    case "describe":
-      return DESCRIBE;
-  }
-}
+// What the model names is where the lesson starts; the reader offers a way back if it is wrong.
+export function RecognitionStep({ recognition }: RecognitionStepProps) {
+  const router = useRouter();
+  const subject = recognition.data?.subject;
 
-// Recognition only suggests: the learner still confirms, and every choice is recorded as feedback.
-export function RecognitionStep({ recognition, onSelect }: RecognitionStepProps) {
+  useEffect(() => {
+    if (subject) router.push(lessonHref({ label: subject }, { prefs: readPrefs() }));
+  }, [router, subject]);
+
   if (recognition.isPending) {
     return <StatusLine>Recognising the object…</StatusLine>;
   }
-  if (!recognition.data) {
-    return (
-      <ConfirmLesson headingLevel={3} initialMessage={recognition.error?.message ?? DESCRIBE} />
-    );
+  if (subject) {
+    return <StatusLine>It looks like: {subject}. Starting your lesson…</StatusLine>;
   }
-  const reply = recognition.data;
-  const options = reply.next.kind === "ask" ? reply.next.options : [];
-  const candidates = reply.candidates.length > 0 ? reply.candidates : options;
-  const fallback =
-    reply.next.kind === "ask" || reply.next.kind === "assume-category"
-      ? reply.next.fallback
-      : undefined;
-  return (
-    <ConfirmLesson
-      key={reply.resultId}
-      headingLevel={3}
-      initialCandidates={candidates}
-      initialMessage={promptFor(reply)}
-      fallback={fallback}
-      otherLabels={reply.otherLabels}
-      onStart={({ taxonomyId }) =>
-        onSelect({ resultId: reply.resultId, selection: { kind: "object", taxonomyId } })
-      }
-      onCorrection={(text) =>
-        onSelect({ resultId: reply.resultId, selection: { kind: "free-text", text } })
-      }
-    />
-  );
+  return <DescribeForm message={recognition.error?.message ?? DESCRIBE} />;
 }

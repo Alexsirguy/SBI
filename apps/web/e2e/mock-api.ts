@@ -1,5 +1,4 @@
 import { expect, type Page } from "@playwright/test";
-import { createTaxonomy, SEED_TAXONOMY, searchObservations } from "@sbi/taxonomy";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/+$/, "");
 const STORAGE_PUT = "https://storage.test/fake-put";
@@ -48,7 +47,7 @@ export const SESSION_ID = "0192f1a0-0000-7000-8000-000000000011";
 /** Answers recognition with `reply` and returns the selections the page records. */
 export async function mockRecognition(
   page: Page,
-  reply: { candidates: unknown[]; otherLabels?: string[]; next: unknown },
+  reply: { candidates: unknown[]; otherLabels?: string[]; subject?: string; next: unknown },
 ) {
   const selections: unknown[] = [];
   const requests: unknown[] = [];
@@ -63,23 +62,13 @@ export async function mockRecognition(
   return { requests, selections };
 }
 
-// Answers search from the real taxonomy package, so specs exercise the shipped seed and ranking.
-export async function mockTaxonomy(page: Page) {
-  const taxonomy = createTaxonomy(SEED_TAXONOMY);
-  await page.route(`${API_URL}/taxonomy/search?*`, (route) => {
-    const query = new URL(route.request().url()).searchParams.get("q") ?? "";
-    return route.fulfill({ headers: CORS, json: { results: taxonomy.search(query) } });
-  });
-}
-
-/** Answers observations from the real taxonomy and returns the bodies the page sent. */
-export async function mockObservations(page: Page) {
-  const taxonomy = createTaxonomy(SEED_TAXONOMY);
-  const sent: Record<string, string>[] = [];
-  await mockApi(page, "/observations", (body) => {
-    const notes = body as Record<string, string>;
-    sent.push(notes);
-    return { json: { results: searchObservations(taxonomy, Object.values(notes)) } };
+/** Returns the lesson requests the reader sends, whatever the mocked reply. */
+export function lessonRequests(page: Page) {
+  const sent: Record<string, unknown>[] = [];
+  page.on("request", (request) => {
+    if (request.url() === `${API_URL}/lessons` && request.method() === "POST") {
+      sent.push(request.postDataJSON() as Record<string, unknown>);
+    }
   });
   return sent;
 }

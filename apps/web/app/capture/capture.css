@@ -199,8 +199,7 @@
   color: var(--sbi-ink);
 }
 
-.crop-actions,
-.confirm__actions {
+.crop-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sbi-space-2);
@@ -248,79 +247,18 @@
   color: var(--sbi-marker-ink);
 }
 
-/* Confirmation */
-.confirm {
+.describe-form {
   display: grid;
   gap: var(--sbi-space-3);
+  justify-items: start;
 }
 
-.confirm__card {
-  border: 2px solid var(--sbi-action);
-  border-radius: var(--sbi-radius-l);
-  padding: var(--sbi-space-4);
-  display: grid;
-  gap: var(--sbi-space-2);
+.describe-form .sbi-field {
+  justify-self: stretch;
 }
 
-.confirm__card p {
+.describe-form .sbi-status {
   margin: 0;
-}
-
-.choice-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--sbi-space-2);
-}
-
-.choice-list li {
-  display: grid;
-  gap: var(--sbi-space-1);
-}
-
-.sbi-button.choice {
-  justify-content: flex-start;
-  width: 100%;
-  min-height: 56px;
-  border-color: var(--sbi-control-edge);
-  color: var(--sbi-ink);
-  text-align: left;
-}
-
-.choice__why {
-  font-size: var(--sbi-text-small);
-  color: var(--sbi-ink-soft);
-  padding-left: var(--sbi-space-2);
-}
-
-.chip-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sbi-space-2);
-}
-
-.chip-list .sbi-button {
-  border-radius: var(--sbi-radius-pill);
-}
-
-.search-row {
-  display: grid;
-  gap: var(--sbi-space-2);
-}
-
-@media (min-width: 560px) {
-  .search-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-  }
-
-  .search-row .sbi-field {
-    margin-bottom: 0;
-  }
 }
 
 /* Live regions stay mounted so they announce, so the form spaces only children with content. */

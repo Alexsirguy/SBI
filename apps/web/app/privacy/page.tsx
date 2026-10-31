@@ -34,9 +34,9 @@ export default function PrivacyPage() {
       <h2>Your question</h2>
       <ul>
         <li>
-          Your question and the object you confirmed are sent to the AI model that writes your
-          lesson. The lesson is stored with its sources and checks so a reviewer can look at it;
-          your photo is never part of a lesson.
+          Your question and what the lesson is about (the name we recognised or the words you typed)
+          are sent to the AI model that writes your lesson. The lesson is stored with its sources
+          and checks so a reviewer can look at it; your photo is never part of a lesson.
         </li>
         <li>
           Your choice of depth and age band stays in this browser tab and is only used to ask for

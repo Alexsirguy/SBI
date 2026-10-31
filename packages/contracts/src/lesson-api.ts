@@ -3,17 +3,24 @@ import { Id, IsoDateTime, Locale, SafetyClass, Uuid } from "./common";
 import { AudienceBand, LessonDisclaimer, ReadingLevel, ReviewStatus } from "./lesson";
 import { VisualRef } from "./visual";
 
-export const LessonRequest = z.object({
-  question: z.string().trim().min(3).max(500),
-  taxonomyId: Id,
-  audience: AudienceBand,
-  readingLevel: ReadingLevel,
-  locale: Locale,
-  // Client-declared until E8 lands server-side classification; routing still reviews high-risk topics.
-  safetyClass: SafetyClass,
-  assumptions: z.array(z.string().trim().min(1).max(300)).default([]),
-  fresh: z.boolean().default(false),
-});
+// A lesson is about a catalogue object or any subject the learner names (ADR 0013).
+export const LessonRequest = z
+  .object({
+    question: z.string().trim().min(3).max(500),
+    taxonomyId: Id.optional(),
+    subject: z.string().trim().min(2).max(80).optional(),
+    audience: AudienceBand,
+    readingLevel: ReadingLevel,
+    locale: Locale,
+    // Client-declared until E8 lands server-side classification; routing still reviews high-risk topics.
+    safetyClass: SafetyClass,
+    assumptions: z.array(z.string().trim().min(1).max(300)).default([]),
+    fresh: z.boolean().default(false),
+  })
+  .refine((request) => request.taxonomyId !== undefined || request.subject !== undefined, {
+    message: "Name an object or a subject.",
+    path: ["subject"],
+  });
 
 export const LessonKind = z.enum(["fresh", "cached", "fallback"]);
 

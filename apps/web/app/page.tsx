@@ -124,8 +124,8 @@ export default function HomePage() {
         <ol className="home__steps" role="list">
           <li>
             <span>
-              <strong>Show us the object.</strong> Take a photo or type what it is, then confirm we
-              have it right.
+              <strong>Show us the object.</strong> Take a photo or type what it is. We name what we
+              see and start your lesson; if we get it wrong, you can say what it is.
             </span>
           </li>
           <li>

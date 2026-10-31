@@ -9,15 +9,3 @@ export function useRecognisePhoto() {
     mutationFn: (request: ApiRequest<"recognisePhoto">) => api("recognisePhoto", request),
   });
 }
-
-export function useRecordSelection() {
-  return useMutation({
-    mutationFn: (request: ApiRequest<"recordSelection">) => api("recordSelection", request),
-  });
-}
-
-export function useNoticeObject() {
-  return useMutation({
-    mutationFn: (request: ApiRequest<"noticeObject">) => api("noticeObject", request),
-  });
-}

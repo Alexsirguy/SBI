@@ -18,7 +18,7 @@ export function SectionView({
 }: {
   section: LessonSection;
   lesson: Lesson;
-  /** The object the learner confirmed, named in What you're seeing. */
+  /** What the lesson is about, named in What you're seeing. */
   objectLabel?: string;
   askQuestion?: ReactNode;
 }) {

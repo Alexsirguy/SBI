@@ -257,10 +257,13 @@ test("names the object, its assumptions and objectives, and says when a lesson i
   await expect.poll(() => requests.at(-1)?.question).toBe("Can it start a fire?");
 });
 
-test("asks for an object when the link names none", async ({ page }) => {
+test("asks for something to learn about when the link names nothing", async ({ page }) => {
   await page.goto("/lesson");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Choose an object first");
-  await expect(
-    page.getByRole("link", { name: "Photograph or describe an object" }),
-  ).toHaveAttribute("href", "/capture");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Choose something to learn about",
+  );
+  await expect(page.getByRole("link", { name: "Photograph or describe anything" })).toHaveAttribute(
+    "href",
+    "/capture",
+  );
 });

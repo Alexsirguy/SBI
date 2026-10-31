@@ -1,103 +1,40 @@
 import { expectNoAxeViolations } from "./a11y";
-import { mockApi, mockTaxonomy, mockUploads, expectLessonOpened } from "./mock-api";
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import { expectLessonOpened, lessonRequests } from "./mock-api";
+import { expect, test } from "@playwright/test";
 
-const tinyPng = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-  "base64",
-);
-
-// Runs the shared confirmation step inside `scope`, the same way for either entry path.
-async function confirmKettle(page: Page, scope: Locator) {
-  await scope.getByLabel("Describe the object").fill("electric kettles");
-  await scope.getByLabel("Describe the object").press("Enter");
-  await expect(scope.getByRole("status").last()).toHaveText("1 match for “electric kettles”.");
-  await scope.getByRole("button", { name: "Electric kettle" }).click();
-
-  const heading = scope.getByRole("heading", { name: "Start this lesson?" });
-  await expect(heading).toBeFocused();
-  await expect(scope).toContainText("Lesson about: Electric kettle.");
+test("describing anything starts a lesson on it, with no catalogue search", async ({ page }) => {
+  const sent = lessonRequests(page);
+  await page.goto("/capture");
+  const section = page.getByRole("region", { name: "No image? Describe it instead" });
   await expectNoAxeViolations(page);
 
-  await scope.getByRole("button", { name: "Choose again" }).click();
-  await expect(scope.getByRole("button", { name: "Electric kettle" })).toBeFocused();
-  await scope.getByRole("button", { name: "Electric kettle" }).click();
-  await scope.getByRole("button", { name: "Start lesson" }).click();
-  await expectLessonOpened(page, "Electric kettle");
-  await expectNoAxeViolations(page);
-}
-
-test.beforeEach(async ({ page }) => {
-  await mockTaxonomy(page);
-});
-
-test("text entry resolves candidates and confirms the lesson", async ({ page }) => {
-  await page.goto("/capture");
-  await confirmKettle(page, page.getByRole("region", { name: "No image? Describe it instead" }));
-});
-
-test("photo entry reaches the same confirmation step after upload", async ({ page }) => {
-  await mockUploads(page);
-  await page.goto("/capture");
-  await page
-    .locator('input[name="upload"]')
-    .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
-  await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
-
-  const photo = page.getByRole("region", { name: "What is in your photo?" });
-  await expect(photo).toContainText("Describe the object instead.");
-  await confirmKettle(page, photo);
+  await section.getByLabel("What is it?").fill("  a rainbow   after rain ");
+  await section.getByRole("button", { name: "Start lesson" }).click();
+  await expectLessonOpened(page, "Rainbow after rain");
+  await expect
+    .poll(() => sent.at(0))
+    .toMatchObject({
+      subject: "Rainbow after rain",
+      question: "What is the science behind the rainbow after rain?",
+    });
 });
 
 test("text entry works from the keyboard alone", async ({ page }) => {
   await page.goto("/capture");
   const section = page.getByRole("region", { name: "No image? Describe it instead" });
-  await section.getByLabel("Describe the object").focus();
-  await page.keyboard.type("tea");
+  await section.getByLabel("What is it?").focus();
+  await page.keyboard.type("bike bell");
   await page.keyboard.press("Enter");
-  await expect(section.getByRole("status")).toHaveText("3 matches for “tea”.");
-
-  await section.getByRole("button", { name: "Teapot" }).focus();
-  await page.keyboard.press("Enter");
-  await expect(section.getByRole("heading", { name: "Start this lesson?" })).toBeFocused();
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Enter");
-  await expectLessonOpened(page, "Teapot");
+  await expectLessonOpened(page, "Bike bell");
 });
 
-test("text entry guides on short, unmatched and edited queries", async ({ page }) => {
+test("too short a description is explained at the field", async ({ page }) => {
   await page.goto("/capture");
   const section = page.getByRole("region", { name: "No image? Describe it instead" });
-  const status = section.getByRole("status");
-
-  await section.getByRole("button", { name: "Search objects" }).click();
-  await expect(status).toHaveText("Type at least 2 letters to search.");
-
-  await section.getByLabel("Describe the object").fill("spaceship");
-  await section.getByRole("button", { name: "Search objects" }).click();
-  await expect(status).toContainText("No matches for “spaceship”");
-  await expect(section.getByLabel("Matching objects")).toHaveCount(0);
-
-  await section.getByLabel("Describe the object").fill("tea");
-  await section.getByRole("button", { name: "Search objects" }).click();
-  await expect(section.getByLabel("Matching objects")).toBeVisible();
-  await section.getByLabel("Describe the object").fill("tea cup");
-  await expect(section.getByLabel("Matching objects")).toHaveCount(0);
-  await expect(status).toHaveText("");
+  await section.getByRole("button", { name: "Start lesson" }).click();
+  const field = section.getByLabel("What is it?");
+  await expect(field).toBeFocused();
+  await expect(field).toHaveAccessibleDescription(/Type at least 2 letters\./);
+  await expect(page).toHaveURL(/\/capture$/);
   await expectNoAxeViolations(page);
-});
-
-test("text entry explains when search is unavailable", async ({ page }) => {
-  await mockApi(page, "/taxonomy/search?*", () => ({
-    json: { error: "Search is down." },
-    status: 503,
-  }));
-  await page.goto("/capture");
-  const section = page.getByRole("region", { name: "No image? Describe it instead" });
-
-  await section.getByLabel("Describe the object").fill("bike");
-  await section.getByRole("button", { name: "Search objects" }).click();
-
-  await expect(section.getByRole("status")).toHaveText("Search is down.");
-  await expect(section.getByLabel("Matching objects")).toHaveCount(0);
 });

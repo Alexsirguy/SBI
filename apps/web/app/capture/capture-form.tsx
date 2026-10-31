@@ -20,7 +20,7 @@ import {
 } from "./processing";
 import { assessQuality, readImageData, type QualityReport } from "./quality";
 import { useKeepPhoto, usePhotoUpload } from "./use-photo-upload";
-import { useRecognisePhoto, useRecordSelection } from "./use-recognition";
+import { useRecognisePhoto } from "./use-recognition";
 import { RecognitionStep } from "./confirm/recognition-step";
 import { Button } from "@sbi/ui";
 
@@ -101,7 +101,6 @@ export function CaptureForm() {
   const photoUpload = usePhotoUpload();
   const keep = useKeepPhoto();
   const recognition = useRecognisePhoto();
-  const selection = useRecordSelection();
   // One session per visit groups retakes; accounts will replace it (#102).
   const sessionRef = useRef<string | undefined>(undefined);
   const busy = processing || photoUpload.isPending || keep.isPending;
@@ -146,7 +145,6 @@ export function CaptureForm() {
     photoUpload.reset();
     keep.reset();
     recognition.reset();
-    selection.reset();
   }
 
   function retake() {
@@ -473,10 +471,7 @@ export function CaptureForm() {
       {uploaded ? (
         <section aria-labelledby={confirmId} className="capture-path">
           <h2 id={confirmId}>What is in your photo?</h2>
-          <RecognitionStep
-            recognition={recognition}
-            onSelect={(request) => selection.mutate(request)}
-          />
+          <RecognitionStep recognition={recognition} />
         </section>
       ) : null}
     </>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { LessonDisclaimer, LessonRequest, LessonVisuals } from "@sbi/contracts";
 import { Button, Mark, Notice, Placeholder, StatusLine, VisuallyHidden } from "@sbi/ui";
 import { useRouter } from "next/navigation";
@@ -18,7 +19,7 @@ import { useLessonStream } from "./use-lesson-stream";
 
 interface LessonReaderProps {
   request: LessonRequest;
-  /** The confirmed object's name, shown until the lesson brings its own title. */
+  /** What the lesson is about, shown until the lesson brings its own title. */
   label: string;
   /** The depth and age band this request was built from. */
   prefs: LessonPrefs;
@@ -58,6 +59,7 @@ function VisualsSlot({ visuals }: { visuals: LessonVisuals["visuals"] }) {
 // Text first: the quick answer, then sections as they arrive; visuals load only after the text.
 export function LessonReader({ request, label, prefs, question, fetcher }: LessonReaderProps) {
   const router = useRouter();
+  const subject = { label, taxonomyId: request.taxonomyId };
   // The choice in the URL is the learner's latest, so it is what the session remembers.
   useEffect(() => writePrefs(prefs), [prefs]);
   // A choice shows at once and lasts until the URL catches up; it is tied to the prefs it
@@ -67,7 +69,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const chosen = pending?.from === current ? pending.next : prefs;
   const choose = (next: LessonPrefs) => {
     setPending({ from: current, next });
-    router.replace(lessonHref(request.taxonomyId, label, { question, prefs: next }), {
+    router.replace(lessonHref(subject, { question, prefs: next }), {
       scroll: false,
     });
   };
@@ -76,8 +78,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
     fetcher,
   );
   // The spec promises a fresh answer is always available, so a reused lesson can be replaced.
-  const askFresh = () =>
-    router.push(lessonHref(request.taxonomyId, label, { question, prefs, fresh: true }));
+  const askFresh = () => router.push(lessonHref(subject, { question, prefs, fresh: true }));
   const written = lesson ? new Date(lesson.reuse.generatedAt) : undefined;
   const loading = status === "loading";
   const disclaimers = lesson?.disclaimers ?? answer?.disclaimers ?? [];
@@ -93,6 +94,10 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
           {label} · {DEPTHS[chosen.depth].label}
         </p>
         <h1>{lesson?.title ?? answer?.title ?? `Lesson: ${label}`}</h1>
+        {/* Recognition can be wrong, and the lesson starts without asking, so a way back is always here. */}
+        <p className="lesson-head__change">
+          <Link href="/capture#text-entry">Not a {label.toLowerCase()}? Describe it instead</Link>
+        </p>
         <DepthControls prefs={chosen} onChange={choose} />
       </header>
       <StatusLine>
@@ -183,13 +188,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
                         section={section}
                         lesson={lesson}
                         objectLabel={label}
-                        askQuestion={
-                          <AskQuestion
-                            taxonomyId={request.taxonomyId}
-                            label={label}
-                            prefs={prefs}
-                          />
-                        }
+                        askQuestion={<AskQuestion subject={subject} prefs={prefs} />}
                       />
                       {/* Pictures sit beside the mechanism they show, after the text (#83). */}
                       {section.module === "how-parts-work" ? (

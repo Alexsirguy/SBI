@@ -414,3 +414,8 @@ main.lesson {
     margin-right: auto;
   }
 }
+
+.lesson-head__change {
+  margin: 0;
+  font-size: var(--sbi-text-small);
+}

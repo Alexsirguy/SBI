@@ -3,19 +3,12 @@
 import { useRouter } from "next/navigation";
 import { Button, TextField } from "@sbi/ui";
 import { useRef, useState } from "react";
-import { lessonHref } from "./lesson-request";
+import { lessonHref, type LessonSubjectRef } from "./lesson-request";
 import type { LessonPrefs } from "./prefs";
 
 /** Lets the learner ask their own question about the same object, at the same depth. */
-export function AskQuestion({
-  taxonomyId,
-  label,
-  prefs,
-}: {
-  taxonomyId: string;
-  label: string;
-  prefs: LessonPrefs;
-}) {
+export function AskQuestion({ subject, prefs }: { subject: LessonSubjectRef; prefs: LessonPrefs }) {
+  const { label } = subject;
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [question, setQuestion] = useState("");
@@ -32,7 +25,7 @@ export function AskQuestion({
           return;
         }
         setError(undefined);
-        router.push(lessonHref(taxonomyId, label, { question: question.trim(), prefs }));
+        router.push(lessonHref(subject, { question: question.trim(), prefs }));
       }}
     >
       <TextField

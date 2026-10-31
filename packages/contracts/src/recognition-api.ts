@@ -41,6 +41,8 @@ export const RecognisedPhoto = z.object({
   candidates: z.array(LearnerCandidate).max(3),
   /** Look-alikes the model named that the catalog cannot teach yet; picking one is a correction. */
   otherLabels: z.array(z.string().min(1).max(60)).max(3).default([]),
+  /** The model's own name for what it sees, catalogued or not; a lesson can start from it. */
+  subject: z.string().min(1).max(60).optional(),
   next: NextStep,
 });
 
