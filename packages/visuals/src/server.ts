@@ -1,5 +1,5 @@
 import { VisualManifest, type VisualAsset } from "@sbi/contracts";
-import { completeStructured, type ChatMessage, type LlmProvider } from "@sbi/llm";
+import { completeStructured, LlmError, type ChatMessage, type LlmProvider } from "@sbi/llm";
 import { ZodError } from "zod";
 import type { MainModule } from "@mujoco/mujoco";
 import type mermaidApi from "mermaid";
@@ -156,19 +156,29 @@ interface CheckInput {
 }
 
 async function reviewPlayground(input: CheckInput, manifest: VisualManifest): Promise<string[]> {
-  const { value } = await completeStructured(input.provider, {
+  const request = {
     messages: playgroundReviewMessages(
       input.lesson,
       manifest,
       String((manifest.spec as { code?: unknown }).code),
     ),
     jsonSchema: { name: "PlaygroundReview", schema: PLAYGROUND_REVIEW_SCHEMA },
-    maxTokens: 2000,
+    // Room for the model to reason before it answers; a tight cap came back empty in live runs.
+    maxTokens: 6000,
     prompt: PLAYGROUND_REVIEW_PROMPT,
     signal: input.signal,
-    parse: (text) => PlaygroundReview.parse(JSON.parse(text)),
-  });
-  return value.problems.filter((problem) => problem.trim() !== "").slice(0, 6);
+    parse: (text: string) => PlaygroundReview.parse(JSON.parse(text)),
+  };
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const { value } = await completeStructured(input.provider, request);
+      return value.problems.filter((problem) => problem.trim() !== "").slice(0, 6);
+    } catch (error) {
+      if (!(error instanceof LlmError) || attempt === 2) break;
+    }
+  }
+  // The review is a second opinion: code that passed the sandbox checks still ships without it.
+  return [];
 }
 
 async function check(

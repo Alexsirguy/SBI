@@ -1,5 +1,5 @@
 import { VisualAsset } from "@sbi/contracts";
-import type { CompletionRequest, LlmProvider } from "@sbi/llm";
+import { LlmError, type CompletionRequest, type LlmProvider } from "@sbi/llm";
 import { describe, expect, it, vi } from "vitest";
 import { GENERATED_VISUAL_SCHEMA, type GeneratedVisual } from "./generate";
 import { memoryPubChemCache } from "./pubchem";
@@ -183,5 +183,34 @@ describe("generateVisual", () => {
     const result = await generateVisual({ provider, lesson, pubchem });
     expect(result).toMatchObject({ problems: [expect.stringMatching(/may not use fetch/)] });
     expect(requests.every((request) => request.prompt?.id === "visual-generate")).toBe(true);
+  });
+
+  it("ships playground code that passed the sandbox checks when the review never answers", async () => {
+    const { RAINBOW_CODE } = await import("./kinds/rainbow");
+    const playground: GeneratedVisual = {
+      ...EMPTY,
+      kind: "playground",
+      alt: "Light splitting in a raindrop",
+      fallbackText: "Each colour bends a little differently.",
+      code: RAINBOW_CODE,
+    };
+    let calls = 0;
+    const provider: LlmProvider = {
+      id: "test",
+      model: "test",
+      complete: async () => {
+        calls += 1;
+        if (calls > 1) throw new LlmError("test: empty completion");
+        return {
+          text: JSON.stringify(playground),
+          model: "test",
+          latencyMs: 1,
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 },
+        };
+      },
+    };
+    const result = await generateVisual({ provider, lesson, pubchem });
+    expect(result && "manifest" in result).toBe(true);
+    expect(calls).toBe(3);
   });
 });
