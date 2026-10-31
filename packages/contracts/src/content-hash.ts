@@ -37,6 +37,9 @@ export async function lessonContentHash(lesson: Lesson): Promise<string> {
   );
   // Re-verifying a claim changes its audit trail, not what the learner reads.
   content.claims = lesson.claims.map(({ verification: _verification, ...claim }) => claim);
+  // Only Merrill lessons carry these, so lessons drafted before them keep their hashes.
+  if (lesson.tasks.length > 0) content.tasks = lesson.tasks;
+  if (lesson.experiment) content.experiment = lesson.experiment;
   return sha256Hex(canonicalJson(content));
 }
 
