@@ -1,0 +1,182 @@
+{
+  "api": "http://localhost:4100",
+  "ranAt": "2026-10-31T18:36:56.915Z",
+  "outcomes": [
+    {
+      "id": "seed-001",
+      "category": "physics",
+      "label": "Bicycle",
+      "kind": "mechanism",
+      "labels": 5,
+      "labelsCiteLesson": true,
+      "controls": 2,
+      "readouts": 2,
+      "visualSeconds": 27.2
+    },
+    {
+      "id": "seed-003",
+      "category": "physics",
+      "label": "Electric kettle",
+      "kind": "playground",
+      "labels": 3,
+      "labelsCiteLesson": true,
+      "controls": 1,
+      "readouts": 2,
+      "visualSeconds": 26.9
+    },
+    {
+      "id": "seed-005",
+      "category": "physics",
+      "label": "Magnifying glass",
+      "kind": "none",
+      "labels": 0,
+      "labelsCiteLesson": true,
+      "controls": 0,
+      "readouts": 0,
+      "visualSeconds": 36.1
+    },
+    {
+      "id": "seed-006",
+      "category": "physics",
+      "label": "Playground swing",
+      "kind": "mechanism",
+      "labels": 3,
+      "labelsCiteLesson": true,
+      "controls": 1,
+      "readouts": 2,
+      "visualSeconds": 18.1
+    },
+    {
+      "id": "seed-007",
+      "category": "physics",
+      "label": "Magnetic compass",
+      "kind": "playground",
+      "labels": 5,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 24.6
+    },
+    {
+      "id": "seed-010",
+      "category": "maths",
+      "label": "Honeycomb",
+      "kind": "playground",
+      "labels": 4,
+      "labelsCiteLesson": true,
+      "controls": 2,
+      "readouts": 2,
+      "visualSeconds": 43.6
+    },
+    {
+      "id": "seed-011",
+      "category": "maths",
+      "label": "Sunflower",
+      "kind": "playground",
+      "labels": 5,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 25.7
+    },
+    {
+      "id": "seed-017",
+      "category": "biology",
+      "label": "Leaf",
+      "kind": "process",
+      "labels": 6,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 11.9
+    },
+    {
+      "id": "seed-020",
+      "category": "biology",
+      "label": "Honey bee",
+      "kind": "playground",
+      "labels": 6,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 16.8
+    },
+    {
+      "id": "seed-022",
+      "category": "biology",
+      "label": "Cactus",
+      "kind": "graph",
+      "labels": 0,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 7.5
+    },
+    {
+      "id": "seed-024",
+      "category": "chemistry",
+      "label": "Rusty nail",
+      "kind": "playground",
+      "labels": 6,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 17.6
+    },
+    {
+      "id": "seed-026",
+      "category": "chemistry",
+      "label": "Ice cubes",
+      "kind": "playground",
+      "labels": 4,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 35.9
+    },
+    {
+      "id": "seed-028",
+      "category": "chemistry",
+      "label": "Salt crystals",
+      "kind": "playground",
+      "labels": 4,
+      "labelsCiteLesson": true,
+      "controls": 2,
+      "readouts": 2,
+      "visualSeconds": 19.8
+    },
+    {
+      "id": "seed-030",
+      "category": "chemistry",
+      "label": "Soap bubble",
+      "kind": "playground",
+      "labels": 6,
+      "labelsCiteLesson": true,
+      "controls": 2,
+      "readouts": 2,
+      "visualSeconds": 20.2
+    },
+    {
+      "id": "seed-032",
+      "category": "arts",
+      "label": "Acoustic guitar",
+      "kind": "playground",
+      "labels": 3,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 34.6
+    },
+    {
+      "id": "seed-035",
+      "category": "arts",
+      "label": "Drum",
+      "kind": "playground",
+      "labels": 4,
+      "labelsCiteLesson": true,
+      "controls": 3,
+      "readouts": 2,
+      "visualSeconds": 20.3
+    }
+  ]
+}

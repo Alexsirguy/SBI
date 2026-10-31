@@ -1,0 +1,35 @@
+{
+  "device": "360×740 @2x, 4× CPU, Slow 4G, cold cache",
+  "results": [
+    {
+      "kind": "mechanism",
+      "firstDrawMs": 20853,
+      "kilobytes": 3113,
+      "loadsOnTap": true
+    },
+    {
+      "kind": "molecule",
+      "firstDrawMs": 3982,
+      "kilobytes": 375,
+      "loadsOnTap": false
+    },
+    {
+      "kind": "process",
+      "firstDrawMs": 9031,
+      "kilobytes": 860,
+      "loadsOnTap": true
+    },
+    {
+      "kind": "graph",
+      "firstDrawMs": 4533,
+      "kilobytes": 508,
+      "loadsOnTap": false
+    },
+    {
+      "kind": "playground",
+      "firstDrawMs": 2000,
+      "kilobytes": 215,
+      "loadsOnTap": false
+    }
+  ]
+}
