@@ -6,6 +6,6 @@ export const RENDERER_LIBRARIES: Readonly<Record<VisualKind, readonly string[]>>
   molecule: ["3dmol", "mathjs"],
   process: ["mermaid", "mathjs"],
   graph: ["vega", "vega-lite", "vega-embed", "mathjs"],
-  // acorn checks playground code on the server; the sandbox itself loads the kit's libraries.
-  playground: ["three", "matter-js", "mathjs", "acorn"],
+  // acorn checks playground code on the server; the frame runs our small kit and nothing else.
+  playground: ["acorn", "mathjs"],
 };

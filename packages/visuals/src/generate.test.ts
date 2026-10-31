@@ -30,6 +30,7 @@ const EMPTY: GeneratedVisual = {
   mermaid: "",
   graph: { x: { name: "x", label: "", unit: "", from: 0, to: 1 }, series: [], mark: "line" },
   molecules: [],
+  code: "",
 };
 
 const PROCESS: GeneratedVisual = {
@@ -46,7 +47,7 @@ const PROCESS: GeneratedVisual = {
   mermaid: "flowchart LR\n  light[Light] --> leaf[Leaf]\n  leaf --> sugar[Sugar]",
 };
 
-function scripted(...answers: GeneratedVisual[]) {
+function scripted(...answers: unknown[]) {
   const requests: CompletionRequest[] = [];
   const provider: LlmProvider = {
     id: "test",
@@ -146,5 +147,41 @@ describe("generateVisual", () => {
     expect(String(requests[1]?.messages.at(-1)?.content)).toMatch(
       /PubChem does not know a molecule called "leafium"/,
     );
+  });
+
+  it("has playground code reviewed against the lesson, and sends the review's problems back", async () => {
+    const { RAINBOW_CODE } = await import("./kinds/rainbow");
+    const playground: GeneratedVisual = {
+      ...EMPTY,
+      kind: "playground",
+      alt: "Light splitting in a raindrop",
+      fallbackText: "Each colour bends a little differently.",
+      controls: [{ id: "spread", label: "Spread", unit: "×", min: 1, max: 6, step: 1, value: 1 }],
+      code: RAINBOW_CODE,
+    };
+    const { provider, requests } = scripted(
+      playground,
+      { problems: ["violet is drawn bending less than red"] },
+      playground,
+      { problems: [] },
+    );
+    const result = await generateVisual({ provider, lesson, pubchem });
+    expect(result && "manifest" in result && result.attempts).toBe(2);
+    expect(requests[1]?.prompt?.id).toBe("visual-playground-review");
+    expect(String(requests[2]?.messages.at(-1)?.content)).toMatch(/violet is drawn bending less/);
+  });
+
+  it("sends forbidden playground code back before any review", async () => {
+    const leaky = {
+      ...EMPTY,
+      kind: "playground" as const,
+      alt: "x",
+      fallbackText: "y",
+      code: "fetch('https://x.example'); kit.onFrame(() => {});",
+    };
+    const { provider, requests } = scripted(leaky, leaky);
+    const result = await generateVisual({ provider, lesson, pubchem });
+    expect(result).toMatchObject({ problems: [expect.stringMatching(/may not use fetch/)] });
+    expect(requests.every((request) => request.prompt?.id === "visual-generate")).toBe(true);
   });
 });

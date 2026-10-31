@@ -62,17 +62,21 @@ The AI fills in the same layer for every kind, and our renderer draws it, so no 
 
 ### The playground sandbox
 
-- **How it is served:** the API serves the playground document, not the web origin, with a header CSP:
-  - `sandbox allow-scripts`
-  - `default-src 'none'`
-  - `script-src` limited to the kit's hashed URL
-  - `connect-src 'none'`
-- **How it is mounted:** in an `<iframe sandbox="allow-scripts">` without `allow-same-origin`, so the frame has an opaque origin. It cannot reach the page, cookies or storage, and it has no network access.
-- **What the code may use:** the SBI kit, a pinned and self-hosted bundle of three.js, matter-js, mathjs and the common-layer helpers. The static check rejects:
-  - network APIs, `eval`, `Function` and dynamic `import()`;
-  - access to `parent`, `top` or storage;
-  - code over the size limit.
-- **Messages to the page:** only `ready`, `error`, `height` and `labChange`, each checked against a schema and its source window.
+Amended by #293 when it was built: the frame is a `srcdoc` document with a meta CSP rather than one the API serves, and the kit is a small canvas helper with no libraries.
+
+- **How it is mounted:** in an `<iframe sandbox="allow-scripts">` without `allow-same-origin`, so the frame has an opaque origin. It cannot reach the page, cookies or storage, submit forms, open popups or navigate the lesson.
+- **Its CSP** (a meta tag, first in the document):
+  - `default-src 'none'`, so no network, images, fonts or frames.
+  - `script-src` lists only the hashes of the kit and the AI's code, so `eval`, `Function` and injected scripts are blocked.
+  - `form-action 'none'` and `base-uri 'none'`.
+- **What the code gets:** `kit.onFrame((ctx, state) => …)` with a 2D context wrapped so it can't reach the canvas element, or through it the document. It also gets `state` (size, time and slider values), `kit.colors`, `kit.arrow` and `kit.marker`.
+  - Sliders, readouts, labels and assumptions stay in the page, drawn by the common layer, and their values are posted into the frame.
+- **The static check (acorn)** rejects:
+  - globals, the DOM, timers, the network, `eval` and `Function`;
+  - `constructor` and `prototype`, `canvas` and `ownerDocument`, dynamic `import()` and `with`;
+  - code over 20,000 characters, and code that never calls `kit.onFrame`.
+  - A second model pass then reviews the code against the lesson's claims.
+- **Messages to the page:** only `ready` and `error`, accepted only from the frame's own window. An error, a second load (the frame navigated itself) or no `ready` within 5 s replaces the frame with the text fallback.
 
 ### Loading
 

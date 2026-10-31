@@ -468,6 +468,9 @@ importers:
       '@sbi/rights':
         specifier: workspace:*
         version: link:../rights
+      acorn:
+        specifier: 8.19.0
+        version: 8.19.0
       happy-dom:
         specifier: 21.0.4
         version: 21.0.4

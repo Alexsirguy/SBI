@@ -1,14 +1,15 @@
 import { canonicalJson, newId, sha256Hex, VisualManifest, type VisualAsset } from "@sbi/contracts";
 import { projectOutputAsset } from "@sbi/rights";
 import { z } from "zod";
+import { RAINBOW_CODE } from "./kinds/rainbow";
 import { REFERENCE_MECHANISMS } from "./references";
 
-export const VISUAL_PROMPT = { id: "visual-generate", version: "v3" } as const;
+export const VISUAL_PROMPT = { id: "visual-generate", version: "v4" } as const;
 
 const Named = z.string();
 // One flat object with a field per format, because strict JSON schema mode allows no free-form spec.
 export const GeneratedVisual = z.object({
-  kind: z.enum(["mechanism", "molecule", "process", "graph", "none"]),
+  kind: z.enum(["mechanism", "molecule", "process", "graph", "playground", "none"]),
   alt: z.string(),
   longDescription: z.string(),
   fallbackText: z.string(),
@@ -45,6 +46,7 @@ export const GeneratedVisual = z.object({
     mark: z.enum(["line", "area", "point", "bar"]),
   }),
   molecules: z.array(z.object({ name: z.string(), caption: z.string() })),
+  code: z.string(),
 });
 export type GeneratedVisual = z.infer<typeof GeneratedVisual>;
 
@@ -88,6 +90,7 @@ export const GENERATED_VISUAL_SCHEMA = object({
     mark: { type: "string", enum: ["line", "area", "point", "bar"] },
   }),
   molecules: list(object({ name: text, caption: text })),
+  code: text,
 });
 
 const LEVER_MJCF = (REFERENCE_MECHANISMS.lever.spec as { mjcf: string }).mjcf;
@@ -110,6 +113,14 @@ ${LEVER_MJCF}
   plain words only, no links, HTML, click lines or %% directives.
 - graph: one quantity changing with another (temperature over time, speed against gear). Fill "graph": an x range and up to 4 series
   whose formulas use x's name and slider ids.
+- playground: only when none of the kinds above can show it (light, colour, heat, particles, weather, cells).
+  Write "code": JavaScript that calls kit.onFrame((ctx, state) => { ... }) and draws on a 2D canvas with ctx.
+  state has width, height, time (seconds), dt and values (slider values by id). kit.colors has ink, soft, action,
+  marker, caution, note, paper and sky; kit.arrow(ctx, x1, y1, x2, y2, colour) and kit.marker(ctx, number, x, y)
+  draw arrows and numbered part markers (use the label's position in the labels list as its number).
+  Use only ctx, state, kit, Math and plain JavaScript: no window, document, timers, network, eval or canvas.
+  Example (sunlight split by a raindrop):
+${RAINBOW_CODE}
 - none: nothing visual would help.
 
 Every kind:
@@ -152,6 +163,7 @@ export function toManifest(
       })),
     },
     process: output.mermaid,
+    playground: { code: output.code },
     graph: {
       x: { ...output.graph.x, samples: 60 },
       series: output.graph.series,
@@ -194,4 +206,28 @@ export async function generatedSpecAsset(
     accessibilityFallback: manifest.fallback.text,
     lessonId,
   });
+}
+
+export const PLAYGROUND_REVIEW_PROMPT = { id: "visual-playground-review", version: "v1" } as const;
+
+export const PLAYGROUND_REVIEW_SCHEMA = object({ problems: list(text) });
+export const PlaygroundReview = z.object({ problems: z.array(z.string()) });
+
+/** A second reading of playground code against the lesson, because code is hard to check by rule. */
+export function playgroundReviewMessages(
+  lesson: LessonForVisual,
+  manifest: VisualManifest,
+  code: string,
+) {
+  return [
+    {
+      role: "system" as const,
+      content:
+        "You check a small canvas drawing written for a science lesson. List each statement it draws or animates that is physically wrong or contradicts the lesson's claims, and each slider it ignores. Return an empty list when it is correct. Do not judge style.",
+    },
+    {
+      role: "user" as const,
+      content: `${visualUserPrompt(lesson)}\nPicture: ${manifest.alt}\nSliders: ${manifest.controls.map((c) => `${c.id} (${c.label}, ${c.unit})`).join(", ") || "none"}\nCode:\n${code}`,
+    },
+  ];
 }

@@ -7,6 +7,10 @@ import { commonLayerProblems } from "./common/validate";
 import {
   GENERATED_VISUAL_SCHEMA,
   GeneratedVisual,
+  PLAYGROUND_REVIEW_PROMPT,
+  PLAYGROUND_REVIEW_SCHEMA,
+  PlaygroundReview,
+  playgroundReviewMessages,
   generatedSpecAsset,
   toManifest,
   VISUAL_PROMPT,
@@ -17,6 +21,7 @@ import {
 import { graphProblems, graphRows, planGraph, vegaLiteSpec } from "./kinds/graph-spec";
 import { physicsProblems, readMechanismSpec } from "./kinds/mechanism-sim";
 import { readMoleculeSpec } from "./kinds/molecule-spec";
+import { PlaygroundSpec, playgroundCodeProblems } from "./kinds/playground-spec";
 import { processSpecProblems } from "./kinds/process-spec";
 import { resolveMolecules, type PubChemCache } from "./pubchem";
 
@@ -75,8 +80,11 @@ async function kindProblems(manifest: VisualManifest): Promise<string[]> {
       const spec = readMoleculeSpec(manifest);
       return "problems" in spec ? spec.problems : [];
     }
-    default:
-      return [`${manifest.kind} visuals cannot be drawn yet`];
+    case "playground": {
+      const spec = PlaygroundSpec.safeParse(manifest.spec);
+      if (!spec.success) return ["spec.code: write the playground's code"];
+      return playgroundCodeProblems(spec.data.code);
+    }
   }
 }
 
@@ -140,9 +148,32 @@ export async function generateVisual(input: {
   return { problems, attempts: 2 };
 }
 
+interface CheckInput {
+  provider: LlmProvider;
+  lesson: LessonForVisual;
+  pubchem: { cache: PubChemCache; fetch?: typeof fetch };
+  signal?: AbortSignal;
+}
+
+async function reviewPlayground(input: CheckInput, manifest: VisualManifest): Promise<string[]> {
+  const { value } = await completeStructured(input.provider, {
+    messages: playgroundReviewMessages(
+      input.lesson,
+      manifest,
+      String((manifest.spec as { code?: unknown }).code),
+    ),
+    jsonSchema: { name: "PlaygroundReview", schema: PLAYGROUND_REVIEW_SCHEMA },
+    maxTokens: 2000,
+    prompt: PLAYGROUND_REVIEW_PROMPT,
+    signal: input.signal,
+    parse: (text) => PlaygroundReview.parse(JSON.parse(text)),
+  });
+  return value.problems.filter((problem) => problem.trim() !== "").slice(0, 6);
+}
+
 async function check(
   output: GeneratedVisual,
-  input: { lesson: LessonForVisual; pubchem: { cache: PubChemCache; fetch?: typeof fetch } },
+  input: CheckInput,
 ): Promise<
   { manifest: VisualManifest; assets: VisualAsset[] } | { problems: string[] } | undefined
 > {
@@ -166,6 +197,10 @@ async function check(
   }
   const problems = await manifestProblems(manifest);
   if (problems.length > 0) return { problems };
+  if (manifest.kind === "playground") {
+    const review = await reviewPlayground(input, manifest);
+    if (review.length > 0) return { problems: review };
+  }
   const own = await generatedSpecAsset(manifest, input.lesson.lessonId);
   return {
     manifest: { ...manifest, assetIds: [own.assetId, ...manifest.assetIds] },

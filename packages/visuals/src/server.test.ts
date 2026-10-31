@@ -60,19 +60,17 @@ describe("manifestProblems", () => {
     ]);
   });
 
-  it("says a kind without a renderer cannot be drawn yet", async () => {
+  it("asks for code when a playground has none", async () => {
     expect(await manifestProblems({ ...base, kind: "playground" })).toEqual([
-      "playground visuals cannot be drawn yet",
+      "spec.code: write the playground's code",
     ]);
   });
 });
 
 describe("GALLERY_FIXTURES", () => {
-  it("are valid for every kind that can be drawn", async () => {
+  it("are valid, one for every kind", async () => {
     const { GALLERY_FIXTURES } = await import("./fixtures");
-    for (const manifest of GALLERY_FIXTURES.filter((item) =>
-      ["process", "graph"].includes(item.kind),
-    )) {
+    for (const manifest of GALLERY_FIXTURES) {
       expect(await manifestProblems(manifest)).toEqual([]);
     }
   });

@@ -1,4 +1,5 @@
 import { VisualManifest } from "@sbi/contracts";
+import { RAINBOW_CODE } from "./kinds/rainbow";
 import { REFERENCE_MECHANISMS } from "./references";
 
 const CLAIM = "0192f1a0-0000-7000-8000-0000000000f1";
@@ -86,5 +87,22 @@ export const GALLERY_FIXTURES: readonly VisualManifest[] = [
     fallback: {
       text: "Each colour of light bends by a slightly different amount, so they spread out.",
     },
+    assumptions: ["One raindrop, drawn much larger", "Angles from 40° to 42°"],
+    labels: [
+      { id: "raindrop", text: "Raindrop", claimId: CLAIM },
+      { id: "reflection", text: "Reflection at the back", claimId: CLAIM },
+    ],
+    controls: [
+      {
+        id: "spread",
+        label: "Spread of the colours",
+        unit: "×",
+        min: 1,
+        max: 6,
+        step: 1,
+        value: 1,
+      },
+    ],
+    spec: { code: RAINBOW_CODE },
   },
 ].map((manifest) => VisualManifest.parse(manifest));

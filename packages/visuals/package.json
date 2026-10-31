@@ -9,6 +9,7 @@
     "./graph": "./src/kinds/graph.ts",
     "./mechanism": "./src/kinds/mechanism.ts",
     "./molecule": "./src/kinds/molecule.ts",
+    "./playground": "./src/kinds/playground.ts",
     "./process": "./src/kinds/process.ts",
     "./server": "./src/server.ts"
   },
@@ -22,6 +23,7 @@
     "@sbi/contracts": "workspace:*",
     "@sbi/llm": "workspace:*",
     "@sbi/rights": "workspace:*",
+    "acorn": "8.19.0",
     "3dmol": "2.5.5",
     "happy-dom": "21.0.4",
     "mathjs": "15.2.0",

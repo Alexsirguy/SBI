@@ -30,6 +30,7 @@ const PROCESS = {
     "flowchart LR\n  boil[Water boils] --> steam[Steam rises]\n  steam --> strip[Strip bends] --> off[Switch flips off]",
   graph: { x: { name: "x", label: "", unit: "", from: 0, to: 1 }, series: [], mark: "line" },
   molecules: [],
+  code: "",
 };
 
 function provider(answer: unknown): LlmProvider {

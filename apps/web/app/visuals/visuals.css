@@ -183,3 +183,13 @@
   border-radius: var(--sbi-radius-m);
   background: var(--sbi-paper-sunk);
 }
+
+.visual-playground {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 360px;
+  border: 0;
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+}

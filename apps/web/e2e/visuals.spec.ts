@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { GALLERY_FIXTURES } from "@sbi/visuals";
 import { expectNoAxeViolations } from "./a11y";
 
-const DRAWN = new Set(["graph", "process", "mechanism", "molecule"]);
+const DRAWN = new Set(["graph", "process", "mechanism", "molecule", "playground"]);
 
 test.describe("visual gallery", () => {
   test("shows every kind, and the text fallback for kinds not drawn yet", async ({ page }) => {
@@ -112,6 +112,27 @@ test.describe("visual gallery", () => {
       "aria-pressed",
       "false",
     );
+    await expectNoAxeViolations(page);
+  });
+
+  test("runs the rainbow playground in a sandboxed frame driven by our own slider", async ({
+    page,
+  }) => {
+    await page.goto("/visuals");
+    const rainbow = page.getByRole("figure", { name: /raindrop/ });
+    const frame = rainbow.locator("iframe");
+    await expect(frame).toHaveAttribute("sandbox", "allow-scripts");
+    await expect(rainbow.getByRole("button", { name: "Pause" })).toBeVisible();
+    // Paused, so only the slider can change what the frame draws.
+    await rainbow.getByRole("button", { name: "Pause" }).click();
+    await expect(page.frameLocator(".visual-playground").locator("canvas")).toBeVisible();
+    const before = await frame.screenshot();
+    const spread = rainbow.getByRole("slider", { name: "Spread of the colours" });
+    await spread.focus();
+    await page.keyboard.press("End");
+    await expect(spread).toHaveAttribute("aria-valuetext", "6 ×");
+    await expect.poll(async () => (await frame.screenshot()).equals(before)).toBe(false);
+    await expect(rainbow).not.toContainText("could not run");
     await expectNoAxeViolations(page);
   });
 });
