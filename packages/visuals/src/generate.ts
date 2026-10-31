@@ -4,7 +4,7 @@ import { z } from "zod";
 import { RAINBOW_CODE } from "./kinds/rainbow";
 import { REFERENCE_MECHANISMS, REFERENCE_VISUALS } from "./references";
 
-export const VISUAL_PROMPT = { id: "visual-generate", version: "v5" } as const;
+export const VISUAL_PROMPT = { id: "visual-generate", version: "v6" } as const;
 
 const Named = z.string();
 // One flat object with a field per format, because strict JSON schema mode allows no free-form spec.
@@ -96,8 +96,24 @@ export const GENERATED_VISUAL_SCHEMA = object({
 const LEVER_MJCF = (REFERENCE_MECHANISMS.lever.spec as { mjcf: string }).mjcf;
 const HEATING_SERIES = (REFERENCE_VISUALS.heating.spec as { series: unknown }).series;
 
+/** A string's pitch against its length (Mersenne's law), so sound topics get a graph, not a playground. */
+export const PITCH_EXAMPLE = {
+  x: { name: "L", label: "String length", unit: "m", from: 0.3, to: 0.9 },
+  series: [
+    {
+      name: "pitch",
+      label: "Pitch",
+      unit: "Hz",
+      formula: "sqrt(tension / massPerMetre) / (2 * L)",
+    },
+  ],
+  mark: "line",
+};
+
 export const VISUAL_SYSTEM_PROMPT = `You design one interactive picture that shows how an everyday thing works, for a science lesson.
-Pick the kind that best shows the lesson's mechanism, and fill only that kind's fields; leave the others empty ("" or []).
+The learner changes sliders and watches the result, so prefer a kind with sliders and readouts.
+Try the kinds in this order and pick the first that can show the lesson's mechanism: graph, mechanism, molecule, process, playground.
+Fill only that kind's fields; leave the others empty ("" or []).
 
 Kinds:
 - mechanism: moving parts (engines, gears, levers, hinges, pumps, springs, pendulums, wheels). Write "mjcf", a MuJoCo model:
@@ -109,13 +125,16 @@ Kinds:
   make casings, cylinders and housings see-through (alpha 0.25) so the moving parts inside stay visible; add no floor plane.
   Example (a lever):
 ${LEVER_MJCF}
-- molecule: the substance itself matters (water, salt, sugar, caffeine, carbon dioxide). List up to 3 common names in "molecules"; never write coordinates.
+- molecule: the substance itself matters (water, ice, sugar, caffeine, carbon dioxide). List up to 3 common names in "molecules"; never write coordinates.
+  Only small covalent molecules work: never ionic solids, metals, rust, minerals or polymers (salt, iron oxide, glass, starch).
 - process: stages or flows (photosynthesis, the water cycle, digestion, the four strokes). Write "mermaid": a "flowchart LR" with at most 12 short nodes;
   plain words only, no links, HTML, click lines or %% directives.
-- graph: one quantity changing with another (temperature over time, speed against gear). Fill "graph": an x range and up to 4 series
+- graph: one quantity changing with another (heating over time, pitch against string length or drum size, speed against gear). Fill "graph": an x range and up to 4 series
   whose formulas use x's name and slider ids. Example (a kettle; sliders power, mass and height):
   ${JSON.stringify({ x: { name: "t", label: "Time", unit: "s", from: 0, to: 600 }, series: HEATING_SERIES, mark: "line" })}
-- playground: only when none of the kinds above can show it (light, colour, heat, particles, weather, cells).
+  Example (a guitar string; sliders length in m, tension in N, mass per metre in kg/m):
+  ${JSON.stringify(PITCH_EXAMPLE)}
+- playground: only when none of the kinds above can show it (light, colour, geometry, particles, weather, cells).
   Write "code": JavaScript that calls kit.onFrame((ctx, state) => { ... }) and draws on a 2D canvas with ctx.
   state has width, height, time (seconds), dt and values (slider values by id). kit.colors has ink, soft, action,
   marker, caution, note, paper and sky; kit.arrow(ctx, x1, y1, x2, y2, colour) and kit.marker(ctx, number, x, y)
@@ -131,9 +150,9 @@ Every kind:
 - assumptions: the simplifications, such as "No friction" or "One cylinder".
 - labels: up to 6 named parts; text is the part's name in 1 to 3 words ("Piston", "Exhaust valve");
   claimId must be one of the lesson's claim ids given below, or leave the label out.
-- controls: up to 4 sliders with a camelCase id, label, unit, and min < value < max; step divides the range into at most 100 steps.
+- controls: 1 to 4 sliders (none only for molecule and process) with a camelCase id, label, unit, and min < value < max; step divides the range into at most 100 steps.
 - every label, control and readout id is different from all the others.
-- readouts: up to 3 numbers worked out from slider ids with plain arithmetic (mathjs syntax: + - * / ^, min, max, sqrt, sin, cos, pi).
+- readouts: 1 to 3 numbers (none only for molecule and process) worked out from slider ids with plain arithmetic (mathjs syntax: + - * / ^, min, max, sqrt, sin, cos, pi).
 Use real physical values and units. Be correct: a learner will trust it.`;
 
 export interface LessonForVisual {

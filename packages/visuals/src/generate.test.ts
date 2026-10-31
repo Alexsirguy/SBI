@@ -1,7 +1,13 @@
 import { VisualAsset } from "@sbi/contracts";
 import { LlmError, type CompletionRequest, type LlmProvider } from "@sbi/llm";
 import { describe, expect, it, vi } from "vitest";
-import { GENERATED_VISUAL_SCHEMA, type GeneratedVisual } from "./generate";
+import { compileFormula } from "./formula";
+import {
+  GENERATED_VISUAL_SCHEMA,
+  PITCH_EXAMPLE,
+  VISUAL_SYSTEM_PROMPT,
+  type GeneratedVisual,
+} from "./generate";
 import { memoryPubChemCache } from "./pubchem";
 import { generateVisual } from "./server";
 
@@ -212,5 +218,23 @@ describe("generateVisual", () => {
     const result = await generateVisual({ provider, lesson, pubchem });
     expect(result && "manifest" in result).toBe(true);
     expect(calls).toBe(3);
+  });
+});
+
+describe("visual prompt", () => {
+  it("tries the kinds with sliders before the playground", () => {
+    expect(VISUAL_SYSTEM_PROMPT).toContain("graph, mechanism, molecule, process, playground");
+    expect(VISUAL_SYSTEM_PROMPT).toContain(PITCH_EXAMPLE.series[0]?.formula);
+  });
+
+  it("teaches a pitch graph with the right physics", () => {
+    const formula = compileFormula(PITCH_EXAMPLE.series[0]?.formula ?? "", [
+      "L",
+      "tension",
+      "massPerMetre",
+    ]);
+    if ("error" in formula) throw new Error(formula.error);
+    // A guitar's open A string: 0.65 m, 112.5 N and 0.0055 kg/m sounds at about 110 Hz.
+    expect(formula.evaluate({ L: 0.65, tension: 112.5, massPerMetre: 0.0055 })).toBeCloseTo(110, 0);
   });
 });
