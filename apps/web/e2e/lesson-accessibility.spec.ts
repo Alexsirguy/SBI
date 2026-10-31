@@ -39,7 +39,10 @@ test("the whole lesson can be read and used from the keyboard alone", async ({ p
   await page.keyboard.press("Enter");
   await expect(check.locator(".check-feedback")).toBeFocused();
 
-  // A marker in the evidence at the end leads to the source it names.
+  // The evidence at the end opens from the keyboard, and a marker leads to the source it names.
+  const evidenceToggle = page.getByRole("region", { name: "How do we know?" }).locator("summary");
+  await tabTo(page, evidenceToggle);
+  await page.keyboard.press("Enter");
   const marker = page
     .getByRole("region", { name: "How do we know?" })
     .getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" })
@@ -109,9 +112,11 @@ test("every reader control shows a clear focus outline", async ({ page }) => {
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
   await page.getByText("Age band", { exact: true }).click();
+  await page.getByRole("region", { name: "How do we know?" }).locator("summary").click();
   for (const target of [
     page.getByRole("radio", { name: /Explore/ }),
     page.getByLabel("Age band (optional)"),
+    page.getByRole("region", { name: "Sources" }).locator("summary").first(),
     page.getByRole("link", { name: /^Source 1/ }).first(),
     page.getByLabel("Your thinking (optional, not saved or marked)"),
     page.getByRole("button", { name: "Compare with the explanation" }),

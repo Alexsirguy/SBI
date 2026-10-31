@@ -1,4 +1,4 @@
-import type { RightsStatus } from "@sbi/contracts";
+import { readableText, type RightsStatus } from "@sbi/contracts";
 import type { ConnectorOptions } from "./crossref";
 import { SourceFetchError } from "./http";
 import { createPoliteFetcher, type PoliteFetcher } from "./robots";
@@ -167,10 +167,17 @@ export function createOpenTextbookConnector(
       const passages: Passage[] =
         licence.rightsStatus === "reusable"
           ? [
+              // Textbooks write maths as LaTeX source; claims and quotes must read as plain text.
               ...htmlParagraphs(body)
                 .filter((text) => !LICENCE_FOOTER.test(text))
-                .map((text, index) => ({ location: `paragraph ${index + 1}`, text })),
-              ...htmlTablePassages(body),
+                .map((text, index) => ({
+                  location: `paragraph ${index + 1}`,
+                  text: readableText(text),
+                })),
+              ...htmlTablePassages(body).map((passage) => ({
+                ...passage,
+                text: readableText(passage.text),
+              })),
             ]
           : [];
       return {

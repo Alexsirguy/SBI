@@ -400,3 +400,59 @@ main.lesson {
   border-left: 0;
   padding-left: 0;
 }
+
+/* Evidence and sources open on request; the summary carries the heading and a count. */
+.lesson-fold > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+  min-height: var(--sbi-touch-min);
+  cursor: pointer;
+  list-style-position: outside;
+}
+
+.lesson-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The flex summary drops the native arrow, so the open state is drawn and written in the count. */
+.lesson-fold > summary::before {
+  content: "▸" / "";
+  align-self: center;
+  font-size: var(--sbi-text-title);
+  line-height: 1;
+  color: var(--sbi-action);
+}
+
+.lesson-fold[open] > summary::before {
+  content: "▾" / "";
+}
+
+.lesson-fold > summary h2 {
+  display: inline;
+  margin: 0;
+}
+
+.lesson-fold__count {
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.lesson-fold[open] > summary {
+  margin-bottom: var(--sbi-space-3);
+}
+
+.source-quotes {
+  margin-top: var(--sbi-space-1);
+  font-size: var(--sbi-text-small);
+}
+
+.source-quotes > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sbi-touch-min);
+  color: var(--sbi-action);
+  font-weight: 700;
+  cursor: pointer;
+}
