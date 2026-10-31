@@ -2,7 +2,7 @@
 
 - Status: accepted
 - Date: 2026-10-31
-- Issue: #
+- Issue: #309
 - Amends: 0009 (search depth) and 0011 (when evidence is gathered)
 
 ## Context
