@@ -68,6 +68,9 @@ importers:
       '@sbi/recognition':
         specifier: workspace:*
         version: link:../../packages/recognition
+      '@sbi/rights':
+        specifier: workspace:*
+        version: link:../../packages/rights
       '@sbi/taxonomy':
         specifier: workspace:*
         version: link:../../packages/taxonomy

@@ -38,6 +38,7 @@ const REQUEST: LessonRequest = {
   fresh: false,
 };
 
+const CLEARED = { check: async () => ({ cleared: true }) };
 function subjectRequest(subject: string): LessonRequest {
   return { ...REQUEST, taxonomyId: undefined, subject };
 }
@@ -240,7 +241,15 @@ function setup(
   return {
     lessons,
     audit,
-    service: new LessonService(provider, taxonomy(), repo, EVIDENCE.evidence, audit, gather),
+    service: new LessonService(
+      provider,
+      taxonomy(),
+      repo,
+      EVIDENCE.evidence,
+      audit,
+      gather,
+      CLEARED,
+    ),
   };
 }
 
@@ -389,6 +398,7 @@ describe("LessonService", () => {
       EVIDENCE.evidence,
       createMemoryReviewAuditLog(),
       gatherer([EVIDENCE.claim]),
+      CLEARED,
     );
     const events = await collect(target);
     expect(events.map((event) => event.type)).toEqual([
@@ -412,6 +422,7 @@ describe("LessonService", () => {
       EVIDENCE.evidence,
       createMemoryReviewAuditLog(),
       gatherer([EVIDENCE.claim]),
+      CLEARED,
     );
     const events = await collect(target, subjectRequest("camping kettle"));
     const lesson = events.find((event) => event.type === "lesson");
@@ -427,6 +438,7 @@ describe("LessonService", () => {
       EVIDENCE.evidence,
       createMemoryReviewAuditLog(),
       gatherer([EVIDENCE.claim]),
+      CLEARED,
     );
     const events = await collect(target, subjectRequest("oven cleaner spray"));
     const lesson = events.find((event) => event.type === "lesson");
@@ -560,6 +572,7 @@ describe("LessonService", () => {
       EVIDENCE.evidence,
       createMemoryReviewAuditLog(),
       gatherer([]),
+      CLEARED,
     );
     const events = await collect(target);
     expect(events.map((event) => event.type)).toEqual([
@@ -612,6 +625,7 @@ describe("LessonService", () => {
       EVIDENCE.evidence,
       createMemoryReviewAuditLog(),
       gatherer([]),
+      CLEARED,
     );
     // The scripted draft cites a claim this lesson lacks; only the prompt it was given matters.
     await collectAll(target).catch(() => undefined);
@@ -631,6 +645,7 @@ describe("LessonService", () => {
       EVIDENCE.evidence,
       createMemoryReviewAuditLog(),
       gatherer([]),
+      CLEARED,
     );
     const failure = await userFacing(() => collect(target));
     expect(failure.status).toBe(HttpStatus.NOT_FOUND);
@@ -871,6 +886,7 @@ describe("LessonService", () => {
       evidence,
       createMemoryReviewAuditLog(),
       gatherer(),
+      CLEARED,
     );
 
     const failure = await userFacing(() => collect(target));
@@ -906,6 +922,7 @@ describe("LessonService", () => {
       createMemoryEvidenceRepositories(),
       createMemoryReviewAuditLog(),
       gatherer(),
+      CLEARED,
     );
     const missing = await userFacing(() =>
       collect(uncovered, { ...REQUEST, taxonomyId: "test.rock" }),

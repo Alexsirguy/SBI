@@ -52,6 +52,7 @@ import { sourcedFacts, type Taxonomy } from "@sbi/taxonomy";
 import {
   LESSON_EVIDENCE,
   LESSON_GATHERER,
+  LESSON_RIGHTS,
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
@@ -106,15 +107,6 @@ export function effectiveSafetyClass(
   const floor = safetyNoticeFor(entry) ? "high" : "low";
   return SAFETY_ORDER.indexOf(requested) >= SAFETY_ORDER.indexOf(floor) ? requested : floor;
 }
-
-// Drafts carry no visuals yet; any visual needs the rights register before it is served.
-// TODO(#72) check visual assets against the rights register.
-const VISUAL_RIGHTS: RightsGate = {
-  check: async (lesson) =>
-    lesson.visuals.length === 0
-      ? { cleared: true }
-      : { cleared: false, reason: "visual rights are not checked yet" },
-};
 
 /** Gathers (or reuses) request-time evidence for a lesson; see gatherEvidence in @sbi/evidence. */
 export type EvidenceGatherer = (
@@ -260,6 +252,7 @@ export class LessonService {
     @Inject(LESSON_EVIDENCE) private readonly evidence: EvidenceRepositories,
     @Inject(LESSON_REVIEW_AUDIT) private readonly reviewAudit: ReviewAuditLog,
     @Inject(LESSON_GATHERER) private readonly gather: EvidenceGatherer,
+    @Inject(LESSON_RIGHTS) private readonly rights: RightsGate,
   ) {}
 
   // Events leave as their stage completes, so the answer streams before the heavier payloads.
@@ -298,7 +291,7 @@ export class LessonService {
       locale: request.locale,
       safetyScope: safetyClass,
     };
-    const hit = await createReuseMatcher(this.lessons).match({
+    const hit = await createReuseMatcher(this.lessons, undefined, this.rights).match({
       intent,
       assumptions: request.assumptions,
       policyVersion: LESSON_POLICY_VERSION,
@@ -484,7 +477,7 @@ export class LessonService {
             }
           }
           // High-risk, low-confidence, failed or rights-blocked lessons wait for a reviewer.
-          const routed = await createPublisher({ rights: VISUAL_RIGHTS, onAudit: record }).route(
+          const routed = await createPublisher({ rights: this.rights, onAudit: record }).route(
             checked,
             report,
             { safetyNotice: safetyNoticeFor(entry) },

@@ -7,6 +7,7 @@ import {
   type LlmEventSink,
   type LlmProvider,
 } from "@sbi/llm";
+import { createRightsRegister } from "@sbi/rights";
 import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
 import {
@@ -16,6 +17,7 @@ import {
   FEEDBACK_LIMITER,
   LESSON_FEEDBACK,
   LESSON_GATHERER,
+  LESSON_RIGHTS,
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
@@ -103,6 +105,17 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
         repositories: Repositories,
         database: DatabaseHandle,
       ) => createEvidenceGatherer({ provider, env, repositories, database }),
+    },
+    {
+      provide: LESSON_RIGHTS,
+      inject: [REPOSITORIES],
+      // No visual has a stored manifest yet, so any lesson with a visual stays held.
+      // TODO(#84) read manifests and renderer libraries from the visual registry.
+      useFactory: (repos: Repositories) =>
+        createRightsRegister({
+          assets: repos.visualAssets,
+          manifests: { get: async () => undefined },
+        }),
     },
     {
       provide: LESSON_EVIDENCE,
