@@ -10,13 +10,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function VisualsGalleryPage() {
+export default async function VisualsGalleryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kind?: string }>;
+}) {
   // Rendered per request, so its scripts carry the nonce the CSP proxy sets.
   await connection();
+  // One kind alone, so a measurement counts only that kind's downloads (#92).
+  const { kind } = await searchParams;
+  const shown = GALLERY_FIXTURES.filter((manifest) => !kind || manifest.kind === kind);
   return (
     <main id="main" className="prose-page">
       <h1>Visual kinds</h1>
-      {GALLERY_FIXTURES.map((manifest) => (
+      {shown.map((manifest) => (
         <section key={manifest.visualId} aria-labelledby={`kind-${manifest.kind}`}>
           <h2 id={`kind-${manifest.kind}`}>{manifest.kind}</h2>
           <VisualMount manifest={manifest} />

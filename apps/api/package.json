@@ -13,7 +13,8 @@
     "test": "vitest run",
     "ingest:evidence": "tsx --env-file-if-exists=.env scripts/ingest-evidence.ts",
     "source:facts": "tsx --env-file-if-exists=.env scripts/source-taxonomy-facts.ts",
-    "load:evidence": "tsx --env-file-if-exists=.env scripts/load-evidence-snapshot.ts"
+    "load:evidence": "tsx --env-file-if-exists=.env scripts/load-evidence-snapshot.ts",
+    "eval:visuals": "tsx scripts/visual-eval.ts"
   },
   "dependencies": {
     "@nestjs/common": "12.1.3",
