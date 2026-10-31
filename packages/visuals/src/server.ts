@@ -4,6 +4,7 @@ import type mermaidApi from "mermaid";
 import { commonLayerProblems } from "./common/validate";
 import { graphProblems, graphRows, planGraph, vegaLiteSpec } from "./kinds/graph-spec";
 import { physicsProblems, readMechanismSpec } from "./kinds/mechanism-sim";
+import { readMoleculeSpec } from "./kinds/molecule-spec";
 import { processSpecProblems } from "./kinds/process-spec";
 
 type Mermaid = typeof mermaidApi;
@@ -57,6 +58,10 @@ async function kindProblems(manifest: VisualManifest): Promise<string[]> {
       mujoco ??= loadMujoco();
       return physicsProblems(await mujoco, manifest);
     }
+    case "molecule": {
+      const spec = readMoleculeSpec(manifest);
+      return "problems" in spec ? spec.problems : [];
+    }
     default:
       return [`${manifest.kind} visuals cannot be drawn yet`];
   }
@@ -72,3 +77,5 @@ export async function manifestProblems(input: unknown): Promise<string[]> {
   }
   return [...commonLayerProblems(parsed.data), ...(await kindProblems(parsed.data))];
 }
+
+export { memoryPubChemCache, resolveMolecules, type PubChemCache } from "./pubchem";

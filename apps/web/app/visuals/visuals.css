@@ -163,3 +163,23 @@
   color: var(--sbi-marker-ink);
   text-decoration: none;
 }
+
+.visual-molecules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sbi-space-3);
+  width: 100%;
+}
+
+.visual-molecule {
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.visual-molecule__view {
+  position: relative;
+  height: 220px;
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+}

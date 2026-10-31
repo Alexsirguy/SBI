@@ -174,3 +174,34 @@ export function projectOutputAsset(input: {
     approvedLessonIds: input.lessonId ? [input.lessonId] : [],
   };
 }
+
+/** The record for one 3D structure taken from PubChem, whose computed data NCBI publishes freely. */
+export function pubChemStructureAsset(input: {
+  assetId: string;
+  cid: number;
+  sha256: string;
+  sizeBytes: number;
+  accessibilityFallback: string;
+}): VisualAsset {
+  return {
+    assetId: input.assetId,
+    kind: "data",
+    sourceUrl: `https://pubchem.ncbi.nlm.nih.gov/compound/${input.cid}`,
+    creator: "PubChem, National Library of Medicine (NCBI)",
+    assetLicense: {
+      id: "LicenseRef-NCBI-PubChem-data",
+      url: "https://www.ncbi.nlm.nih.gov/home/about/policies/",
+    },
+    attribution: `3D structure from PubChem (CID ${input.cid}), National Library of Medicine`,
+    modified: true,
+    modificationNotes: "Kept only the molfile block; PubChem's property fields are dropped.",
+    commercialUse: "allowed",
+    sha256: input.sha256,
+    format: "sdf",
+    sizeBytes: input.sizeBytes,
+    accessibilityFallback: input.accessibilityFallback,
+    reviewOwner: REVIEW_OWNER,
+    reviewDueOn: LIBRARY_REVIEW_DUE,
+    approvedLessonIds: [],
+  };
+}

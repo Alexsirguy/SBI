@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { GALLERY_FIXTURES } from "@sbi/visuals";
 import { expectNoAxeViolations } from "./a11y";
 
-const DRAWN = new Set(["graph", "process", "mechanism"]);
+const DRAWN = new Set(["graph", "process", "mechanism", "molecule"]);
 
 test.describe("visual gallery", () => {
   test("shows every kind, and the text fallback for kinds not drawn yet", async ({ page }) => {
@@ -93,6 +93,25 @@ test.describe("visual gallery", () => {
     await piston.press("Enter");
     await expect(piston).toHaveAttribute("aria-pressed", "true");
     await expect(engine.locator(".visual-3d__marker--on")).toHaveText("1");
+    await expectNoAxeViolations(page);
+  });
+
+  test("draws the water molecule from PubChem's structure, turning unless asked not to", async ({
+    page,
+  }) => {
+    await page.goto("/visuals");
+    const water = page.getByRole("figure", { name: /water molecule/ });
+    await expect(
+      water.getByRole("img", { name: "3D model of Water" }).locator("canvas"),
+    ).toBeVisible();
+    await expect(water).toContainText("PubChem (CID 962)");
+    const turn = water.getByRole("button", { name: "Stop turning" });
+    await expect(turn).toHaveAttribute("aria-pressed", "true");
+    await turn.click();
+    await expect(water.getByRole("button", { name: "Turn" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
     await expectNoAxeViolations(page);
   });
 });

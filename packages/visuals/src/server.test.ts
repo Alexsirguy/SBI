@@ -47,6 +47,13 @@ describe("manifestProblems", () => {
     expect((await manifestProblems({ ...base, kind: "mechanism", spec })).join()).toMatch(/bogus/);
   });
 
+  it("needs every molecule looked up in PubChem first", async () => {
+    const spec = { molecules: [{ name: "caffeine" }] };
+    expect(await manifestProblems({ ...base, kind: "molecule", spec })).toEqual([
+      "caffeine has not been looked up in PubChem",
+    ]);
+  });
+
   it("reports contract errors by field", async () => {
     expect(await manifestProblems({ ...base, kind: "process", alt: "" })).toEqual([
       expect.stringMatching(/^alt:/),
@@ -54,8 +61,8 @@ describe("manifestProblems", () => {
   });
 
   it("says a kind without a renderer cannot be drawn yet", async () => {
-    expect(await manifestProblems({ ...base, kind: "molecule" })).toEqual([
-      "molecule visuals cannot be drawn yet",
+    expect(await manifestProblems({ ...base, kind: "playground" })).toEqual([
+      "playground visuals cannot be drawn yet",
     ]);
   });
 });

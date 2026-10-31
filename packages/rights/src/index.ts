@@ -5,4 +5,9 @@ export {
   type RightsRegister,
   type VisualManifestSource,
 } from "./register";
-export { LIBRARY_ASSET_IDS, LIBRARY_ASSETS, projectOutputAsset } from "./libraries";
+export {
+  LIBRARY_ASSET_IDS,
+  LIBRARY_ASSETS,
+  projectOutputAsset,
+  pubChemStructureAsset,
+} from "./libraries";

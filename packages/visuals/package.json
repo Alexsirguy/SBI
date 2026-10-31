@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./graph": "./src/kinds/graph.ts",
     "./mechanism": "./src/kinds/mechanism.ts",
+    "./molecule": "./src/kinds/molecule.ts",
     "./process": "./src/kinds/process.ts",
     "./server": "./src/server.ts"
   },
@@ -19,6 +20,8 @@
   "dependencies": {
     "@mujoco/mujoco": "3.17.0",
     "@sbi/contracts": "workspace:*",
+    "@sbi/rights": "workspace:*",
+    "3dmol": "2.5.5",
     "happy-dom": "21.0.4",
     "mathjs": "15.2.0",
     "mermaid": "12.2.0",

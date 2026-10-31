@@ -3,6 +3,10 @@ import { REFERENCE_MECHANISMS } from "./references";
 
 const CLAIM = "0192f1a0-0000-7000-8000-0000000000f1";
 
+// PubChem CID 962, molfile block only (see pubChemStructureAsset for its rights record).
+const WATER_SDF =
+  "962\n  -OEChem-10312612333D\n\n  3  2  0     0  0  0  0  0  0999 V2000\n    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n    0.2774    0.8929    0.2544 H   0  0  0  0  0  0  0  0  0  0  0  0\n    0.6068   -0.2383   -0.7169 H   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0  0  0  0\n  1  3  1  0  0  0  0\nM  END\n";
+
 // One hand-written manifest per kind, for the hidden /visuals gallery and the visual e2e tests.
 export const GALLERY_FIXTURES: readonly VisualManifest[] = [
   {
@@ -18,6 +22,7 @@ export const GALLERY_FIXTURES: readonly VisualManifest[] = [
     kind: "molecule",
     alt: "A water molecule: one oxygen atom bonded to two hydrogen atoms",
     fallback: { text: "Water is one oxygen atom joined to two hydrogen atoms, in a bent shape." },
+    spec: { molecules: [{ name: "water", caption: "Water", cid: 962, sdf: WATER_SDF }] },
   },
   {
     visualId: "0192f1a0-0000-7000-8000-0000000000a3",
