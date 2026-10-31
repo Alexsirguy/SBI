@@ -58,6 +58,8 @@ test("reads like the prototype: one notice, then every step open on the rail", a
   await expect(notices).toHaveCount(1);
   await expect(notices.locator(".sbi-notice")).toHaveCount(1);
   await expect(notices).toContainText("general knowledge");
+  // Several doubts read as one caution, never the same point repeated.
+  await expect(notices.locator(".sbi-notice p")).toHaveCount(1);
 
   // The whole lesson is open: the learner only scrolls, with no buttons to reveal more.
   const [, second] = SAMPLE_LESSON.sections;

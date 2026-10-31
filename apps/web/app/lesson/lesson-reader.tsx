@@ -12,6 +12,7 @@ import { SourceList } from "./citations";
 import { DepthControls } from "./depth-controls";
 import { LessonFeedback } from "./feedback";
 import { lessonHref } from "./lesson-request";
+import { cautionText } from "./notice-text";
 import { LessonRail } from "./lesson-rail";
 import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
@@ -29,16 +30,14 @@ interface LessonReaderProps {
 
 // One notice, whatever the lesson carries, with any safety text first (owner decision, #281).
 function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
-  if (items.length === 0) return null;
-  const ordered = [...items].sort(
-    (a, b) => Number(b.kind === "safety") - Number(a.kind === "safety"),
-  );
+  const safety = items.find((item) => item.kind === "safety");
+  const caution = cautionText(items);
+  if (!safety && !caution) return null;
   return (
     <aside aria-label="Before you read" className="lesson-notices">
-      <Notice kind={ordered[0]?.kind === "safety" ? "safety" : "note"}>
-        {ordered.map((item) => (
-          <p key={item.kind}>{item.message}</p>
-        ))}
+      <Notice kind={safety ? "safety" : "note"}>
+        {safety ? <p>{safety.message}</p> : null}
+        {caution ? <p>{caution}</p> : null}
       </Notice>
     </aside>
   );
