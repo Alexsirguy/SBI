@@ -120,38 +120,38 @@ describe("checkAsset", () => {
   });
 });
 
-describe("checkLesson", () => {
+describe("check", () => {
   it("clears a lesson with no visuals", async () => {
-    expect(await register([]).checkLesson(lesson([]))).toEqual({ cleared: true });
+    expect(await register([]).check(lesson([]))).toEqual({ cleared: true });
   });
 
   it("clears a visual whose assets and libraries all clear", async () => {
     const target = register([output(), ...LIBRARY_ASSETS], {
       libraries: [THREE],
     });
-    expect(await target.checkLesson(lesson([ref]))).toEqual({ cleared: true });
+    expect(await target.check(lesson([ref]))).toEqual({ cleared: true });
   });
 
   it("blocks a visual without a manifest", async () => {
-    const decision = await register([output()], { manifests: [] }).checkLesson(lesson([ref]));
+    const decision = await register([output()], { manifests: [] }).check(lesson([ref]));
     expect(decision.reason).toMatch(/has no manifest/);
   });
 
   it("blocks a manifest whose kind differs from the reference", async () => {
-    const decision = await register([output()]).checkLesson(lesson([{ ...ref, kind: "molecule" }]));
+    const decision = await register([output()]).check(lesson([{ ...ref, kind: "molecule" }]));
     expect(decision.reason).toMatch(/is a mechanism, not a molecule/);
   });
 
   it("blocks a manifest that records no assets", async () => {
     const bare = { ...manifest, assetIds: [] };
-    const decision = await register([output()], { manifests: [bare] }).checkLesson(lesson([ref]));
+    const decision = await register([output()], { manifests: [bare] }).check(lesson([ref]));
     expect(decision.reason).toMatch(/records no assets/);
   });
 
   it("blocks when a library the renderer loads has no record", async () => {
     const decision = await register([output()], {
       libraries: [THREE],
-    }).checkLesson(lesson([ref]));
+    }).check(lesson([ref]));
     expect(decision.reason).toMatch(/no rights record/);
   });
 });
