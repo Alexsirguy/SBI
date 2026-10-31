@@ -7,6 +7,7 @@ import {
   type LlmEventSink,
   type LlmProvider,
 } from "@sbi/llm";
+import type { RightsGate } from "@sbi/orchestrator";
 import { createRightsRegister, LIBRARY_ASSET_IDS } from "@sbi/rights";
 import { RENDERER_LIBRARIES, type VisualManifestRepository } from "@sbi/visuals";
 import { memoryPubChemCache } from "@sbi/visuals/server";
@@ -116,7 +117,8 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
     {
       provide: LESSON_RIGHTS,
       inject: [REPOSITORIES, VISUAL_MANIFESTS],
-      useFactory: (repos: Repositories, manifests: VisualManifestRepository) =>
+      // Typed as the gate the publisher calls, so a mismatch fails the build instead of a lesson.
+      useFactory: (repos: Repositories, manifests: VisualManifestRepository): RightsGate =>
         createRightsRegister({
           assets: repos.visualAssets,
           manifests,
