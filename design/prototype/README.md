@@ -50,7 +50,7 @@ Evidence sits behind **How do we know?** under each step, and opens only after t
 | Lever               | Live lessons, for example "seesaw"     | Load and both distances from the pivot; **Lift the load 10 cm** shows the trade between force and distance              |
 | Heating and boiling | Kettle, "Why it stays at 100 °C"       | Heater power, amount of water and height above the sea; a temperature graph flattens at the boiling point               |
 
-Live lessons choose from this fixed list and never draw a visual of their own, which is the rule issue #96 sets. This kit is a stand-in. Issue #88 replaces it with tested simulations in `packages/visuals`, each with its simplifications, units and slider ranges.
+Live lessons choose from this fixed list and never draw a visual of their own. This kit is a stand-in: [ADR 0014](../../docs/adr/0014-visuals-generated-for-any-object.md) replaces it with a visual generated for each object, and these four models become its reference examples (#87).
 
 ### Gears
 

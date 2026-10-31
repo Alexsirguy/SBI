@@ -1,6 +1,6 @@
 # 0005. Default visual format for lessons
 
-- Status: proposed (load-time evidence in; comprehension evidence pending the E1-5 sessions)
+- Status: proposed (load-time evidence in; comprehension evidence pending the E1-5 sessions); amended by [0014](0014-visuals-generated-for-any-object.md), which generates the visual for each object
 - Date: 2026-10-27
 - Issue: #14
 
