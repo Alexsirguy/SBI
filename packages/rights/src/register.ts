@@ -14,7 +14,7 @@ export interface RightsRegister {
   /** Whether one asset may be shown; `lessonId` matters only for assets limited to some lessons. */
   checkAsset(assetId: string, context?: { lessonId?: string }): Promise<RightsDecision>;
   /** Whether every visual in a lesson, with the libraries its renderer needs, may be published. */
-  checkLesson(lesson: Lesson): Promise<RightsDecision>;
+  check(lesson: Lesson): Promise<RightsDecision>;
   /** Whether bytes about to be served are the ones the register recorded. */
   verifyChecksum(assetId: string, sha256: string): Promise<RightsDecision>;
 }
@@ -75,7 +75,7 @@ export function createRightsRegister(deps: {
 
   return {
     checkAsset,
-    async checkLesson(lesson) {
+    async check(lesson) {
       for (const ref of lesson.visuals) {
         const manifest = await deps.manifests.get(ref.visualId);
         if (!manifest) return blocked(`visual ${ref.visualId} has no manifest`);
