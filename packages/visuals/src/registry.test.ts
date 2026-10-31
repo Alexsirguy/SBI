@@ -14,6 +14,9 @@ const manifest: VisualManifest = {
   assetIds: [],
   assumptions: [],
   params: {},
+  labels: [],
+  controls: [],
+  readouts: [],
 };
 
 const OPTIONS = { reducedMotion: false };

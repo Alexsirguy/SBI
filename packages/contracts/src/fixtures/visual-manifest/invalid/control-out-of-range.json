@@ -1,0 +1,17 @@
+{
+  "visualId": "0192f1a0-0000-7000-8000-00000000002b",
+  "kind": "graph",
+  "alt": "Kettle temperature",
+  "fallback": { "text": "The water warms, then boils." },
+  "controls": [
+    {
+      "id": "power",
+      "label": "Heater power",
+      "unit": "W",
+      "min": 500,
+      "max": 3000,
+      "step": 100,
+      "value": 5000
+    }
+  ]
+}

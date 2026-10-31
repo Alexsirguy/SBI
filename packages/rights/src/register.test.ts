@@ -31,6 +31,9 @@ const manifest: VisualManifest = {
   assetIds: [ASSET_ID],
   assumptions: [],
   params: {},
+  labels: [],
+  controls: [],
+  readouts: [],
 };
 
 function lesson(visuals: Lesson["visuals"]): Lesson {

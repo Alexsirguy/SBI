@@ -1,0 +1,65 @@
+import { describe, expect, it } from "vitest";
+import { manifestProblems } from "./server";
+
+const base = {
+  visualId: "0192f1a0-0000-7000-8000-0000000000c1",
+  alt: "Photosynthesis",
+  fallback: { text: "Leaves make sugar from light, water and carbon dioxide." },
+};
+
+describe("manifestProblems", () => {
+  it("passes a process Mermaid can read", async () => {
+    const spec =
+      "flowchart LR\n  light[Light] --> leaf[Leaf]\n  water[Water] --> leaf\n  leaf --> sugar[Sugar]";
+    expect(await manifestProblems({ ...base, kind: "process", spec })).toEqual([]);
+  });
+
+  it("reports Mermaid's own error for a broken diagram", async () => {
+    const problems = await manifestProblems({
+      ...base,
+      kind: "process",
+      spec: "flowchart LR\n  A[Light --> ",
+    });
+    expect(problems.join()).toMatch(/Mermaid could not read the diagram/);
+  });
+
+  it("passes a graph Vega-Lite can compile", async () => {
+    const manifest = {
+      ...base,
+      kind: "graph",
+      controls: [
+        { id: "power", label: "Power", unit: "W", min: 500, max: 3000, step: 100, value: 2000 },
+      ],
+      spec: {
+        x: { name: "t", label: "Time", unit: "s", from: 0, to: 600 },
+        series: [
+          { name: "temp", label: "Temperature", formula: "min(20 + power * t / 4190, 100)" },
+        ],
+      },
+    };
+    expect(await manifestProblems(manifest)).toEqual([]);
+  });
+
+  it("reports contract errors by field", async () => {
+    expect(await manifestProblems({ ...base, kind: "process", alt: "" })).toEqual([
+      expect.stringMatching(/^alt:/),
+    ]);
+  });
+
+  it("says a kind without a renderer cannot be drawn yet", async () => {
+    expect(await manifestProblems({ ...base, kind: "mechanism", spec: "<mujoco/>" })).toEqual([
+      "mechanism visuals cannot be drawn yet",
+    ]);
+  });
+});
+
+describe("GALLERY_FIXTURES", () => {
+  it("are valid for every kind that can be drawn", async () => {
+    const { GALLERY_FIXTURES } = await import("./fixtures");
+    for (const manifest of GALLERY_FIXTURES.filter((item) =>
+      ["process", "graph"].includes(item.kind),
+    )) {
+      expect(await manifestProblems(manifest)).toEqual([]);
+    }
+  });
+});

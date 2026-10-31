@@ -1,0 +1,7 @@
+{
+  "visualId": "0192f1a0-0000-7000-8000-00000000002c",
+  "kind": "process",
+  "alt": "Photosynthesis",
+  "fallback": { "text": "Leaves make sugar from light, water and carbon dioxide." },
+  "labels": [{ "id": "chloroplast", "text": "Chloroplast" }]
+}
