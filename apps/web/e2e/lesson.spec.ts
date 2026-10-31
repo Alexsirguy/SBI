@@ -72,35 +72,26 @@ test("reads like the prototype: one notice, then every step open on the rail", a
   await expectNoAxeViolations(page);
 });
 
-test("evidence and sources sit together at the end, and nowhere inside the steps", async ({
+test("sources sit collapsed at the end, with no evidence list and nothing inside the steps", async ({
   page,
 }) => {
   await mockLesson(page, FULL);
   await page.goto(LESSON_URL);
   await expect(page.locator(".rail .citation-marker")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "How do we know?" })).toHaveCount(0);
 
   await expect(page.locator(".lesson-body > section").last()).toHaveClass(/lesson-feedback/);
-  // Both start collapsed, saying how much is inside, so the lesson does not end in paragraphs.
-  const evidence = page.getByRole("region", { name: "How do we know?" });
   const list = page.getByRole("region", { name: "Sources" });
-  await expect(evidence.locator("details")).not.toHaveAttribute("open");
   await expect(list.locator("details.lesson-fold")).not.toHaveAttribute("open");
-  await expect(evidence.locator("summary")).toContainText(/\d+ statements/);
   await expect(list.locator("summary").first()).toContainText("2 sources");
-
-  await evidence.locator("summary").click();
-  await expect(evidence.getByText("Based on limited evidence").first()).toBeVisible();
-  // A source marker opens the source list on the way to its entry.
-  await evidence.getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" }).first().click();
-  await expect(page).toHaveURL(/#source-1$/);
-  await expect(list.locator("details.lesson-fold")).toHaveAttribute("open", "");
+  await list.locator("summary").first().click();
   await expect(list.getByRole("listitem").first()).toContainText("CC BY 4.0");
+  await expect(list).toContainText("Lesson written 30 October 2026");
   // Quoted passages stay behind their own toggle.
   const quotes = list.locator(".source-quotes").first();
   await expect(quotes).not.toHaveAttribute("open");
   await quotes.locator("summary").click();
   await expect(quotes.locator("blockquote").first()).toBeVisible();
-  await expect(list).toContainText("Lesson written 30 October 2026");
   await expectNoAxeViolations(page);
 });
 

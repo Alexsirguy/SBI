@@ -39,17 +39,13 @@ test("the whole lesson can be read and used from the keyboard alone", async ({ p
   await page.keyboard.press("Enter");
   await expect(check.locator(".check-feedback")).toBeFocused();
 
-  // The evidence at the end opens from the keyboard, and a marker leads to the source it names.
-  const evidenceToggle = page.getByRole("region", { name: "How do we know?" }).locator("summary");
-  await tabTo(page, evidenceToggle);
+  // The source list at the end opens from the keyboard.
+  const sourcesToggle = page.getByRole("region", { name: "Sources" }).locator("summary").first();
+  await tabTo(page, sourcesToggle);
   await page.keyboard.press("Enter");
-  const marker = page
-    .getByRole("region", { name: "How do we know?" })
-    .getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" })
-    .first();
-  await tabTo(page, marker);
-  await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/#source-1$/);
+  await expect(
+    page.getByRole("region", { name: "Sources" }).locator("details").first(),
+  ).toHaveAttribute("open", "");
 
   // Ratings use arrow keys inside each group, as radio groups should.
   const rate = page.getByRole("form", { name: "Rate this lesson" });
@@ -112,12 +108,12 @@ test("every reader control shows a clear focus outline", async ({ page }) => {
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
   await page.getByText("Age band", { exact: true }).click();
-  await page.getByRole("region", { name: "How do we know?" }).locator("summary").click();
+  await page.getByRole("region", { name: "Sources" }).locator("summary").first().click();
   for (const target of [
     page.getByRole("radio", { name: /Explore/ }),
     page.getByLabel("Age band (optional)"),
     page.getByRole("region", { name: "Sources" }).locator("summary").first(),
-    page.getByRole("link", { name: /^Source 1/ }).first(),
+    page.getByRole("link", { name: "2.8: The Simple Magnifier" }),
     page.getByLabel("Your thinking (optional, not saved or marked)"),
     page.getByRole("button", { name: "Compare with the explanation" }),
     page.getByLabel("What is wrong?"),
@@ -138,9 +134,6 @@ test("meaning never rests on colour alone", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Glass bends light" })).toContainText(
     "Explanation",
   );
-  await expect(page.getByRole("region", { name: "How do we know?" })).toContainText(
-    "Based on limited evidence:",
-  );
   await expect(page.getByRole("complementary", { name: "Before you read" })).toContainText("Note");
   await expectNoAxeViolations(page);
 });
@@ -156,8 +149,6 @@ test("landmarks and headings give screen readers the lesson's outline", async ({
   for (const section of SAMPLE_LESSON.sections) {
     await expect(page.getByRole("region", { name: section.heading ?? "" })).toHaveCount(1);
   }
-  // Citation markers are announced by source, not as bare bracketed numbers.
-  await expect(page.getByRole("link", { name: "[1]" })).toHaveCount(0);
 });
 
 test("while writing, the loader is announced and passes accessibility checks", async ({ page }) => {

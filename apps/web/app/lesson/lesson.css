@@ -279,47 +279,16 @@ main.lesson {
   border-top: 1px solid var(--sbi-rule);
 }
 
-/* Evidence and sources come last, so the lesson reads as reasoning rather than citations. */
-.lesson-evidence,
+/* Sources come last, so the lesson reads as reasoning rather than citations. */
 .lesson-sources {
   border-top: 1px solid var(--sbi-rule);
   padding-top: var(--sbi-space-5);
 }
 
-.lesson-evidence h2,
 .lesson-sources h2,
 .lesson-feedback h2 {
   font-size: var(--sbi-text-title);
   margin: 0 0 var(--sbi-space-2);
-}
-
-.lesson-evidence h3 {
-  font-size: var(--sbi-text-heading);
-  margin: var(--sbi-space-4) 0 var(--sbi-space-1);
-}
-
-.lesson-evidence ul {
-  margin: 0;
-  padding-left: 1.2rem;
-  display: grid;
-  gap: var(--sbi-space-2);
-}
-
-.evidence-origin {
-  color: var(--sbi-ink-soft);
-  font-size: var(--sbi-text-small);
-}
-
-/* A boxed number reads as a reference, and its name comes from aria-label. */
-.citation-marker {
-  display: inline-grid;
-  place-items: center;
-  min-width: var(--sbi-touch-min);
-  min-height: var(--sbi-touch-min);
-  margin-left: var(--sbi-space-1);
-  font-family: var(--sbi-font-mono);
-  font-weight: 500;
-  text-decoration: none;
 }
 
 .lesson-visuals {
@@ -401,7 +370,7 @@ main.lesson {
   padding-left: 0;
 }
 
-/* Evidence and sources open on request; the summary carries the heading and a count. */
+/* Sources open on request; the summary carries the heading and a count. */
 .lesson-fold > summary {
   display: flex;
   flex-wrap: wrap;

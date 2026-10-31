@@ -8,7 +8,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { handedOffPhoto } from "../photo-handoff";
 import { Scanner } from "../scanner";
 import { AskQuestion } from "./ask-question";
-import { EvidenceList, SourceList } from "./citations";
+import { SourceList } from "./citations";
 import { DepthControls } from "./depth-controls";
 import { LessonFeedback } from "./feedback";
 import { lessonHref } from "./lesson-request";
@@ -146,7 +146,6 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
             askQuestion={<AskQuestion subject={subject} prefs={prefs} />}
             visuals={visuals?.visuals ?? []}
           />
-          {lesson ? <EvidenceList lesson={lesson} sources={sources} /> : null}
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
           {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
         </div>

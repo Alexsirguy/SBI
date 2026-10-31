@@ -2,7 +2,6 @@
 
 import { readableText, type Claim, type Lesson, type LessonSources } from "@sbi/contracts";
 import { type ReactNode, useEffect, useRef } from "react";
-import { MODULE_LABELS } from "./modules/labels";
 
 interface CitationIndex {
   claims: Map<string, Claim>;
@@ -27,87 +26,7 @@ export function citationIndex(lesson: Lesson, sources: LessonSources | undefined
 
 export const sourceAnchor = (number: number) => `source-${number}`;
 
-const STATUS_LABELS: Partial<Record<Claim["status"], string>> = {
-  qualified: "Based on limited evidence",
-  disputed: "Sources disagree",
-  unsupported: "Not yet confirmed",
-};
-
-/** Every statement the lesson rests on, by section, with its status and sources; read last. */
-export function EvidenceList({ lesson, sources }: { lesson: Lesson; sources?: LessonSources }) {
-  const index = citationIndex(lesson, sources);
-  const sourceOf = new Map([...index.numbers].map(([id, number]) => [number, id]));
-  const seen = new Set<string>();
-  const groups = lesson.sections.flatMap((section) => {
-    const claims = section.claimIds.flatMap((id) => {
-      const claim = index.claims.get(id);
-      if (!claim || seen.has(id)) return [];
-      seen.add(id);
-      return [claim];
-    });
-    return claims.length > 0 ? [{ section, claims }] : [];
-  });
-  if (groups.length === 0) return null;
-  const count = groups.reduce((total, group) => total + group.claims.length, 0);
-  // Collapsed by default: the lesson reads as reasoning, and the evidence is there to open.
-  return (
-    <section aria-labelledby="evidence-heading" className="lesson-evidence">
-      <details className="lesson-fold">
-        <summary>
-          <h2 id="evidence-heading">How do we know?</h2>
-          <span className="lesson-fold__count">
-            {count} {count === 1 ? "statement" : "statements"}
-          </span>
-        </summary>
-        <p>Each statement in the lesson, and where it comes from.</p>
-        {groups.map(({ section, claims }) => (
-          <div key={section.sectionId}>
-            <h3>{section.heading ?? MODULE_LABELS[section.module]}</h3>
-            <ul>
-              {claims.map((claim) => {
-                const numbers = [
-                  ...new Set(claim.sourceIds.flatMap((id) => index.numbers.get(id) ?? [])),
-                ].sort((a, b) => a - b);
-                const status = claim.origin === "model" ? undefined : STATUS_LABELS[claim.status];
-                return (
-                  <li key={claim.claimId}>
-                    {status ? <strong>{status}: </strong> : null}
-                    {readableText(claim.text)}
-                    {claim.uncertainty && status ? ` ${claim.uncertainty}` : ""}{" "}
-                    {claim.origin === "model" ? (
-                      <span className="evidence-origin">(the AI&apos;s general knowledge)</span>
-                    ) : (
-                      numbers.map((number) => (
-                        <a
-                          key={number}
-                          href={`#${sourceAnchor(number)}`}
-                          className="citation-marker"
-                          onClick={openSources}
-                          aria-label={`Source ${number}: ${index.titles.get(sourceOf.get(number) ?? "") ?? ""}`}
-                        >
-                          [{number}]
-                        </a>
-                      ))
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </details>
-    </section>
-  );
-}
-
-const SOURCES_FOLD = "sources-fold";
-
-// A marker leads into the source list, so the list opens before the browser jumps to it.
-function openSources() {
-  document.getElementById(SOURCES_FOLD)?.setAttribute("open", "");
-}
-
-/** The numbered source list markers link to, with credits and only the quotes licences allow. */
+/** The numbered source list, with credits and only the quotes licences allow. */
 export function SourceList({ sources, lesson }: { sources: LessonSources; lesson: Lesson }) {
   const { numbers } = citationIndex(lesson, sources);
   const listed = sources.sources
@@ -180,7 +99,7 @@ function SourcesFold({ count, children }: { count: number; children: ReactNode }
     }
   }, []);
   return (
-    <details ref={fold} id={SOURCES_FOLD} className="lesson-fold">
+    <details ref={fold} className="lesson-fold">
       <summary>
         <h2 id="sources-heading">Sources</h2>
         <span className="lesson-fold__count">
