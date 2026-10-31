@@ -2813,7 +2813,6 @@
             }
           },
           "labels": {
-            "default": [],
             "maxItems": 5,
             "type": "array",
             "items": {
@@ -2906,7 +2905,6 @@
           "calibrationVersion",
           "candidates",
           "observations",
-          "labels",
           "createdAt",
           "deleteBy"
         ],

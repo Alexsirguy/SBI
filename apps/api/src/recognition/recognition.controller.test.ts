@@ -167,6 +167,32 @@ describe("recognition routes", () => {
     expect(recogniser.recognise).toHaveBeenCalledTimes(3);
   });
 
+  it("asks again for a photo stored before the model's labels were kept", async () => {
+    const recogniser = answering({
+      candidates: [
+        { label: "car engine", certainty: "likely", calibratedConfidence: 0.9, reasons: [] },
+      ],
+    });
+    const recognition = fakeRecognition(recogniser);
+    test = await startTestApp(storedPhoto(), recognition);
+    const first = RecognisedPhoto.parse(
+      await (await test.post("/recognitions", { key: KEY })).json(),
+    );
+    const older = RecognitionResult.parse(recognition.saved.get(first.resultId));
+    delete older.labels;
+    recognition.saved.set(first.resultId, older);
+
+    const again = RecognisedPhoto.parse(
+      await (await test.post("/recognitions", { key: KEY })).json(),
+    );
+    expect(recogniser.recognise).toHaveBeenCalledTimes(2);
+    expect(again.options).toEqual([{ label: "Car engine", certainty: "likely" }]);
+
+    // Once labels are stored, even a photo the model named nothing in is reused, not re-paid.
+    await test.post("/recognitions", { key: KEY });
+    expect(recogniser.recognise).toHaveBeenCalledTimes(2);
+  });
+
   it("issues a session id when none is sent", async () => {
     test = await startTestApp(storedPhoto(), fakeRecognition(answering({})));
 

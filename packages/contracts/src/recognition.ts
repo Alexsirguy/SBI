@@ -28,11 +28,12 @@ export const RecognitionResult = z
     calibrationVersion: z.string().min(1),
     candidates: z.array(RecognitionCandidate),
     observations: z.array(z.string().min(1)).default([]),
-    /** The model's own names, catalogued or not, strongest first; a repeat photo reuses them. */
+    /** The model's own names, catalogued or not, strongest first; a repeat photo reuses them.
+        Absent on results stored before labels were kept, which are asked again rather than reused. */
     labels: z
       .array(z.object({ label: z.string().min(1).max(60), certainty: Certainty }))
       .max(5)
-      .default([]),
+      .optional(),
     selectedTaxonomyId: Id.optional(),
     userCorrection: UserCorrection.optional(),
     createdAt: IsoDateTime,
