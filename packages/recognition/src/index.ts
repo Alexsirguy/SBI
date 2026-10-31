@@ -34,10 +34,12 @@ export {
 export {
   buildRecognitionResult,
   copyRecognitionResult,
+  modelLabels,
   parseRecognitionRetention,
   sha256Hex,
   withSelection,
   type BuildRecognitionResultInput,
+  type ModelLabel,
   type RecognitionRetention,
   type Selection,
 } from "./result";

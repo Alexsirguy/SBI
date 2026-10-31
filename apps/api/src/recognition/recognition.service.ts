@@ -68,15 +68,6 @@ function sentenceCase(label: string) {
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
-// The model's own strongest name, catalogued or not, is what a lesson starts from (ADR 0013).
-function topLabel(outcome: Parameters<typeof rankCandidates>[0]): string | undefined {
-  if (outcome.status === "unsupported") return undefined;
-  const [top] = [...outcome.candidates].sort(
-    (a, b) => b.calibratedConfidence - a.calibratedConfidence,
-  );
-  return top?.label.trim() || undefined;
-}
-
 @Injectable()
 export class RecognitionService {
   private readonly logger = new Logger(RecognitionService.name);
@@ -110,7 +101,7 @@ export class RecognitionService {
     const earlier = await this.results.findByImage(await sha256Hex(image), now);
     let ranked: RankedRecognition;
     let result: RecognitionResult;
-    let subject: string | undefined;
+    let labels: RecognitionResult["labels"];
     // Each recognition is a paid call that sends the photo out, so a repeat reuses the stored answer.
     if (earlier?.modelVersion.endsWith(`+${RECOGNITION_PROMPT_VERSION}`)) {
       result = copyRecognitionResult(earlier, { now, retention, sessionId });
@@ -119,7 +110,8 @@ export class RecognitionService {
         candidates: result.candidates,
         unmapped: [],
       };
-      subject = result.candidates[0]?.label;
+      // Results stored before labels were kept still offer their catalogue matches.
+      labels = result.labels.length > 0 ? result.labels : result.candidates;
     } else {
       let outcome;
       try {
@@ -129,8 +121,8 @@ export class RecognitionService {
         throw new UserFacingException(UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
       }
       ranked = rankCandidates(outcome, this.taxonomy, this.env.ranking);
-      subject = topLabel(outcome);
       result = await buildRecognitionResult({ image, now, outcome, ranked, retention, sessionId });
+      labels = result.labels;
       for (const label of ranked.unmapped) {
         await this.observations.recordGap(label, "recognition-label");
       }
@@ -149,7 +141,7 @@ export class RecognitionService {
         })),
       })),
       otherLabels: [...new Set(ranked.unmapped.map(sentenceCase))].slice(0, 3),
-      subject: subject ? sentenceCase(subject) : undefined,
+      options: labels.slice(0, 3).map(({ label, certainty }) => ({ label, certainty })),
       next: toNextStep(planClarification(ranked, this.taxonomy, this.env.ranking)),
     };
   }

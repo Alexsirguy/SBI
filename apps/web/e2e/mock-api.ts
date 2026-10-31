@@ -47,7 +47,7 @@ export const SESSION_ID = "0192f1a0-0000-7000-8000-000000000011";
 /** Answers recognition with `reply` and returns the selections the page records. */
 export async function mockRecognition(
   page: Page,
-  reply: { candidates: unknown[]; otherLabels?: string[]; subject?: string; next: unknown },
+  reply: { candidates: unknown[]; otherLabels?: string[]; options?: unknown[]; next: unknown },
 ) {
   const selections: unknown[] = [];
   const requests: unknown[] = [];

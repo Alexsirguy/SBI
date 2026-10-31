@@ -157,60 +157,69 @@
   font-weight: 700;
 }
 
-.crop-panel {
+/* The learner's photo, framed as in the prototype; never its size or format. */
+.photo-frame {
+  overflow: hidden;
+  border-radius: var(--sbi-radius-l);
   border: 1px solid var(--sbi-rule);
-  border-radius: var(--sbi-radius-m);
-  padding: var(--sbi-space-3);
-  margin: 0;
+  background: var(--sbi-paper);
+}
+
+.photo-frame img {
+  display: block;
+  width: 100%;
+  max-height: 60vh;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.looking,
+.selected,
+.photo-choices {
   display: grid;
   gap: var(--sbi-space-3);
-  min-width: 0;
 }
 
-.crop-panel legend {
-  font-weight: 700;
-  padding: 0 var(--sbi-space-1);
+.looking h2,
+.looking p,
+.photo-choices h2,
+.photo-choices p {
+  margin: 0;
 }
 
-.crop-panel .crop-box {
-  max-width: 100%;
-  border-radius: var(--sbi-radius-s);
-}
-
-.crop-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sbi-space-2) var(--sbi-space-3);
-}
-
-.crop-fields > div {
-  display: grid;
-  gap: var(--sbi-space-1);
-  font-size: var(--sbi-text-small);
-}
-
-.crop-fields input[type="number"] {
-  width: 100%;
-  min-height: var(--sbi-touch-min);
-  border: 2px solid var(--sbi-control-edge);
-  border-radius: var(--sbi-radius-s);
-  padding: 0 var(--sbi-space-2);
-  background: var(--sbi-paper);
-  color: var(--sbi-ink);
-}
-
-.crop-actions {
+.selected__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sbi-space-2);
 }
 
-/* Each check says pass or fix in words; the mark is extra and hidden from screen readers. */
-.photo-check h2 {
-  font-size: var(--sbi-text-heading);
+.photo-issues {
+  padding: var(--sbi-space-3) var(--sbi-space-4);
+  border-left: 6px solid var(--sbi-marker);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper);
 }
 
-.photo-check ul {
+.photo-issues p,
+.photo-issues ul {
+  margin: 0;
+}
+
+.photo-issues ul {
+  padding-left: 1.2rem;
+  margin-top: var(--sbi-space-2);
+}
+
+.photo-choices {
+  margin-top: var(--sbi-space-5);
+}
+
+.photo-choices h2:focus {
+  outline: none;
+}
+
+/* Choices are full-width cards with how sure we are on the right, as in the prototype. */
+.choice-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -218,33 +227,48 @@
   gap: var(--sbi-space-2);
 }
 
-.photo-check li {
-  display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: var(--sbi-space-3);
+.photo-choices .choice {
+  width: 100%;
+  margin: 0;
+  display: flex;
   align-items: center;
-}
-
-.photo-check li::before {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+  justify-content: space-between;
+  gap: var(--sbi-space-3);
+  min-height: 52px;
+  padding: 0 var(--sbi-space-4);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  font: inherit;
   font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.photo-choices .choice:hover {
+  border-color: var(--sbi-action);
+}
+
+.photo-choices .choice small {
+  font-weight: 400;
   font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
 }
 
-.photo-check .check--pass::before {
-  content: "✓" / "";
-  background: var(--sbi-action);
-  color: var(--sbi-action-ink);
-}
-
-.photo-check .check--fix::before {
-  content: "!" / "";
-  background: var(--sbi-marker);
-  color: var(--sbi-marker-ink);
+.back-link {
+  justify-self: start;
+  min-height: var(--sbi-touch-min);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sbi-ink-soft);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
 }
 
 .describe-form {
@@ -264,6 +288,8 @@
 /* Live regions stay mounted so they announce, so the form spaces only children with content. */
 .capture-form {
   display: block;
+  /* Clears the sticky header when a new step scrolls into view. */
+  scroll-margin-top: 80px;
 }
 
 .capture-form > * {

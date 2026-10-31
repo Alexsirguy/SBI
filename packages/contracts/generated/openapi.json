@@ -343,10 +343,33 @@
                         "maxLength": 60
                       }
                     },
-                    "subject": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 60
+                    "options": {
+                      "default": [],
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 60
+                          },
+                          "certainty": {
+                            "type": "string",
+                            "enum": [
+                              "likely",
+                              "possible",
+                              "unsure"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "label",
+                          "certainty"
+                        ],
+                        "additionalProperties": false
+                      }
                     },
                     "next": {
                       "oneOf": [
@@ -509,6 +532,7 @@
                     "sessionId",
                     "candidates",
                     "otherLabels",
+                    "options",
                     "next"
                   ],
                   "additionalProperties": false
@@ -2788,6 +2812,34 @@
               "minLength": 1
             }
           },
+          "labels": {
+            "default": [],
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "certainty": {
+                  "type": "string",
+                  "enum": [
+                    "likely",
+                    "possible",
+                    "unsure"
+                  ]
+                }
+              },
+              "required": [
+                "label",
+                "certainty"
+              ],
+              "additionalProperties": false
+            }
+          },
           "selectedTaxonomyId": {
             "type": "string",
             "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
@@ -2854,6 +2906,7 @@
           "calibrationVersion",
           "candidates",
           "observations",
+          "labels",
           "createdAt",
           "deleteBy"
         ],

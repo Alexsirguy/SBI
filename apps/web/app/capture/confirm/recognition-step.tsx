@@ -1,38 +1,79 @@
 "use client";
 
-import type { ApiRequest, ApiResponse } from "@sbi/contracts";
-import type { UseMutationResult } from "@tanstack/react-query";
-import { StatusLine } from "@sbi/ui";
+import type { ApiResponse, Certainty } from "@sbi/contracts";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { lessonHref } from "../../lesson/lesson-request";
 import { readPrefs } from "../../lesson/prefs";
 import { DescribeForm } from "./describe-form";
 
-interface RecognitionStepProps {
-  recognition: UseMutationResult<
-    ApiResponse<"recognisePhoto">,
-    Error,
-    ApiRequest<"recognisePhoto">
-  >;
-}
+const CERTAINTY_WORDS: Record<Certainty, string> = {
+  likely: "likely",
+  possible: "possible",
+  unsure: "less likely",
+};
 
-const DESCRIBE = "We could not tell what is in the photo. Describe it to start your lesson.";
+const NOTHING_SEEN =
+  "We couldn't tell what this is. Tell us what it is, or try a photo of an everyday object, close up and in good light.";
 
-// What the model names is where the lesson starts; the reader offers a way back if it is wrong.
-export function RecognitionStep({ recognition }: RecognitionStepProps) {
+/** The prototype's choice step: what it could be, in the model's words, or the learner's own. */
+export function RecognitionStep({
+  reply,
+  error,
+  onStart,
+  onRetake,
+}: {
+  reply?: ApiResponse<"recognisePhoto">;
+  error?: string;
+  /** Hands the photo on to the lesson page before it opens. */
+  onStart: () => void;
+  onRetake: () => void;
+}) {
   const router = useRouter();
-  const subject = recognition.data?.subject;
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const options = reply?.options ?? [];
 
-  useEffect(() => {
-    if (subject) router.push(lessonHref({ label: subject }, { prefs: readPrefs() }));
-  }, [router, subject]);
+  // The loader that held focus is gone, so the learner lands on the question being asked.
+  useEffect(() => headingRef.current?.focus(), []);
 
-  if (recognition.isPending) {
-    return <StatusLine>Recognising the object…</StatusLine>;
+  function start(label: string) {
+    onStart();
+    router.push(lessonHref({ label }, { prefs: readPrefs() }));
   }
-  if (subject) {
-    return <StatusLine>It looks like: {subject}. Starting your lesson…</StatusLine>;
-  }
-  return <DescribeForm message={recognition.error?.message ?? DESCRIBE} />;
+
+  return (
+    <section aria-labelledby="choices-heading" className="photo-choices">
+      <h2 id="choices-heading" ref={headingRef} tabIndex={-1}>
+        {options.length > 0 ? "Which one is it?" : "What is in your photo?"}
+      </h2>
+      {options.length > 0 ? (
+        <>
+          <p>We can see a few possibilities. Pick the one that matches.</p>
+          <ul className="choice-list">
+            {options.map((option) => (
+              <li key={option.label}>
+                <button type="button" className="choice" onClick={() => start(option.label)}>
+                  <span>{option.label}</span>
+                  <small>{CERTAINTY_WORDS[option.certainty]}</small>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p role="status" className="photo-choices__message">
+          {error ?? NOTHING_SEEN}
+        </p>
+      )}
+      <DescribeForm
+        label="Something else? Tell us what it is"
+        hint=""
+        submitLabel="Use this"
+        onStart={onStart}
+      />
+      <button type="button" className="back-link" onClick={onRetake}>
+        Try a different photo
+      </button>
+    </section>
+  );
 }

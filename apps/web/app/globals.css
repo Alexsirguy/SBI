@@ -1,7 +1,7 @@
 /* App layout on top of @sbi/ui/styles.css; colours, type and spacing come from its tokens. */
 
-/* Comfortable touch targets for controls not yet on @sbi/ui (E15-3); the crop area sizes itself. */
-button:not(.crop-area):not(.sbi-button),
+/* Comfortable touch targets for controls not yet on @sbi/ui (E15-3); choice cards size themselves. */
+button:not(.sbi-button):not(.choice):not(.back-link),
 input:not(.sbi-control):not([type="radio"]):not([type="checkbox"]),
 select:not(.sbi-control) {
   min-height: var(--sbi-touch-min);
@@ -9,7 +9,7 @@ select:not(.sbi-control) {
   font: inherit;
 }
 
-button:not(.crop-area):not(.sbi-button) {
+button:not(.sbi-button):not(.choice):not(.back-link) {
   min-width: var(--sbi-touch-min);
   padding: 0 var(--sbi-space-4);
 }
@@ -72,4 +72,52 @@ main {
 .causal-steps li,
 .concepts li {
   margin-bottom: var(--sbi-space-1);
+}
+
+/* Scanning loader shared by recognition and lesson writing, as in the prototype. */
+.scanner {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--sbi-radius-l);
+  border: 1px solid var(--sbi-rule);
+  background: var(--sbi-paper);
+}
+
+.scanner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner__label {
+  padding: var(--sbi-space-5);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: var(--sbi-text-display);
+  text-align: center;
+}
+
+.scanner__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4%;
+  height: 3px;
+  background: var(--sbi-marker);
+  box-shadow: 0 0 18px 6px color-mix(in srgb, var(--sbi-marker) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scanner__line {
+    animation: sbi-scan 1.4s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes sbi-scan {
+  to {
+    top: 94%;
+  }
 }

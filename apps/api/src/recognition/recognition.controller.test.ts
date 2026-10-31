@@ -109,8 +109,11 @@ describe("recognition routes", () => {
 
     expect(gaps.recorded).toEqual([{ source: "recognition-label", term: "lava lamp" }]);
     expect(reply.otherLabels).toEqual(["Lava lamp"]);
-    // The lesson starts from the model's strongest name, even one the catalogue lacks.
-    expect(reply.subject).toBe("Lava lamp");
+    // The learner chooses from the model's own names, even ones the catalogue lacks.
+    expect(reply.options).toEqual([
+      { label: "Lava lamp", certainty: "possible" },
+      { label: "Bicycle", certainty: "possible" },
+    ]);
   });
 
   it("recognises the same photo once, giving each session its own record", async () => {
@@ -134,7 +137,7 @@ describe("recognition routes", () => {
     expect(again).toMatchObject({
       sessionId: other,
       candidates: first.candidates,
-      subject: "Bicycle",
+      options: [{ label: "Bicycle", certainty: "likely" }],
       next: first.next,
     });
     expect(again.resultId).not.toBe(first.resultId);

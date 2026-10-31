@@ -1,42 +1,22 @@
 "use client";
 
+import { Button } from "@sbi/ui";
 import { useEffect, useId, useRef, useState } from "react";
 import { webEnv } from "../../env";
+import { handedOffPhoto, handOffPhoto } from "../photo-handoff";
+import { Scanner } from "../scanner";
 import { CameraView } from "./camera-view";
-import { CropBox } from "./crop-box";
+import { RecognitionStep } from "./confirm/recognition-step";
 import {
   ACCEPTED_EXTENSIONS,
   ACCEPTED_FORMATS_LABEL,
-  formatBytes,
   uploadLimitLabel,
   validateSelection,
 } from "./limits";
-import {
-  cropImage,
-  normaliseImage,
-  stripUploadMetadata,
-  type CropRect,
-  type ProcessedImage,
-} from "./processing";
-import { assessQuality, readImageData, type QualityReport } from "./quality";
-import { useKeepPhoto, usePhotoUpload } from "./use-photo-upload";
+import { normaliseImage, stripUploadMetadata, type ProcessedImage } from "./processing";
+import { assessQuality, readImageData, type QualityCheck } from "./quality";
+import { usePhotoUpload } from "./use-photo-upload";
 import { useRecognisePhoto } from "./use-recognition";
-import { RecognitionStep } from "./confirm/recognition-step";
-import { Button } from "@sbi/ui";
-
-const CHECK_LABELS = {
-  exposure: "Exposure",
-  resolution: "Resolution",
-  sharpness: "Sharpness",
-  subject: "Object size",
-};
-
-const CROP_FIELDS = [
-  { key: "x", label: "Left (px)" },
-  { key: "y", label: "Top (px)" },
-  { key: "width", label: "Width (px)" },
-  { key: "height", label: "Height (px)" },
-] as const;
 
 function CameraIcon() {
   return (
@@ -67,94 +47,78 @@ function UploadIcon() {
   );
 }
 
-function describe(image: ProcessedImage): string {
-  const format = image.type === "image/jpeg" || image.type === "" ? "JPEG" : image.type;
-  return `${image.width} by ${image.height} pixels, ${format} (${formatBytes(image.size)})`;
-}
-
-function fullFrame(image: ProcessedImage): CropRect {
-  return { height: image.height, width: image.width, x: 0, y: 0 };
-}
-
+// The prototype's flow: choose a photo, see only what would stop it working, then upload and pick.
 export function CaptureForm() {
   const limits = webEnv.capture;
   const uploadId = useId();
   const problemId = useId();
-  const checkId = useId();
-  const confirmId = useId();
-  const uploadHintId = useId();
   const cameraRef = useRef<HTMLInputElement>(null);
   const takeRef = useRef<HTMLButtonElement>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraNote, setCameraNote] = useState<{ text: string; offerApp: boolean } | null>(null);
-  const uploadRef = useRef<HTMLInputElement>(null);
   // Bumped on every new selection so a slow earlier decode cannot overwrite a newer photo.
   const runRef = useRef(0);
-  const [fileName, setFileName] = useState<string | null>(null);
   const [processingProblem, setProblem] = useState<string | null>(null);
   const [processing, setBusy] = useState(false);
-  const [original, setOriginal] = useState<ProcessedImage | null>(null);
   const [prepared, setPrepared] = useState<ProcessedImage | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [crop, setCrop] = useState<CropRect | null>(null);
-  const [quality, setQuality] = useState<QualityReport | null>(null);
+  const [issues, setIssues] = useState<QualityCheck[]>([]);
   const photoUpload = usePhotoUpload();
-  const keep = useKeepPhoto();
   const recognition = useRecognisePhoto();
   // One session per visit groups retakes; accounts will replace it (#102).
   const sessionRef = useRef<string | undefined>(undefined);
-  const busy = processing || photoUpload.isPending || keep.isPending;
-  const problem = processingProblem ?? photoUpload.error?.message ?? keep.error?.message ?? null;
-  const stage = photoUpload.stage;
-  const uploaded = photoUpload.isSuccess;
-  const photoKey = photoUpload.data?.key ?? null;
-  const kept = keep.isSuccess;
+  const problem = processingProblem ?? photoUpload.error?.message ?? null;
+  const looking = photoUpload.isPending || recognition.isPending;
+  const answered = recognition.isSuccess || recognition.isError;
+  const step = answered ? "choices" : looking ? "looking" : previewUrl ? "selected" : "choose";
 
-  // Guidance only: a failed check never blocks uploading.
+  // One step at a time, as in the prototype: each new step starts at the top of the screen.
+  useEffect(() => {
+    if (step !== "choose") formRef.current?.scrollIntoView({ block: "start" });
+  }, [step]);
+
+  // Only failed checks matter to the learner; they guide, and never block uploading.
   async function assess(image: ProcessedImage) {
     try {
       const bitmap = await createImageBitmap(image.blob);
       try {
-        setQuality(assessQuality(readImageData(bitmap), {}, image));
+        const report = assessQuality(readImageData(bitmap), {}, image);
+        setIssues(report.checks.filter((check) => !check.passed));
       } finally {
         bitmap.close();
       }
     } catch {
-      setQuality(null);
+      setIssues([]);
     }
   }
 
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      // The lesson page's loader may still be showing a photo handed on to it.
+      if (previewUrl && previewUrl !== handedOffPhoto()) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
   function clear() {
     runRef.current += 1;
-    setFileName(null);
     setProblem(null);
     setBusy(false);
-    setOriginal(null);
     setPrepared(null);
     setPreviewUrl(null);
-    setCrop(null);
-    setQuality(null);
+    setIssues([]);
     photoUpload.reset();
-    keep.reset();
     recognition.reset();
   }
 
   function retake() {
     clear();
     for (const input of [cameraRef.current, uploadRef.current]) {
-      if (input) {
-        input.value = "";
-      }
+      if (input) input.value = "";
     }
-    takeRef.current?.focus();
+    // The choice buttons render again on the next frame, so focus waits for them.
+    requestAnimationFrame(() => takeRef.current?.focus());
   }
 
   // A live view needs a secure page and browser support; otherwise the device's own camera app opens.
@@ -177,12 +141,9 @@ export function CaptureForm() {
   }
 
   async function choose(selected: File | undefined) {
-    if (!selected) {
-      return;
-    }
+    if (!selected) return;
     clear();
     const run = runRef.current;
-    setFileName(selected.name);
     const issue = validateSelection(selected, limits.maxUploadBytes);
     if (issue) {
       setProblem(issue);
@@ -191,14 +152,10 @@ export function CaptureForm() {
     setBusy(true);
     try {
       const image = await stripUploadMetadata(await normaliseImage(selected, limits));
-      if (run !== runRef.current) {
-        return;
-      }
+      if (run !== runRef.current) return;
       await assess(image);
-      setOriginal(image);
       setPrepared(image);
       setPreviewUrl(URL.createObjectURL(image.blob));
-      setCrop(fullFrame(image));
     } catch (error) {
       if (run === runRef.current) {
         setProblem(
@@ -206,51 +163,13 @@ export function CaptureForm() {
         );
       }
     } finally {
-      if (run === runRef.current) {
-        setBusy(false);
-      }
+      if (run === runRef.current) setBusy(false);
     }
-  }
-
-  async function applyCrop() {
-    if (!original || !crop) {
-      return;
-    }
-    const run = runRef.current;
-    setBusy(true);
-    setProblem(null);
-    try {
-      // Always crop the normalised original so repeated crops do not recompress the JPEG.
-      const image = await stripUploadMetadata(await cropImage(original.blob, crop, limits));
-      if (run === runRef.current) {
-        setPrepared(image);
-        await assess(image);
-      }
-    } catch (error) {
-      if (run === runRef.current) {
-        setProblem(
-          error instanceof Error
-            ? error.message
-            : "We couldn't crop that photo. Try again, or upload it without cropping.",
-        );
-      }
-    } finally {
-      if (run === runRef.current) {
-        setBusy(false);
-      }
-    }
-  }
-
-  function setField(key: keyof CropRect, value: number) {
-    setCrop((current) => (current ? { ...current, [key]: value } : current));
   }
 
   function upload() {
-    if (!prepared) {
-      return;
-    }
+    if (!prepared) return;
     setProblem(null);
-    keep.reset();
     recognition.reset();
     photoUpload.mutate(prepared, {
       onSuccess: (photo) =>
@@ -265,214 +184,169 @@ export function CaptureForm() {
     });
   }
 
-  function keepPhoto() {
-    if (photoKey) {
-      keep.mutate(photoKey);
-    }
-  }
-
   const status = problem
     ? null
-    : stage
-      ? stage
-      : busy
+    : looking
+      ? (photoUpload.stage ?? "Looking closely…")
+      : processing
         ? "Preparing your photo…"
-        : kept
-          ? "Kept. This photo will not be deleted automatically."
-          : uploaded
-            ? "Uploaded, with location and camera details removed. Your lesson can begin."
-            : prepared
-              ? `Ready: ${describe(prepared)}.`
-              : fileName
-                ? `Selected ${fileName}.`
-                : null;
+        : prepared && !answered
+          ? issues.length > 0
+            ? "Photo ready to upload, though it may be hard to recognise."
+            : "Photo ready to upload."
+          : null;
 
   return (
     <>
       <form
+        ref={formRef}
         aria-label="Photo capture"
         className="capture-path capture-form"
-        aria-busy={busy}
+        aria-busy={processing || looking}
         onSubmit={(event) => {
           event.preventDefault();
           upload();
         }}
       >
-        <fieldset className="photo-choice">
-          <legend>Add a photo</legend>
-          <div className="photo-choice__actions">
-            <button
-              ref={takeRef}
-              type="button"
-              className="sbi-button sbi-button--primary"
-              aria-expanded={cameraOpen}
-              onClick={takePhoto}
-            >
-              <CameraIcon />
-              Take a photo
-            </button>
-            <span className="photo-choice__upload">
-              <input
-                id={uploadId}
-                ref={uploadRef}
-                name="upload"
-                type="file"
-                className="photo-choice__file"
-                aria-invalid={problem ? true : undefined}
-                aria-describedby={problem ? problemId : undefined}
-                accept={ACCEPTED_EXTENSIONS}
-                onChange={(event) => void choose(event.currentTarget.files?.[0])}
-              />
-              <label htmlFor={uploadId} className="sbi-button sbi-button--quiet">
-                <UploadIcon />
-                Upload a photo
-              </label>
-            </span>
+        {answered && previewUrl ? (
+          <div className="photo-frame">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewUrl} alt="Your photo" />
           </div>
-          {/* The fallback when no live view is possible: the device's own camera app. */}
-          <input
-            ref={cameraRef}
-            name="camera"
-            type="file"
-            hidden
-            accept="image/*"
-            capture="environment"
-            onChange={(event) => void choose(event.currentTarget.files?.[0])}
-          />
-          {cameraOpen ? (
-            <CameraView
-              onCancel={closeCamera}
-              onSnap={(photo) => {
-                closeCamera();
-                void choose(photo);
-              }}
-              onUnavailable={(reason) => {
-                setCameraOpen(false);
-                setCameraNote({
-                  text: `${reason} You can use your camera app or upload a photo instead.`,
-                  offerApp: true,
-                });
-              }}
-            />
-          ) : null}
-          {cameraNote ? (
-            <div className="photo-choice__note">
-              <p>{cameraNote.text}</p>
-              {cameraNote.offerApp ? (
-                <button
-                  type="button"
-                  className="sbi-button sbi-button--quiet sbi-button--small"
-                  onClick={() => cameraRef.current?.click()}
-                >
-                  Open camera app
-                </button>
-              ) : null}
+        ) : looking ? (
+          <div className="looking">
+            <h2>Looking closely…</h2>
+            <Scanner src={previewUrl} />
+            <p className="sbi-field__hint">Checking shapes, parts and materials.</p>
+          </div>
+        ) : prepared && previewUrl ? (
+          <div className="selected">
+            <div className="photo-frame">
+              {/* Learners never see the numbers; tests read them to check normalisation. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewUrl}
+                alt="Your photo"
+                data-width={prepared.width}
+                data-height={prepared.height}
+                data-type={prepared.type || "image/jpeg"}
+                data-bytes={prepared.size}
+              />
             </div>
-          ) : null}
-        </fieldset>
-        <p className="sbi-field__hint">
-          Accepted formats: {ACCEPTED_FORMATS_LABEL}. Maximum size:{" "}
-          {uploadLimitLabel(limits.maxUploadBytes)}.
-        </p>
+            {issues.length > 0 ? (
+              <div className="photo-issues">
+                <p>
+                  <strong>This photo may be hard to recognise.</strong> Try another, or upload it
+                  anyway.
+                </p>
+                <ul>
+                  {issues.map((check) => (
+                    <li key={check.id}>{check.guidance ?? "Retake the photo."}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <div className="selected__actions">
+              <Button type="submit">Upload photo</Button>
+              <Button variant="quiet" type="button" onClick={retake}>
+                Choose another photo
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <fieldset className="photo-choice">
+            <legend>Add a photo</legend>
+            <div className="photo-choice__actions">
+              <button
+                ref={takeRef}
+                type="button"
+                className="sbi-button sbi-button--primary"
+                aria-expanded={cameraOpen}
+                onClick={takePhoto}
+              >
+                <CameraIcon />
+                Take a photo
+              </button>
+              <span className="photo-choice__upload">
+                <input
+                  id={uploadId}
+                  ref={uploadRef}
+                  name="upload"
+                  type="file"
+                  className="photo-choice__file"
+                  aria-invalid={problem ? true : undefined}
+                  aria-describedby={problem ? problemId : undefined}
+                  accept={ACCEPTED_EXTENSIONS}
+                  onChange={(event) => void choose(event.currentTarget.files?.[0])}
+                />
+                <label htmlFor={uploadId} className="sbi-button sbi-button--quiet">
+                  <UploadIcon />
+                  Upload a photo
+                </label>
+              </span>
+            </div>
+            {cameraOpen ? (
+              <CameraView
+                onCancel={closeCamera}
+                onSnap={(photo) => {
+                  setCameraOpen(false);
+                  void choose(photo);
+                }}
+                onUnavailable={(reason) => {
+                  setCameraOpen(false);
+                  setCameraNote({
+                    text: `${reason} You can use your camera app or upload a photo instead.`,
+                    offerApp: true,
+                  });
+                }}
+              />
+            ) : null}
+            {cameraNote ? (
+              <div className="photo-choice__note">
+                <p>{cameraNote.text}</p>
+                {cameraNote.offerApp ? (
+                  <button
+                    type="button"
+                    className="sbi-button sbi-button--quiet sbi-button--small"
+                    onClick={() => cameraRef.current?.click()}
+                  >
+                    Open camera app
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            <p className="sbi-field__hint">
+              Accepted formats: {ACCEPTED_FORMATS_LABEL}. Maximum size:{" "}
+              {uploadLimitLabel(limits.maxUploadBytes)}.
+            </p>
+          </fieldset>
+        )}
+        {/* The fallback when no live view is possible: the device's own camera app. */}
+        <input
+          ref={cameraRef}
+          name="camera"
+          type="file"
+          hidden
+          accept="image/*"
+          capture="environment"
+          onChange={(event) => void choose(event.currentTarget.files?.[0])}
+        />
+        {/* Kept mounted, so problems and progress are announced as they change. */}
         <div role="alert" id={problemId} className="capture-problem">
           {problem}
         </div>
-        <div role="status" className="sbi-status">
+        {/* While loading, the heading says it on screen; the status still announces it. */}
+        <div role="status" className={looking ? "sbi-visually-hidden" : "sbi-status"}>
           {status ? <p>{status}</p> : null}
         </div>
-        {original && previewUrl && crop ? (
-          <fieldset className="crop-panel">
-            <legend>Crop (optional)</legend>
-            <CropBox
-              src={previewUrl}
-              imageWidth={original.width}
-              imageHeight={original.height}
-              rect={crop}
-              onChange={setCrop}
-            />
-            <div className="crop-fields">
-              {CROP_FIELDS.map(({ key, label }) => (
-                <div key={key}>
-                  <label htmlFor={`${uploadId}-crop-${key}`}>{label}</label>
-                  <input
-                    id={`${uploadId}-crop-${key}`}
-                    type="number"
-                    min={key === "width" || key === "height" ? 1 : 0}
-                    max={key === "x" || key === "width" ? original.width : original.height}
-                    value={crop[key]}
-                    onChange={(event) => setField(key, event.currentTarget.valueAsNumber)}
-                  />
-                </div>
-              ))}
-            </div>
-            <div className="crop-actions">
-              <Button
-                variant="quiet"
-                type="button"
-                onClick={() => setCrop(fullFrame(original))}
-                disabled={busy}
-              >
-                Reset crop
-              </Button>
-              <Button
-                variant="quiet"
-                type="button"
-                onClick={() => void applyCrop()}
-                disabled={busy}
-              >
-                Apply crop
-              </Button>
-              <Button variant="quiet" type="button" onClick={retake}>
-                Retake or choose another
-              </Button>
-            </div>
-          </fieldset>
-        ) : null}
-        {/* Kept mounted so screen readers announce guidance when it appears. */}
-        <div aria-live="polite">
-          {prepared && !busy ? (
-            <section aria-labelledby={checkId} className="photo-check">
-              <h2 id={checkId}>Photo check</h2>
-              {quality ? (
-                <ul>
-                  {quality.checks.map((check) => (
-                    <li key={check.id} className={check.passed ? "check--pass" : "check--fix"}>
-                      {check.passed
-                        ? `${CHECK_LABELS[check.id]}: good`
-                        : (check.guidance ?? "Retake the photo.")}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>We couldn&apos;t check this photo, but you can still upload it.</p>
-              )}
-            </section>
-          ) : null}
-        </div>
-        {uploaded && photoKey && !kept ? (
-          <Button variant="quiet" type="button" onClick={keepPhoto} disabled={busy}>
-            Keep this photo
-          </Button>
-        ) : null}
-        <Button
-          type="submit"
-          block
-          disabled={!prepared || busy}
-          aria-describedby={!prepared || busy ? uploadHintId : undefined}
-        >
-          Upload photo
-        </Button>
-        {!prepared || busy ? (
-          <p id={uploadHintId} className="sbi-field__hint">
-            {busy ? "Wait until your photo is ready." : "Take or choose a photo first."}
-          </p>
-        ) : null}
       </form>
-      {uploaded ? (
-        <section aria-labelledby={confirmId} className="capture-path">
-          <h2 id={confirmId}>What is in your photo?</h2>
-          <RecognitionStep recognition={recognition} />
-        </section>
+      {answered && previewUrl ? (
+        <RecognitionStep
+          reply={recognition.data}
+          error={recognition.error?.message}
+          onStart={() => handOffPhoto(previewUrl)}
+          onRetake={retake}
+        />
       ) : null}
     </>
   );

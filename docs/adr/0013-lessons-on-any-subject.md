@@ -24,17 +24,17 @@ The owner's decision (2026-10-30): "We don't need to have an object to make a le
   - A subject that is exactly one catalogue name or alias uses that entry, with its facts, concepts and safety notice.
   - Any other subject becomes a stand-in entry with id `subject.<slug>` and no facts. Evidence is gathered at request time and model knowledge fills the gaps (ADR 0011). Lesson storage and reuse key on that id, so no schema change is needed.
   - A stand-in whose words belong to a high-risk topic (medicines, household chemicals, mains electricity, wild mushrooms) takes that topic as its parent. It then gets the topic's safety notice and high safety class, as catalogue entries do. This stays a word list until the classifier lands (#67).
-- **Recognition returns `subject`**, the model's strongest name for what it sees, whether or not it is in the catalogue.
+- **Recognition returns `options`**: up to three of the model's own names for what it sees, strongest first, whether or not they are in the catalogue. Results keep these names, so a repeat photo offers the same ones (#280).
 - **The web app starts the lesson as soon as a subject is known:**
-  - Photo: once recognition names something, the page goes straight to the lesson. If the model names nothing, or recognition is unavailable, the learner is asked to describe it instead.
+  - Photo: as in the prototype, the learner picks one of the options, or writes what it is, and the lesson starts on it. If the model names nothing, or recognition is unavailable, the learner writes what it is.
   - Text: "What is it?" and Start lesson. There is no catalogue search.
-  - The lesson page always offers "Not a …? Describe it instead", because the lesson started without asking.
-- **The pick, search and "tell us what you notice" steps are removed from the web app.** Their API routes stay for now.
+  - The lesson page always offers "Not a …? Describe it instead", in case the pick was wrong.
+- **The catalogue pick, search and "tell us what you notice" steps are removed from the web app.** Their API routes stay for now.
 
 ## Consequences
 
 - Anything a learner can photograph or name can be taught. Catalogue entries still improve lessons that match them.
-- A wrong recognition now costs one lesson generation before the learner corrects it. The way back is one link on the lesson page.
+- One tap starts the lesson, and a misread one can still be corrected from the lesson page.
 - Recognition no longer records the learner's pick (`/recognitions/selection`), so calibration loses that signal. A correction from the lesson page could restore it later.
 - Safety for free subjects rests on a word list. It can miss unusual wording and over-warn on rare look-alikes. The classifier in #67 replaces it.
 - Stand-in subjects have no curated facts, so their lessons lean more on request-time evidence and model knowledge, with the disclaimer ADR 0011 requires.

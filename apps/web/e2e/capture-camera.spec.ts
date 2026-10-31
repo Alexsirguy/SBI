@@ -24,9 +24,7 @@ test("take a photo opens a live camera in the page and the snap goes through the
 
   await camera.getByRole("button", { name: "Snap" }).click();
   await expect(camera).toHaveCount(0);
-  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Ready:", { timeout: 15000 });
-  await expect(page.getByRole("region", { name: "Photo check" })).toBeVisible();
+  await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
 });
 

@@ -44,64 +44,45 @@ async function selectPatternedPhoto(page: Page, pattern: Pattern) {
   }, pattern);
 }
 
-test("sharp, well-framed photo passes every check", async ({ page }) => {
+test("a good photo shows no check results at all", async ({ page }) => {
   await page.goto("/capture");
   await selectPatternedPhoto(page, "checker");
-  const check = page.getByLabel("Photo check");
+  await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
 
-  await expect(check).toContainText("Sharpness: good", { timeout: 15000 });
-  await expect(check).toContainText("Exposure: good");
-  await expect(check).toContainText("Object size: good");
+  await expect(page.getByText("This photo may be hard to recognise")).toHaveCount(0);
+  await expect(page.getByText(/: good/)).toHaveCount(0);
 });
 
-test("plain photo gets actionable retake guidance without blocking upload", async ({ page }) => {
+test("a plain photo shows only what to fix, without blocking upload", async ({ page }) => {
   await page.goto("/capture");
   await selectPatternedPhoto(page, "flat");
-  const check = page.getByLabel("Photo check");
+  const issues = page.locator(".photo-issues");
 
-  await expect(check).toContainText("Hold the camera still", { timeout: 15000 });
-  await expect(check).toContainText("Move closer");
+  await expect(issues).toContainText("Hold the camera still", { timeout: 15000 });
+  await expect(issues).toContainText("Move closer");
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Choose another photo" })).toBeVisible();
+  await expect(page.getByRole("form", { name: "Photo capture" }).getByRole("status")).toHaveText(
+    "Photo ready to upload, though it may be hard to recognise.",
+  );
+  await expectNoAxeViolations(page);
 });
 
 test("overexposed photo advises against glare", async ({ page }) => {
   await page.goto("/capture");
   await selectPatternedPhoto(page, "white");
 
-  await expect(page.getByLabel("Photo check")).toContainText("too bright", { timeout: 15000 });
+  await expect(page.getByText("too bright")).toBeVisible({ timeout: 15000 });
 });
 
 test("underexposed photo advises finding better light", async ({ page }) => {
   await page.goto("/capture");
   await selectPatternedPhoto(page, "black");
 
-  await expect(page.getByLabel("Photo check")).toContainText("too dark", { timeout: 15000 });
+  await expect(page.getByText("too dark")).toBeVisible({ timeout: 15000 });
 });
 
-test("guidance sits in a live region so screen readers announce it", async ({ page }) => {
-  await page.goto("/capture");
-  await selectPatternedPhoto(page, "flat");
-  const check = page.getByLabel("Photo check");
-
-  await expect(check).toContainText("Hold the camera still", { timeout: 15000 });
-  await expect(page.locator('[aria-live="polite"]')).toContainText("Hold the camera still");
-  await expectNoAxeViolations(page);
-});
-
-test("cropping re-runs the checks on the cropped photo", async ({ page }) => {
-  await page.goto("/capture");
-  await selectPatternedPhoto(page, "checker");
-  const check = page.getByLabel("Photo check");
-  await expect(check).toContainText("Sharpness: good", { timeout: 15000 });
-
-  await page.getByLabel("Width (px)").fill("10");
-  await page.getByLabel("Height (px)").fill("10");
-  await page.getByRole("button", { name: "Apply crop" }).click();
-  await expect(check).toContainText("too small to recognise", { timeout: 15000 });
-  await expect(check).toContainText("Hold the camera still");
-});
-
-test("checks that cannot run say so instead of failing silently", async ({ page }) => {
+test("checks that cannot run never stop the photo being used", async ({ page }) => {
   await page.addInitScript(() => {
     CanvasRenderingContext2D.prototype.getImageData = () => {
       throw new Error("blocked by privacy settings");
@@ -110,8 +91,6 @@ test("checks that cannot run say so instead of failing silently", async ({ page 
   await page.goto("/capture");
   await selectPatternedPhoto(page, "checker");
 
-  await expect(page.getByLabel("Photo check")).toContainText("We couldn't check this photo", {
-    timeout: 15000,
-  });
+  await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
 });

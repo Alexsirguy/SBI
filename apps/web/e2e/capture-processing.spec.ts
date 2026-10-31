@@ -37,16 +37,6 @@ async function selectGeneratedPhoto(page: Page, width: number, height: number) {
   );
 }
 
-const CROP_LABELS = { height: "Height (px)", width: "Width (px)", x: "Left (px)", y: "Top (px)" };
-
-async function setCrop(page: Page, values: Partial<Record<keyof typeof CROP_LABELS, string>>) {
-  for (const [name, value] of Object.entries(values)) {
-    await page
-      .getByLabel(CROP_LABELS[name as keyof typeof CROP_LABELS], { exact: true })
-      .fill(value);
-  }
-}
-
 // Builds a JPEG whose pixels are landscape but whose EXIF says "rotate 90° clockwise".
 async function selectRotatedJpeg(page: Page, width: number, height: number) {
   await page.evaluate(
@@ -82,76 +72,27 @@ async function selectRotatedJpeg(page: Page, width: number, height: number) {
   );
 }
 
-test("large photo is normalised down to the dimension cap as JPEG", async ({ page }) => {
+test("a large photo is normalised to the size cap as JPEG, without showing the numbers", async ({
+  page,
+}) => {
   await page.goto("/capture");
   await selectGeneratedPhoto(page, 2000, 1000);
 
-  await expect(page.getByRole("form", { name: "Photo capture" }).getByRole("status")).toContainText(
-    "Ready: 1600 by 800 pixels, JPEG",
-    { timeout: 15000 },
-  );
-  await expect(page.getByAltText("Preview of the photo to upload")).toBeVisible();
+  const preview = page.getByAltText("Your photo");
+  await expect(preview).toHaveAttribute("data-width", "1600", { timeout: 15000 });
+  await expect(preview).toHaveAttribute("data-height", "800");
+  await expect(preview).toHaveAttribute("data-type", "image/jpeg");
+  await expect(page.getByText(/1600 by 800|pixels/)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
-});
-
-test("crop and retake flow updates and resets the prepared photo", async ({ page }) => {
-  await page.goto("/capture");
-  await selectGeneratedPhoto(page, 800, 600);
-  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Ready: 800 by 600 pixels", { timeout: 15000 });
-
-  await setCrop(page, { height: "300", width: "400", x: "100", y: "50" });
-  await page.getByRole("button", { name: "Apply crop" }).click();
-  await expect(status).toContainText("Ready: 400 by 300 pixels", { timeout: 15000 });
-
-  await page.getByRole("button", { name: "Retake or choose another" }).click();
-  await expect(page.getByRole("button", { name: "Upload photo" })).toBeDisabled();
-  await expect(page.getByAltText("Preview of the photo to upload")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Take a photo" })).toBeFocused();
-});
-
-test("repeated crops start from the original rather than the previous crop", async ({ page }) => {
-  await page.goto("/capture");
-  await selectGeneratedPhoto(page, 800, 600);
-  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Ready: 800 by 600 pixels", { timeout: 15000 });
-
-  await setCrop(page, { height: "100", width: "100" });
-  await page.getByRole("button", { name: "Apply crop" }).click();
-  await expect(status).toContainText("Ready: 100 by 100 pixels", { timeout: 15000 });
-  await setCrop(page, { height: "600", width: "800" });
-  await page.getByRole("button", { name: "Apply crop" }).click();
-  await expect(status).toContainText("Ready: 800 by 600 pixels", { timeout: 15000 });
-});
-
-test("crop area can be moved and resized with the keyboard", async ({ page }) => {
-  await page.goto("/capture");
-  await selectGeneratedPhoto(page, 800, 600);
-  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Ready: 800 by 600 pixels", { timeout: 15000 });
-
-  const area = page.getByRole("button", { name: /^Crop area/ });
-  await area.focus();
-  await page.keyboard.press("Shift+ArrowLeft");
-  await page.keyboard.press("Shift+ArrowUp");
-  await page.keyboard.press("ArrowRight");
-  await expect(page.getByLabel("Width (px)")).toHaveValue("784");
-  await expect(page.getByLabel("Height (px)")).toHaveValue("584");
-  await expect(page.getByLabel("Left (px)")).toHaveValue("16");
-
-  await page.keyboard.press("Tab");
-  await page.getByRole("button", { name: "Apply crop" }).press("Enter");
-  await expect(status).toContainText("Ready: 784 by 584 pixels", { timeout: 15000 });
 });
 
 test("EXIF orientation is applied so sideways photos come out upright", async ({ page }) => {
   await page.goto("/capture");
   await selectRotatedJpeg(page, 400, 200);
 
-  await expect(page.getByRole("form", { name: "Photo capture" }).getByRole("status")).toContainText(
-    "Ready: 200 by 400 pixels",
-    { timeout: 15000 },
-  );
+  const preview = page.getByAltText("Your photo");
+  await expect(preview).toHaveAttribute("data-width", "200", { timeout: 15000 });
+  await expect(preview).toHaveAttribute("data-height", "400");
 });
 
 test("normalisation compresses a large photo below its original size", async ({ page }) => {
@@ -186,56 +127,24 @@ test("normalisation compresses a large photo below its original size", async ({ 
         }, "image/png");
       }),
   );
-  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Ready:", { timeout: 15000 });
-  const match = /\(([\d.]+) (B|KB|MB)\)/.exec((await status.textContent()) ?? "");
-  const factor = { B: 1, KB: 1024, MB: 1024 * 1024 }[match?.[2] as "B" | "KB" | "MB"];
-  expect(Number(match?.[1]) * factor).toBeLessThan(originalBytes);
+  const preview = page.getByAltText("Your photo");
+  await expect(preview).toBeVisible({ timeout: 15000 });
+  expect(Number(await preview.getAttribute("data-bytes"))).toBeLessThan(originalBytes);
 });
 
-test("invalid crop values explain the problem instead of failing silently", async ({ page }) => {
+test("choosing another photo goes back to the photo choice", async ({ page }) => {
   await page.goto("/capture");
   await selectGeneratedPhoto(page, 800, 600);
-  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Ready: 800 by 600 pixels", { timeout: 15000 });
+  await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
 
-  await setCrop(page, { height: "0", width: "0", x: "0", y: "0" });
-  await page.getByRole("button", { name: "Apply crop" }).click();
-  await expect(page.getByRole("form", { name: "Photo capture" }).getByRole("alert")).toContainText(
-    "positive width and height",
-  );
+  await page.getByRole("button", { name: "Choose another photo" }).click();
+  await expect(page.getByAltText("Your photo")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Take a photo" })).toBeFocused();
 });
 
 test("prepared capture page has no detectable accessibility violations", async ({ page }) => {
   await page.goto("/capture");
   await selectGeneratedPhoto(page, 800, 600);
-  await expect(page.getByRole("form", { name: "Photo capture" }).getByRole("status")).toContainText(
-    "Ready: 800 by 600 pixels",
-    { timeout: 15000 },
-  );
-
+  await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
   await expectNoAxeViolations(page);
-});
-
-test("crop area can be resized by dragging its corner handle", async ({ page }) => {
-  await page.goto("/capture");
-  await selectGeneratedPhoto(page, 800, 600);
-  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Ready: 800 by 600 pixels", { timeout: 15000 });
-
-  const cropArea = page.getByRole("button", { name: /^Crop area/ });
-  // Mouse moves only reach what is on screen, so bring the preview into view as a learner would.
-  await cropArea.scrollIntoViewIfNeeded();
-  const box = await cropArea.boundingBox();
-  if (!box) {
-    throw new Error("crop area not rendered");
-  }
-  // The preview is 320px wide for an 800px image, so 40 screen pixels is 100 image pixels.
-  await page.mouse.move(box.x + box.width - 2, box.y + box.height - 2);
-  await page.mouse.down();
-  await page.mouse.move(box.x + box.width - 42, box.y + box.height - 42, { steps: 4 });
-  await page.mouse.up();
-
-  await expect(page.getByLabel("Width (px)")).toHaveValue("700");
-  await expect(page.getByLabel("Height (px)")).toHaveValue("500");
 });

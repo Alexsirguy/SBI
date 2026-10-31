@@ -42,46 +42,44 @@ test("keyboard focus is clearly visible on every kind of control", async ({ page
   await expectVisibleFocus(page.getByRole("button", { name: "Start lesson" }));
 
   await selectPhoto(page);
-  const area = page.getByRole("button", { name: /^Crop area/ });
-  await expect(area).toBeVisible({ timeout: 15000 });
-  await area.focus();
-  await page.keyboard.press("Shift+ArrowLeft");
-  await expectVisibleFocus(area);
+  const upload = page.getByRole("button", { name: "Upload photo" });
+  await expect(upload).toBeVisible({ timeout: 15000 });
+  await tabTo(page, upload);
+  await expectVisibleFocus(upload);
 });
 
 test("the whole photo journey works from the keyboard alone", async ({ page }) => {
   await mockUploads(page);
-  await mockRecognition(page, { candidates: [], subject: "Bicycle", next: { kind: "describe" } });
+  await mockRecognition(page, {
+    candidates: [],
+    options: [
+      { label: "Bicycle", certainty: "likely" },
+      { label: "Unicycle", certainty: "unsure" },
+    ],
+    next: { kind: "describe" },
+  });
   await page.goto("/capture");
   await selectPhoto(page);
-  const form = page.getByRole("form", { name: "Photo capture" });
-  await expect(form.getByRole("status")).toContainText("Ready: 800 by 600", { timeout: 15000 });
-
-  await tabTo(page, page.getByRole("button", { name: /^Crop area/ }));
-  await page.keyboard.press("Shift+ArrowLeft");
-  await tabTo(page, page.getByRole("button", { name: "Apply crop" }));
-  await page.keyboard.press("Enter");
-  await expect(form.getByRole("status")).toContainText("Ready: 784 by 600", { timeout: 15000 });
 
   await tabTo(page, page.getByRole("button", { name: "Upload photo" }));
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Which one is it?" })).toBeFocused();
+  await tabTo(page, page.getByRole("button", { name: /^Bicycle/ }));
   await page.keyboard.press("Enter");
   await expectLessonOpened(page, "Bicycle");
 });
 
-test("busy and disabled states are explained to assistive technology", async ({ page }) => {
+test("busy states are explained to assistive technology", async ({ page }) => {
   await page.goto("/capture");
   const form = page.getByRole("form", { name: "Photo capture" });
-  const upload = page.getByRole("button", { name: "Upload photo" });
-  await expect(upload).toHaveAccessibleDescription("Take or choose a photo first.");
   await expect(form).toHaveAttribute("aria-busy", "false");
 
   await selectPhoto(page);
-  await expect(form.getByRole("status")).toContainText("Ready", { timeout: 15000 });
+  await expect(form.getByRole("status")).toHaveText("Photo ready to upload.", { timeout: 15000 });
   await expect(form).toHaveAttribute("aria-busy", "false");
-  await expect(upload).not.toHaveAttribute("aria-describedby");
 });
 
-test("error and uploaded states have no accessibility violations", async ({ page }) => {
+test("error and recognised states have no accessibility violations", async ({ page }) => {
   await page.goto("/capture");
   await page
     .locator('input[name="upload"]')
