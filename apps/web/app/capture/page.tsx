@@ -1,6 +1,6 @@
 import { CaptureForm } from "./capture-form";
 import { PHOTO_RETENTION_DAYS } from "./limits";
-import { ConfirmLesson } from "./confirm/confirm-lesson";
+import { DescribeForm } from "./confirm/describe-form";
 import "./capture.css";
 
 export default function CapturePage() {
@@ -30,7 +30,7 @@ export default function CapturePage() {
       <CaptureForm />
       <section aria-labelledby="text-entry" className="capture-path">
         <h2 id="text-entry">No image? Describe it instead</h2>
-        <ConfirmLesson headingLevel={3} />
+        <DescribeForm />
       </section>
     </main>
   );

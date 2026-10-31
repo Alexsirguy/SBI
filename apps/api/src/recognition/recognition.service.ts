@@ -101,14 +101,20 @@ export class RecognitionService {
     const earlier = await this.results.findByImage(await sha256Hex(image), now);
     let ranked: RankedRecognition;
     let result: RecognitionResult;
+    let labels: NonNullable<RecognitionResult["labels"]>;
     // Each recognition is a paid call that sends the photo out, so a repeat reuses the stored answer.
-    if (earlier?.modelVersion.endsWith(`+${RECOGNITION_PROMPT_VERSION}`)) {
+    // A result stored before labels were kept would offer no options, so it is asked again.
+    if (
+      earlier?.modelVersion.endsWith(`+${RECOGNITION_PROMPT_VERSION}`) &&
+      earlier.labels !== undefined
+    ) {
       result = copyRecognitionResult(earlier, { now, retention, sessionId });
       ranked = {
         calibrationVersion: result.calibrationVersion,
         candidates: result.candidates,
         unmapped: [],
       };
+      labels = result.labels ?? [];
     } else {
       let outcome;
       try {
@@ -119,6 +125,7 @@ export class RecognitionService {
       }
       ranked = rankCandidates(outcome, this.taxonomy, this.env.ranking);
       result = await buildRecognitionResult({ image, now, outcome, ranked, retention, sessionId });
+      labels = result.labels ?? [];
       for (const label of ranked.unmapped) {
         await this.observations.recordGap(label, "recognition-label");
       }
@@ -137,6 +144,7 @@ export class RecognitionService {
         })),
       })),
       otherLabels: [...new Set(ranked.unmapped.map(sentenceCase))].slice(0, 3),
+      options: labels.slice(0, 3).map(({ label, certainty }) => ({ label, certainty })),
       next: toNextStep(planClarification(ranked, this.taxonomy, this.env.ranking)),
     };
   }

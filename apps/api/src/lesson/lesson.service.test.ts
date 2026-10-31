@@ -38,6 +38,10 @@ const REQUEST: LessonRequest = {
   fresh: false,
 };
 
+function subjectRequest(subject: string): LessonRequest {
+  return { ...REQUEST, taxonomyId: undefined, subject };
+}
+
 function page(publisher: string, url: string): FetchedSource {
   return {
     title: publisher,
@@ -397,6 +401,38 @@ describe("LessonService", () => {
     expect(lesson?.claims.map((claim) => claim.claimId)).toEqual([EVIDENCE.claim.claimId]);
     expect(lesson?.concepts.map((concept) => concept.label)).toEqual(["Kettle"]);
     expect(lessons).toHaveLength(1);
+  });
+
+  it("teaches a subject the catalogue does not have, under its own stable id", async () => {
+    const { lessons, repo } = memoryLessons();
+    const target = new LessonService(
+      scriptedProvider(),
+      taxonomy(),
+      repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([EVIDENCE.claim]),
+    );
+    const events = await collect(target, subjectRequest("camping kettle"));
+    const lesson = events.find((event) => event.type === "lesson");
+    expect(lesson?.type === "lesson" && lesson.data.taxonomyId).toBe("subject.camping-kettle");
+    expect(lessons.at(-1)?.concepts.map((concept) => concept.label)).toEqual(["Camping kettle"]);
+  });
+
+  it("serves a free subject on a high-risk topic with that topic's safety notice", async () => {
+    const target = new LessonService(
+      scriptedProvider(),
+      taxonomy(),
+      memoryLessons().repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([EVIDENCE.claim]),
+    );
+    const events = await collect(target, subjectRequest("oven cleaner spray"));
+    const lesson = events.find((event) => event.type === "lesson");
+    if (lesson?.type !== "lesson") throw new Error("no lesson");
+    expect(lesson.data.safetyClass).toBe("high");
+    expect(lesson.data.disclaimers?.[0]?.message).toContain("Household chemicals");
   });
 
   it("streams research progress and the first checked answer while evidence is gathered", async () => {

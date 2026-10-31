@@ -1,5 +1,5 @@
 import { expectNoAxeViolations } from "./a11y";
-import { mockApi, mockUploads, PHOTO_KEY } from "./mock-api";
+import { mockApi, mockUploads, pressDone } from "./mock-api";
 import { expect, test } from "@playwright/test";
 
 // 1x1 transparent PNG; content is irrelevant, only name/size/type are validated.
@@ -31,7 +31,8 @@ test("capture page offers camera and upload entries with limits and privacy cue"
     "accept",
     ".jpg,.jpeg,.png,.heic,.heif,image/jpeg,image/png,image/heic,image/heif",
   );
-  await expect(page.getByRole("button", { name: "Upload photo" })).toBeDisabled();
+  // Upload appears once there is a photo to upload, as in the prototype.
+  await expect(page.getByRole("button", { name: "Upload photo" })).toHaveCount(0);
 });
 
 test("capture page validates the selected photo", async ({ page }) => {
@@ -42,14 +43,18 @@ test("capture page validates the selected photo", async ({ page }) => {
   const alert = form.getByRole("alert");
 
   await upload.setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
-  await expect(status).toContainText("Ready: 1 by 1 pixels, JPEG", { timeout: 15000 });
+
+  await pressDone(page);
+  await expect(page.getByAltText("Your photo")).toBeVisible({ timeout: 15000 });
+  await expect(status).toContainText("Photo ready to upload");
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
+  await page.getByRole("button", { name: "Choose another photo" }).click();
 
   await upload.setInputFiles({ buffer: tinyPng, mimeType: "text/plain", name: "notes.txt" });
   await expect(alert).toContainText("is not a photo");
   await expect(upload).toHaveAttribute("aria-invalid", "true");
   await expect(upload).toHaveAccessibleDescription(/is not a photo/);
-  await expect(page.getByRole("button", { name: "Upload photo" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Upload photo" })).toHaveCount(0);
 
   await upload.setInputFiles({ buffer: Buffer.alloc(0), mimeType: "image/png", name: "empty.png" });
   await expect(alert).toContainText("is empty");
@@ -60,7 +65,7 @@ test("capture page validates the selected photo", async ({ page }) => {
     name: "huge.jpg",
   });
   await expect(alert).toContainText("is too large");
-  await expect(page.getByRole("button", { name: "Upload photo" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Upload photo" })).toHaveCount(0);
 });
 
 test("capture page has no detectable accessibility violations", async ({ page }) => {
@@ -78,6 +83,8 @@ test("upload reports honestly when private storage is unavailable", async ({ pag
   await page
     .locator('input[name="upload"]')
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
+
+  await pressDone(page);
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled({ timeout: 15000 });
   await page.getByRole("button", { name: "Upload photo" }).click();
 
@@ -87,23 +94,20 @@ test("upload reports honestly when private storage is unavailable", async ({ pag
   );
 });
 
-test("after upload the learner can choose to keep the photo", async ({ page }) => {
-  const kept: unknown[] = [];
+test("uploading shows the prototype's loader over the learner's photo", async ({ page }) => {
   await mockUploads(page);
-  await mockApi(page, "/photos/keep", (body) => {
-    kept.push(body);
-    return { json: { kept: true } };
-  });
+  // Recognition is held open, so the loader stays up long enough to check.
+  await page.route("**/recognitions", () => undefined);
   await page.goto("/capture");
   await page
     .locator('input[name="upload"]')
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
-  await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
-  const status = page.getByRole("form", { name: "Photo capture" }).getByRole("status");
-  await expect(status).toContainText("Uploaded, with location and camera details removed");
 
-  await page.getByRole("button", { name: "Keep this photo" }).click();
-  await expect(status).toContainText("will not be deleted automatically");
-  expect(kept).toEqual([{ key: PHOTO_KEY }]);
+  await pressDone(page);
+  await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
+
+  await expect(page.getByRole("heading", { name: "Looking closely…" })).toBeVisible();
+  await expect(page.locator(".scanner").getByAltText("Your photo")).toBeVisible();
   await expect(page.getByRole("button", { name: "Keep this photo" })).toHaveCount(0);
+  await expectNoAxeViolations(page);
 });

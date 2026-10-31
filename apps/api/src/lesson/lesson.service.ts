@@ -58,6 +58,7 @@ import {
   TAXONOMY,
 } from "../tokens";
 import { createEventQueue } from "./event-queue";
+import { resolveSubject } from "./subject";
 import { lessonSources } from "./sources";
 import { UserFacingException } from "../common/user-facing.exception";
 
@@ -265,12 +266,13 @@ export class LessonService {
   async *streamLesson(request: LessonRequest): AsyncGenerator<LessonStreamEvent> {
     const provider = this.provider;
     if (!provider) throw new UserFacingException(UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
-    const entry = this.taxonomy.get(request.taxonomyId);
+    const entry = resolveSubject(request, this.taxonomy);
     if (!entry) throw new UserFacingException(UNKNOWN_CATEGORY, HttpStatus.NOT_FOUND);
+    const taxonomyId = entry.id;
     const taken = new Set<string>();
-    const concepts = this.taxonomy
-      .concepts(request.taxonomyId)
-      .map((label) => ({ conceptId: slug(label, taken), label, prerequisites: [] as string[] }));
+    const concepts = (this.taxonomy.get(taxonomyId) ? this.taxonomy.concepts(taxonomyId) : []).map(
+      (label) => ({ conceptId: slug(label, taken), label, prerequisites: [] as string[] }),
+    );
     // Entries without taxonomy concepts are still teachable; the plan supplies the principles.
     if (concepts.length === 0) {
       concepts.push({ conceptId: slug(entry.label, taken), label: entry.label, prerequisites: [] });
@@ -289,7 +291,7 @@ export class LessonService {
     const conceptIds = concepts.map((concept) => concept.conceptId);
     const intent = {
       question: request.question,
-      taxonomyId: request.taxonomyId,
+      taxonomyId,
       conceptIds,
       audience: request.audience,
       readingLevel: request.readingLevel,
@@ -345,7 +347,7 @@ export class LessonService {
       };
       const gathering = this.gather(
         {
-          taxonomyId: request.taxonomyId,
+          taxonomyId,
           objectLabel: entry.label,
           question: request.question,
           concepts: concepts.map((concept) => concept.label),
@@ -416,7 +418,7 @@ export class LessonService {
           lessonId,
           intentSignature,
           question: request.question,
-          taxonomyId: request.taxonomyId,
+          taxonomyId,
           locale: request.locale,
           audience: [request.audience],
           readingLevel: request.readingLevel,
@@ -497,7 +499,7 @@ export class LessonService {
           return { lesson: routed.lesson, report: heldForReview(report, routed.decision.reasons) };
         },
         {
-          taxonomyIds: [request.taxonomyId, ...(entry.parentId ? [entry.parentId] : [])],
+          taxonomyIds: [taxonomyId, ...(entry.parentId ? [entry.parentId] : [])],
           locale: request.locale,
           audience: request.audience,
           safetyClass,

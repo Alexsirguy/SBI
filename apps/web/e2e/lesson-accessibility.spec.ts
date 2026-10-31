@@ -31,11 +31,14 @@ test("the whole lesson can be read and used from the keyboard alone", async ({ p
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
 
-  // Section list jump; Tab then carries on from the section it jumped to, in reading order.
-  const nav = page.getByRole("navigation", { name: "Lesson sections" });
-  await tabTo(page, nav.getByRole("link", { name: "Reading stones" }));
+  // "Show me why" opens the next step and moves the reader to it; the rest open in one go.
+  await tabTo(page, page.getByRole("button", { name: "Show me why" }));
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/#section-history$/);
+  await expect(
+    page.locator(".rail").getByRole("heading", { name: "Glass bends light" }),
+  ).toBeFocused();
+  await tabTo(page, page.getByRole("button", { name: "Show the whole lesson" }));
+  await page.keyboard.press("Enter");
 
   // Check your thinking: type, submit with Enter on the button, and focus moves to the explanation.
   const check = page.getByRole("region", { name: "Does the word grow?" });
@@ -45,10 +48,11 @@ test("the whole lesson can be read and used from the keyboard alone", async ({ p
   await page.keyboard.press("Enter");
   await expect(check.locator(".check-feedback")).toBeFocused();
 
-  // A citation marker leads to the source it names.
+  // A marker in the evidence at the end leads to the source it names.
   const marker = page
-    .getByRole("region", { name: "Angles, not sizes" })
-    .getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" });
+    .getByRole("region", { name: "How do we know?" })
+    .getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" })
+    .first();
   await tabTo(page, marker);
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#source-1$/);
@@ -81,6 +85,7 @@ test("changing depth or age keeps focus on the control while the new lesson load
   await expect(page.getByRole("radio", { name: /Deeper/ })).toBeFocused();
   await expect(page.getByRole("radio", { name: /Deeper/ })).toBeChecked();
 
+  await page.getByText("Age band", { exact: true }).click();
   const age = page.getByLabel("Age band (optional)");
   await age.focus();
   await age.selectOption("teen");
@@ -92,6 +97,7 @@ test("feedback moves focus to its confirmation, and to the field a report is mis
   page,
 }) => {
   await page.goto(LESSON_URL);
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   const rate = page.getByRole("form", { name: "Rate this lesson" });
   await rate.getByRole("group", { name: "How helpful was it?" }).getByLabel("5 Very").check();
   await rate.getByRole("group", { name: "How clear was it?" }).getByLabel("5 Very").check();
@@ -109,26 +115,14 @@ test("feedback moves focus to its confirmation, and to the field a report is mis
   await expect(page.getByText("Thanks. A reviewer will look at this lesson.")).toBeFocused();
 });
 
-test("the section list marks the section being read", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto(LESSON_URL);
-  await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
-  const nav = page.getByRole("navigation", { name: "Lesson sections" });
-  await nav.getByRole("link", { name: "Reading stones" }).click();
-  await expect(nav.getByRole("link", { name: "Reading stones" })).toHaveAttribute(
-    "aria-current",
-    "location",
-  );
-  await expect(nav.locator('[aria-current="location"]')).toHaveCount(1);
-});
-
 test("every reader control shows a clear focus outline", async ({ page }) => {
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+  await page.getByText("Age band", { exact: true }).click();
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   for (const target of [
     page.getByRole("radio", { name: /Explore/ }),
     page.getByLabel("Age band (optional)"),
-    page.getByRole("navigation", { name: "Lesson sections" }).getByRole("link").first(),
     page.getByRole("link", { name: /^Source 1/ }).first(),
     page.getByLabel("Your thinking (optional, not saved or marked)"),
     page.getByRole("button", { name: "Compare with the explanation" }),
@@ -143,6 +137,7 @@ test("meaning never rests on colour alone", async ({ page }) => {
   await page.emulateMedia({ forcedColors: "active" });
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   // Each distinction the styling makes is also written out in words.
   await expect(page.getByRole("region", { name: "Small print looks larger" })).toContainText(
     "What you can observe",
@@ -150,7 +145,7 @@ test("meaning never rests on colour alone", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Glass bends light" })).toContainText(
     "Explanation",
   );
-  await expect(page.getByRole("region", { name: "Small print looks larger" })).toContainText(
+  await expect(page.getByRole("region", { name: "How do we know?" })).toContainText(
     "Based on limited evidence:",
   );
   await expect(page.getByRole("complementary", { name: "Before you read" })).toContainText("Note");
@@ -160,9 +155,10 @@ test("meaning never rests on colour alone", async ({ page }) => {
 test("landmarks and headings give screen readers the lesson's outline", async ({ page }) => {
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   await expect(page.getByRole("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("navigation", { name: "Lesson sections" })).toBeVisible();
+  await expect(page.getByRole("list", { name: /Lesson, 8 of 8 steps open/ })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "Before you read" })).toBeVisible();
   // Every module is its own named region, so a screen reader can jump between them.
   for (const section of SAMPLE_LESSON.sections) {
@@ -172,11 +168,11 @@ test("landmarks and headings give screen readers the lesson's outline", async ({
   await expect(page.getByRole("link", { name: "[1]" })).toHaveCount(0);
 });
 
-test("while loading, the section list says which sections are still coming", async ({ page }) => {
+test("while writing, the loader is announced and passes accessibility checks", async ({ page }) => {
   await page.unroute("**/lessons");
   await mockLesson(page, null);
   await page.goto(LESSON_URL);
-  const nav = page.getByRole("navigation", { name: "Lesson sections" });
-  await expect(nav.getByRole("listitem").first()).toContainText("What you're seeing (loading)");
+  await expect(page.getByRole("heading", { name: "Writing your lesson…" })).toBeVisible();
+  await expect(page.getByRole("status").first()).toHaveText("Starting your lesson…");
   await expectNoAxeViolations(page);
 });

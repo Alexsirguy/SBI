@@ -1,7 +1,7 @@
 "use client";
 
-import type { Claim, Lesson, LessonSection, LessonSources } from "@sbi/contracts";
-import { createContext, useContext } from "react";
+import type { Claim, Lesson, LessonSources } from "@sbi/contracts";
+import { MODULE_LABELS } from "./modules/labels";
 
 interface CitationIndex {
   claims: Map<string, Claim>;
@@ -9,8 +9,6 @@ interface CitationIndex {
   numbers: Map<string, number>;
   titles: Map<string, string>;
 }
-
-const Citations = createContext<CitationIndex | null>(null);
 
 export function citationIndex(lesson: Lesson, sources: LessonSources | undefined): CitationIndex {
   const titles = new Map(sources?.sources.map((source) => [source.sourceId, source.title]));
@@ -26,60 +24,68 @@ export function citationIndex(lesson: Lesson, sources: LessonSources | undefined
   return { claims: new Map(lesson.claims.map((claim) => [claim.claimId, claim])), numbers, titles };
 }
 
-export const CitationProvider = Citations.Provider;
-
 export const sourceAnchor = (number: number) => `source-${number}`;
 
-// Model-knowledge claims are covered by the one lesson-level notice (ADR 0011), not per section.
 const STATUS_LABELS: Partial<Record<Claim["status"], string>> = {
   qualified: "Based on limited evidence",
   disputed: "Sources disagree",
   unsupported: "Not yet confirmed",
 };
 
-/** Markers for a section's sources and words for any claim that is not fully settled. */
-export function SectionCitations({ section }: { section: LessonSection }) {
-  const index = useContext(Citations);
-  if (!index) return null;
-  const claims = section.claimIds.flatMap((id) => index.claims.get(id) ?? []);
-  const numbers = [
-    ...new Set(
-      claims.flatMap((claim) => claim.sourceIds.flatMap((id) => index.numbers.get(id) ?? [])),
-    ),
-  ].sort((a, b) => a - b);
+/** Every statement the lesson rests on, by section, with its status and sources; read last. */
+export function EvidenceList({ lesson, sources }: { lesson: Lesson; sources?: LessonSources }) {
+  const index = citationIndex(lesson, sources);
   const sourceOf = new Map([...index.numbers].map(([id, number]) => [number, id]));
-  const unsettled = claims.filter(
-    (claim) => claim.origin !== "model" && STATUS_LABELS[claim.status],
-  );
-  if (numbers.length === 0 && unsettled.length === 0) return null;
+  const seen = new Set<string>();
+  const groups = lesson.sections.flatMap((section) => {
+    const claims = section.claimIds.flatMap((id) => {
+      const claim = index.claims.get(id);
+      if (!claim || seen.has(id)) return [];
+      seen.add(id);
+      return [claim];
+    });
+    return claims.length > 0 ? [{ section, claims }] : [];
+  });
+  if (groups.length === 0) return null;
   return (
-    <div className="section-citations">
-      {numbers.length > 0 ? (
-        <p>
-          Sources:{" "}
-          {numbers.map((number) => (
-            <a
-              key={number}
-              href={`#${sourceAnchor(number)}`}
-              className="citation-marker"
-              aria-label={`Source ${number}: ${index.titles.get(sourceOf.get(number) ?? "") ?? ""}`}
-            >
-              [{number}]
-            </a>
-          ))}
-        </p>
-      ) : null}
-      {unsettled.length > 0 ? (
-        <ul className="claim-status">
-          {unsettled.map((claim) => (
-            <li key={claim.claimId}>
-              <strong>{STATUS_LABELS[claim.status]}:</strong> {claim.text}
-              {claim.uncertainty ? ` ${claim.uncertainty}` : ""}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
+    <section aria-labelledby="evidence-heading" className="lesson-evidence">
+      <h2 id="evidence-heading">How do we know?</h2>
+      <p>Each statement in the lesson, and where it comes from.</p>
+      {groups.map(({ section, claims }) => (
+        <div key={section.sectionId}>
+          <h3>{section.heading ?? MODULE_LABELS[section.module]}</h3>
+          <ul>
+            {claims.map((claim) => {
+              const numbers = [
+                ...new Set(claim.sourceIds.flatMap((id) => index.numbers.get(id) ?? [])),
+              ].sort((a, b) => a - b);
+              const status = claim.origin === "model" ? undefined : STATUS_LABELS[claim.status];
+              return (
+                <li key={claim.claimId}>
+                  {status ? <strong>{status}: </strong> : null}
+                  {claim.text}
+                  {claim.uncertainty && status ? ` ${claim.uncertainty}` : ""}{" "}
+                  {claim.origin === "model" ? (
+                    <span className="evidence-origin">(the AI&apos;s general knowledge)</span>
+                  ) : (
+                    numbers.map((number) => (
+                      <a
+                        key={number}
+                        href={`#${sourceAnchor(number)}`}
+                        className="citation-marker"
+                        aria-label={`Source ${number}: ${index.titles.get(sourceOf.get(number) ?? "") ?? ""}`}
+                      >
+                        [{number}]
+                      </a>
+                    ))
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
   );
 }
 

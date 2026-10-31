@@ -18,53 +18,86 @@ const FULL = sseFrames([
   { type: "visuals", data: { lessonId: SAMPLE_LESSON.lessonId, visuals: [] } },
 ]);
 
-test("shows section placeholders and progress while the lesson is on its way", async ({ page }) => {
+test("shows the prototype's writing loader until the quick answer arrives", async ({ page }) => {
   await mockLesson(page, null);
   await page.goto(LESSON_URL);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lesson: Magnifying glass");
   await expect(page.getByRole("status")).toHaveText("Starting your lesson…");
-  const nav = page.getByRole("navigation", { name: "Lesson sections" });
-  await expect(nav.getByRole("listitem")).toHaveCount(8);
-  await expect(nav.getByRole("link")).toHaveCount(0);
-  await expect(page.locator(".lesson-sections")).toHaveAttribute("aria-busy", "true");
+  await expect(page.getByRole("heading", { name: "Writing your lesson…" })).toBeVisible();
+  await expect(page.locator(".scanner")).toContainText("Magnifying glass");
+  await expect(page.getByRole("region", { name: "Quick answer" })).toHaveCount(0);
   await expectNoAxeViolations(page);
 });
 
-test("reads the quick answer, notices and every section in order once streamed", async ({
+test("shows the quick answer as soon as it is ready, while the rest is written", async ({
+  page,
+}) => {
+  await mockLesson(
+    page,
+    sseFrames([
+      { type: "progress", data: { stage: "drafting", message: "Writing the lesson." } },
+      { type: "quick-answer", data: SAMPLE_ANSWER },
+    ]),
+  );
+  await page.goto(LESSON_URL);
+  await expect(page.getByRole("region", { name: "Quick answer" })).toContainText(
+    SAMPLE_ANSWER.shortAnswer,
+  );
+  await expect(page.getByRole("heading", { name: "Writing your lesson…" })).toHaveCount(0);
+});
+
+test("reads like the prototype: one notice, two open steps, then one step at a time", async ({
   page,
 }) => {
   await mockLesson(page, FULL);
   await page.goto(LESSON_URL);
   await expect(page.getByRole("status")).toHaveText("Lesson ready.");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(SAMPLE_LESSON.title);
-  await expect(page.getByRole("complementary", { name: "Before you read" })).toContainText(
-    "general knowledge",
-  );
-  await expect(page.getByRole("region", { name: "Quick answer" })).toContainText(
-    SAMPLE_ANSWER.shortAnswer,
-  );
-  const headings = SAMPLE_LESSON.sections.map((section) => section.heading ?? "");
-  await expect(page.getByRole("heading", { level: 2 })).toHaveText([
-    "Quick answer",
-    "In this lesson",
-    ...headings,
-    "Sources",
-    "Tell us what you think",
-  ]);
+  await expect(page.locator(".topic-chip")).toHaveText("Magnifying glass");
 
-  const nav = page.getByRole("navigation", { name: "Lesson sections" });
-  await nav.getByRole("link", { name: "Reading stones" }).click();
-  await expect(page).toHaveURL(/#section-history$/);
-  await expect(page.locator(".lesson-sections")).toHaveAttribute("aria-busy", "false");
+  // However many disclaimers the lesson carries, the learner sees one notice at the top.
+  const notices = page.getByRole("complementary", { name: "Before you read" });
+  await expect(notices).toHaveCount(1);
+  await expect(notices.locator(".sbi-notice")).toHaveCount(1);
+  await expect(notices).toContainText("general knowledge");
+
+  const [first, second, third, fourth] = SAMPLE_LESSON.sections;
+  const rail = page.locator(".rail");
+  await expect(rail.getByRole("heading", { level: 2 })).toHaveText([
+    first?.heading ?? "",
+    second?.heading ?? "",
+  ]);
+  // Evidence, sources and feedback wait until the last step is open.
+  await expect(page.getByRole("region", { name: "How do we know?" })).toHaveCount(0);
+  await expect(rail.locator("mark")).toContainText(second?.text ?? "");
+
+  await page.getByRole("button", { name: "Show me why" }).click();
+  await expect(rail.getByRole("heading", { name: third?.heading ?? "" })).toBeFocused();
+  await page
+    .getByRole("button", { name: `Next: ${(fourth?.heading ?? "").toLowerCase()}` })
+    .click();
+  await expect(rail.getByRole("heading", { name: fourth?.heading ?? "" })).toBeFocused();
+
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
+  await expect(rail.getByRole("heading", { level: 2 })).toHaveText(
+    SAMPLE_LESSON.sections.map((section) => section.heading ?? ""),
+  );
+  await expect(page.getByRole("button", { name: "Show the whole lesson" })).toHaveCount(0);
   await expectNoAxeViolations(page);
 });
 
-test("citation markers lead to the source list, which credits each source", async ({ page }) => {
+test("evidence and sources sit together at the end, and nowhere inside the steps", async ({
+  page,
+}) => {
   await mockLesson(page, FULL);
   await page.goto(LESSON_URL);
-  const seeing = page.getByRole("region", { name: "Small print looks larger" });
-  await expect(seeing).toContainText("Based on limited evidence");
-  await seeing.getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" }).click();
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
+  await expect(page.locator(".rail .citation-marker")).toHaveCount(0);
+
+  await expect(page.locator(".lesson-body > section").last()).toHaveClass(/lesson-feedback/);
+  const evidence = page.getByRole("region", { name: "How do we know?" });
+  await expect(evidence).toContainText("Based on limited evidence");
+  await evidence.getByRole("link", { name: "Source 1: 2.8: The Simple Magnifier" }).first().click();
   await expect(page).toHaveURL(/#source-1$/);
   const list = page.getByRole("region", { name: "Sources" });
   await expect(list.getByRole("listitem").first()).toContainText("CC BY 4.0");
@@ -77,6 +110,7 @@ test("check your thinking explains after the learner has had a go, without scori
 }) => {
   await mockLesson(page, FULL);
   await page.goto(LESSON_URL);
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   const check = page.getByRole("region", { name: "Does the word grow?" });
   await check
     .getByLabel("Your thinking (optional, not saved or marked)")
@@ -148,6 +182,7 @@ test("depth and age band request the matching lesson and last for the session", 
   await page.goto(LESSON_URL);
   const settings = page.getByRole("form", { name: "Lesson settings" });
   await expect(settings.getByRole("radio", { name: /Explore/ })).toBeChecked();
+  await settings.getByText("Age band", { exact: true }).click();
   await expect(settings.getByLabel("Age band (optional)")).toHaveValue("none");
 
   await settings.getByRole("radio", { name: /Deeper/ }).check();
@@ -178,6 +213,7 @@ test("rates the lesson and reports a problem tied to its version", async ({ page
     };
   });
   await page.goto(LESSON_URL);
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   const rate = page.getByRole("form", { name: "Rate this lesson" });
   await expect(rate.getByRole("button", { name: "Send rating" })).toBeDisabled();
   await rate.getByRole("group", { name: "How helpful was it?" }).getByLabel("4 Mostly").check();
@@ -204,9 +240,7 @@ test("rates the lesson and reports a problem tied to its version", async ({ page
   await expectNoAxeViolations(page);
 });
 
-test("names the object, its assumptions and objectives, and says when a lesson is reused", async ({
-  page,
-}) => {
+test("names the object and its assumptions, and says when a lesson is reused", async ({ page }) => {
   const requests: { fresh?: boolean; question: string }[] = [];
   const cached = sseFrames([
     { type: "quick-answer", data: { ...SAMPLE_ANSWER, kind: "cached" } },
@@ -235,17 +269,17 @@ test("names the object, its assumptions and objectives, and says when a lesson i
   const seeing = page.getByRole("region", { name: "Small print looks larger" });
   await expect(seeing).toContainText("Object: Magnifying glass");
   await expect(seeing).toContainText(SAMPLE_LESSON.assumptions[0] ?? "");
-  await expect(page.getByRole("region", { name: "In this lesson" })).toContainText(
-    SAMPLE_LESSON.learningObjectives[0] ?? "",
+  const provenance = page.locator(".provenance");
+  await expect(provenance).toContainText(
+    "written earlier for a similar question, on 30 October 2026",
   );
-  const answer = page.getByRole("region", { name: "Quick answer" });
-  await expect(answer).toContainText("written earlier for a similar question, on 30 October 2026");
   await expectNoAxeViolations(page);
 
-  await answer.getByRole("button", { name: "Get a fresh answer" }).click();
+  await provenance.getByRole("button", { name: "Get a fresh answer" }).click();
   await expect(page).toHaveURL(/fresh=1/);
   await expect.poll(() => requests.at(-1)?.fresh).toBe(true);
 
+  await page.getByRole("button", { name: "Show the whole lesson" }).click();
   const ask = page.getByRole("form", { name: "Ask your own question" });
   await ask.getByRole("button", { name: "Ask" }).click();
   await expect(ask.getByRole("alert")).toHaveText("Write a question of at least 3 characters.");
@@ -257,10 +291,13 @@ test("names the object, its assumptions and objectives, and says when a lesson i
   await expect.poll(() => requests.at(-1)?.question).toBe("Can it start a fire?");
 });
 
-test("asks for an object when the link names none", async ({ page }) => {
+test("asks for something to learn about when the link names nothing", async ({ page }) => {
   await page.goto("/lesson");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Choose an object first");
-  await expect(
-    page.getByRole("link", { name: "Photograph or describe an object" }),
-  ).toHaveAttribute("href", "/capture");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Choose something to learn about",
+  );
+  await expect(page.getByRole("link", { name: "Photograph or describe anything" })).toHaveAttribute(
+    "href",
+    "/capture",
+  );
 });

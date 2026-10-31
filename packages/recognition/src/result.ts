@@ -1,4 +1,4 @@
-import { newId, RecognitionResult, type UserCorrection } from "@sbi/contracts";
+import { type Certainty, newId, RecognitionResult, type UserCorrection } from "@sbi/contracts";
 import { createEnv, type EnvSource } from "@sbi/env";
 import { z } from "zod";
 import type { FallbackOutcome } from "./fallback";
@@ -33,6 +33,30 @@ export interface BuildRecognitionResultInput {
   retention: RecognitionRetention;
 }
 
+export interface ModelLabel {
+  label: string;
+  certainty: Certainty;
+}
+
+/** The model's own names, strongest first and without repeats, as learners will choose from. */
+export function modelLabels(outcome: Pick<FallbackOutcome, "status" | "candidates">): ModelLabel[] {
+  if (outcome.status === "unsupported") return [];
+  const seen = new Set<string>();
+  return [...outcome.candidates]
+    .sort((a, b) => b.calibratedConfidence - a.calibratedConfidence)
+    .flatMap(({ label, certainty }) => {
+      const trimmed = label.trim().replace(/\s+/g, " ").slice(0, 60);
+      const key = trimmed.toLowerCase();
+      if (!trimmed || seen.has(key)) return [];
+      seen.add(key);
+      // A photo the model itself calls ambiguous never offers a "likely" answer.
+      const capped =
+        outcome.status === "ambiguous" && certainty === "likely" ? "possible" : certainty;
+      return [{ label: trimmed.charAt(0).toUpperCase() + trimmed.slice(1), certainty: capped }];
+    })
+    .slice(0, 5);
+}
+
 /** The photo never enters the record: only its SHA-256 links a result to an upload. */
 export async function buildRecognitionResult(
   input: BuildRecognitionResultInput,
@@ -49,6 +73,7 @@ export async function buildRecognitionResult(
     calibrationVersion: ranked.calibrationVersion,
     candidates: ranked.candidates,
     observations: outcome.observations,
+    labels: modelLabels(outcome),
     createdAt: now.toISOString(),
     deleteBy: new Date(now.getTime() + input.retention.resultTtlDays * DAY_MS).toISOString(),
   });

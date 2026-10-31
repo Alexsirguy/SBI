@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Id, Uuid } from "./common";
 import { PhotoKey } from "./media-api";
-import { RecognitionCandidate } from "./recognition";
+import { Certainty, RecognitionCandidate } from "./recognition";
 import { TaxonomyMatch } from "./taxonomy-api";
 
 export const RecognisePhotoRequest = z.object({
@@ -41,6 +41,11 @@ export const RecognisedPhoto = z.object({
   candidates: z.array(LearnerCandidate).max(3),
   /** Look-alikes the model named that the catalog cannot teach yet; picking one is a correction. */
   otherLabels: z.array(z.string().min(1).max(60)).max(3).default([]),
+  /** What it could be, in the model's own words and strongest first; any can start a lesson. */
+  options: z
+    .array(z.object({ label: z.string().min(1).max(60), certainty: Certainty }))
+    .max(3)
+    .default([]),
   next: NextStep,
 });
 

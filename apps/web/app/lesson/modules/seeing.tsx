@@ -1,7 +1,7 @@
 import type { LessonSection } from "@sbi/contracts";
 import { SectionFrame } from "./frame";
 
-/** Module 1: the confirmed object, what can be seen, and what the lesson assumes about it. */
+/** Module 1: the subject, what can be seen, and what the lesson assumes about it. */
 export function SeeingSection({
   section,
   objectLabel,

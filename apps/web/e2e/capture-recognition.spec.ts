@@ -1,14 +1,14 @@
 import { expect, type Page, test } from "@playwright/test";
 import { expectNoAxeViolations } from "./a11y";
 import {
-  mockObservations,
+  expectLessonOpened,
+  lessonRequests,
   mockRecognition,
-  mockTaxonomy,
   mockUploads,
   PHOTO_KEY,
-  RESULT_ID,
+  RECOGNITION_OFF,
   SESSION_ID,
-  expectLessonOpened,
+  pressDone,
 } from "./mock-api";
 
 const tinyPng = Buffer.from(
@@ -16,232 +16,96 @@ const tinyPng = Buffer.from(
   "base64",
 );
 
-const BICYCLE = {
-  taxonomyId: "object.bicycle",
-  label: "Bicycle",
-  certainty: "likely",
-  reasons: ["Two wheels", "A chain"],
-  parts: [
-    { taxonomyId: "object.bicycle:chain", label: "Chain" },
-    { taxonomyId: "object.bicycle:gears", label: "Gears" },
-  ],
-};
-const SWING = {
-  taxonomyId: "object.swing",
-  label: "Playground swing",
-  certainty: "unsure",
-  reasons: ["A seat on chains"],
-  parts: [],
-};
-const MAGNET = {
-  taxonomyId: "object.magnet",
-  label: "Magnet",
-  certainty: "unsure",
-  reasons: [],
-  parts: [],
-};
-
 async function uploadPhoto(page: Page) {
   await page.goto("/capture");
   await page
     .locator('input[name="upload"]')
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "object.png" });
+
+  await pressDone(page);
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
-  return page.getByRole("region", { name: "What is in your photo?" });
+  return page.locator(".photo-choices");
 }
 
 test.beforeEach(async ({ page }) => {
   await mockUploads(page);
-  await mockTaxonomy(page);
 });
 
-test("shows the likely object with reasons, alternatives and parts", async ({ page }) => {
-  const recognition = await mockRecognition(page, {
-    candidates: [BICYCLE, SWING, MAGNET],
-    next: { kind: "proceed", taxonomyId: "object.bicycle" },
-  });
-  const photo = await uploadPhoto(page);
+const KETTLE_LIKE = [
+  { label: "Stovetop kettle", certainty: "possible" },
+  { label: "Teapot", certainty: "possible" },
+  { label: "Coffee pot", certainty: "unsure" },
+];
 
-  const suggestions = photo.getByRole("list", { name: "What we think it is" });
-  await expect(suggestions.getByRole("button")).toHaveText([
-    "Bicycle",
-    "Playground swing",
-    "Magnet",
-  ]);
-  await expect(photo.getByRole("button", { name: "Bicycle" })).toHaveAccessibleDescription(
-    "Likely. Two wheels. A chain.",
-  );
-  await expect(photo.getByRole("button", { name: "Magnet" })).toHaveAccessibleDescription(
-    "Not sure.",
-  );
-  await expect(photo.getByRole("button", { name: "Chain" })).toBeVisible();
-  await expect(photo.getByRole("status")).toHaveText(
-    "Is this right? Pick the object in your photo, or tell us what it is.",
-  );
-  expect(recognition.requests).toEqual([{ key: PHOTO_KEY }]);
-  await expectNoAxeViolations(page);
-});
-
-test("choosing an alternative records it on the recognition result", async ({ page }) => {
-  const recognition = await mockRecognition(page, {
-    candidates: [BICYCLE, SWING],
-    next: { kind: "proceed", taxonomyId: "object.bicycle" },
-  });
-  const photo = await uploadPhoto(page);
-
-  await photo.getByRole("button", { name: "Playground swing" }).click();
-  await expect(photo.getByRole("heading", { name: "Start this lesson?" })).toBeFocused();
-  await photo.getByRole("button", { name: "Start lesson" }).click();
-
-  await expectLessonOpened(page, "Playground swing");
-  await expect
-    .poll(() => recognition.selections)
-    .toEqual([{ resultId: RESULT_ID, selection: { kind: "object", taxonomyId: "object.swing" } }]);
-});
-
-test("tapping a part starts a lesson about that part", async ({ page }) => {
-  const recognition = await mockRecognition(page, {
-    candidates: [BICYCLE],
-    next: { kind: "proceed", taxonomyId: "object.bicycle" },
-  });
-  const photo = await uploadPhoto(page);
-
-  await photo.getByRole("button", { name: "Chain" }).click();
-  await expect(photo).toContainText("Lesson about: Bicycle: chain.");
-  await photo.getByRole("button", { name: "Start lesson" }).click();
-
-  await expect
-    .poll(() => recognition.selections)
-    .toEqual([
-      { resultId: RESULT_ID, selection: { kind: "object", taxonomyId: "object.bicycle:chain" } },
-    ]);
-});
-
-test("the learner's own words are recorded as a correction", async ({ page }) => {
-  const recognition = await mockRecognition(page, {
-    candidates: [SWING],
-    next: { kind: "ask", question: "Is it a playground swing?", options: [SWING] },
-  });
-  const photo = await uploadPhoto(page);
-  await expect(photo.getByRole("status")).toHaveText("Is it a playground swing?");
-
-  await photo.getByLabel("Not right? Tell us what it is").fill("bike");
-  await photo.getByLabel("Not right? Tell us what it is").press("Enter");
-  await expect(photo.getByRole("status")).toHaveText("1 match for “bike”.");
-  await photo.getByRole("button", { name: "Bicycle" }).click();
-  await photo.getByRole("button", { name: "Start lesson" }).click();
-
-  await expect
-    .poll(() => recognition.selections)
-    .toEqual([
-      { resultId: RESULT_ID, selection: { kind: "free-text", text: "bike" } },
-      { resultId: RESULT_ID, selection: { kind: "object", taxonomyId: "object.bicycle" } },
-    ]);
-});
-
-test("an unsure learner can learn about the shared category, with the assumption stated", async ({
+test("recognition offers three options in the model's words, and a pick starts the lesson", async ({
   page,
 }) => {
-  const fallback = {
-    taxonomyId: "category.heating",
-    label: "Heating and cooking",
-    alternatives: ["Teapot", "Coffee pot"],
-    assumption:
-      "We could not tell if this is a teapot or a coffee pot, so this lesson covers heating and cooking, which is true of both.",
-  };
-  const recognition = await mockRecognition(page, {
-    candidates: [],
-    next: {
-      kind: "ask",
-      question: "Is it a teapot or a coffee pot?",
-      options: [
-        { taxonomyId: "object.teapot", label: "Teapot" },
-        { taxonomyId: "object.coffee-pot", label: "Coffee pot" },
-      ],
-      fallback,
-    },
-  });
+  const sent = lessonRequests(page);
+  await mockRecognition(page, { candidates: [], options: KETTLE_LIKE, next: { kind: "describe" } });
+  const choices = await uploadPhoto(page);
+
+  await expect(choices.getByRole("heading", { name: "Which one is it?" })).toBeFocused();
+  await expect(choices.getByRole("listitem")).toHaveText([
+    "Stovetop kettlepossible",
+    "Teapotpossible",
+    "Coffee potless likely",
+  ]);
+  await expect(page.getByAltText("Your photo")).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  await choices.getByRole("button", { name: /^Stovetop kettle/ }).click();
+  await expectLessonOpened(page, "Stovetop kettle");
+  await expect.poll(() => sent.at(0)).toMatchObject({ subject: "Stovetop kettle" });
+});
+
+test("the learner can say what it is instead of picking", async ({ page }) => {
+  await mockRecognition(page, { candidates: [], options: KETTLE_LIKE, next: { kind: "describe" } });
+  const choices = await uploadPhoto(page);
+
+  await choices.getByLabel("Something else? Tell us what it is").fill("camping kettle");
+  await choices.getByRole("button", { name: "Use this" }).click();
+  await expectLessonOpened(page, "Camping kettle");
+});
+
+test("trying a different photo goes back to the photo choice", async ({ page }) => {
+  await mockRecognition(page, { candidates: [], options: KETTLE_LIKE, next: { kind: "describe" } });
+  const choices = await uploadPhoto(page);
+  await choices.getByRole("button", { name: "Try a different photo" }).click();
+  await expect(page.getByRole("button", { name: "Take a photo" })).toBeFocused();
+  await expect(page.getByRole("heading", { name: "Which one is it?" })).toHaveCount(0);
+});
+
+test("a photo the model cannot name asks the learner to say what it is", async ({ page }) => {
+  await mockRecognition(page, { candidates: [], next: { kind: "describe" } });
   const photo = await uploadPhoto(page);
 
-  await expect(
-    photo.getByRole("list", { name: "Matching objects" }).getByRole("button"),
-  ).toHaveText(["Teapot", "Coffee pot"]);
-  await photo.getByRole("button", { name: "Not sure? Learn about heating and cooking" }).click();
-  await expect(photo).toContainText(fallback.assumption);
-  await expectNoAxeViolations(page);
-  await photo.getByRole("button", { name: "Start lesson" }).click();
+  await expect(photo.getByRole("status").first()).toContainText("We couldn't tell what this is.");
+  await photo.getByLabel("Something else? Tell us what it is").fill("kite");
+  await photo.getByRole("button", { name: "Use this" }).click();
+  await expectLessonOpened(page, "Kite");
+});
 
-  await expect
-    .poll(() => recognition.selections)
-    .toEqual([
-      { resultId: RESULT_ID, selection: { kind: "object", taxonomyId: "category.heating" } },
-    ]);
+test("when recognition is down, the photo step says so and offers describing", async ({ page }) => {
+  const photo = await uploadPhoto(page);
+  await expect(photo.getByRole("status").first()).toHaveText(RECOGNITION_OFF);
+  await expect(photo.getByLabel("Something else? Tell us what it is")).toBeVisible();
+  await expectNoAxeViolations(page);
 });
 
 test("a retake reuses the session so results stay grouped", async ({ page }) => {
-  const recognition = await mockRecognition(page, {
-    candidates: [BICYCLE],
-    next: { kind: "proceed", taxonomyId: "object.bicycle" },
-  });
+  const recognition = await mockRecognition(page, { candidates: [], next: { kind: "describe" } });
   await uploadPhoto(page);
-  await expect(page.getByRole("button", { name: "Bicycle" })).toBeVisible();
+  await expect(page.getByLabel("Something else? Tell us what it is")).toBeVisible();
 
-  await page.getByRole("button", { name: "Retake or choose another" }).click();
+  await page.getByRole("button", { name: "Try a different photo" }).click();
   await page
     .locator('input[name="upload"]')
     .setInputFiles({ buffer: tinyPng, mimeType: "image/png", name: "again.png" });
+
+  await pressDone(page);
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
 
   await expect
     .poll(() => recognition.requests)
     .toEqual([{ key: PHOTO_KEY }, { key: PHOTO_KEY, sessionId: SESSION_ID }]);
-});
-
-test("suggestions and parts work from the keyboard alone", async ({ page }) => {
-  const recognition = await mockRecognition(page, {
-    candidates: [BICYCLE, SWING],
-    next: { kind: "proceed", taxonomyId: "object.bicycle" },
-  });
-  const photo = await uploadPhoto(page);
-
-  await photo.getByRole("button", { name: "Bicycle" }).focus();
-  await page.keyboard.press("Tab");
-  await expect(photo.getByRole("button", { name: "Playground swing" })).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(photo.getByRole("button", { name: "Chain" })).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(photo.getByRole("heading", { name: "Start this lesson?" })).toBeFocused();
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Enter");
-
-  await expectLessonOpened(page, "Bicycle: chain");
-  await expect.poll(() => recognition.selections).toHaveLength(1);
-});
-
-test("look-alikes the catalog cannot teach yet are offered as corrections", async ({ page }) => {
-  const sent = await mockObservations(page);
-  const recognition = await mockRecognition(page, {
-    candidates: [{ ...BICYCLE, reasons: ["two spoked wheels"] }],
-    otherLabels: ["Tricycle", "Motorcycle"],
-    next: { kind: "proceed", taxonomyId: "object.bicycle" },
-  });
-  const photo = await uploadPhoto(page);
-
-  await expect(photo.getByRole("button", { name: "Bicycle" })).toHaveAccessibleDescription(
-    "Likely. Two spoked wheels.",
-  );
-  const others = photo.getByRole("list", { name: "Or something we cannot teach yet:" });
-  await expect(others.getByRole("button")).toHaveText(["Tricycle", "Motorcycle"]);
-  await expectNoAxeViolations(page);
-
-  await others.getByRole("button", { name: "Tricycle" }).click();
-  await expect(photo.getByRole("status")).toContainText("No matches for “Tricycle”");
-  await expect(photo.getByLabel("Not right? Tell us what it is")).toHaveValue("Tricycle");
-  await expect(
-    photo.getByRole("button", { name: "Can't find it? Tell us what you notice" }),
-  ).toBeVisible();
-  await expect
-    .poll(() => recognition.selections)
-    .toEqual([{ resultId: RESULT_ID, selection: { kind: "free-text", text: "Tricycle" } }]);
-  expect(sent).toEqual([]);
 });

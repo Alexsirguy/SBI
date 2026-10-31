@@ -1,64 +1,125 @@
-/* Lesson reader (E15-4): one reading column on phones; a section list beside it on wide screens. */
+/* Lesson reader (E15-13): one reading column laid out like the prototype's rail. */
 main.lesson {
-  max-width: 72rem;
+  max-width: var(--sbi-measure);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sbi-space-4);
 }
 
-/* Everything above the sections keeps the reading measure, so the answer reads as one line of thought. */
-.lesson > :not(.reader-layout):not(.reading-progress) {
-  max-width: var(--sbi-measure);
-  width: 100%;
-  margin-inline: auto;
-}
-
 .lesson-head {
   display: grid;
   gap: var(--sbi-space-2);
+  justify-items: start;
 }
 
 .lesson-head h1 {
   font-size: var(--sbi-text-display);
   margin: 0;
+  justify-self: stretch;
 }
 
+.lesson-head__change {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sbi-touch-min);
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+  color: var(--sbi-ink-soft);
+}
+
+.topic-chip {
+  margin: 0;
+  padding: 2px 10px 3px;
+  border-radius: var(--sbi-radius-pill);
+  background: var(--sbi-marker);
+  color: var(--sbi-marker-ink);
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+}
+
+/* "Explain it" pills, as in the prototype; the chosen one is filled with ink. */
 .lesson-head .depth-controls {
   display: grid;
   gap: var(--sbi-space-1);
+  justify-self: stretch;
 }
 
 .lesson-head .depth-controls .sbi-choice {
-  margin-bottom: 0;
-}
-
-@media (min-width: 640px) {
-  .lesson-head .depth-controls {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: end;
-    column-gap: var(--sbi-space-4);
-  }
-
-  .lesson-head .depth-controls > .sbi-field__hint {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .lesson-head .depth-controls > .sbi-field {
-    grid-column: 2;
-    grid-row: 1;
-    margin-block: var(--sbi-space-3) 0;
-  }
-}
-
-.lesson-notices {
-  display: grid;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--sbi-space-2);
+}
+
+.lesson-head .depth-controls .sbi-choice__legend {
+  float: left;
+  margin: 0 var(--sbi-space-1) 0 0;
+  padding: 0;
+  font-weight: 400;
+  color: var(--sbi-ink-soft);
+}
+
+.lesson-head .depth-controls .sbi-choice__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.lesson-head .depth-controls .sbi-choice__option {
+  min-height: var(--sbi-touch-min);
+  padding: 0 var(--sbi-space-4);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-pill);
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+}
+
+.lesson-head .depth-controls .sbi-choice__option:has(input:checked) {
+  background: var(--sbi-ink);
+  border-color: var(--sbi-ink);
+  color: var(--sbi-paper);
+}
+
+.lesson-head .depth-controls .sbi-disclosure {
+  border-top: 0;
+  padding-block: 0;
+  font-size: var(--sbi-text-small);
+}
+
+.lesson-notices .sbi-notice p {
+  margin: 0;
+}
+
+.lesson-notices .sbi-notice p + p {
+  margin-top: var(--sbi-space-2);
+}
+
+/* The writing loader: the prototype's scanline over the learner's photo, or the subject's name. */
+.writing {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.writing h2,
+.writing__lede {
+  margin: 0;
+}
+
+.writing__lede {
+  font-size: var(--sbi-text-answer);
+  color: var(--sbi-ink-soft);
 }
 
 .quick-answer {
   display: grid;
   gap: var(--sbi-space-2);
+  background: var(--sbi-paper-sunk);
+  border-radius: var(--sbi-radius-l);
+  padding: var(--sbi-space-4);
 }
 
 .quick-answer h2 {
@@ -80,130 +141,101 @@ main.lesson {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sbi-space-2);
+  margin: 0;
   font-size: var(--sbi-text-small);
   color: var(--sbi-ink-soft);
 }
 
-.objectives h2,
-.lesson-sources h2,
-.lesson-feedback h2 {
-  font-size: var(--sbi-text-title);
-  margin: 0 0 var(--sbi-space-2);
-}
-
-.objectives ul {
-  margin: 0;
-  padding-left: 1.2rem;
-  display: grid;
-  gap: var(--sbi-space-1);
-}
-
-/* Layout */
-.reader-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sbi-space-5);
-}
-
-.reader-main {
-  min-width: 0;
-  max-width: var(--sbi-measure);
-  width: 100%;
-  margin-inline: auto;
+.lesson-body {
   display: grid;
   gap: var(--sbi-space-6);
 }
 
-.lesson-nav {
-  background: var(--sbi-paper);
-  border: 1px solid var(--sbi-rule);
-  border-radius: var(--sbi-radius-l);
-  padding: var(--sbi-space-3);
-  max-width: var(--sbi-measure);
-  width: 100%;
-  margin-inline: auto;
-}
-
-.lesson-nav ol {
+/* The rail: a filled dot and line for open steps, a hollow dot and faint title for the rest. */
+.rail {
   list-style: none;
   margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 2px;
+  padding: 0 0 0 28px;
 }
 
-.lesson-nav li {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  align-items: center;
-  min-height: var(--sbi-touch-min);
-  border-radius: var(--sbi-radius-s);
+.rail__step {
+  position: relative;
+  padding-bottom: var(--sbi-space-5);
 }
 
-.nav-number {
-  font-family: var(--sbi-font-mono);
-  font-weight: 500;
-  font-size: var(--sbi-text-small);
-  color: var(--sbi-ink-soft);
-  text-align: center;
+.rail__step::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: 6px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--sbi-action);
+  box-shadow: 0 0 0 3px var(--sbi-bench);
+  z-index: 1;
 }
 
-.lesson-nav a {
-  display: flex;
-  align-items: center;
-  min-height: var(--sbi-touch-min);
-  padding-inline: var(--sbi-space-2);
-  border-radius: var(--sbi-radius-s);
-  color: var(--sbi-ink);
-  text-decoration: none;
+.rail__step::after {
+  content: "";
+  position: absolute;
+  left: -22px;
+  top: 12px;
+  bottom: -6px;
+  width: 3px;
+  background: var(--sbi-action);
 }
 
-.lesson-nav a:hover {
-  text-decoration: underline;
+.rail__step:last-child::after {
+  display: none;
 }
 
-/* Where you are: a bar and bold text, never colour alone. */
-.lesson-nav a[aria-current="location"] {
-  background: var(--sbi-paper-sunk);
-  box-shadow: inset 4px 0 0 var(--sbi-action);
-  font-weight: 700;
-}
-
-.lesson-nav li > span:not(.nav-number) {
-  padding-inline: var(--sbi-space-2);
+.rail__step--ghost {
+  padding-bottom: var(--sbi-space-3);
   color: var(--sbi-ink-soft);
 }
 
-@media (min-width: 1040px) {
-  .reader-layout {
-    grid-template-columns: 15rem minmax(0, var(--sbi-measure));
-    justify-content: center;
-    align-items: start;
-    gap: var(--sbi-space-7);
-  }
-
-  .lesson-nav {
-    position: sticky;
-    top: max(var(--sbi-space-4), env(safe-area-inset-top, 0px));
-    margin: 0;
-  }
-
-  .reader-main {
-    margin: 0;
-  }
+.rail__step--ghost::before {
+  background: var(--sbi-bench);
+  box-shadow:
+    inset 0 0 0 2px var(--sbi-rule),
+    0 0 0 3px var(--sbi-bench);
 }
 
-/* Sections */
-.lesson-sections {
-  display: grid;
-  gap: var(--sbi-space-6);
+.rail__step--ghost::after {
+  background: var(--sbi-rule);
 }
 
-.lesson-sections .lesson-section {
+.rail__step:not(.rail__step--ghost):has(+ .rail__step--ghost)::after {
+  background: linear-gradient(var(--sbi-action), var(--sbi-rule));
+}
+
+.rail .lesson-section {
   margin: 0;
   display: grid;
   gap: var(--sbi-space-2);
-  scroll-margin-top: var(--sbi-space-5);
+  scroll-margin-top: 80px;
+}
+
+.rail .lesson-section h2:focus {
+  outline: none;
+}
+
+.rail__step--answer .short-answer {
+  font-size: var(--sbi-text-answer);
+  line-height: 1.5;
+}
+
+/* Kept in view while reading, as in the prototype, so the next step is always one tap away. */
+.lesson-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+  padding: var(--sbi-space-3) 0 calc(var(--sbi-space-3) + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(transparent, var(--sbi-bench) 30%);
 }
 
 .lesson-section h2 {
@@ -251,14 +283,38 @@ main.lesson {
   border-top: 1px solid var(--sbi-rule);
 }
 
-/* Citations: a boxed number reads as a reference, and its name comes from aria-label. */
-.section-citations {
-  display: grid;
-  gap: var(--sbi-space-2);
-  font-size: var(--sbi-text-small);
-  color: var(--sbi-ink-soft);
+/* Evidence and sources come last, so the lesson reads as reasoning rather than citations. */
+.lesson-evidence,
+.lesson-sources {
+  border-top: 1px solid var(--sbi-rule);
+  padding-top: var(--sbi-space-5);
 }
 
+.lesson-evidence h2,
+.lesson-sources h2,
+.lesson-feedback h2 {
+  font-size: var(--sbi-text-title);
+  margin: 0 0 var(--sbi-space-2);
+}
+
+.lesson-evidence h3 {
+  font-size: var(--sbi-text-heading);
+  margin: var(--sbi-space-4) 0 var(--sbi-space-1);
+}
+
+.lesson-evidence ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.evidence-origin {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}
+
+/* A boxed number reads as a reference, and its name comes from aria-label. */
 .citation-marker {
   display: inline-grid;
   place-items: center;
@@ -270,16 +326,6 @@ main.lesson {
   text-decoration: none;
 }
 
-.claim-status {
-  list-style: none;
-  margin: 0;
-  padding: var(--sbi-space-2) var(--sbi-space-3);
-  border-left: 4px double var(--sbi-note);
-  background: var(--sbi-note-wash);
-  border-radius: var(--sbi-radius-s);
-  color: var(--sbi-ink);
-}
-
 .lesson-visuals {
   border: 2px dashed var(--sbi-rule);
   border-radius: var(--sbi-radius-l);
@@ -289,12 +335,6 @@ main.lesson {
 .lesson-visuals h2 {
   font-size: var(--sbi-text-heading);
   margin: 0 0 var(--sbi-space-2);
-}
-
-/* Sources */
-.lesson-sources {
-  border-top: 1px solid var(--sbi-rule);
-  padding-top: var(--sbi-space-5);
 }
 
 .lesson-sources ol {
@@ -358,59 +398,9 @@ main.lesson {
   font-size: var(--sbi-text-heading);
 }
 
-/* Phone-only reading progress; the section list carries the same location for assistive technology. */
-.reading-progress {
-  position: sticky;
-  bottom: 0;
-  margin-inline: calc(-1 * max(var(--sbi-space-4), env(safe-area-inset-left, 0px)));
-  padding: var(--sbi-space-2) max(var(--sbi-space-4), env(safe-area-inset-right, 0px))
-    calc(var(--sbi-space-2) + env(safe-area-inset-bottom, 0px));
-  background: var(--sbi-paper);
-  border-top: 1px solid var(--sbi-rule);
-  display: grid;
-  gap: 6px;
-  font-size: var(--sbi-text-small);
-  color: var(--sbi-ink-soft);
-}
-
-.reading-progress__track {
-  display: block;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--sbi-paper-sunk);
-  overflow: hidden;
-}
-
-.reading-progress__fill {
-  display: block;
-  height: 100%;
-  background: var(--sbi-action);
-  transition: width var(--sbi-duration-settle) var(--sbi-ease);
-}
-
-@media (min-width: 1040px) {
-  .reading-progress {
-    display: none;
-  }
-}
-
-/* Inside its section the short answer is body text with the answer in bold; the card above leads. */
-.lesson-section .short-answer {
-  font-family: var(--sbi-font-body);
-  font-size: var(--sbi-text-body);
-  font-weight: 400;
-  line-height: var(--sbi-leading);
-}
-
-/* On wide screens the top blocks start where the reading column starts, beside the section list. */
-@media (min-width: 1040px) {
-  .lesson > :not(.reader-layout):not(.reading-progress) {
-    margin-left: max(
-      0px,
-      calc(
-        (100% - (15rem + var(--sbi-space-7) + var(--sbi-measure))) / 2 + 15rem + var(--sbi-space-7)
-      )
-    );
-    margin-right: auto;
-  }
+/* The rail's line marks each step; the labels already say observation or explanation in words. */
+.rail .evidence-observation,
+.rail .evidence-inference {
+  border-left: 0;
+  padding-left: 0;
 }

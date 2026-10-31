@@ -1,19 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { CitationProvider, citationIndex, SourceList } from "./citations";
+import { citationIndex, EvidenceList, SourceList } from "./citations";
 import { SectionView } from "./modules/section-view";
 import { SAMPLE_LESSON, SAMPLE_SOURCES } from "./sample-lesson";
 
 const index = citationIndex(SAMPLE_LESSON, SAMPLE_SOURCES);
-const render = (module: string) => {
-  const section = SAMPLE_LESSON.sections.find((item) => item.module === module);
-  if (!section) throw new Error(`no ${module}`);
-  return renderToStaticMarkup(
-    <CitationProvider value={index}>
-      <SectionView section={section} lesson={SAMPLE_LESSON} />
-    </CitationProvider>,
-  );
-};
+const evidence = renderToStaticMarkup(
+  <EvidenceList lesson={SAMPLE_LESSON} sources={SAMPLE_SOURCES} />,
+);
 
 describe("citationIndex", () => {
   it("numbers sources in the order the lesson first cites them", () => {
@@ -23,29 +17,25 @@ describe("citationIndex", () => {
   });
 });
 
-describe("SectionCitations", () => {
-  it("links each cited source and names a claim resting on limited evidence", () => {
-    const html = render("what-youre-seeing");
-    expect(html).toContain('href="#source-1"');
-    expect(html).toContain('aria-label="Source 1: 2.8: The Simple Magnifier"');
-    expect(html).toContain("Based on limited evidence:");
+describe("EvidenceList", () => {
+  it("links each statement to its numbered sources, at the end of the lesson", () => {
+    expect(evidence).toContain("How do we know?");
+    expect(evidence).toContain('href="#source-1"');
+    expect(evidence).toContain('aria-label="Source 1: 2.8: The Simple Magnifier"');
+    expect(evidence).toContain("Based on limited evidence:");
+    expect(evidence).toContain("Sources disagree:");
   });
 
-  it("says when sources disagree", () => {
-    expect(render("how-parts-work")).toContain("Sources disagree:");
+  it("names model knowledge plainly instead of inventing a source", () => {
+    expect(evidence).toContain("the AI&#x27;s general knowledge");
   });
 
-  it("adds no per-section label for model knowledge, which the lesson notice covers", () => {
-    const html = render("history");
-    expect(html).not.toContain("section-citations");
-  });
-
-  it("renders nothing extra without a citation index", () => {
-    const section = SAMPLE_LESSON.sections[0];
-    if (!section) throw new Error("no section");
-    expect(
-      renderToStaticMarkup(<SectionView section={section} lesson={SAMPLE_LESSON} />),
-    ).not.toContain("section-citations");
+  it("puts nothing about sources inside the sections themselves", () => {
+    for (const section of SAMPLE_LESSON.sections) {
+      const html = renderToStaticMarkup(<SectionView section={section} lesson={SAMPLE_LESSON} />);
+      expect(html).not.toContain("citation-marker");
+      expect(html).not.toContain("Sources:");
+    }
   });
 });
 
