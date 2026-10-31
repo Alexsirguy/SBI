@@ -79,11 +79,11 @@ for (const path of PAGES) {
   }
 }
 
-test("reduced motion stops placeholders and the reading bar from moving", async ({ page }) => {
+test("reduced motion stops the scanning loader from moving", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await mockLesson(page, null);
   await page.goto(LESSON_URL);
-  const line = page.locator(".sbi-placeholder__line").first();
+  const line = page.locator(".scanner__line").first();
   await expect(line).toBeAttached();
   expect(await line.evaluate((element) => getComputedStyle(element).animationName)).toBe("none");
   // The minifier may write the zero as 0s or 0ms; either means no movement.

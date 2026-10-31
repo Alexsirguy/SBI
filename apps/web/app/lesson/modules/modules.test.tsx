@@ -39,10 +39,10 @@ describe("SeeingSection with the confirmed object", () => {
 });
 
 describe("ShortAnswerSection", () => {
-  it("states the answer as an explanation, in bold", () => {
+  it("states the answer as an explanation, highlighted as in the prototype", () => {
     const html = renderToStaticMarkup(<ShortAnswerSection section={section("short-answer")} />);
     expect(html).toContain("Explanation");
-    expect(html).toContain("<strong>The lens makes a larger, upright image");
+    expect(html).toContain('<mark class="sbi-mark">The lens makes a larger, upright image');
   });
 });
 
