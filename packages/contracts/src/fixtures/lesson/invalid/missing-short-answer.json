@@ -79,7 +79,7 @@
   "visuals": [
     {
       "visualId": "0192f1a0-0000-7000-8000-00000000000d",
-      "kind": "svg-diagram",
+      "kind": "process",
       "manifestUri": "/visuals/kettle_heat_v1.json",
       "alt": "Diagram of convection currents inside a kettle."
     }

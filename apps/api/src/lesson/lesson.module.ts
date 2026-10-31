@@ -7,7 +7,8 @@ import {
   type LlmEventSink,
   type LlmProvider,
 } from "@sbi/llm";
-import { createRightsRegister } from "@sbi/rights";
+import { createRightsRegister, LIBRARY_ASSET_IDS } from "@sbi/rights";
+import { RENDERER_LIBRARIES, type VisualManifestRepository } from "@sbi/visuals";
 import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
 import {
@@ -22,12 +23,14 @@ import {
   LESSON_REVIEW_AUDIT,
   LESSONS,
   REPOSITORIES,
+  VISUAL_MANIFESTS,
 } from "../tokens";
 import { createRateLimiter } from "../common/rate-limiter";
 import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
 import { LessonService } from "./lesson.service";
+import { VisualsModule } from "../visuals/visuals.module";
 
 const logger = new Logger("LessonLlm");
 
@@ -66,7 +69,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
 }
 
 @Module({
-  imports: [TaxonomyModule],
+  imports: [TaxonomyModule, VisualsModule],
   controllers: [LessonController, LessonFeedbackController],
   providers: [
     LessonService,
@@ -108,13 +111,14 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
     },
     {
       provide: LESSON_RIGHTS,
-      inject: [REPOSITORIES],
-      // No visual has a stored manifest yet, so any lesson with a visual stays held.
-      // TODO(#84) read manifests and renderer libraries from the visual registry.
-      useFactory: (repos: Repositories) =>
+      inject: [REPOSITORIES, VISUAL_MANIFESTS],
+      useFactory: (repos: Repositories, manifests: VisualManifestRepository) =>
         createRightsRegister({
           assets: repos.visualAssets,
-          manifests: { get: async () => undefined },
+          manifests,
+          // An unknown library name maps to an id with no record, so the gate blocks it.
+          librariesFor: (kind) =>
+            RENDERER_LIBRARIES[kind].map((name) => LIBRARY_ASSET_IDS[name] ?? `missing:${name}`),
         }),
     },
     {

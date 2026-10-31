@@ -39,13 +39,8 @@ export const VisualAsset = z
     path: ["modificationNotes"],
   });
 
-export const VisualKind = z.enum([
-  "svg-diagram",
-  "canvas-diagram",
-  "gltf-model",
-  "simulation",
-  "molecular",
-]);
+// ADR 0014: each kind is a spec format the AI writes and a renderer we own; playground is the fallback.
+export const VisualKind = z.enum(["mechanism", "molecule", "process", "graph", "playground"]);
 
 export const VisualFallback = z.object({
   text: z.string().min(1),
@@ -70,7 +65,16 @@ export const VisualRef = z.object({
   alt: z.string().min(1),
 });
 
+export const VisualRequest = z.object({ visualId: Uuid });
+
+/** Where a client fetches a visual's manifest; GET routes take their request as query parameters. */
+export function visualManifestUri(visualId: string): string {
+  return `/visuals?visualId=${encodeURIComponent(visualId)}`;
+}
+
 export type VisualAsset = z.infer<typeof VisualAsset>;
+export type VisualFallback = z.infer<typeof VisualFallback>;
 export type VisualKind = z.infer<typeof VisualKind>;
 export type VisualManifest = z.infer<typeof VisualManifest>;
 export type VisualRef = z.infer<typeof VisualRef>;
+export type VisualRequest = z.infer<typeof VisualRequest>;

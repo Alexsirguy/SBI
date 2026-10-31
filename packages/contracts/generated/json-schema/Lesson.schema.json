@@ -302,11 +302,11 @@
           "kind": {
             "type": "string",
             "enum": [
-              "svg-diagram",
-              "canvas-diagram",
-              "gltf-model",
-              "simulation",
-              "molecular"
+              "mechanism",
+              "molecule",
+              "process",
+              "graph",
+              "playground"
             ]
           },
           "manifestUri": {

@@ -12,7 +12,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@sbi/contracts": "workspace:*"
+  },
   "devDependencies": {
-    "@sbi/config": "workspace:*"
+    "@sbi/config": "workspace:*",
+    "happy-dom": "21.0.4"
   }
 }

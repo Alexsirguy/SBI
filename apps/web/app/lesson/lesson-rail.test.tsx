@@ -25,4 +25,24 @@ describe("LessonRail", () => {
     expect(html).not.toContain("rail__step--ghost");
     expect(html).not.toContain("Show me why");
   });
+
+  it("draws each visual beside the parts step through the frame it is given", () => {
+    const visual = {
+      visualId: "0192f1a0-0000-7000-8000-0000000000b1",
+      kind: "mechanism",
+      manifestUri: "/visuals?visualId=0192f1a0-0000-7000-8000-0000000000b1",
+      alt: "Lens bending light",
+    } as const;
+    const html = renderToStaticMarkup(
+      <LessonRail
+        lesson={SAMPLE_LESSON}
+        label="Magnifying glass"
+        askQuestion={null}
+        visuals={[visual]}
+        renderVisual={(item) => <canvas data-visual={item.visualId} />}
+      />,
+    );
+    expect(html).toContain(`data-visual="${visual.visualId}"`);
+    expect(html.match(/id="visuals-heading"/g)).toHaveLength(1);
+  });
 });

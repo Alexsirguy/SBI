@@ -1,0 +1,28 @@
+.visual {
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.visual__stage {
+  min-height: 4rem;
+}
+
+.visual-fallback {
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.visual-fallback img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--sbi-radius-m);
+}
+
+.visual__assumptions,
+.visual__note {
+  margin: 0;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}

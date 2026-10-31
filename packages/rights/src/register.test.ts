@@ -25,7 +25,7 @@ function output(overrides: Partial<VisualAsset> = {}): VisualAsset {
 
 const manifest: VisualManifest = {
   visualId: VISUAL_ID,
-  kind: "simulation",
+  kind: "mechanism",
   alt: "Piston engine",
   fallback: { text: "A piston moves up and down inside a cylinder." },
   assetIds: [ASSET_ID],
@@ -39,7 +39,7 @@ function lesson(visuals: Lesson["visuals"]): Lesson {
 
 const ref = {
   visualId: VISUAL_ID,
-  kind: "simulation",
+  kind: "mechanism",
   manifestUri: "/visuals/x",
   alt: "Engine",
 } as const;
@@ -138,10 +138,8 @@ describe("checkLesson", () => {
   });
 
   it("blocks a manifest whose kind differs from the reference", async () => {
-    const decision = await register([output()]).checkLesson(
-      lesson([{ ...ref, kind: "molecular" }]),
-    );
-    expect(decision.reason).toMatch(/is a simulation, not a molecular/);
+    const decision = await register([output()]).checkLesson(lesson([{ ...ref, kind: "molecule" }]));
+    expect(decision.reason).toMatch(/is a mechanism, not a molecule/);
   });
 
   it("blocks a manifest that records no assets", async () => {

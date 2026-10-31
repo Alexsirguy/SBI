@@ -160,6 +160,13 @@ export const visualAssets = mysqlTable("visual_assets", {
   document: jsonDocument("document").notNull(),
 });
 
+export const visualManifests = mysqlTable("visual_manifests", {
+  visualId: uuid("visual_id").primaryKey(),
+  kind: varchar("kind", { length: 32 }).notNull(),
+  sha256: char("sha256", { length: 64 }).notNull(),
+  document: jsonDocument("document").notNull(),
+});
+
 export const recognitionResults = mysqlTable(
   "recognition_results",
   {

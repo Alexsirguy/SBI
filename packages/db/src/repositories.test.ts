@@ -7,6 +7,7 @@ import {
   RecognitionResult,
   TutorTurn,
   VisualAsset,
+  VisualManifest,
   type Lesson as LessonRecord,
 } from "@sbi/contracts";
 import { DuplicateSourceError } from "@sbi/evidence";
@@ -30,6 +31,7 @@ const TABLES = [
   "evidence_sources",
   "claims",
   "visual_assets",
+  "visual_manifests",
   "recognition_results",
   "tutor_turns",
   "media_objects",
@@ -353,6 +355,19 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       const asset = fixture(VisualAsset, "visual-asset", "curated-glb");
       await repos.visualAssets.save(asset);
       expect(await repos.visualAssets.get(asset.assetId)).toEqual(asset);
+    });
+  });
+
+  describe("visual manifests", () => {
+    it("round-trips a manifest and replaces it on save", async () => {
+      const manifest = fixture(VisualManifest, "visual-manifest", "process");
+      await repos.visualManifests.save(manifest);
+      await repos.visualManifests.save({ ...manifest, alt: "Kettle, redrawn" });
+      expect(await repos.visualManifests.get(manifest.visualId)).toEqual({
+        ...manifest,
+        alt: "Kettle, redrawn",
+      });
+      expect(await repos.visualManifests.get(newId())).toBeUndefined();
     });
   });
 
