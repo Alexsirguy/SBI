@@ -110,12 +110,11 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
     {
       provide: LESSON_RIGHTS,
       inject: [REPOSITORIES],
-      // No visual has a stored manifest yet, so any lesson with a visual stays held.
-      // TODO(#84) read manifests and renderer libraries from the visual registry.
       // Typed as the gate the publisher calls, so a mismatch fails the build instead of a lesson.
       useFactory: (repos: Repositories): RightsGate =>
         createRightsRegister({
           assets: repos.visualAssets,
+          // TODO(#84) read stored manifests; until then any lesson with a visual stays held.
           manifests: { get: async () => undefined },
         }),
     },
