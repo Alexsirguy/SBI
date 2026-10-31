@@ -3,7 +3,7 @@ import { projectOutputAsset } from "@sbi/rights";
 import { z } from "zod";
 import { REFERENCE_MECHANISMS } from "./references";
 
-export const VISUAL_PROMPT = { id: "visual-generate", version: "v1" } as const;
+export const VISUAL_PROMPT = { id: "visual-generate", version: "v2" } as const;
 
 const Named = z.string();
 // One flat object with a field per format, because strict JSON schema mode allows no free-form spec.
@@ -100,7 +100,8 @@ Kinds:
   start with <mujoco>; z is up; metres and kilograms; use only primitive geoms (box, sphere, capsule, cylinder, ellipsoid, plane);
   never use files, meshes, <include> or plugins; at most 30 bodies; give joints damping; turn gravity off unless gravity is the point;
   add a motor actuator for each slider that drives something and list it in "bindings" ({control: slider id, actuator: actuator name});
-  name bodies with short camelCase names, and use those names as label ids so labels point at parts. Colour parts with rgba.
+  name bodies with short camelCase names, and use those names as label ids so labels point at parts. Colour parts with rgba;
+  make casings, cylinders and housings see-through (alpha 0.25) so the moving parts inside stay visible; add no floor plane.
   Example (a lever):
 ${LEVER_MJCF}
 - molecule: the substance itself matters (water, salt, sugar, caffeine, carbon dioxide). List up to 3 common names in "molecules"; never write coordinates.
@@ -114,7 +115,8 @@ Every kind:
 - alt: under 120 characters, says what the picture shows.
 - longDescription and fallbackText: 1 to 2 plain sentences a screen reader or a learner without the picture can follow.
 - assumptions: the simplifications, such as "No friction" or "One cylinder".
-- labels: up to 6 named parts; claimId must be one of the lesson's claim ids given below, or leave the label out.
+- labels: up to 6 named parts; text is the part's name in 1 to 3 words ("Piston", "Exhaust valve");
+  claimId must be one of the lesson's claim ids given below, or leave the label out.
 - controls: up to 4 sliders with a camelCase id, label, unit, and min < value < max; step divides the range into at most 100 steps.
 - readouts: up to 3 numbers worked out from slider ids with plain arithmetic (mathjs syntax: + - * / ^, min, max, sqrt, sin, cos, pi).
 Use real physical values and units. Be correct: a learner will trust it.`;
