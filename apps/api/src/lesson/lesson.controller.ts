@@ -1,9 +1,11 @@
-import { Body, Controller, Inject, Post, Res } from "@nestjs/common";
+import { Body, Controller, Inject, Logger, Post, Res } from "@nestjs/common";
 import type { ServerResponse } from "node:http";
 import { API_ROUTES, LessonRequest } from "@sbi/contracts";
 import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
 import { LessonService, type LessonStreamEvent } from "./lesson.service";
+
+const logger = new Logger("LessonController");
 
 interface RawResponse {
   raw: ServerResponse;
@@ -48,6 +50,9 @@ export class LessonController {
       for await (const event of events) res.raw.write(frame(event));
     } catch (error) {
       // Later stages resolve between events; failures must end the stream, not hang it.
+      if (!(error instanceof UserFacingException)) {
+        logger.error(`Lesson stream failed: ${(error as Error)?.stack ?? String(error)}`);
+      }
       const message =
         error instanceof UserFacingException ? error.message : "Something went wrong.";
       res.raw.write(frame({ type: "error", data: { error: message } }));
