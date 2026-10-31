@@ -70,4 +70,29 @@ test.describe("visual gallery", () => {
     await expect(engine.getByRole("button", { name: "Play" })).toBeVisible();
     await expect(engine.getByRole("button", { name: "Step forward" })).toBeVisible();
   });
+
+  test("turns the engine, pulls it apart and points at a part from the keyboard", async ({
+    page,
+  }) => {
+    await page.goto("/visuals");
+    const engine = page.getByRole("figure", { name: /piston engine/ });
+    await engine.getByRole("button", { name: "See it in action" }).click();
+    await engine.getByRole("button", { name: "Pause" }).click();
+
+    const canvas = engine.locator("canvas");
+    const before = await canvas.screenshot();
+    await engine.getByRole("button", { name: "Turn right" }).click();
+    await expect.poll(async () => (await canvas.screenshot()).equals(before)).toBe(false);
+
+    const apart = engine.getByRole("slider", { name: "Pull the parts apart" });
+    await apart.focus();
+    await page.keyboard.press("End");
+    await expect(apart).toHaveAttribute("aria-valuetext", "100%");
+
+    const piston = engine.getByRole("button", { name: "Piston" });
+    await piston.press("Enter");
+    await expect(piston).toHaveAttribute("aria-pressed", "true");
+    await expect(engine.locator(".visual-3d__marker--on")).toHaveText("1");
+    await expectNoAxeViolations(page);
+  });
 });

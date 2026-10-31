@@ -1,6 +1,7 @@
 import type { MjModel } from "@mujoco/mujoco";
 import type * as Three from "three";
 import { kindRenderer } from "../kind";
+import { attachInteraction } from "../three/interaction";
 import { applyControls, loadMechanism } from "./mechanism-sim";
 
 // MuJoCo's geom type numbers (mjtGeom); meshes and height fields are refused by the validator.
@@ -41,9 +42,10 @@ export const mechanismRenderer = kindRenderer({
   kind: "mechanism",
   loadOnTap: "See it in action",
   async draw(manifest, stage, values, options) {
-    const [{ default: loadMujoco }, three] = await Promise.all([
+    const [{ default: loadMujoco }, three, { OrbitControls }] = await Promise.all([
       import("@mujoco/mujoco"),
       import("three"),
+      import("three/addons/controls/OrbitControls.js"),
     ]);
     const mujoco = await loadMujoco();
     const loaded = loadMechanism(mujoco, manifest);
@@ -55,6 +57,10 @@ export const mechanismRenderer = kindRenderer({
     const document = stage.ownerDocument;
     const canvas = document.createElement("canvas");
     canvas.className = "visual-mechanism";
+    canvas.id = `mechanism-${manifest.visualId}`;
+    const wrapper = document.createElement("div");
+    wrapper.className = "visual-3d";
+    wrapper.append(canvas);
     canvas.setAttribute("role", "img");
     canvas.setAttribute("aria-label", manifest.alt);
     // Transparent, so the page's own surface colour shows behind the model in both themes.
@@ -91,11 +97,19 @@ export const mechanismRenderer = kindRenderer({
       meshes.push(mesh);
     }
 
+    // Pulling apart moves each part away from the middle, so hidden parts come into view.
+    let apart = 0;
+    const middle = new three.Vector3();
     function place() {
       for (let index = 0; index < meshes.length; index += 1) {
         const mesh = meshes[index];
         if (!mesh) continue;
-        const p = data.geom_xpos.slice(index * 3, index * 3 + 3);
+        const p = Array.from(data.geom_xpos.slice(index * 3, index * 3 + 3) as ArrayLike<number>);
+        if (apart > 0 && model.geom_type[index] !== PLANE) {
+          for (let axis = 0; axis < 3; axis += 1) {
+            p[axis] = (p[axis] ?? 0) + ((p[axis] ?? 0) - middle.getComponent(axis)) * apart;
+          }
+        }
         const m = data.geom_xmat.slice(index * 9, index * 9 + 9);
         mesh.matrix.set(
           m[0] ?? 1,
@@ -125,6 +139,7 @@ export const mechanismRenderer = kindRenderer({
       if (mesh && model.geom_type[index] !== PLANE) box.expandByObject(mesh);
     });
     const centre = box.isEmpty() ? new three.Vector3() : box.getCenter(new three.Vector3());
+    middle.copy(centre);
     const size = box.isEmpty() ? 1 : Math.max(...box.getSize(new three.Vector3()).toArray(), 0.1);
     const camera = new three.PerspectiveCamera(40, 1, size / 100, size * 100);
     camera.up.set(0, 0, 1);
@@ -167,22 +182,56 @@ export const mechanismRenderer = kindRenderer({
     const buttons = document.createElement("div");
     buttons.className = "visual-mechanism__buttons";
     buttons.append(play, stepButton);
-    stage.append(canvas, buttons);
+    const toolbar = document.createElement("div");
+    toolbar.className = "visual-3d__toolbar";
+    stage.append(wrapper, buttons, toolbar);
+
+    const named = (index: number) => [
+      model.geom(index)?.name,
+      model.body(model.geom_bodyid[index] as number)?.name,
+    ];
+    const hotspots = manifest.labels.flatMap((label, number) => {
+      const parts = meshes.filter(
+        (mesh, index): mesh is Three.Mesh => mesh !== null && named(index).includes(label.id),
+      );
+      return parts.length > 0 ? [{ id: label.id, number: number + 1, meshes: parts }] : [];
+    });
+    const interaction = attachInteraction({
+      three,
+      OrbitControls,
+      camera,
+      canvas,
+      wrapper,
+      toolbar,
+      centre,
+      size,
+      render: draw,
+      explode(amount) {
+        apart = amount;
+        place();
+      },
+      hotspots,
+      partsKey: stage.parentElement?.querySelector('[aria-label="Parts"]') ?? null,
+    });
+    function draw() {
+      renderer.render(scene, camera);
+      interaction.updateMarkers();
+    }
 
     function advance(seconds: number) {
       const steps = Math.min(Math.round(seconds / model.opt.timestep), 500);
       for (let step = 0; step < steps; step += 1) mujoco.mj_step(model, data);
       place();
-      renderer.render(scene, camera);
+      draw();
     }
 
     const observer = new ResizeObserver(() => {
       resize();
-      renderer.render(scene, camera);
+      draw();
     });
     observer.observe(stage);
     resize();
-    renderer.render(scene, camera);
+    draw();
 
     let frame = 0;
     let last = performance.now();
@@ -203,6 +252,7 @@ export const mechanismRenderer = kindRenderer({
       destroy() {
         cancelAnimationFrame(frame);
         observer.disconnect();
+        interaction.destroy();
         scene.traverse((object) => {
           if (object instanceof three.Mesh) {
             object.geometry.dispose();
@@ -211,8 +261,9 @@ export const mechanismRenderer = kindRenderer({
         });
         renderer.dispose();
         loaded.dispose();
-        canvas.remove();
+        wrapper.remove();
         buttons.remove();
+        toolbar.remove();
       },
     };
   },

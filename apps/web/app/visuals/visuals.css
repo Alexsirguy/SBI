@@ -109,3 +109,57 @@
   display: flex;
   gap: var(--sbi-space-2);
 }
+
+.visual-3d {
+  position: relative;
+}
+
+.visual-3d__marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  border: 2px solid var(--sbi-ink);
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.visual-3d__marker--on {
+  background: var(--sbi-marker);
+  color: var(--sbi-marker-ink);
+}
+
+.visual-3d__toolbar,
+.visual-3d__view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+}
+
+.visual-3d__toolbar .visual-layer__control {
+  flex: 1 1 14rem;
+}
+
+.visual-3d__part {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: var(--sbi-space-1) 0;
+  min-height: 44px;
+  text-align: left;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
+.visual-3d__part[aria-pressed="true"] {
+  background: var(--sbi-marker);
+  color: var(--sbi-marker-ink);
+  text-decoration: none;
+}

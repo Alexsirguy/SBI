@@ -5,7 +5,14 @@ const CLAIM = "0192f1a0-0000-7000-8000-0000000000f1";
 
 // One hand-written manifest per kind, for the hidden /visuals gallery and the visual e2e tests.
 export const GALLERY_FIXTURES: readonly VisualManifest[] = [
-  REFERENCE_MECHANISMS.engine,
+  {
+    ...REFERENCE_MECHANISMS.engine,
+    labels: [
+      { id: "piston", text: "Piston", claimId: CLAIM },
+      { id: "connectingRod", text: "Connecting rod", claimId: CLAIM },
+      { id: "crankshaft", text: "Crankshaft", claimId: CLAIM },
+    ],
+  },
   {
     visualId: "0192f1a0-0000-7000-8000-0000000000a2",
     kind: "molecule",
