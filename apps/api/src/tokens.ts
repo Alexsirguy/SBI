@@ -22,3 +22,4 @@ export const LESSON_RIGHTS = Symbol("LESSON_RIGHTS");
 export const LESSON_FEEDBACK = Symbol("LESSON_FEEDBACK");
 export const FEEDBACK_LIMITER = Symbol("FEEDBACK_LIMITER");
 export const VISUAL_MANIFESTS = Symbol("VISUAL_MANIFESTS");
+export const VISUAL_MAKER = Symbol("VISUAL_MAKER");

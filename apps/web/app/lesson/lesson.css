@@ -292,9 +292,14 @@ main.lesson {
 }
 
 .lesson-visuals {
-  border: 2px dashed var(--sbi-rule);
+  border: 2px solid var(--sbi-rule);
   border-radius: var(--sbi-radius-l);
   padding: var(--sbi-space-4);
+}
+
+.lesson-visuals__pending {
+  margin: 0;
+  color: var(--sbi-ink-soft);
 }
 
 .lesson-visuals h2 {

@@ -144,7 +144,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
             lesson={lesson}
             label={label}
             askQuestion={<AskQuestion subject={subject} prefs={prefs} />}
-            visuals={visuals?.visuals ?? []}
+            visuals={visuals?.visuals ?? (status === "loading" ? undefined : [])}
             renderVisual={(visual) => <VisualFrame visual={visual} />}
           />
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}

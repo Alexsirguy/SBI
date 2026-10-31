@@ -462,6 +462,9 @@ importers:
       '@sbi/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@sbi/llm':
+        specifier: workspace:*
+        version: link:../llm
       '@sbi/rights':
         specifier: workspace:*
         version: link:../rights

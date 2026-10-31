@@ -45,4 +45,25 @@ describe("LessonRail", () => {
     expect(html).toContain(`data-visual="${visual.visualId}"`);
     expect(html.match(/id="visuals-heading"/g)).toHaveLength(1);
   });
+
+  it("says a picture is being made until the visuals arrive, and shows nothing when there are none", () => {
+    const pending = renderToStaticMarkup(
+      <LessonRail
+        lesson={SAMPLE_LESSON}
+        label="Magnifying glass"
+        askQuestion={null}
+        visuals={undefined}
+      />,
+    );
+    expect(pending).toContain("Making a picture of how it works…");
+    const none = renderToStaticMarkup(
+      <LessonRail
+        lesson={SAMPLE_LESSON}
+        label="Magnifying glass"
+        askQuestion={null}
+        visuals={[]}
+      />,
+    );
+    expect(none).not.toContain("visuals-heading");
+  });
 });

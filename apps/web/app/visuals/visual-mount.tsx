@@ -41,9 +41,11 @@ export function VisualMount({
       <p id={descriptionId} className="sbi-visually-hidden">
         {manifest.longDescription ?? manifest.alt}
       </p>
-      {manifest.assumptions.length > 0 ? (
-        <p className="visual__assumptions">Simplified: {manifest.assumptions.join(", ")}.</p>
-      ) : null}
+      {/* Every visual is generated for its lesson (ADR 0014), so it says so, with its simplifications. */}
+      <p className="visual__assumptions">
+        Made by AI for this lesson and simplified
+        {manifest.assumptions.length > 0 ? `: ${manifest.assumptions.join(", ")}.` : "."}
+      </p>
     </figure>
   );
 }

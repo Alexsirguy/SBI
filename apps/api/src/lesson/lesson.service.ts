@@ -1,4 +1,4 @@
-import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
+import { HttpStatus, Inject, Injectable, Logger, Optional } from "@nestjs/common";
 import {
   Lesson,
   LessonProgress,
@@ -53,6 +53,7 @@ import {
   LESSON_EVIDENCE,
   LESSON_GATHERER,
   LESSON_RIGHTS,
+  VISUAL_MAKER,
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
@@ -60,6 +61,7 @@ import {
 } from "../tokens";
 import { createEventQueue } from "./event-queue";
 import { resolveSubject } from "./subject";
+import type { VisualMaker } from "../visuals/visual-maker";
 import { lessonSources } from "./sources";
 import { UserFacingException } from "../common/user-facing.exception";
 
@@ -253,6 +255,7 @@ export class LessonService {
     @Inject(LESSON_REVIEW_AUDIT) private readonly reviewAudit: ReviewAuditLog,
     @Inject(LESSON_GATHERER) private readonly gather: EvidenceGatherer,
     @Inject(LESSON_RIGHTS) private readonly rights: RightsGate,
+    @Optional() @Inject(VISUAL_MAKER) private readonly makeVisual?: VisualMaker,
   ) {}
 
   // Events leave as their stage completes, so the answer streams before the heavier payloads.
@@ -562,9 +565,11 @@ export class LessonService {
         sourceIds.length > 0 ? await this.evidence.sources.getMany(sourceIds) : [],
       ),
     };
+    // Last, because generating a visual can take a minute and the learner is already reading.
+    const visuals = this.makeVisual ? await this.makeVisual(validated) : validated.visuals;
     yield {
       type: "visuals",
-      data: LessonVisuals.parse({ lessonId: validated.lessonId, visuals: validated.visuals }),
+      data: LessonVisuals.parse({ lessonId: validated.lessonId, visuals }),
     };
   }
 }

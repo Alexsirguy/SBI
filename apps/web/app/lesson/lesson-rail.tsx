@@ -8,16 +8,21 @@ function VisualsSlot({
   visuals,
   renderVisual,
 }: {
-  visuals: LessonVisuals["visuals"];
+  /** Undefined while the visual is still being made for this lesson. */
+  visuals: LessonVisuals["visuals"] | undefined;
   renderVisual: RenderVisual;
 }) {
-  if (visuals.length === 0) return null;
+  if (visuals?.length === 0) return null;
   return (
     <section aria-labelledby="visuals-heading" className="lesson-visuals">
-      <h2 id="visuals-heading">Pictures</h2>
-      {visuals.map((visual) => (
-        <div key={visual.visualId}>{renderVisual(visual)}</div>
-      ))}
+      <h2 id="visuals-heading">See how it works</h2>
+      {visuals ? (
+        visuals.map((visual) => <div key={visual.visualId}>{renderVisual(visual)}</div>)
+      ) : (
+        <p role="status" className="lesson-visuals__pending">
+          Making a picture of how it works…
+        </p>
+      )}
     </section>
   );
 }
@@ -38,7 +43,7 @@ export function LessonRail({
   lesson?: Lesson;
   label: string;
   askQuestion: ReactNode;
-  visuals: LessonVisuals["visuals"];
+  visuals: LessonVisuals["visuals"] | undefined;
   renderVisual?: RenderVisual;
 }) {
   if (!lesson) {

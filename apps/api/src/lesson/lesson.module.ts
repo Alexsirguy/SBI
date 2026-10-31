@@ -9,6 +9,8 @@ import {
 } from "@sbi/llm";
 import { createRightsRegister, LIBRARY_ASSET_IDS } from "@sbi/rights";
 import { RENDERER_LIBRARIES, type VisualManifestRepository } from "@sbi/visuals";
+import { memoryPubChemCache } from "@sbi/visuals/server";
+import type { RightsGate } from "@sbi/orchestrator";
 import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
 import {
@@ -23,6 +25,7 @@ import {
   LESSON_REVIEW_AUDIT,
   LESSONS,
   REPOSITORIES,
+  VISUAL_MAKER,
   VISUAL_MANIFESTS,
 } from "../tokens";
 import { createRateLimiter } from "../common/rate-limiter";
@@ -30,6 +33,7 @@ import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
 import { LessonService } from "./lesson.service";
+import { createVisualMaker } from "../visuals/visual-maker";
 import { VisualsModule } from "../visuals/visuals.module";
 
 const logger = new Logger("LessonLlm");
@@ -119,6 +123,25 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
           // An unknown library name maps to an id with no record, so the gate blocks it.
           librariesFor: (kind) =>
             RENDERER_LIBRARIES[kind].map((name) => LIBRARY_ASSET_IDS[name] ?? `missing:${name}`),
+        }),
+    },
+    {
+      provide: VISUAL_MAKER,
+      inject: [LESSON_LLM, REPOSITORIES, VISUAL_MANIFESTS, LESSON_RIGHTS],
+      useFactory: (
+        provider: LlmProvider | null,
+        repos: Repositories,
+        manifests: VisualManifestRepository,
+        rights: RightsGate,
+      ) =>
+        createVisualMaker({
+          provider,
+          manifests,
+          assets: repos.visualAssets,
+          lessons: repos.lessons,
+          rights,
+          // One lookup per molecule name for the life of the process; manifests keep the result.
+          pubchem: memoryPubChemCache(),
         }),
     },
     {

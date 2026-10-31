@@ -1,11 +1,24 @@
-import { VisualManifest } from "@sbi/contracts";
+import { VisualManifest, type VisualAsset } from "@sbi/contracts";
+import { completeStructured, type ChatMessage, type LlmProvider } from "@sbi/llm";
+import { ZodError } from "zod";
 import type { MainModule } from "@mujoco/mujoco";
 import type mermaidApi from "mermaid";
 import { commonLayerProblems } from "./common/validate";
+import {
+  GENERATED_VISUAL_SCHEMA,
+  GeneratedVisual,
+  generatedSpecAsset,
+  toManifest,
+  VISUAL_PROMPT,
+  VISUAL_SYSTEM_PROMPT,
+  visualUserPrompt,
+  type LessonForVisual,
+} from "./generate";
 import { graphProblems, graphRows, planGraph, vegaLiteSpec } from "./kinds/graph-spec";
 import { physicsProblems, readMechanismSpec } from "./kinds/mechanism-sim";
 import { readMoleculeSpec } from "./kinds/molecule-spec";
 import { processSpecProblems } from "./kinds/process-spec";
+import { resolveMolecules, type PubChemCache } from "./pubchem";
 
 type Mermaid = typeof mermaidApi;
 let mermaid: Promise<Mermaid> | undefined;
@@ -79,3 +92,83 @@ export async function manifestProblems(input: unknown): Promise<string[]> {
 }
 
 export { memoryPubChemCache, resolveMolecules, type PubChemCache } from "./pubchem";
+export { type LessonForVisual } from "./generate";
+
+export interface GeneratedResult {
+  manifest: VisualManifest;
+  /** Rights records for the spec and any PubChem structures; save them before the lesson shows it. */
+  assets: VisualAsset[];
+  attempts: number;
+}
+
+/**
+ * Asks the AI for one visual and checks it; problems go back once for repair (ADR 0014).
+ * Resolves to undefined when the AI says no picture would help.
+ */
+export async function generateVisual(input: {
+  provider: LlmProvider;
+  lesson: LessonForVisual;
+  pubchem: { cache: PubChemCache; fetch?: typeof fetch };
+  signal?: AbortSignal;
+}): Promise<GeneratedResult | { problems: string[]; attempts: number } | undefined> {
+  const messages: ChatMessage[] = [
+    { role: "system", content: VISUAL_SYSTEM_PROMPT },
+    { role: "user", content: visualUserPrompt(input.lesson) },
+  ];
+  let problems: string[] = [];
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const { value, completion } = await completeStructured(input.provider, {
+      messages,
+      jsonSchema: { name: "Visual", schema: GENERATED_VISUAL_SCHEMA },
+      maxTokens: 8000,
+      prompt: VISUAL_PROMPT,
+      signal: input.signal,
+      parse: (text) => GeneratedVisual.parse(JSON.parse(text)),
+    });
+    const checked = await check(value, input);
+    if (checked === undefined) return undefined;
+    if ("manifest" in checked) return { ...checked, attempts: attempt };
+    problems = checked.problems;
+    messages.push(
+      { role: "assistant", content: completion.text },
+      {
+        role: "user",
+        content: `That picture cannot be shown yet. Fix these problems and answer again in full:\n${problems.map((p) => `- ${p}`).join("\n")}`,
+      },
+    );
+  }
+  return { problems, attempts: 2 };
+}
+
+async function check(
+  output: GeneratedVisual,
+  input: { lesson: LessonForVisual; pubchem: { cache: PubChemCache; fetch?: typeof fetch } },
+): Promise<
+  { manifest: VisualManifest; assets: VisualAsset[] } | { problems: string[] } | undefined
+> {
+  let manifest: VisualManifest | undefined;
+  try {
+    manifest = toManifest(output, input.lesson);
+  } catch (error) {
+    const issues = error instanceof ZodError ? error.issues : [];
+    return {
+      problems: issues.length
+        ? issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+        : [String(error)],
+    };
+  }
+  if (!manifest) return undefined;
+  let assets: VisualAsset[] = [];
+  if (manifest.kind === "molecule") {
+    const resolved = await resolveMolecules(manifest, input.pubchem);
+    if ("problems" in resolved) return resolved;
+    ({ manifest, assets } = resolved);
+  }
+  const problems = await manifestProblems(manifest);
+  if (problems.length > 0) return { problems };
+  const own = await generatedSpecAsset(manifest, input.lesson.lessonId);
+  return {
+    manifest: { ...manifest, assetIds: [own.assetId, ...manifest.assetIds] },
+    assets: [own, ...assets],
+  };
+}
