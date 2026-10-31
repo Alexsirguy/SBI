@@ -7,6 +7,10 @@ import {
   type LlmEventSink,
   type LlmProvider,
 } from "@sbi/llm";
+import type { RightsGate } from "@sbi/orchestrator";
+import { createRightsRegister, LIBRARY_ASSET_IDS } from "@sbi/rights";
+import { RENDERER_LIBRARIES, type VisualManifestRepository } from "@sbi/visuals";
+import { memoryPubChemCache } from "@sbi/visuals/server";
 import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
 import {
@@ -16,16 +20,21 @@ import {
   FEEDBACK_LIMITER,
   LESSON_FEEDBACK,
   LESSON_GATHERER,
+  LESSON_RIGHTS,
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
   REPOSITORIES,
+  VISUAL_MAKER,
+  VISUAL_MANIFESTS,
 } from "../tokens";
 import { createRateLimiter } from "../common/rate-limiter";
 import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
 import { LessonService } from "./lesson.service";
+import { createVisualMaker } from "../visuals/visual-maker";
+import { VisualsModule } from "../visuals/visuals.module";
 
 const logger = new Logger("LessonLlm");
 
@@ -64,7 +73,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
 }
 
 @Module({
-  imports: [TaxonomyModule],
+  imports: [TaxonomyModule, VisualsModule],
   controllers: [LessonController, LessonFeedbackController],
   providers: [
     LessonService,
@@ -103,6 +112,38 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
         repositories: Repositories,
         database: DatabaseHandle,
       ) => createEvidenceGatherer({ provider, env, repositories, database }),
+    },
+    {
+      provide: LESSON_RIGHTS,
+      inject: [REPOSITORIES, VISUAL_MANIFESTS],
+      // Typed as the gate the publisher calls, so a mismatch fails the build instead of a lesson.
+      useFactory: (repos: Repositories, manifests: VisualManifestRepository): RightsGate =>
+        createRightsRegister({
+          assets: repos.visualAssets,
+          manifests,
+          // An unknown library name maps to an id with no record, so the gate blocks it.
+          librariesFor: (kind) =>
+            RENDERER_LIBRARIES[kind].map((name) => LIBRARY_ASSET_IDS[name] ?? `missing:${name}`),
+        }),
+    },
+    {
+      provide: VISUAL_MAKER,
+      inject: [LESSON_LLM, REPOSITORIES, VISUAL_MANIFESTS, LESSON_RIGHTS],
+      useFactory: (
+        provider: LlmProvider | null,
+        repos: Repositories,
+        manifests: VisualManifestRepository,
+        rights: RightsGate,
+      ) =>
+        createVisualMaker({
+          provider,
+          manifests,
+          assets: repos.visualAssets,
+          lessons: repos.lessons,
+          rights,
+          // One lookup per molecule name for the life of the process; manifests keep the result.
+          pubchem: memoryPubChemCache(),
+        }),
     },
     {
       provide: LESSON_EVIDENCE,

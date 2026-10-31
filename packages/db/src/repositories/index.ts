@@ -9,6 +9,7 @@ import { createRecognitionResultRepository } from "./recognition-results";
 import { createReviewAuditLog } from "./review-audit";
 import { createTutorTurnRepository } from "./tutor-turns";
 import { createVisualAssetRepository } from "./visual-assets";
+import { createVisualManifestRepository } from "./visual-manifests";
 
 export function createRepositories(db: Database) {
   return {
@@ -21,6 +22,7 @@ export function createRepositories(db: Database) {
     evidencePacks: createEvidencePackRepository(db),
     claims: createClaimRepository(db),
     visualAssets: createVisualAssetRepository(db),
+    visualManifests: createVisualManifestRepository(db),
     recognitionResults: createRecognitionResultRepository(db),
     reviewAudit: createReviewAuditLog(db),
     tutorTurns: createTutorTurnRepository(db),

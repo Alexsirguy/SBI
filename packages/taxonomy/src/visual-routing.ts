@@ -6,9 +6,9 @@ export type Interaction =
   "label-parts" | "adjust-quantities" | "explore-pattern" | "compare-results";
 
 export interface VisualFamily {
-  /** Always deterministic code-drawn SVG, so every lesson works on low-end phones (ADR 0005). */
+  /** The kind suggested first for the domain; the generator may still pick another (ADR 0014). */
   primary: VisualKind;
-  /** Richer views offered on request, in order of preference. */
+  /** Other kinds that suit the domain, in order of preference. */
   optional: VisualKind[];
   interactions: Interaction[];
 }
@@ -22,28 +22,28 @@ export interface VisualRoute extends VisualFamily {
 
 export const VISUAL_ROUTES: Readonly<Record<Domain, VisualFamily>> = {
   maths: {
-    primary: "svg-diagram",
-    optional: ["simulation"],
+    primary: "graph",
+    optional: ["playground"],
     interactions: ["explore-pattern", "adjust-quantities"],
   },
   physics: {
-    primary: "svg-diagram",
-    optional: ["simulation", "gltf-model"],
+    primary: "mechanism",
+    optional: ["graph", "playground"],
     interactions: ["label-parts", "adjust-quantities"],
   },
   biology: {
-    primary: "svg-diagram",
-    optional: ["gltf-model"],
+    primary: "process",
+    optional: ["molecule", "playground"],
     interactions: ["label-parts"],
   },
   chemistry: {
-    primary: "svg-diagram",
-    optional: ["molecular", "simulation"],
+    primary: "molecule",
+    optional: ["process", "graph"],
     interactions: ["label-parts", "compare-results"],
   },
   arts: {
-    primary: "svg-diagram",
-    optional: ["canvas-diagram"],
+    primary: "playground",
+    optional: ["process"],
     interactions: ["compare-results", "explore-pattern"],
   },
 };

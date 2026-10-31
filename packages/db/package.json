@@ -23,6 +23,7 @@
     "@sbi/rights": "workspace:*",
     "@sbi/taxonomy": "workspace:*",
     "@sbi/tutor": "workspace:*",
+    "@sbi/visuals": "workspace:*",
     "drizzle-orm": "0.45.4",
     "mysql2": "3.24.6"
   },

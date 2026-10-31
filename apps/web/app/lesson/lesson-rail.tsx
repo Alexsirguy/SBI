@@ -4,19 +4,33 @@ import { MODULE_LABELS, MODULES } from "./modules/labels";
 import { SectionView } from "./modules/section-view";
 
 // Reserved from the start so diagrams arrive without moving the text the learner is reading.
-function VisualsSlot({ visuals }: { visuals: LessonVisuals["visuals"] }) {
-  if (visuals.length === 0) return null;
+function VisualsSlot({
+  visuals,
+  renderVisual,
+}: {
+  /** Undefined while the visual is still being made for this lesson. */
+  visuals: LessonVisuals["visuals"] | undefined;
+  renderVisual: RenderVisual;
+}) {
+  if (visuals?.length === 0) return null;
   return (
     <section aria-labelledby="visuals-heading" className="lesson-visuals">
-      <h2 id="visuals-heading">Pictures</h2>
-      <ul>
-        {visuals.map((visual) => (
-          <li key={visual.visualId}>{visual.alt}</li>
-        ))}
-      </ul>
+      <h2 id="visuals-heading">See how it works</h2>
+      {visuals ? (
+        visuals.map((visual) => <div key={visual.visualId}>{renderVisual(visual)}</div>)
+      ) : (
+        <p role="status" className="lesson-visuals__pending">
+          Making a picture of how it works…
+        </p>
+      )}
     </section>
   );
 }
+
+// Passed in, so the rail stays free of the API client and renders in unit tests.
+type RenderVisual = (visual: LessonVisuals["visuals"][number]) => ReactNode;
+
+const altOnly: RenderVisual = (visual) => <p>{visual.alt}</p>;
 
 /** The prototype's rail, opened in full so the learner only scrolls (owner decision, #287). */
 export function LessonRail({
@@ -24,11 +38,13 @@ export function LessonRail({
   label,
   askQuestion,
   visuals,
+  renderVisual = altOnly,
 }: {
   lesson?: Lesson;
   label: string;
   askQuestion: ReactNode;
-  visuals: LessonVisuals["visuals"];
+  visuals: LessonVisuals["visuals"] | undefined;
+  renderVisual?: RenderVisual;
 }) {
   if (!lesson) {
     return (
@@ -58,7 +74,9 @@ export function LessonRail({
             askQuestion={askQuestion}
           />
           {/* Pictures sit beside the mechanism they show, after the text (#83). */}
-          {section.module === "how-parts-work" ? <VisualsSlot visuals={visuals} /> : null}
+          {section.module === "how-parts-work" ? (
+            <VisualsSlot visuals={visuals} renderVisual={renderVisual} />
+          ) : null}
         </li>
       ))}
     </ol>

@@ -183,6 +183,20 @@ describe("createReuseMatcher", () => {
     expect(hit?.lesson.version).toBe(2);
   });
 
+  it("falls back to an older version when the newest no longer clears the rights gate", async () => {
+    const { repo } = memoryRepository([makeLesson(), makeLesson({ version: 2 })]);
+    const rights = {
+      check: async (lesson: LessonType) =>
+        lesson.version === 2 ? { cleared: false, reason: "review overdue" } : { cleared: true },
+    };
+
+    expect((await createReuseMatcher(repo, undefined, rights).match(query))?.lesson.version).toBe(
+      1,
+    );
+    const blocked = { check: async () => ({ cleared: false, reason: "review overdue" }) };
+    expect(await createReuseMatcher(repo, undefined, blocked).match(query)).toBeNull();
+  });
+
   it("never serves a private lesson, which has no owner to match yet", async () => {
     const privately = makeLesson({ reuse: { ...makeLesson().reuse, cacheScope: "private" } });
     const { repo } = memoryRepository([privately]);

@@ -11,6 +11,7 @@ import { MediaModule } from "./media/media.module";
 import { PurgeModule } from "./purge/purge.module";
 import { RecognitionModule } from "./recognition/recognition.module";
 import { TaxonomyModule } from "./taxonomy/taxonomy.module";
+import { VisualsModule } from "./visuals/visuals.module";
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TaxonomyModule } from "./taxonomy/taxonomy.module";
     PurgeModule,
     RecognitionModule,
     TaxonomyModule,
+    VisualsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_FILTER, useClass: ApiErrorFilter }],

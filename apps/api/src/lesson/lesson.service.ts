@@ -1,4 +1,4 @@
-import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
+import { HttpStatus, Inject, Injectable, Logger, Optional } from "@nestjs/common";
 import {
   Lesson,
   LessonProgress,
@@ -52,6 +52,8 @@ import { sourcedFacts, type Taxonomy } from "@sbi/taxonomy";
 import {
   LESSON_EVIDENCE,
   LESSON_GATHERER,
+  LESSON_RIGHTS,
+  VISUAL_MAKER,
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
@@ -59,6 +61,7 @@ import {
 } from "../tokens";
 import { createEventQueue } from "./event-queue";
 import { resolveSubject } from "./subject";
+import type { VisualMaker } from "../visuals/visual-maker";
 import { lessonSources } from "./sources";
 import { UserFacingException } from "../common/user-facing.exception";
 
@@ -106,15 +109,6 @@ export function effectiveSafetyClass(
   const floor = safetyNoticeFor(entry) ? "high" : "low";
   return SAFETY_ORDER.indexOf(requested) >= SAFETY_ORDER.indexOf(floor) ? requested : floor;
 }
-
-// Drafts carry no visuals yet; any visual needs the rights register before it is served.
-// TODO(#72) check visual assets against the rights register.
-const VISUAL_RIGHTS: RightsGate = {
-  check: async (lesson) =>
-    lesson.visuals.length === 0
-      ? { cleared: true }
-      : { cleared: false, reason: "visual rights are not checked yet" },
-};
 
 /** Gathers (or reuses) request-time evidence for a lesson; see gatherEvidence in @sbi/evidence. */
 export type EvidenceGatherer = (
@@ -260,6 +254,8 @@ export class LessonService {
     @Inject(LESSON_EVIDENCE) private readonly evidence: EvidenceRepositories,
     @Inject(LESSON_REVIEW_AUDIT) private readonly reviewAudit: ReviewAuditLog,
     @Inject(LESSON_GATHERER) private readonly gather: EvidenceGatherer,
+    @Inject(LESSON_RIGHTS) private readonly rights: RightsGate,
+    @Optional() @Inject(VISUAL_MAKER) private readonly makeVisual?: VisualMaker,
   ) {}
 
   // Events leave as their stage completes, so the answer streams before the heavier payloads.
@@ -298,7 +294,7 @@ export class LessonService {
       locale: request.locale,
       safetyScope: safetyClass,
     };
-    const hit = await createReuseMatcher(this.lessons).match({
+    const hit = await createReuseMatcher(this.lessons, undefined, this.rights).match({
       intent,
       assumptions: request.assumptions,
       policyVersion: LESSON_POLICY_VERSION,
@@ -484,7 +480,7 @@ export class LessonService {
             }
           }
           // High-risk, low-confidence, failed or rights-blocked lessons wait for a reviewer.
-          const routed = await createPublisher({ rights: VISUAL_RIGHTS, onAudit: record }).route(
+          const routed = await createPublisher({ rights: this.rights, onAudit: record }).route(
             checked,
             report,
             { safetyNotice: safetyNoticeFor(entry) },
@@ -569,9 +565,11 @@ export class LessonService {
         sourceIds.length > 0 ? await this.evidence.sources.getMany(sourceIds) : [],
       ),
     };
+    // Last, because generating a visual can take a minute and the learner is already reading.
+    const visuals = this.makeVisual ? await this.makeVisual(validated) : validated.visuals;
     yield {
       type: "visuals",
-      data: LessonVisuals.parse({ lessonId: validated.lessonId, visuals: validated.visuals }),
+      data: LessonVisuals.parse({ lessonId: validated.lessonId, visuals }),
     };
   }
 }

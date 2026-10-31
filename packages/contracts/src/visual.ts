@@ -39,17 +39,50 @@ export const VisualAsset = z
     path: ["modificationNotes"],
   });
 
-export const VisualKind = z.enum([
-  "svg-diagram",
-  "canvas-diagram",
-  "gltf-model",
-  "simulation",
-  "molecular",
-]);
+// ADR 0014: each kind is a spec format the AI writes and a renderer we own; playground is the fallback.
+export const VisualKind = z.enum(["mechanism", "molecule", "process", "graph", "playground"]);
 
 export const VisualFallback = z.object({
   text: z.string().min(1),
   stillImageUrl: z.url().optional(),
+});
+
+// Ids name the spec's own elements and variables, so they stay simple enough to use in formulas.
+const VisualName = z.string().regex(/^[a-z][a-zA-Z0-9]{0,39}$/, "Use a short camelCase name");
+
+/** A named part of the visual, tied to the lesson claim that says what it is. */
+export const VisualLabel = z.object({
+  id: VisualName,
+  text: z.string().min(1).max(60),
+  claimId: Uuid,
+});
+
+/** A slider the learner moves; formulas and the spec read its value by `id`. */
+export const VisualControl = z
+  .object({
+    id: VisualName,
+    label: z.string().min(1).max(60),
+    unit: z.string().max(16).default(""),
+    min: z.number(),
+    max: z.number(),
+    step: z.number().positive(),
+    value: z.number(),
+  })
+  .refine((control) => control.min < control.max, {
+    message: "min must be below max",
+    path: ["max"],
+  })
+  .refine((control) => control.value >= control.min && control.value <= control.max, {
+    message: "value must sit within min and max",
+    path: ["value"],
+  });
+
+/** A number worked out from the sliders with a mathjs formula, never with code. */
+export const VisualReadout = z.object({
+  id: VisualName,
+  label: z.string().min(1).max(60),
+  unit: z.string().max(16).default(""),
+  formula: z.string().min(1).max(300),
 });
 
 export const VisualManifest = z.object({
@@ -61,6 +94,11 @@ export const VisualManifest = z.object({
   assetIds: z.array(Uuid).default([]),
   assumptions: z.array(z.string().min(1)).default([]),
   params: z.record(z.string(), z.unknown()).default({}),
+  labels: z.array(VisualLabel).max(20).default([]),
+  controls: z.array(VisualControl).max(8).default([]),
+  readouts: z.array(VisualReadout).max(8).default([]),
+  /** The kind's own format: MJCF or Mermaid text, or a JSON object such as a Vega-Lite spec. */
+  spec: z.union([z.string().max(20_000), z.record(z.string(), z.unknown())]).optional(),
 });
 
 export const VisualRef = z.object({
@@ -70,7 +108,19 @@ export const VisualRef = z.object({
   alt: z.string().min(1),
 });
 
+export const VisualRequest = z.object({ visualId: Uuid });
+
+/** Where a client fetches a visual's manifest; GET routes take their request as query parameters. */
+export function visualManifestUri(visualId: string): string {
+  return `/visuals?visualId=${encodeURIComponent(visualId)}`;
+}
+
 export type VisualAsset = z.infer<typeof VisualAsset>;
+export type VisualFallback = z.infer<typeof VisualFallback>;
+export type VisualControl = z.infer<typeof VisualControl>;
 export type VisualKind = z.infer<typeof VisualKind>;
+export type VisualLabel = z.infer<typeof VisualLabel>;
+export type VisualReadout = z.infer<typeof VisualReadout>;
 export type VisualManifest = z.infer<typeof VisualManifest>;
 export type VisualRef = z.infer<typeof VisualRef>;
+export type VisualRequest = z.infer<typeof VisualRequest>;

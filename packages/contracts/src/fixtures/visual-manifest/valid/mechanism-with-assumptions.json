@@ -1,6 +1,6 @@
 {
   "visualId": "0192f1a0-0000-7000-8000-00000000001c",
-  "kind": "simulation",
+  "kind": "mechanism",
   "alt": "Interactive lever with adjustable fulcrum position and load.",
   "longDescription": "Move the fulcrum to see how the effort needed to lift the load changes.",
   "fallback": {

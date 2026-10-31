@@ -16,6 +16,7 @@ import { cautionText } from "./notice-text";
 import { LessonRail } from "./lesson-rail";
 import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
+import { VisualFrame } from "./visual-frame";
 
 interface LessonReaderProps {
   request: LessonRequest;
@@ -143,7 +144,8 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
             lesson={lesson}
             label={label}
             askQuestion={<AskQuestion subject={subject} prefs={prefs} />}
-            visuals={visuals?.visuals ?? []}
+            visuals={visuals?.visuals ?? (status === "loading" ? undefined : [])}
+            renderVisual={(visual) => <VisualFrame visual={visual} />}
           />
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
           {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}

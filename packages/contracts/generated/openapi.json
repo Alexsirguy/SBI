@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.22.0"
+    "version": "0.24.0"
   },
   "paths": {
     "/uploads": {
@@ -1560,11 +1560,11 @@
                           "kind": {
                             "type": "string",
                             "enum": [
-                              "svg-diagram",
-                              "canvas-diagram",
-                              "gltf-model",
-                              "simulation",
-                              "molecular"
+                              "mechanism",
+                              "molecule",
+                              "process",
+                              "graph",
+                              "playground"
                             ]
                           },
                           "manifestUri": {
@@ -1811,6 +1811,284 @@
             }
           },
           "503": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/visuals": {
+      "get": {
+        "operationId": "getVisual",
+        "summary": "Fetch the manifest of one visual a lesson references.",
+        "parameters": [
+          {
+            "name": "visualId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "visualId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "mechanism",
+                        "molecule",
+                        "process",
+                        "graph",
+                        "playground"
+                      ]
+                    },
+                    "alt": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "longDescription": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "fallback": {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "stillImageUrl": {
+                          "type": "string",
+                          "format": "uri"
+                        }
+                      },
+                      "required": [
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "assetIds": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      }
+                    },
+                    "assumptions": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "params": {
+                      "default": {},
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "labels": {
+                      "default": [],
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+                          },
+                          "text": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 60
+                          },
+                          "claimId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "text",
+                          "claimId"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "controls": {
+                      "default": [],
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 60
+                          },
+                          "unit": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 16
+                          },
+                          "min": {
+                            "type": "number"
+                          },
+                          "max": {
+                            "type": "number"
+                          },
+                          "step": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "unit",
+                          "min",
+                          "max",
+                          "step",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "readouts": {
+                      "default": [],
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 60
+                          },
+                          "unit": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 16
+                          },
+                          "formula": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 300
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "unit",
+                          "formula"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "spec": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 20000
+                        },
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "visualId",
+                    "kind",
+                    "alt",
+                    "fallback",
+                    "assetIds",
+                    "assumptions",
+                    "params",
+                    "labels",
+                    "controls",
+                    "readouts"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Error",
             "content": {
               "application/json": {
@@ -2519,11 +2797,11 @@
                 "kind": {
                   "type": "string",
                   "enum": [
-                    "svg-diagram",
-                    "canvas-diagram",
-                    "gltf-model",
-                    "simulation",
-                    "molecular"
+                    "mechanism",
+                    "molecule",
+                    "process",
+                    "graph",
+                    "playground"
                   ]
                 },
                 "manifestUri": {
@@ -3198,11 +3476,11 @@
           "kind": {
             "type": "string",
             "enum": [
-              "svg-diagram",
-              "canvas-diagram",
-              "gltf-model",
-              "simulation",
-              "molecular"
+              "mechanism",
+              "molecule",
+              "process",
+              "graph",
+              "playground"
             ]
           },
           "alt": {
@@ -3254,6 +3532,134 @@
               "type": "string"
             },
             "additionalProperties": {}
+          },
+          "labels": {
+            "default": [],
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+                },
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "claimId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "id",
+                "text",
+                "claimId"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "controls": {
+            "default": [],
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "unit": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 16
+                },
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "step": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "unit",
+                "min",
+                "max",
+                "step",
+                "value"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "readouts": {
+            "default": [],
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "unit": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 16
+                },
+                "formula": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "unit",
+                "formula"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "spec": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20000
+              },
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            ]
           }
         },
         "required": [
@@ -3263,7 +3669,10 @@
           "fallback",
           "assetIds",
           "assumptions",
-          "params"
+          "params",
+          "labels",
+          "controls",
+          "readouts"
         ],
         "additionalProperties": false
       },
@@ -3278,11 +3687,11 @@
           "kind": {
             "type": "string",
             "enum": [
-              "svg-diagram",
-              "canvas-diagram",
-              "gltf-model",
-              "simulation",
-              "molecular"
+              "mechanism",
+              "molecule",
+              "process",
+              "graph",
+              "playground"
             ]
           },
           "manifestUri": {
