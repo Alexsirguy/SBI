@@ -7,6 +7,7 @@ import {
   type LlmEventSink,
   type LlmProvider,
 } from "@sbi/llm";
+import type { RightsGate } from "@sbi/orchestrator";
 import { createRightsRegister } from "@sbi/rights";
 import type { ApiEnv } from "../env";
 import { TaxonomyModule } from "../taxonomy/taxonomy.module";
@@ -111,7 +112,8 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       inject: [REPOSITORIES],
       // No visual has a stored manifest yet, so any lesson with a visual stays held.
       // TODO(#84) read manifests and renderer libraries from the visual registry.
-      useFactory: (repos: Repositories) =>
+      // Typed as the gate the publisher calls, so a mismatch fails the build instead of a lesson.
+      useFactory: (repos: Repositories): RightsGate =>
         createRightsRegister({
           assets: repos.visualAssets,
           manifests: { get: async () => undefined },
