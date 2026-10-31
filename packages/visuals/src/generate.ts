@@ -112,7 +112,7 @@ export const PITCH_EXAMPLE = {
 
 export const VISUAL_SYSTEM_PROMPT = `You design one interactive picture that shows how an everyday thing works, for a science lesson.
 The learner changes sliders and watches the result, so prefer a kind with sliders and readouts.
-Try the kinds in this order and pick the first that can show the lesson's mechanism: graph, mechanism, molecule, process, playground.
+Try the kinds in this order and pick the first that can show the lesson's mechanism: mechanism, graph, molecule, process, playground.
 Fill only that kind's fields; leave the others empty ("" or []).
 
 Kinds:

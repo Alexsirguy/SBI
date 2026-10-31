@@ -223,7 +223,7 @@ describe("generateVisual", () => {
 
 describe("visual prompt", () => {
   it("tries the kinds with sliders before the playground", () => {
-    expect(VISUAL_SYSTEM_PROMPT).toContain("graph, mechanism, molecule, process, playground");
+    expect(VISUAL_SYSTEM_PROMPT).toContain("mechanism, graph, molecule, process, playground");
     expect(VISUAL_SYSTEM_PROMPT).toContain(PITCH_EXAMPLE.series[0]?.formula);
   });
 
