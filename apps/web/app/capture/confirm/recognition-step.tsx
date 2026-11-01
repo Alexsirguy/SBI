@@ -1,11 +1,9 @@
 "use client";
 
 import type { ApiResponse, Certainty } from "@sbi/contracts";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
-import { lessonHref } from "../../lesson/lesson-request";
-import { readPrefs } from "../../lesson/prefs";
+import { useEffect, useRef, useState } from "react";
 import { DescribeForm } from "./describe-form";
+import { QuestionStep } from "./question-step";
 
 const CERTAINTY_WORDS: Record<Certainty, string> = {
   likely: "likely",
@@ -29,16 +27,18 @@ export function RecognitionStep({
   onStart: (label: string) => void;
   onRetake: () => void;
 }) {
-  const router = useRouter();
+  const [chosen, setChosen] = useState<string>();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const options = reply?.options ?? [];
 
-  // The loader that held focus is gone, so the learner lands on the question being asked.
-  useEffect(() => headingRef.current?.focus(), []);
+  // The loader, or the question step, that held focus is gone, so the learner lands on this one.
+  useEffect(() => {
+    if (!chosen) headingRef.current?.focus();
+  }, [chosen]);
 
-  function start(label: string) {
-    onStart(label);
-    router.push(lessonHref({ label }, { prefs: readPrefs() }));
+  // No lesson is written until the learner says what they want to know about it.
+  if (chosen) {
+    return <QuestionStep label={chosen} onStart={onStart} onBack={() => setChosen(undefined)} />;
   }
 
   return (
@@ -52,7 +52,7 @@ export function RecognitionStep({
           <ul className="choice-list">
             {options.map((option) => (
               <li key={option.label}>
-                <button type="button" className="choice" onClick={() => start(option.label)}>
+                <button type="button" className="choice" onClick={() => setChosen(option.label)}>
                   <span>{option.label}</span>
                   <small>{CERTAINTY_WORDS[option.certainty]}</small>
                 </button>
@@ -69,7 +69,7 @@ export function RecognitionStep({
         label="Something else? Tell us what it is"
         hint=""
         submitLabel="Use this"
-        onStart={onStart}
+        onName={setChosen}
       />
       <button type="button" className="back-link" onClick={onRetake}>
         Try a different photo

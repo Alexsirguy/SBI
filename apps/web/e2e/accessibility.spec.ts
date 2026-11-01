@@ -70,6 +70,11 @@ test("the whole photo journey works from the keyboard alone", async ({ page }) =
   await expect(page.getByRole("heading", { name: "Which one is it?" })).toBeFocused();
   await tabTo(page, page.getByRole("button", { name: /^Bicycle/ }));
   await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "What would you like to know about the bicycle?" }),
+  ).toBeFocused();
+  await tabTo(page, page.getByRole("button", { name: "Why does the bicycle whistle?" }));
+  await page.keyboard.press("Enter");
   await expectLessonOpened(page, "Bicycle");
 });
 

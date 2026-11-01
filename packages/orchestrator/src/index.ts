@@ -69,3 +69,8 @@ export {
   type PipelineOutcome,
 } from "./pipeline";
 export { repairable, REVISE_PROMPT_VERSION, reviseSections } from "./repair";
+export {
+  QUESTION_SUGGEST_PROMPT_VERSION,
+  suggestQuestions,
+  type QuestionSuggestionInput,
+} from "./questions";

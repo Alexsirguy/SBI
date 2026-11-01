@@ -29,6 +29,7 @@ const schema = z.object({
   // Free text may hold personal details despite the form's hint, so it does not outlive triage.
   FEEDBACK_DETAILS_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
   FEEDBACK_MAX_PER_HOUR: z.coerce.number().int().positive().default(20),
+  QUESTIONS_MAX_PER_HOUR: z.coerce.number().int().positive().default(60),
   FEATURE_FLAGS: z.string().optional(),
 });
 
