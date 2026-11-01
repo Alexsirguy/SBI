@@ -322,7 +322,7 @@ describe("generateVisual with the lesson's experiment", () => {
 
 describe("visual prompt", () => {
   it("asks for the experiment's ids in every kind with sliders, under v7", () => {
-    expect(VISUAL_PROMPT.version).toBe("v7");
+    expect(VISUAL_PROMPT.version).toBe("v8");
     expect(VISUAL_SYSTEM_PROMPT).toContain("SAME id, min, max and value");
     expect(VISUAL_SYSTEM_PROMPT).toContain("except molecule, process and none");
   });

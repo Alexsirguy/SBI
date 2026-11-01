@@ -82,6 +82,42 @@ describe("mechanism checks", () => {
     expect(mjcfTextProblems(mjcf).join()).toMatch(message);
   });
 
+  it("sends back a piston that is not joined to its crank", () => {
+    const loose = `<mujoco><worldbody>
+      <body name="crankshaft"><joint name="crankSpin" type="hinge"/><geom type="cylinder" size=".05 .01"/></body>
+      <body name="piston"><joint name="pistonSlide" type="slide"/><geom type="cylinder" size=".04 .02"/></body>
+    </worldbody></mujoco>`;
+    expect(mjcfTextProblems(loose).join()).toMatch(/piston is not joined to the crank/);
+    const pump = loose.replace(/crank(shaft|Spin)/g, "handle$1");
+    expect(mjcfTextProblems(pump)).toEqual([]);
+    const engine = (REFERENCE_MECHANISMS.engine.spec as { mjcf: string }).mjcf;
+    expect(mjcfTextProblems(engine)).toEqual([]);
+  });
+
+  it("refuses a joint range that leaves out where the body starts", () => {
+    const engine = (REFERENCE_MECHANISMS.engine.spec as { mjcf: string }).mjcf;
+    const mjcf = engine.replace(
+      'name="pistonTravel" type="slide"',
+      'name="pistonTravel" type="slide" range="0.1 0.28"',
+    );
+    const ranged = { ...REFERENCE_MECHANISMS.engine, spec: { mjcf } };
+    expect(physicsProblems(mujoco, ranged).join()).toMatch(
+      /"pistonTravel" has range 0.1 0.28, which leaves out 0/,
+    );
+  });
+
+  it("refuses a part that turns too fast to follow", () => {
+    const engine = REFERENCE_MECHANISMS.engine;
+    const mjcf = (engine.spec as { mjcf: string }).mjcf.replace(
+      'joint="crankAngle" gear="1"',
+      'joint="crankAngle" gear="20"',
+    );
+    const fast = { ...engine, spec: { ...(engine.spec as object), mjcf } };
+    expect(physicsProblems(mujoco, fast).join()).toMatch(
+      /"crankAngle" turns \d+ times a second .* at most 10 times a second/,
+    );
+  });
+
   it("passes MuJoCo's own error back", () => {
     const broken = {
       ...base,

@@ -8,7 +8,7 @@ const engineMjcf = `<mujoco model="piston-engine">
   <option timestep="0.002" gravity="0 0 0"/>
   <default><geom rgba="0.62 0.66 0.7 1"/></default>
   <worldbody>
-    <geom name="cylinderWall" type="box" pos="0 0.07 0.19" size="0.06 0.004 0.09" rgba="0.75 0.82 0.9 0.35" contype="0" conaffinity="0"/>
+    <geom name="cylinder" type="cylinder" pos="0 -0.03 ${ENGINE.rod + 0.01}" size="0.052 0.08" rgba="0.75 0.82 0.9 0.25" contype="0" conaffinity="0"/>
     <body name="crankshaft">
       <joint name="crankAngle" type="hinge" axis="0 1 0" damping="0.05"/>
       <geom name="crankDisc" type="cylinder" size="0.07 0.012" euler="90 0 0" contype="0" conaffinity="0"/>
