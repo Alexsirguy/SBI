@@ -27,6 +27,24 @@ describe("compileFormula", () => {
     expect("error" in compiled && compiled.error).toMatch(message);
   });
 
+  it("knows every function the generated formulas use", () => {
+    // From the 256 formulas in 112 stored manifests on 2026-11-01, plus near relatives.
+    const used = "sqrt(9) + min(1, 2) + max(1, 2) + cos(0) + exp(0) + abs(-1) + sin(0) + log(1)";
+    const more = "round(1.4) + atan(0) + floor(1.5) + acos(1) + tan(0) + mod(5, 3) + x ^ 2";
+    expect(evaluate(`${used} + ${more}`, { x: 3 })).toBeCloseTo(
+      3 + 1 + 2 + 1 + 1 + 1 + 0 + 0 + 1 + 0 + 1 + 0 + 0 + 2 + 9,
+    );
+    expect(evaluate("e ^ 0 + log10(100) + hypot(3, 4) + sign(-2) + ceil(0.2)", {})).toBe(8);
+  });
+
+  it.each(["config({})", "typed(1)", "derivative(x, x)", "det(x)", "factory(1)"])(
+    "refuses mathjs internals and functions outside arithmetic: %s",
+    (formula) => {
+      const compiled = compileFormula(formula, ["x"]);
+      expect("error" in compiled && compiled.error).toMatch(/unknown name/);
+    },
+  );
+
   it("throws on a result that is not a finite number", () => {
     expect(() => evaluate("1 / mass", { mass: 0 })).toThrow(/finite/);
   });
