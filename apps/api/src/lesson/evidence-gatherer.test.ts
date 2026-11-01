@@ -1,6 +1,7 @@
 import type { GatheredEvidence } from "@sbi/evidence";
 import { describe, expect, it, vi } from "vitest";
-import { backgroundGathers, lessonFirst } from "./evidence-gatherer";
+import { backgroundGathers, createEvidenceGatherer, lessonFirst } from "./evidence-gatherer";
+import { testEnv } from "../testing/test-app";
 
 const pack = { reused: true, claims: [], pack: {} } as unknown as GatheredEvidence;
 
@@ -44,5 +45,23 @@ describe("lessonFirst", () => {
     };
     expect(await lessonFirst("failing", steps)).toBeUndefined();
     await expect(backgroundGathers()).resolves.toBeUndefined();
+  });
+});
+
+describe("createEvidenceGatherer", () => {
+  it("fetches nothing when no lesson model is configured, since no lesson can use the index", () => {
+    const fetched = vi.fn(fetch);
+    vi.stubGlobal("fetch", fetched);
+    try {
+      createEvidenceGatherer({
+        provider: null,
+        env: testEnv,
+        repositories: {} as never,
+        database: {} as never,
+      });
+      expect(fetched).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -54,7 +54,8 @@ export function createEvidenceGatherer(deps: GathererDeps): EvidenceGatherer {
   const libretexts = createLibreTextsIndex({
     fetcher: createPoliteFetcher({ ...http, maxBytes: 20_000_000, timeoutMs: 90_000 }),
   });
-  libretexts.warm();
+  // Without a lesson model no lesson can search the index, so it is not built (and tests stay offline).
+  if (deps.provider) libretexts.warm();
   const retriever = createDefaultRetriever(sourceHttp);
   const gatherDeps = (provider: LlmProvider) => ({
     provider,
