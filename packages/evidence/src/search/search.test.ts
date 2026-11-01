@@ -173,11 +173,15 @@ describe("searchSources", () => {
         ? [{ doi: "10.1063/1.1475333" }, { url: "https://www.nist.gov/water" }]
         : [{ doi: "10.1063/1.1475333" }],
     );
-    const result = await searchSources(question(), {
-      libretexts: index,
-      searchWikipedia: async () => ["Enthalpy of vaporization"],
-      discoverReferences,
-    });
+    const result = await searchSources(
+      question(),
+      {
+        libretexts: index,
+        searchWikipedia: async () => ["Enthalpy of vaporization"],
+        discoverReferences,
+      },
+      { refsPerArticle: 3 },
+    );
     expect(result.articles).toEqual(["Latent heat", "Enthalpy of vaporization"]);
     expect(result.refs).toEqual([
       { url: `${BOOK}/Volume_A/36A%3A_Heat%3A_Phase_Changes` },
@@ -196,9 +200,23 @@ describe("searchSources", () => {
         },
         discoverReferences: async () => Array.from({ length: 10 }, (_, n) => ({ pmid: String(n) })),
       },
-      { maxRefs: 3 },
+      { maxRefs: 3, refsPerArticle: 10 },
     );
     expect(result.refs).toHaveLength(3);
     expect(result.failures.join(" ")).toContain("wikipedia search");
+  });
+
+  it("keeps a cold lesson small by default: one reference per article, three refs in all", async () => {
+    const result = await searchSources(question(), {
+      libretexts: index,
+      searchWikipedia: async () => ["Enthalpy of vaporization", "Boiling", "Steam"],
+      discoverReferences: async (title) => [
+        { url: `https://www.nist.gov/${title}` },
+        { pmid: title },
+      ],
+    });
+    expect(result.articles).toHaveLength(2);
+    expect(result.refs).toHaveLength(3);
+    expect(result.refs.some((ref) => ref.pmid)).toBe(false);
   });
 });

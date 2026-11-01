@@ -3,7 +3,7 @@ import { LlmError, type LlmProvider } from "@sbi/llm";
 import { z } from "zod";
 import { orderByDependencies } from "../claims/graph";
 
-export const INQUIRY_PROMPT_VERSION = "inquiry-plan-p0.1";
+export const INQUIRY_PROMPT_VERSION = "inquiry-plan-p0.2";
 
 export const Discipline = z.enum([
   "physics",
@@ -26,8 +26,8 @@ export const InquiryQuestion = z.object({
 });
 
 export const InquiryPlan = z.object({
-  // Fewer than three cannot get from what is seen to the principles behind it.
-  questions: z.array(InquiryQuestion).min(3).max(6),
+  // ADR 0016: two or three sub-questions keep a cold lesson near 30 s; model knowledge fills the rest.
+  questions: z.array(InquiryQuestion).min(2).max(3),
 });
 
 export type Discipline = z.infer<typeof Discipline>;
@@ -45,7 +45,7 @@ export interface InquiryInput {
 }
 
 const SYSTEM = `You plan the research for a first-principles science lesson about an everyday object.
-Given the object and the learner's question, list 3 to 6 sub-questions that together explain the science behind it: start from what can be observed, then the principles needed, in dependency order.
+Given the object and the learner's question, list 2 or 3 sub-questions that together explain the science behind it: start from what can be observed, then the principles needed, in dependency order.
 Cover the disciplines that genuinely apply among physics, chemistry, biology, maths, earth-science, engineering and history. Include history only when the object or its invention has a documented history.
 Each sub-question must be answerable from a textbook, a public science institution or a reference source. Ask about typical mechanisms of the category, never about the specific item in a photo.
 searchTerms: 2 to 6 specific terms a search index should match (name the principle, not just the object). wikipediaArticles: up to 4 exact English Wikipedia article titles covering the principle.
@@ -61,8 +61,8 @@ const SCHEMA: Record<string, unknown> = {
   properties: {
     questions: {
       type: "array",
-      minItems: 3,
-      maxItems: 6,
+      minItems: 2,
+      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,

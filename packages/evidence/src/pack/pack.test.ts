@@ -318,6 +318,41 @@ describe("gatherEvidence", () => {
     expect(await target.packs.get(result.pack.packKey)).toBeDefined();
   });
 
+  it("fetches a sub-question's sources at once and records the one that fails", async () => {
+    let inFlight = 0;
+    let most = 0;
+    const retriever: Retriever = {
+      retrieve: vi.fn(async (ref) => {
+        inFlight += 1;
+        most = Math.max(most, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        inFlight -= 1;
+        const page = PAGES[ref.url ?? ""];
+        if (!page) throw new Error("gone");
+        return page;
+      }),
+      discover: vi.fn(),
+    };
+    const target = deps({
+      retriever,
+      search: {
+        searchWikipedia: async () => [],
+        discoverReferences: async () => [],
+        libretexts: {
+          search: async (query) =>
+            query.includes("current heat")
+              ? ["https://phys.libretexts.org/heat", "https://phys.libretexts.org/missing"]
+              : [],
+        },
+      },
+    });
+    const result = await gatherEvidence(input, target, { concurrency: 1 });
+    expect(most).toBe(2);
+    const first = result.pack.questions.find((question) => question.key === "q1");
+    expect(first?.sources).toBe(1);
+    expect(first?.failures.join(" ")).toContain("gone");
+  });
+
   it("stops at the time budget, keeps what finished, and does not store the pack", async () => {
     const slow: Retriever = {
       retrieve: vi.fn(

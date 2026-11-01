@@ -169,6 +169,7 @@ export {
   EvidencePack,
   evidencePackKey,
   gatherEvidence,
+  storedEvidence,
   type EvidencePackRepository,
   type GatherDeps,
   type GatheredEvidence,
