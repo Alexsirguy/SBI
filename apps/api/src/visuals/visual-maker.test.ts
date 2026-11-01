@@ -33,12 +33,21 @@ const PROCESS = {
   code: "",
 };
 
-function provider(answer: unknown): LlmProvider {
+const NONE = { ...PROCESS, kind: "none" };
+// A diagram answer lists its stages first; three or more make it worth drawing.
+const STAGED = {
+  ...PROCESS,
+  topic: "process",
+  stages: ["Water boils", "Strip bends", "Switch flips off"],
+};
+
+// The experiment and the diagram are asked side by side, so answers go by prompt.
+function provider(answer: unknown, diagram: unknown = NONE): LlmProvider {
   return {
     id: "test",
     model: "test",
-    complete: vi.fn(async () => ({
-      text: JSON.stringify(answer),
+    complete: vi.fn(async (request: { prompt?: { id: string } }) => ({
+      text: JSON.stringify(request.prompt?.id === "visual-diagram" ? diagram : answer),
       model: "test",
       latencyMs: 1,
       usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 },
@@ -88,10 +97,42 @@ describe("createVisualMaker", () => {
     );
     const llm = provider({ ...PROCESS, labels: [] });
     await createVisualMaker({ provider: llm, rights: cleared, ...stores().deps })(guitar);
-    const [request] = vi.mocked(llm.complete).mock.calls[0] ?? [];
-    const user = String(request?.messages[1]?.content);
+    const requests = vi.mocked(llm.complete).mock.calls.map(([request]) => request);
+    const experiment = requests.find((request) => request.prompt?.id === "visual-generate");
+    const user = String(experiment?.messages[1]?.content);
     expect(user).toContain("- control tension (Tension, N): min 40, max 200, value 110");
     expect(user).toContain("- readout pitch (Pitch, Hz)");
+
+    const diagram = requests.find((request) => request.prompt?.id === "visual-diagram");
+    const asked = String(diagram?.messages[1]?.content);
+    expect(asked).toContain("Demonstration steps:\n1. Start at 110 N");
+    expect(asked).not.toContain("control tension");
+  });
+
+  it("adds a stage diagram beside the experiment, with the experiment first", async () => {
+    const store = stores();
+    const diagram = { ...STAGED, alt: "The stages of switching off" };
+    const make = createVisualMaker({
+      provider: provider(PROCESS, diagram),
+      rights: cleared,
+      ...store.deps,
+    });
+    const refs = await make(lesson);
+    expect(refs.map((ref) => ref.alt)).toEqual([PROCESS.alt, diagram.alt]);
+    expect(store.manifests).toHaveLength(2);
+    expect(store.lessons[0]?.visuals).toEqual(refs);
+  });
+
+  it("keeps the diagram when the experiment visual cannot be made", async () => {
+    const store = stores();
+    const make = createVisualMaker({
+      provider: provider(NONE, STAGED),
+      rights: cleared,
+      ...store.deps,
+    });
+    const refs = await make(lesson);
+    expect(refs.map((ref) => ref.kind)).toEqual(["process"]);
+    expect(store.lessons[0]?.visuals).toEqual(refs);
   });
 
   it("keeps the visual a reused lesson already has, without asking the model", async () => {

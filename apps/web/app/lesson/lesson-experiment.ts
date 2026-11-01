@@ -4,16 +4,17 @@ import { isMerrillLesson, type Lesson, type LessonVisuals } from "@sbi/contracts
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { ExperimentController } from "./experiment";
+import { experimentVisualId } from "./experiment-visual";
 import type { ExperimentState } from "./practice";
 import { visualQuery } from "./visual-query";
 
-/** The Merrill lesson's experiment: its first visual's manifest, once that has arrived. */
+/** The Merrill lesson's experiment: its first visual with sliders, once that has arrived. */
 export function useLessonExperiment(
   lesson: Lesson | undefined,
   visuals: LessonVisuals["visuals"] | undefined,
 ): ExperimentState {
   const wanted = lesson !== undefined && isMerrillLesson(lesson) && lesson.experiment !== undefined;
-  const visualId = wanted ? visuals?.[0]?.visualId : undefined;
+  const visualId = wanted ? experimentVisualId(visuals) : undefined;
   const manifest = useQuery({ ...visualQuery(visualId ?? ""), enabled: visualId !== undefined });
   const [built, setBuilt] = useState<{ visualId: string; controller: ExperimentController }>();
   useEffect(() => {

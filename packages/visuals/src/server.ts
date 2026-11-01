@@ -6,6 +6,11 @@ import type mermaidApi from "mermaid";
 import { commonLayerProblems } from "./common/validate";
 import { experimentProblems } from "./experiment";
 import {
+  diagramStages,
+  MIN_DIAGRAM_STAGES,
+  DIAGRAM_PROMPT,
+  DIAGRAM_SYSTEM_PROMPT,
+  GENERATED_DIAGRAM_SCHEMA,
   GENERATED_VISUAL_SCHEMA,
   GeneratedVisual,
   PLAYGROUND_REVIEW_PROMPT,
@@ -121,20 +126,37 @@ export async function generateVisual(input: {
   lesson: LessonForVisual;
   pubchem: { cache: PubChemCache; fetch?: typeof fetch };
   signal?: AbortSignal;
+  /** "diagram" asks only for a stage diagram beside the experiment, or none (ADR 0017). */
+  mode?: "experiment" | "diagram";
 }): Promise<GeneratedResult | { problems: string[]; attempts: number } | undefined> {
+  const diagram = input.mode === "diagram";
+  // A diagram has no sliders, so it never sees the experiment it could not offer.
+  const lesson = diagram ? { ...input.lesson, experiment: undefined } : input.lesson;
+  input = { ...input, lesson };
   const messages: ChatMessage[] = [
-    { role: "system", content: VISUAL_SYSTEM_PROMPT },
-    { role: "user", content: visualUserPrompt(input.lesson) },
+    { role: "system", content: diagram ? DIAGRAM_SYSTEM_PROMPT : VISUAL_SYSTEM_PROMPT },
+    { role: "user", content: visualUserPrompt(lesson) },
   ];
   let problems: string[] = [];
   // A picture that misses only experiment ids is still worth showing if the repair does no better.
   let kept: GeneratedResult | undefined;
+  const sendBack = (answer: string) =>
+    messages.push(
+      { role: "assistant", content: answer },
+      {
+        role: "user",
+        content: `That picture cannot be shown yet. Fix these problems and answer again in full:\n${problems.map((p) => `- ${p}`).join("\n")}`,
+      },
+    );
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     const answer = await completeStructured(input.provider, {
       messages,
-      jsonSchema: { name: "Visual", schema: GENERATED_VISUAL_SCHEMA },
+      jsonSchema: {
+        name: "Visual",
+        schema: diagram ? GENERATED_DIAGRAM_SCHEMA : GENERATED_VISUAL_SCHEMA,
+      },
       maxTokens: 8000,
-      prompt: VISUAL_PROMPT,
+      prompt: diagram ? DIAGRAM_PROMPT : VISUAL_PROMPT,
       signal: input.signal,
       parse: (text) => GeneratedVisual.parse(JSON.parse(text)),
     }).catch((error: unknown) => {
@@ -143,6 +165,18 @@ export async function generateVisual(input: {
     });
     if (!answer) break;
     const { value, completion } = answer;
+    if (diagram) {
+      // A process topic with its stages decides, not the kind alone, so those get one reliably.
+      const stages = diagramStages(completion.text);
+      if (stages.length < MIN_DIAGRAM_STAGES) return undefined;
+      if (value.kind === "none") {
+        problems = [
+          `You listed ${stages.length} stages, so draw them: kind "process", one node per stage, in order.`,
+        ];
+        sendBack(completion.text);
+        continue;
+      }
+    }
     const checked = await check(value, input);
     if (checked === undefined) return kept && { ...kept, attempts: attempt };
     if ("manifest" in checked) {
@@ -153,13 +187,7 @@ export async function generateVisual(input: {
     } else {
       problems = checked.problems;
     }
-    messages.push(
-      { role: "assistant", content: completion.text },
-      {
-        role: "user",
-        content: `That picture cannot be shown yet. Fix these problems and answer again in full:\n${problems.map((p) => `- ${p}`).join("\n")}`,
-      },
-    );
+    sendBack(completion.text);
   }
   return kept ? { ...kept, attempts: 2 } : { problems, attempts: 2 };
 }

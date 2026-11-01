@@ -99,3 +99,55 @@ test("challenges stay answerable as multiple choice when the experiment cannot l
   await expect(challenge.getByRole("status")).toContainText("Solved.");
   await expectNoAxeViolations(page);
 });
+
+test("shows a stage diagram beside the experiment, and the steps still drive the experiment", async ({
+  page,
+}) => {
+  const diagramId = "0192f1a0-0000-7000-8000-00000000e021";
+  const diagram = {
+    visualId: diagramId,
+    kind: "process",
+    alt: "How a plucked string becomes sound",
+    fallback: { text: "The string shakes, the body passes it on, and the air carries it." },
+    assumptions: ["Only the main stages"],
+    spec: "flowchart LR\n  pluck[Pluck] --> shake[String shakes] --> body[Body vibrates] --> air[Air carries sound]",
+  };
+  // The diagram comes first here on purpose: the experiment is found by kind, not by order.
+  const visuals = {
+    ...SAMPLE_MERRILL_VISUALS,
+    visuals: [
+      {
+        visualId: diagramId,
+        kind: "process",
+        manifestUri: `/visuals?visualId=${diagramId}`,
+        alt: diagram.alt,
+      },
+      ...SAMPLE_MERRILL_VISUALS.visuals,
+    ],
+  };
+  await mockLesson(
+    page,
+    sseFrames([
+      { type: "lesson", data: SAMPLE_MERRILL_LESSON },
+      { type: "visuals", data: visuals },
+    ]),
+  );
+  await mockManifest(page);
+  await page.route(
+    (url) => url.href.startsWith(`${API_URL}/visuals?`) && url.href.includes(diagramId),
+    (route) => route.fulfill({ headers: CORS, json: diagram }),
+  );
+  await page.goto(LESSON_URL);
+
+  const demonstrate = page.getByRole("region", { name: "Tension speeds up the wave" });
+  const stages = demonstrate.getByRole("figure", { name: diagram.alt });
+  await stages.getByRole("button", { name: "Show the diagram" }).click();
+  await expect(stages.locator("svg[role=img]")).toBeVisible();
+
+  const experiment = demonstrate.getByRole("figure", { name: SAMPLE_MERRILL_MANIFEST.alt });
+  await demonstrate.getByRole("button", { name: "Show me step 2" }).click();
+  await expect(experiment.getByRole("slider", { name: "Tension" })).toHaveAttribute(
+    "aria-valuetext",
+    "160 N",
+  );
+});
