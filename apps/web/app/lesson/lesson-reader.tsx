@@ -48,16 +48,20 @@ function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
 
 const noSubscription = () => () => undefined;
 
-/** The learner's photo from the capture step, if this visit came from one; never on the server. */
-function useHandedOffPhoto() {
-  return useSyncExternalStore(noSubscription, handedOffPhoto, () => null);
+/** The learner's photo of this object, if this visit came from one; never on the server. */
+function useHandedOffPhoto(label: string) {
+  return useSyncExternalStore(
+    noSubscription,
+    () => handedOffPhoto(label),
+    () => null,
+  );
 }
 
 // The prototype's order: a loader until the quick answer, then the answer, then the steps.
 export function LessonReader({ request, label, prefs, question, fetcher }: LessonReaderProps) {
   const router = useRouter();
   const subject = { label, taxonomyId: request.taxonomyId };
-  const photo = useHandedOffPhoto();
+  const photo = useHandedOffPhoto(label);
   // The choice in the URL is the learner's latest, so it is what the session remembers.
   useEffect(() => writePrefs(prefs), [prefs]);
   // A choice shows at once and lasts until the URL catches up; it is tied to the prefs it

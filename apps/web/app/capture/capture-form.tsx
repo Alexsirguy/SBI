@@ -457,7 +457,7 @@ export function CaptureForm() {
         <RecognitionStep
           reply={recognition.data}
           error={recognition.error?.message}
-          onStart={() => handOffPhoto(previewUrl)}
+          onStart={(label) => handOffPhoto(previewUrl, label)}
           onRetake={retake}
         />
       ) : null}

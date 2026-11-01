@@ -4,6 +4,7 @@ import { Button, TextField } from "@sbi/ui";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { lessonHref } from "../../lesson/lesson-request";
+import { handOffPhoto } from "../../photo-handoff";
 import { readPrefs } from "../../lesson/prefs";
 
 const MIN_LENGTH = 2;
@@ -21,7 +22,7 @@ export function DescribeForm({
   submitLabel?: string;
   message?: string;
   /** Runs just before the lesson opens, so a photo step can hand its photo on. */
-  onStart?: () => void;
+  onStart?: (name: string) => void;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +49,9 @@ export function DescribeForm({
         setError(undefined);
         const named = name.charAt(0).toUpperCase() + name.slice(1);
         setStarted(named);
-        onStart?.();
+        // Without a photo step this is a new object, so an earlier photo must not show on its lesson.
+        if (onStart) onStart(named);
+        else handOffPhoto(null);
         router.push(lessonHref({ label: named }, { prefs: readPrefs() }));
       }}
     >

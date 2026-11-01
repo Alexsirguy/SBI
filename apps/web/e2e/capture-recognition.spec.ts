@@ -3,6 +3,7 @@ import { expectNoAxeViolations } from "./a11y";
 import {
   expectLessonOpened,
   lessonRequests,
+  mockLesson,
   mockRecognition,
   mockUploads,
   PHOTO_KEY,
@@ -56,6 +57,24 @@ test("recognition offers three options in the model's words, and a pick starts t
   await choices.getByRole("button", { name: /^Stovetop kettle/ }).click();
   await expectLessonOpened(page, "Stovetop kettle");
   await expect.poll(() => sent.at(0)).toMatchObject({ subject: "Stovetop kettle" });
+});
+
+test("the photo shows on its own lesson, and not on the next object the learner types", async ({
+  page,
+}) => {
+  await mockLesson(page, null);
+  await mockRecognition(page, { candidates: [], options: KETTLE_LIKE, next: { kind: "describe" } });
+  const choices = await uploadPhoto(page);
+  await choices.getByRole("button", { name: /^Stovetop kettle/ }).click();
+  await expectLessonOpened(page, "Stovetop kettle");
+  await expect(page.getByAltText("Your photo")).toBeVisible();
+
+  await page.getByRole("link", { name: /Describe it instead/ }).click();
+  await page.getByLabel("What is it?").fill("rainbow");
+  await page.getByRole("button", { name: "Start lesson" }).click();
+  await expectLessonOpened(page, "Rainbow");
+  await expect(page.locator(".scanner")).toContainText("Rainbow");
+  await expect(page.getByAltText("Your photo")).toHaveCount(0);
 });
 
 test("the learner can say what it is instead of picking", async ({ page }) => {
