@@ -68,6 +68,19 @@ describe("reviseSections", () => {
     expect(String(seen[0]?.messages[1]?.content)).toContain("adds uncited detail");
   });
 
+  it("never rewrites apply's scene, since its challenges hold what was doubted", async () => {
+    const lesson = makeLesson();
+    const seen: CompletionRequest[] = [];
+    const finding = { sectionId: "apply-4", reason: "insufficient: a feedback adds detail" };
+    const revised = await reviseSections(
+      lesson,
+      report([{ ...entailmentFailure, sections: [finding] }]),
+      { provider: provider("Think about a kettle.", seen) },
+    );
+    expect(seen).toHaveLength(0);
+    expect(revised.sections).toEqual(lesson.sections);
+  });
+
   it("replaces a heading the reviser corrects, and keeps one it leaves out", async () => {
     const base = makeLesson();
     const lesson = {

@@ -6,7 +6,7 @@ import {
   createEntailmentCheck,
   ENTAILMENT_PROMPT_VERSION,
 } from "./entailment";
-import { CLAIM_A, makeLesson } from "./lesson-fixture";
+import { CLAIM_A, CLAIM_B, makeLesson } from "./lesson-fixture";
 
 function scriptedProvider(texts: string[], seen: CompletionRequest[] = []): LlmProvider {
   const queue = [...texts];
@@ -161,5 +161,27 @@ describe("prompt versions", () => {
     expect(judged("apply")).toContain("That boils it far too fast.");
     expect(judged("apply")).not.toContain("No timer is involved.");
     expect(String(seen[0]?.messages[0]?.content)).toContain("scenarios, not facts");
+  });
+
+  it("judges apply against its challenges' claims when its text only sets the scene", async () => {
+    const seen: CompletionRequest[] = [];
+    const base = makeLesson();
+    const lesson = {
+      ...base,
+      sections: base.sections.map((section) =>
+        section.module === "apply" ? { ...section, claimIds: [] } : section,
+      ),
+      tasks: base.tasks.map((task) =>
+        task.module === "apply" ? { ...task, claimIds: [CLAIM_B] } : task,
+      ),
+    };
+    await createEntailmentCheck(scriptedProvider([supports, supports], seen)).run(lesson);
+    const apply = seen
+      .map((request) => String(request.messages[1]?.content))
+      .find((text) => text.includes("Module: apply"));
+    expect(apply).toContain("Challenge: Boil the water in under two minutes.");
+    expect(apply).toContain(CLAIM_B);
+    const scene = lesson.sections.find((section) => section.module === "apply")?.text ?? "";
+    expect(apply).not.toContain(scene);
   });
 });

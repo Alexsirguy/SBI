@@ -212,6 +212,28 @@ describe("generateDraft", () => {
     expect(lesson.tasks[2]?.goal).toBeUndefined();
   });
 
+  it("asks for the new case before the sections and uses it as apply's text", async () => {
+    const seen: CompletionRequest[] = [];
+    const withCase = { ...fragment, newCase: "Your friend boils pasta on a camping stove." };
+    const lesson = await generateDraft(base, {
+      provider: stubProvider(JSON.stringify(withCase), seen),
+    });
+    const keys = Object.keys(
+      (seen[0]?.jsonSchema?.schema as { properties: Record<string, unknown> }).properties,
+    );
+    expect(keys.indexOf("newCase")).toBeLessThan(keys.indexOf("sections"));
+    const apply = lesson.sections.find((item) => item.module === "apply");
+    expect(apply?.text).toBe("Your friend boils pasta on a camping stove.");
+  });
+
+  it("keeps apply's own text when the new case is empty", async () => {
+    const lesson = await generateDraft(base, {
+      provider: stubProvider(JSON.stringify({ ...fragment, newCase: " " })),
+    });
+    const apply = fragment.sections.find((item) => item.module === "apply");
+    expect(lesson.sections.find((item) => item.module === "apply")?.text).toBe(apply?.text);
+  });
+
   it("puts sections into Merrill order whatever order the model wrote them in", async () => {
     const shuffled = { ...fragment, sections: [...fragment.sections].reverse() };
     const lesson = await generateDraft(base, { provider: stubProvider(JSON.stringify(shuffled)) });

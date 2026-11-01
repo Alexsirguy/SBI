@@ -160,15 +160,24 @@ const LESSON_DRAFT_PROMPT_V7: PromptVersion = {
       'sentences; steps are 2 to 6 numbered cause-and-effect steps ("X happens, so Y"), each one ' +
       "move in the solution. A step may set experiment controls in settings so the learner " +
       "watches the readouts change. Only demonstrate has steps; every other section's are [].",
-    "4. apply: one or two sentences that set up a NEW case governed by the same principle; the " +
-      "challenges themselves are tasks.",
+    "4. apply: the challenges, set in the case you wrote in newCase; its text is replaced by " +
+      'newCase, so write it as "".',
+    "newCase, written before the sections: one NEW case governed by the same principle, a " +
+      "different object, place or situation from the problem (a guitar becomes a violin or a " +
+      "harp; a kettle becomes a pot of pasta or a camping stove). One or two sentences that set " +
+      "the scene, naming the new object and never the problem's object, and explain nothing, " +
+      'such as "Your friend is tuning a violin before a concert." Every apply task is about it.',
     "5. integrate: one thing to notice or try in everyday life this week, then one reflection " +
       "question.",
-    "Tasks: exactly one activate task, a guess at the opening problem before it is solved, and " +
-      "then 2 or 3 apply tasks on the new case. Each has 2 to 4 options with answerIndex naming " +
-      "the right one (from 0), and one feedback per option in the same order: for the right " +
-      "option say why it works; for each wrong one name the misconception behind it and coach " +
-      "toward the principle. An apply task asks for a prediction in its options, then asks the " +
+    "Tasks: exactly one activate task, which asks the problem's own question so the learner " +
+      "guesses its answer before it is solved, and then 2 or 3 apply tasks on the new case. " +
+      "Each has 2 to 4 options with answerIndex naming the right one (from 0), and one feedback " +
+      "per option in the same order: for the right option say why it works; for each wrong one " +
+      "name the misconception behind it and coach toward the principle. Every option is an " +
+      "answer a thoughtful learner could really believe: each wrong one is a common " +
+      "misconception, never an absurd, joke or obviously wrong choice. Options are alike in " +
+      "length and detail, so the right one does not stand out, and the right one is not always " +
+      "in the same position. An apply task asks for a prediction in its options, then asks the " +
       "learner to set the sliders so a readout meets its goal: setup gives starting slider " +
       "values that do not yet meet it, and the goal (atLeast, atMost, or near with a tolerance in " +
       "the readout's unit) must be reachable within the control ranges. An activate task has " +
@@ -178,8 +187,9 @@ const LESSON_DRAFT_PROMPT_V7: PromptVersion = {
       "are camelCase. Each readout is a quantity a formula of the controls can compute, such as " +
       "pitch from tension and length. Every controlId in settings or setup and every readoutId " +
       "in a goal must be one of these ids.",
-    "Only problem, activate and integrate may cite nothing; demonstrate and apply cite the claim " +
-      "IDs they rely on, and apply tasks may cite too. Use ONLY the claims listed and never " +
+    "problem, activate and integrate cite nothing, and neither does apply's text: its tasks cite " +
+      "the claims their feedback relies on. demonstrate cites the claim IDs it relies on. " +
+      "Use ONLY the claims listed and never " +
       "invent claims, citations, numbers, or facts. Claims marked unsupported or disputed are " +
       "open questions: present them as uncertain, never as fact. Claims marked " +
       "general-knowledge come from the AI's own knowledge, not a source: teach them plainly, " +
@@ -224,6 +234,8 @@ function fencedQuestion(question: string, version: string): string {
 
 interface DraftFragment {
   title: string;
+  /** v7: the scene apply's challenges are set in; it becomes apply's text. */
+  newCase?: string;
   summary: string;
   learningObjectives: string[];
   assumptions?: string[];
@@ -281,13 +293,17 @@ const LEGACY_FRAGMENT_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
 };
 
+const LEGACY_HEAD = Object.fromEntries(
+  Object.entries(LEGACY_FRAGMENT_SCHEMA.properties as Record<string, unknown>).filter(
+    ([key]) => key !== "sections",
+  ),
+);
+
+// newCase comes before the sections, so the model commits to apply's case before writing any.
 const MERRILL_FRAGMENT_SCHEMA: Record<string, unknown> = {
   ...LEGACY_FRAGMENT_SCHEMA,
-  properties: {
-    ...(LEGACY_FRAGMENT_SCHEMA.properties as Record<string, unknown>),
-    ...MERRILL_FRAGMENT_PROPERTIES,
-  },
-  required: [...(LEGACY_FRAGMENT_SCHEMA.required as string[]), "tasks", "experiment"],
+  properties: { ...LEGACY_HEAD, newCase: { type: "string" }, ...MERRILL_FRAGMENT_PROPERTIES },
+  required: [...(LEGACY_FRAGMENT_SCHEMA.required as string[]), "newCase", "tasks", "experiment"],
 };
 
 const isMerrillPrompt = (version: string) => Number(version) >= 7;
@@ -358,7 +374,11 @@ async function assemble(
         sectionId: `${section.module}-${index + 1}`,
         ...section,
         heading: sectionHeading(section.heading),
-        text: withoutInlineIds(section.text),
+        text: withoutInlineIds(
+          merrill && section.module === "apply" && fragment.newCase?.trim()
+            ? fragment.newCase
+            : section.text,
+        ),
         // Models sometimes mangle an id; an unknown citation is dropped, never trusted, and a
         // section left uncited then fails the citation check.
         claimIds: section.claimIds.filter((id) => known.has(id)),

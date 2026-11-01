@@ -1,5 +1,6 @@
 import { Lesson } from "@sbi/contracts";
 import { transitionLesson, type PublishAuditSink } from "./publish";
+import { sectionClaimIds } from "./section-claims";
 
 export interface SectionFinding {
   sectionId: string;
@@ -67,7 +68,10 @@ export const citationCheck: LessonCheck = {
       ...[...cited].filter((id) => !known.has(id)).map((id) => `Unknown claim "${id}"`),
       ...[...known].filter((id) => !cited.has(id)).map((id) => `Claim "${id}" is never cited`),
       ...lesson.sections
-        .filter((section) => section.claimIds.length === 0 && !UNCITED_MODULES.has(section.module))
+        .filter(
+          (section) =>
+            sectionClaimIds(lesson, section).length === 0 && !UNCITED_MODULES.has(section.module),
+        )
         .map((section) => `Section "${section.sectionId}" states facts without citing a claim`),
     ];
     return result(citationCheck.name, details);

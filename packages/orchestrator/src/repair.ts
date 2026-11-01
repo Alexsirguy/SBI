@@ -53,7 +53,8 @@ export async function reviseSections(
   await Promise.all(
     findings.map(async (finding) => {
       const section = lesson.sections.find((item) => item.sectionId === finding.sectionId);
-      if (!section) return;
+      // Revising rewrites text only; apply's text is just the scene, and its doubts sit in tasks.
+      if (!section || section.module === "apply") return;
       const cited = section.claimIds
         .map((id) => claims.get(id))
         .filter((claim): claim is Claim => claim !== undefined);

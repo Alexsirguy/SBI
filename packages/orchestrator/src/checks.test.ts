@@ -91,18 +91,27 @@ describe("citationCheck on uncited sections", () => {
 });
 
 describe("citationCheck on a Merrill lesson", () => {
-  it("lets problem, activate and integrate go uncited but not demonstrate or apply", async () => {
+  it("lets problem, activate and integrate go uncited, and apply when its challenges cite", async () => {
     const lesson = makeLesson();
     expect(
       lesson.sections.filter((section) => section.claimIds.length === 0).map((s) => s.module),
     ).toEqual(["problem", "activate", "integrate"]);
     expect((await citationCheck.run(lesson)).passed).toBe(true);
 
-    const uncited = {
+    const sceneOnly = {
       ...lesson,
       sections: lesson.sections.map((section) =>
         section.module === "apply" ? { ...section, claimIds: [] } : section,
       ),
+      tasks: lesson.tasks.map((task) =>
+        task.module === "apply" ? { ...task, claimIds: [CLAIM_A, CLAIM_B] } : task,
+      ),
+    };
+    expect((await citationCheck.run(sceneOnly)).passed).toBe(true);
+
+    const uncited = {
+      ...sceneOnly,
+      tasks: lesson.tasks.map((task) => ({ ...task, claimIds: [] })),
     };
     const result = await citationCheck.run(uncited);
     expect(result.details).toContain('Section "apply-4" states facts without citing a claim');

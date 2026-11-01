@@ -19,14 +19,14 @@ From lesson-draft v6 (ADR 0011), every lesson had the same eight modules: what-y
 - **problem:** names the object and poses one real task with it, in the second person ("Your guitar's A string sounds flat. What do you change?").
 - **activate:** ties the problem to an everyday experience the learner already has, plus one guess task.
 - **demonstrate:** the worked solution to the opening problem, as numbered cause-and-effect `steps`. A step may set experiment controls so the learner watches the effect.
-- **apply:** 2 or 3 challenges on a new case with the same principle. Each asks for a prediction, then asks the learner to set the sliders so a readout meets a goal. Each option's feedback coaches toward the principle and names the misconception behind it.
+- **apply:** 2 or 3 challenges on a new case with the same principle. Each asks for a prediction, then asks the learner to set the sliders so a readout meets a goal. Each option's feedback coaches toward the principle and names the misconception behind it. The draft names the new case in `newCase` before writing any section, and that scene becomes apply's text, so the challenges and their introduction always describe the same thing.
 - **integrate:** one thing to notice or try in everyday life this week, and a reflection question. On high-risk topics it is an observation or thought experiment only.
 
 `Lesson.tasks` holds exactly one activate guess and 2 or 3 apply challenges. `Lesson.experiment` holds 1 to 4 controls and 1 to 3 readouts with real quantities, units and ranges. Every control and readout a step or task names must exist in the experiment.
 
 **History is dropped.** Model knowledge is no longer asked how the object was invented. Evidence gaps are only the research questions no teachable claim answers, plus the learner's question when nothing was found.
 
-**Citations.** problem, activate and integrate may be uncited, as check-thinking was. demonstrate and apply must cite. The entailment judge reads demonstrate's steps and apply's challenge feedback with their section. The reading-level check covers steps, task prompts and feedback. A section rewrite keeps its steps.
+**Citations.** problem, activate and integrate may be uncited, as check-thinking was. demonstrate must cite. apply's text is only the scene of its new case, so it cites nothing and is not judged; its challenges cite, and the entailment judge reads their prompts and feedback against those claims. The judge also reads demonstrate's steps with their section. The reading-level check covers steps, task prompts and feedback. A section rewrite keeps its steps and never rewrites apply's scene.
 
 **No answer before the guess.** The early quick answer of ADR 0016 streamed the answer before the lesson. That gave away the activate guess, so it is gone. The `quick-answer` event now arrives just before the lesson, with the summary as its short answer.
 

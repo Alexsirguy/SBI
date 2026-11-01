@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import type { Claim, Lesson } from "@sbi/contracts";
 import { completeStructured, type ChatMessage, type LlmProvider } from "@sbi/llm";
 import type { LessonCheck } from "./checks";
+import { sectionClaimIds } from "./section-claims";
 
 export const ENTAILMENT_PROMPT_VERSION = "orchestrator-entailment-p0.4";
 export const CONTRADICTION_PROMPT_VERSION = "orchestrator-contradiction-p0.1";
@@ -152,7 +153,9 @@ function judgedText(lesson: Lesson, section: Lesson["sections"][number]): string
   const tasks =
     section.module === "apply" ? lesson.tasks.filter((task) => task.module === "apply") : [];
   const feedback = tasks.flatMap((task) => [`Challenge: ${task.prompt}`, ...task.feedback]);
-  return [section.heading, section.text, ...steps, ...feedback]
+  // Apply's text only sets the scene of a new case (ADR 0017), so its challenges are judged instead.
+  const text = section.module === "apply" ? undefined : section.text;
+  return [section.heading, text, ...steps, ...feedback]
     .filter((part): part is string => Boolean(part))
     .join("\n\n");
 }
@@ -166,7 +169,9 @@ export function createEntailmentCheck(
     name: "entailment",
     async run(lesson, options) {
       const claims = new Map(lesson.claims.map((claim) => [claim.claimId, claim]));
-      const judged = lesson.sections.filter((section) => section.claimIds.length > 0);
+      const judged = lesson.sections.filter(
+        (section) => sectionClaimIds(lesson, section).length > 0,
+      );
       const skipped = lesson.sections.length - judged.length;
       // Sections are judged independently, so in parallel; latency is the learner's wait.
       const verdicts = await Promise.all(
@@ -174,7 +179,9 @@ export function createEntailmentCheck(
           judgeEntailment(
             provider,
             judgedText(lesson, section),
-            section.claimIds.map((id) => claims.get(id)).filter((claim) => claim !== undefined),
+            sectionClaimIds(lesson, section)
+              .map((id) => claims.get(id))
+              .filter((claim) => claim !== undefined),
             options?.signal,
             { objectLabel: context.objectLabel, module: section.module },
           ),
