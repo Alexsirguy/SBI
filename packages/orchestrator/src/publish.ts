@@ -45,7 +45,7 @@ export interface RightsDecision {
   reason?: string;
 }
 
-// Minimal gate until E8-6 lands the @sbi/rights publication block.
+// The API backs this with @sbi/rights' register; the orchestrator needs only the decision.
 export interface RightsGate {
   check(lesson: Lesson): Promise<RightsDecision>;
 }

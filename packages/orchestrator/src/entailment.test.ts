@@ -6,7 +6,7 @@ import {
   createEntailmentCheck,
   ENTAILMENT_PROMPT_VERSION,
 } from "./entailment";
-import { CLAIM_A, makeLesson } from "./lesson-fixture";
+import { CLAIM_A, CLAIM_B, makeLesson } from "./lesson-fixture";
 
 function scriptedProvider(texts: string[], seen: CompletionRequest[] = []): LlmProvider {
   const queue = [...texts];
@@ -35,23 +35,27 @@ const agree = JSON.stringify({ contradiction: false, reason: "", claimIds: [] })
 describe("createEntailmentCheck", () => {
   it("passes when every cited section is supported", async () => {
     const seen: CompletionRequest[] = [];
-    const check = createEntailmentCheck(scriptedProvider([supports, supports, supports], seen));
+    const check = createEntailmentCheck(scriptedProvider([supports, supports], seen));
 
     const result = await check.run(makeLesson());
 
-    expect(result).toMatchObject({ name: "entailment", passed: true, details: [] });
-    expect(seen).toHaveLength(3);
+    expect(result).toMatchObject({
+      name: "entailment",
+      passed: true,
+      details: ["3 uncited sections skipped"],
+    });
+    expect(seen).toHaveLength(2);
     expect(JSON.stringify(seen[0]?.messages)).toContain(CLAIM_A);
     expect(seen[0]?.jsonSchema?.name).toBe("Verdict");
   });
 
   it("fails the lesson on a contradicted section", async () => {
-    const check = createEntailmentCheck(scriptedProvider([supports, contradicts, supports]));
+    const check = createEntailmentCheck(scriptedProvider([supports, contradicts]));
 
     const result = await check.run(makeLesson());
 
     expect(result.passed).toBe(false);
-    expect(result.details.join("\n")).toContain("what-youre-seeing-2");
+    expect(result.details.join("\n")).toContain("apply-4");
     expect(result.details.join("\n")).toContain("contradicts");
   });
 
@@ -67,7 +71,7 @@ describe("createEntailmentCheck", () => {
     const result = await check.run(uncited);
 
     expect(result.passed).toBe(true);
-    expect(result.details.join("\n")).toContain("3 uncited sections skipped");
+    expect(result.details.join("\n")).toContain("5 uncited sections skipped");
     expect(seen).toHaveLength(0);
   });
 
@@ -111,14 +115,14 @@ describe("prompt versions", () => {
   });
 
   it("pins judge prompt versions", () => {
-    expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.3");
+    expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.5");
     expect(CONTRADICTION_PROMPT_VERSION).toBe("orchestrator-contradiction-p0.1");
   });
 
   it("tells the judge which object and module it is checking", async () => {
     const seen: CompletionRequest[] = [];
     const supports = JSON.stringify({ verdict: "supports", reason: "ok" });
-    await createEntailmentCheck(scriptedProvider([supports, supports, supports], seen), {
+    await createEntailmentCheck(scriptedProvider([supports, supports], seen), {
       objectLabel: "Electric kettle",
     }).run(makeLesson());
     const user = String(seen[0]?.messages[1]?.content);
@@ -134,13 +138,69 @@ describe("prompt versions", () => {
     const lesson = {
       ...base,
       sections: base.sections.map((section, index) =>
-        index === 0 ? { ...section, heading: "Steam lifts the lid" } : section,
+        index === 2 ? { ...section, heading: "Steam lifts the lid" } : section,
       ),
     };
-    await createEntailmentCheck(scriptedProvider([supports, supports, supports], seen)).run(lesson);
+    await createEntailmentCheck(scriptedProvider([supports, supports], seen)).run(lesson);
     const judged = seen.map((request) => String(request.messages[1]?.content));
     expect(
-      judged.some((text) => text.includes(`Steam lifts the lid\n\n${lesson.sections[0]?.text}`)),
+      judged.some((text) => text.includes(`Steam lifts the lid\n\n${lesson.sections[2]?.text}`)),
     ).toBe(true);
+  });
+
+  it("judges a demonstration's steps and apply's challenge feedback with their sections", async () => {
+    const seen: CompletionRequest[] = [];
+    await createEntailmentCheck(scriptedProvider([supports, supports], seen)).run(makeLesson());
+    const judged = (module: string) =>
+      seen
+        .map((request) => String(request.messages[1]?.content))
+        .find((text) => text.includes(`Module: ${module}`)) ?? "";
+    expect(judged("demonstrate")).toContain("1. The water heats the strip.");
+    expect(judged("demonstrate")).toContain("2. The strip bends and the switch clicks off.");
+    expect(judged("apply")).toContain("Challenge: Boil the water in under two minutes.");
+    expect(judged("apply")).toContain("That boils it far too fast.");
+    expect(judged("apply")).not.toContain("No timer is involved.");
+    expect(String(seen[0]?.messages[0]?.content)).toContain("scenarios, not facts");
+  });
+
+  it("shows the judge the AI's own claims as general knowledge, not as unsupported", async () => {
+    const seen: CompletionRequest[] = [];
+    const base = makeLesson();
+    const lesson = {
+      ...base,
+      claims: base.claims.map((claim) => ({
+        ...claim,
+        origin: "model" as const,
+        status: "unsupported" as const,
+        sourceIds: [],
+      })),
+    };
+    await createEntailmentCheck(scriptedProvider([supports, supports], seen)).run(lesson);
+    const prompt = String(seen[0]?.messages[1]?.content);
+    expect(prompt).toContain(`${CLAIM_A} [general-knowledge]`);
+    expect(prompt).not.toContain("[unsupported]");
+    expect(String(seen[0]?.messages[0]?.content)).toContain("supports a plain statement of it");
+  });
+
+  it("judges apply against its challenges' claims when its text only sets the scene", async () => {
+    const seen: CompletionRequest[] = [];
+    const base = makeLesson();
+    const lesson = {
+      ...base,
+      sections: base.sections.map((section) =>
+        section.module === "apply" ? { ...section, claimIds: [] } : section,
+      ),
+      tasks: base.tasks.map((task) =>
+        task.module === "apply" ? { ...task, claimIds: [CLAIM_B] } : task,
+      ),
+    };
+    await createEntailmentCheck(scriptedProvider([supports, supports], seen)).run(lesson);
+    const apply = seen
+      .map((request) => String(request.messages[1]?.content))
+      .find((text) => text.includes("Module: apply"));
+    expect(apply).toContain("Challenge: Boil the water in under two minutes.");
+    expect(apply).toContain(CLAIM_B);
+    const scene = lesson.sections.find((section) => section.module === "apply")?.text ?? "";
+    expect(apply).not.toContain(scene);
   });
 });

@@ -5,14 +5,40 @@
   "description": "Visual registry and renderers behind a common component interface.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./formula": "./src/formula.ts",
+    "./graph": "./src/kinds/graph.ts",
+    "./mechanism": "./src/kinds/mechanism.ts",
+    "./molecule": "./src/kinds/molecule.ts",
+    "./playground": "./src/kinds/playground.ts",
+    "./playground-document": "./src/kinds/playground-kit.ts",
+    "./process": "./src/kinds/process.ts",
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@mujoco/mujoco": "3.17.0",
+    "@sbi/contracts": "workspace:*",
+    "@sbi/llm": "workspace:*",
+    "@sbi/rights": "workspace:*",
+    "acorn": "8.19.0",
+    "3dmol": "2.5.5",
+    "happy-dom": "21.0.4",
+    "mathjs": "15.2.0",
+    "mermaid": "12.2.0",
+    "three": "0.187.0",
+    "vega": "6.4.0",
+    "vega-embed": "7.3.0",
+    "vega-interpreter": "2.3.2",
+    "vega-lite": "6.5.0",
+    "zod": "4.6.7"
+  },
   "devDependencies": {
-    "@sbi/config": "workspace:*"
+    "@sbi/config": "workspace:*",
+    "@types/three": "0.187.0"
   }
 }

@@ -1,5 +1,6 @@
 import { Lesson } from "@sbi/contracts";
 import { transitionLesson, type PublishAuditSink } from "./publish";
+import { sectionClaimIds } from "./section-claims";
 
 export interface SectionFinding {
   sectionId: string;
@@ -46,20 +47,31 @@ export const schemaCheck: LessonCheck = {
   },
 };
 
-// Questions for the learner state no facts; every other module must rest on a claim.
-const UNCITED_MODULES = new Set<Lesson["sections"][number]["module"]>(["check-thinking"]);
+// Questions for the learner and everyday framing state no facts; the rest must rest on a claim.
+const UNCITED_MODULES = new Set<Lesson["sections"][number]["module"]>([
+  "check-thinking",
+  "problem",
+  "activate",
+  "integrate",
+]);
 
 /** Every cited claim must exist, every claim must be cited, and factual sections must cite. */
 export const citationCheck: LessonCheck = {
   name: "citations",
   async run(lesson) {
     const known = new Set(lesson.claims.map((claim) => claim.claimId));
-    const cited = new Set(lesson.sections.flatMap((section) => section.claimIds));
+    const cited = new Set([
+      ...lesson.sections.flatMap((section) => section.claimIds),
+      ...lesson.tasks.flatMap((task) => task.claimIds),
+    ]);
     const details = [
       ...[...cited].filter((id) => !known.has(id)).map((id) => `Unknown claim "${id}"`),
       ...[...known].filter((id) => !cited.has(id)).map((id) => `Claim "${id}" is never cited`),
       ...lesson.sections
-        .filter((section) => section.claimIds.length === 0 && !UNCITED_MODULES.has(section.module))
+        .filter(
+          (section) =>
+            sectionClaimIds(lesson, section).length === 0 && !UNCITED_MODULES.has(section.module),
+        )
         .map((section) => `Section "${section.sectionId}" states facts without citing a claim`),
     ];
     return result(citationCheck.name, details);

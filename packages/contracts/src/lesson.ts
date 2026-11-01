@@ -22,6 +22,12 @@ export const LessonModule = z.enum([
   "history",
   "check-thinking",
   "go-further",
+  // Merrill's First Principles (ADR 0017); the eight above remain for lessons drafted before it.
+  "problem",
+  "activate",
+  "demonstrate",
+  "apply",
+  "integrate",
 ]);
 
 export const REQUIRED_MODULES: readonly LessonModule[] = [
@@ -30,7 +36,95 @@ export const REQUIRED_MODULES: readonly LessonModule[] = [
   "first-principles",
 ];
 
+/** A Merrill lesson has every one of these, in this order, and no other module. */
+export const MERRILL_MODULES: readonly LessonModule[] = [
+  "problem",
+  "activate",
+  "demonstrate",
+  "apply",
+  "integrate",
+];
+
+/** The eight modules of lessons drafted before ADR 0017, in reader order (ADR 0011). */
+export const LEGACY_MODULES: readonly LessonModule[] = LessonModule.options.filter(
+  (module) => !MERRILL_MODULES.includes(module),
+);
+
+export function isMerrillLesson(lesson: { sections: { module: LessonModule }[] }): boolean {
+  return lesson.sections.some((section) => MERRILL_MODULES.includes(section.module));
+}
+
 const Text = z.string().min(1);
+const ParamId = z.string().regex(/^[a-z][A-Za-z0-9]{0,39}$/, "camelCase id");
+
+/** A slider the learner moves in the lesson's experiment; the visual must offer one with this id. */
+export const ExperimentControl = z
+  .object({
+    id: ParamId,
+    label: Text.max(60),
+    unit: z.string().max(20).default(""),
+    min: z.number(),
+    max: z.number(),
+    value: z.number(),
+  })
+  .refine((control) => control.min < control.max && control.value >= control.min, {
+    message: "min < max and value within range",
+  })
+  .refine((control) => control.value <= control.max, { message: "value within range" });
+
+/** A number the experiment shows; the visual works it out from the controls. */
+export const ExperimentReadout = z.object({
+  id: ParamId,
+  label: Text.max(60),
+  unit: z.string().max(20).default(""),
+});
+
+/** What the learner can change and watch; Demonstrate steps and Apply goals name these ids. */
+export const Experiment = z.object({
+  controls: z.array(ExperimentControl).min(1).max(4),
+  readouts: z.array(ExperimentReadout).min(1).max(3),
+});
+
+export const ControlSetting = z.object({ controlId: ParamId, value: z.number() });
+
+/** Met when the named readout, worked out from the learner's sliders, satisfies op. */
+export const ExperimentGoal = z.object({
+  readoutId: ParamId,
+  op: z.enum(["atLeast", "atMost", "near"]),
+  value: z.number(),
+  /** For near: how far off still counts, in the readout's unit. */
+  tolerance: z.number().positive().optional(),
+});
+
+/** A guess (activate) or a challenge (apply): pick an answer, then each option says why. */
+export const LessonTask = z
+  .object({
+    taskId: Id,
+    module: z.enum(["activate", "apply"]),
+    prompt: Text.max(400),
+    options: z.array(Text.max(200)).min(2).max(4),
+    answerIndex: z.int().nonnegative(),
+    feedback: z.array(Text.max(400)).min(2).max(4),
+    /** Where the sliders start for a challenge. */
+    setup: z.array(ControlSetting).max(4).default([]),
+    /** A challenge the learner solves in the experiment; without it, the options are the task. */
+    goal: ExperimentGoal.optional(),
+    claimIds: z.array(Uuid).default([]),
+  })
+  .refine((task) => task.answerIndex < task.options.length, {
+    message: "answerIndex must name an option",
+    path: ["answerIndex"],
+  })
+  .refine((task) => task.feedback.length === task.options.length, {
+    message: "One feedback per option",
+    path: ["feedback"],
+  });
+
+/** One step of a worked demonstration; settings move the experiment so the learner sees it. */
+export const DemonstrationStep = z.object({
+  text: Text.max(500),
+  settings: z.array(ControlSetting).max(4).default([]),
+});
 
 export const Concept = z.object({
   conceptId: Id,
@@ -45,6 +139,8 @@ export const LessonSection = z.object({
   heading: z.string().trim().min(1).max(120).optional(),
   text: Text,
   claimIds: z.array(Uuid).default([]),
+  /** Demonstrate only: the worked solution, step by step. */
+  steps: z.array(DemonstrationStep).max(8).optional(),
 });
 
 export const DisclaimerKind = z.enum([
@@ -99,6 +195,9 @@ const LessonShape = z.object({
   sections: z.array(LessonSection).min(1),
   claims: z.array(Claim).min(1),
   visuals: z.array(VisualRef).default([]),
+  /** Merrill lessons: the activate guess and the apply challenges. */
+  tasks: z.array(LessonTask).default([]),
+  experiment: Experiment.optional(),
   safetyClass: SafetyClass,
   reviewStatus: ReviewStatus,
   reviewedAt: IsoDateTime.optional(),
@@ -123,7 +222,9 @@ function lessonIssues(lesson: z.output<typeof LessonShape>): Issue[] {
   const conceptIds = new Set(lesson.concepts.map((concept) => concept.conceptId));
   const modules = lesson.sections.map((section) => section.module);
 
-  for (const module of REQUIRED_MODULES.filter((required) => !modules.includes(required))) {
+  const merrill = isMerrillLesson(lesson);
+  const required = merrill ? MERRILL_MODULES : REQUIRED_MODULES;
+  for (const module of required.filter((wanted) => !modules.includes(wanted))) {
     issues.push({ message: `Missing required module "${module}"`, path: ["sections"] });
   }
   for (const module of duplicates(modules)) {
@@ -147,6 +248,8 @@ function lessonIssues(lesson: z.output<typeof LessonShape>): Issue[] {
       });
     }
   });
+
+  if (merrill) issues.push(...merrillIssues(lesson, claims));
 
   lesson.sections.forEach((section, index) => {
     const path = ["sections", index, "claimIds"];
@@ -199,6 +302,59 @@ function lessonIssues(lesson: z.output<typeof LessonShape>): Issue[] {
   return issues;
 }
 
+function merrillIssues(
+  lesson: z.output<typeof LessonShape>,
+  claims: Map<string, unknown>,
+): Issue[] {
+  const issues: Issue[] = [];
+  lesson.sections.forEach((section, index) => {
+    if (!MERRILL_MODULES.includes(section.module)) {
+      issues.push({
+        message: `Module "${section.module}" does not belong in a Merrill lesson`,
+        path: ["sections", index, "module"],
+      });
+    }
+  });
+  const order = lesson.sections.map((section) => section.module).join(",");
+  if (order !== MERRILL_MODULES.join(",")) {
+    issues.push({ message: `Modules must run ${MERRILL_MODULES.join(", ")}`, path: ["sections"] });
+  }
+  const guesses = lesson.tasks.filter((task) => task.module === "activate").length;
+  const challenges = lesson.tasks.filter((task) => task.module === "apply").length;
+  if (guesses !== 1) issues.push({ message: "Activate needs exactly one guess", path: ["tasks"] });
+  if (challenges < 2 || challenges > 3) {
+    issues.push({ message: "Apply needs two or three challenges", path: ["tasks"] });
+  }
+  const controls = new Set(lesson.experiment?.controls.map((control) => control.id) ?? []);
+  const readouts = new Set(lesson.experiment?.readouts.map((readout) => readout.id) ?? []);
+  const settings = (path: (string | number)[], list: { controlId: string }[]) => {
+    for (const setting of list.filter((item) => !controls.has(item.controlId))) {
+      issues.push({ message: `Unknown control "${setting.controlId}"`, path });
+    }
+  };
+  lesson.tasks.forEach((task, index) => {
+    settings(["tasks", index, "setup"], task.setup);
+    if (task.goal && !readouts.has(task.goal.readoutId)) {
+      issues.push({
+        message: `Unknown readout "${task.goal.readoutId}"`,
+        path: ["tasks", index, "goal"],
+      });
+    }
+    for (const claimId of task.claimIds.filter((id) => !claims.has(id))) {
+      issues.push({ message: `Unknown claim "${claimId}"`, path: ["tasks", index, "claimIds"] });
+    }
+  });
+  lesson.sections.forEach((section, index) =>
+    section.steps?.forEach((step, stepIndex) =>
+      settings(["sections", index, "steps", stepIndex, "settings"], step.settings),
+    ),
+  );
+  for (const id of duplicates(lesson.tasks.map((task) => task.taskId))) {
+    issues.push({ message: `Duplicate id "${id}"`, path: ["tasks"] });
+  }
+  return issues;
+}
+
 export const Lesson = LessonShape.superRefine((lesson, ctx) => {
   for (const issue of lessonIssues(lesson)) ctx.addIssue({ code: "custom", ...issue });
 });
@@ -206,6 +362,11 @@ export const Lesson = LessonShape.superRefine((lesson, ctx) => {
 export type AudienceBand = z.infer<typeof AudienceBand>;
 export type LessonModule = z.infer<typeof LessonModule>;
 export type LessonSection = z.infer<typeof LessonSection>;
+export type LessonTask = z.infer<typeof LessonTask>;
+export type Experiment = z.infer<typeof Experiment>;
+export type ExperimentGoal = z.infer<typeof ExperimentGoal>;
+export type ControlSetting = z.infer<typeof ControlSetting>;
+export type DemonstrationStep = z.infer<typeof DemonstrationStep>;
 export type Lesson = z.infer<typeof Lesson>;
 export type LessonDisclaimer = z.infer<typeof LessonDisclaimer>;
 export type DisclaimerKind = z.infer<typeof DisclaimerKind>;

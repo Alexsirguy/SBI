@@ -2,12 +2,15 @@ import type { Lesson } from "@sbi/contracts";
 import { buildIntentSignature, type IntentInput } from "./intent";
 import { isReusable } from "./invalidation";
 import type { LessonRepository } from "./lesson-repository";
+import type { RightsGate } from "./publish";
 
 export interface ReuseQuery {
   intent: IntentInput;
   assumptions: string[];
   /** Lessons generated under another policy are never served. */
   policyVersion: string;
+  /** Lessons drafted with another prompt, such as 8-module ones before ADR 0017, are never served. */
+  promptVersion: string;
   /** 'Get a fresh answer': skip the cache entirely. */
   fresh?: boolean;
 }
@@ -54,11 +57,12 @@ function depthMatches(lesson: Lesson, intent: IntentInput): boolean {
   );
 }
 
-// Source and claim changes mark lessons stale through the invalidator; asset changes need E8-6.
-// TODO(#72) invalidate lessons whose visual assets lose clearance.
+// Source and claim changes mark lessons stale; asset clearance is checked at match time instead,
+// because a record can expire without anything being written.
 export function createReuseMatcher(
   lessons: LessonRepository,
   onAudit?: ReuseAuditSink,
+  rights?: RightsGate,
 ): ReuseMatcher {
   return {
     async match(query: ReuseQuery): Promise<ReuseHit | null> {
@@ -66,9 +70,10 @@ export function createReuseMatcher(
       const intentSignature = buildIntentSignature(query.intent);
       const assumptions = [...new Set(query.assumptions.map((item) => item.trim()))].sort();
       const candidates = await lessons.findByIntent(intentSignature);
-      const hit = candidates
+      const ranked = candidates
         .filter((lesson) => isReusable(lesson) && VALIDATED.has(lesson.reviewStatus))
         .filter((lesson) => lesson.reuse.policyVersion === query.policyVersion)
+        .filter((lesson) => lesson.reuse.promptVersion === query.promptVersion)
         // Private lessons have no owner to match yet, so serving one could leak another learner's.
         // TODO(#103) reuse private lessons for their owner once accounts exist.
         .filter((lesson) => lesson.reuse.cacheScope === "shared")
@@ -76,8 +81,14 @@ export function createReuseMatcher(
         .filter((lesson) => lesson.locale === query.intent.locale)
         .filter((lesson) => sameSet([...lesson.assumptions].sort(), assumptions))
         .filter((lesson) => lesson.safetyClass === query.intent.safetyScope)
-        .sort((left, right) => right.version - left.version)
-        .at(0);
+        .sort((left, right) => right.version - left.version);
+      let hit: Lesson | undefined;
+      for (const candidate of ranked) {
+        if (!rights || (await rights.check(candidate)).cleared) {
+          hit = candidate;
+          break;
+        }
+      }
       if (!hit) return null;
       const lesson: Lesson = {
         ...hit,

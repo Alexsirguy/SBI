@@ -11,11 +11,11 @@
     "kind": {
       "type": "string",
       "enum": [
-        "svg-diagram",
-        "canvas-diagram",
-        "gltf-model",
-        "simulation",
-        "molecular"
+        "mechanism",
+        "molecule",
+        "process",
+        "graph",
+        "playground"
       ]
     },
     "alt": {
@@ -67,6 +67,134 @@
         "type": "string"
       },
       "additionalProperties": {}
+    },
+    "labels": {
+      "default": [],
+      "maxItems": 20,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "claimId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "claimId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "controls": {
+      "default": [],
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "unit": {
+            "default": "",
+            "type": "string",
+            "maxLength": 16
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "step": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "unit",
+          "min",
+          "max",
+          "step",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "readouts": {
+      "default": [],
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]{0,39}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "unit": {
+            "default": "",
+            "type": "string",
+            "maxLength": 16
+          },
+          "formula": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "unit",
+          "formula"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "spec": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 20000
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        }
+      ]
     }
   },
   "required": [
@@ -76,7 +204,10 @@
     "fallback",
     "assetIds",
     "assumptions",
-    "params"
+    "params",
+    "labels",
+    "controls",
+    "readouts"
   ],
   "additionalProperties": false
 }

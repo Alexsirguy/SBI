@@ -1,10 +1,15 @@
 import type { Lesson, LessonSection } from "@sbi/contracts";
 import type { ReactNode } from "react";
+import { ActivateSection } from "./activate";
+import { ApplySection } from "./apply";
 import { CheckThinkingSection } from "./check-thinking";
+import { DemonstrateSection } from "./demonstrate";
 import { FirstPrinciplesSection } from "./first-principles";
 import { GoFurtherSection } from "./go-further";
 import { HistorySection } from "./history";
 import { HowPartsWorkSection } from "./how-parts-work";
+import { IntegrateSection } from "./integrate";
+import { ProblemSection } from "./problem";
 import { SeeingSection } from "./seeing";
 import { ShortAnswerSection } from "./short-answer";
 import { TryAnIdeaSection } from "./try-an-idea";
@@ -15,12 +20,15 @@ export function SectionView({
   lesson,
   objectLabel,
   askQuestion,
+  pictures,
 }: {
   section: LessonSection;
   lesson: Lesson;
   /** What the lesson is about, named in What you're seeing. */
   objectLabel?: string;
   askQuestion?: ReactNode;
+  /** The lesson's visuals, for the module that draws them inside itself. */
+  pictures?: ReactNode;
 }) {
   switch (section.module) {
     case "what-youre-seeing":
@@ -53,5 +61,39 @@ export function SectionView({
       );
     case "go-further":
       return <GoFurtherSection section={section} askQuestion={askQuestion} />;
+    case "problem":
+      return (
+        <ProblemSection
+          section={section}
+          objectLabel={objectLabel}
+          assumptions={lesson.assumptions}
+        />
+      );
+    case "activate":
+      return (
+        <ActivateSection
+          section={section}
+          task={lesson.tasks.find((task) => task.module === "activate")}
+        />
+      );
+    case "demonstrate":
+      return (
+        <DemonstrateSection
+          section={section}
+          concepts={lesson.concepts}
+          guess={lesson.tasks.find((task) => task.module === "activate")}
+          pictures={pictures}
+        />
+      );
+    case "apply":
+      return (
+        <ApplySection
+          section={section}
+          tasks={lesson.tasks.filter((task) => task.module === "apply")}
+          experiment={lesson.experiment}
+        />
+      );
+    case "integrate":
+      return <IntegrateSection section={section} title={lesson.title} askQuestion={askQuestion} />;
   }
 }

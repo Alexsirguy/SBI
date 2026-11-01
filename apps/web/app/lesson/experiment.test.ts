@@ -1,0 +1,88 @@
+// @vitest-environment happy-dom
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createExperimentController, visualSliderId } from "./experiment";
+import { goalHint, goalMet } from "./goal";
+import { SAMPLE_MERRILL_MANIFEST } from "./sample-merrill-lesson";
+
+// The same slider the visual's common layer draws, so the controller is driven as in the app.
+function drawSlider() {
+  const figure = document.body.appendChild(document.createElement("figure"));
+  const input = figure.appendChild(document.createElement("input"));
+  Object.assign(input, {
+    type: "range",
+    id: visualSliderId(SAMPLE_MERRILL_MANIFEST.visualId, "tension"),
+    min: "40",
+    max: "200",
+    step: "5",
+    value: "110",
+  });
+  return input;
+}
+
+afterEach(() => document.body.replaceChildren());
+
+describe("createExperimentController", () => {
+  it("knows which controls and readouts the visual offers", () => {
+    const controller = createExperimentController(SAMPLE_MERRILL_MANIFEST);
+    expect(controller.has({ controls: ["tension"], readouts: ["pitch"] })).toBe(true);
+    expect(controller.has({ controls: ["length"] })).toBe(false);
+    expect(controller.has({ readouts: ["loudness"] })).toBe(false);
+  });
+
+  it("moves the slider as a learner would, clamped to its range, and tells subscribers", () => {
+    const input = drawSlider();
+    const heard = vi.fn();
+    input.addEventListener("input", heard);
+    const controller = createExperimentController(SAMPLE_MERRILL_MANIFEST);
+    const listener = vi.fn();
+    const stop = controller.subscribe(listener);
+
+    expect(controller.set("tension", 500)).toBe(true);
+    expect(input.value).toBe("200");
+    expect(heard).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(controller.values()).toEqual({ tension: 200 });
+
+    stop();
+    controller.set("tension", 160);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("works readouts out with the manifest's own formula", () => {
+    drawSlider();
+    const controller = createExperimentController(SAMPLE_MERRILL_MANIFEST);
+    expect(controller.readout("pitch")).toBeCloseTo(147.3, 1);
+    controller.set("tension", 165);
+    expect(controller.readout("pitch")).toBeCloseTo(180.4, 1);
+    expect(controller.readout("loudness")).toBeUndefined();
+  });
+
+  it("uses the manifest's starting values, and cannot set anything, before the visual is drawn", () => {
+    const controller = createExperimentController(SAMPLE_MERRILL_MANIFEST);
+    expect(controller.values()).toEqual({ tension: 110 });
+    expect(controller.set("tension", 160)).toBe(false);
+  });
+});
+
+describe("goals", () => {
+  const pitch = { label: "Pitch", unit: "Hz" };
+
+  it("checks at least, at most and near", () => {
+    expect(goalMet({ readoutId: "pitch", op: "atLeast", value: 180 }, 180)).toBe(true);
+    expect(goalMet({ readoutId: "pitch", op: "atMost", value: 180 }, 181)).toBe(false);
+    expect(goalMet({ readoutId: "pitch", op: "near", value: 147, tolerance: 5 }, 151)).toBe(true);
+    expect(goalMet({ readoutId: "pitch", op: "near", value: 147, tolerance: 5 }, 153)).toBe(false);
+  });
+
+  it("coaches in plain words, never rounding a miss up to the goal", () => {
+    expect(goalHint({ readoutId: "pitch", op: "atLeast", value: 180 }, 160, pitch)).toBe(
+      "Pitch is 160 Hz; you need at least 180 Hz.",
+    );
+    expect(goalHint({ readoutId: "pitch", op: "atLeast", value: 180 }, 179.96, pitch)).toBe(
+      "Pitch is 179.96 Hz; you need at least 180 Hz.",
+    );
+    expect(
+      goalHint({ readoutId: "pitch", op: "near", value: 147, tolerance: 5 }, 189.2, pitch),
+    ).toBe("Pitch is 189.2 Hz; you need about 147 Hz, within 5 Hz.");
+  });
+});

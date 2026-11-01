@@ -12,19 +12,19 @@ describe("VISUAL_ROUTES", () => {
     expect(Object.keys(VISUAL_ROUTES).sort()).toEqual([...Domain.options].sort());
   });
 
-  it.each(Domain.options)("%s defaults to SVG and uses only allowlisted visual kinds", (domain) => {
+  it.each(Domain.options)("%s suggests only allowlisted visual kinds", (domain) => {
     const family = VISUAL_ROUTES[domain];
-    expect(family.primary).toBe("svg-diagram");
-    for (const kind of family.optional) {
+    for (const kind of [family.primary, ...family.optional]) {
       expect(VisualKind.options).toContain(kind);
     }
     expect(family.interactions.length).toBeGreaterThan(0);
   });
 
-  it("routes chemistry to molecular views and arts to colour canvases", () => {
-    expect(VISUAL_ROUTES.chemistry.optional).toContain("molecular");
-    expect(VISUAL_ROUTES.arts.optional).toContain("canvas-diagram");
-    expect(VISUAL_ROUTES.biology.optional).not.toContain("molecular");
+  it("suggests mechanisms for physics, molecules for chemistry and processes for biology", () => {
+    expect(VISUAL_ROUTES.physics.primary).toBe("mechanism");
+    expect(VISUAL_ROUTES.chemistry.primary).toBe("molecule");
+    expect(VISUAL_ROUTES.biology.primary).toBe("process");
+    expect(VISUAL_ROUTES.physics.optional).not.toContain("molecule");
   });
 });
 
@@ -63,8 +63,8 @@ describe("routeVisual", () => {
   });
 
   it("returns copies so callers cannot change the shared table", () => {
-    routeVisual(taxonomy, "object.bicycle").optional.push("molecular");
-    expect(VISUAL_ROUTES.physics.optional).not.toContain("molecular");
+    routeVisual(taxonomy, "object.bicycle").optional.push("molecule");
+    expect(VISUAL_ROUTES.physics.optional).not.toContain("molecule");
   });
 
   it("routes every seeded object", () => {

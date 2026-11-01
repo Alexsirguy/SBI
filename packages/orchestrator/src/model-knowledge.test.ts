@@ -69,4 +69,18 @@ describe("generateModelClaims", () => {
     await generateModelClaims({ ...input, safetyClass: "high" }, { provider: provider([], seen) });
     expect(String(seen[0]?.messages[0]?.content)).toContain("this is a high-risk topic");
   });
+
+  it("lets a lone question use a whole lesson's claims, misconceptions included", async () => {
+    const seen: CompletionRequest[] = [];
+    await generateModelClaims(input, { provider: provider([], seen) });
+    await generateModelClaims(
+      { ...input, gaps: [input.question] },
+      { provider: provider([], seen) },
+    );
+    expect(String(seen[0]?.messages[1]?.content)).toContain("up to 4 claims per research question");
+    expect(String(seen[1]?.messages[1]?.content)).toContain(
+      "up to 12 claims per research question",
+    );
+    expect(String(seen[0]?.messages[0]?.content)).toContain("common misconceptions");
+  });
 });

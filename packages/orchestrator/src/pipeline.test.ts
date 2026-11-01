@@ -4,6 +4,7 @@ import { LlmError } from "@sbi/llm";
 import type { CheckReport } from "./checks";
 import type { TaxonomyLessonLookup } from "./lesson-repository";
 import { runWithFallback, type FallbackQuery, type GenerationAttempt } from "./pipeline";
+import { LESSON_DRAFT_PROMPT_VERSION } from "./draft";
 import { makeLesson } from "./lesson-fixture";
 
 const fallbackQuery: FallbackQuery = {
@@ -12,6 +13,7 @@ const fallbackQuery: FallbackQuery = {
   safetyClass: "low",
   audience: "general",
   policyVersion: "safety-1",
+  promptVersion: LESSON_DRAFT_PROMPT_VERSION,
 };
 
 function memoryLookup(stored: Lesson[] = []): TaxonomyLessonLookup {
@@ -132,6 +134,7 @@ describe("runWithFallback", () => {
       gated(5, { reuse: { ...SHARED, policyVersion: "safety-0" } }),
       gated(6, { safetyClass: "medium" }),
       gated(7, { reuse: { ...SHARED, cacheScope: "private" } }),
+      gated(8, { reuse: { ...SHARED, promptVersion: "lesson-draft@6" } }),
     ];
     const attempt: GenerationAttempt = async () => {
       throw new LlmError("stub: empty completion");

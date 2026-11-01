@@ -1,0 +1,189 @@
+{
+  "lessonId": "0192f1a0-0000-7000-8000-000000000020",
+  "version": 1,
+  "taxonomyId": "subject.acoustic-guitar",
+  "title": "Why a tighter string sounds higher",
+  "locale": "en",
+  "audience": ["general", "teen"],
+  "readingLevel": "plain",
+  "summary": "A string's pitch rises with its tension and falls with its length and weight.",
+  "learningObjectives": ["Predict how tension and length change a string's pitch"],
+  "assumptions": [],
+  "concepts": [
+    {
+      "conceptId": "vibration",
+      "label": "Vibration"
+    },
+    {
+      "conceptId": "wave-speed",
+      "label": "Wave speed",
+      "prerequisites": ["vibration"]
+    }
+  ],
+  "misconceptionNotes": [],
+  "sections": [
+    {
+      "sectionId": "problem",
+      "module": "problem",
+      "heading": "Your guitar sounds flat",
+      "text": "Your guitar's A string sounds lower than the tuner says. What do you change, and why does it work?",
+      "claimIds": []
+    },
+    {
+      "sectionId": "activate",
+      "module": "activate",
+      "heading": "You have heard this before",
+      "text": "Think of a rubber band: stretch it tighter and pluck it.",
+      "claimIds": []
+    },
+    {
+      "sectionId": "demonstrate",
+      "module": "demonstrate",
+      "heading": "Tension speeds up the wave",
+      "text": "A plucked string vibrates; how fast it vibrates is its pitch.",
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000005"],
+      "steps": [
+        {
+          "text": "Start at 110 N: the string sounds about 147 Hz.",
+          "settings": [
+            {
+              "controlId": "tension",
+              "value": 110
+            }
+          ]
+        },
+        {
+          "text": "Tighten it to 160 N and the wave travels faster, so the pitch rises.",
+          "settings": [
+            {
+              "controlId": "tension",
+              "value": 160
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sectionId": "apply",
+      "module": "apply",
+      "heading": "Tune it yourself",
+      "text": "Use the experiment to solve each challenge.",
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000004"]
+    },
+    {
+      "sectionId": "integrate",
+      "module": "integrate",
+      "heading": "Listen for it this week",
+      "text": "Press a string at the fifth fret and pluck it: you shortened it, so it sounds higher.",
+      "claimIds": []
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "0192f1a0-0000-7000-8000-000000000005",
+      "text": "The element converts electrical energy into thermal energy.",
+      "status": "supported",
+      "sourceIds": ["0192f1a0-0000-7000-8000-000000000001"],
+      "scope": "typical electric kettle",
+      "confidence": "high"
+    },
+    {
+      "claimId": "0192f1a0-0000-7000-8000-000000000004",
+      "text": "Heated water rises, forming convection currents.",
+      "status": "supported",
+      "sourceIds": ["0192f1a0-0000-7000-8000-000000000001", "0192f1a0-0000-7000-8000-000000000006"],
+      "scope": "general",
+      "confidence": "high",
+      "dependsOn": ["0192f1a0-0000-7000-8000-000000000005"]
+    }
+  ],
+  "visuals": [],
+  "safetyClass": "low",
+  "reviewStatus": "auto-validated",
+  "reuse": {
+    "intentSignature": "why-boil|household.kitchen.kettle|explore|en|low",
+    "matchDimensions": ["intent", "depth", "locale", "safety"],
+    "cacheScope": "shared",
+    "generatedAt": "2026-09-30T12:00:00Z",
+    "validatedAt": "2026-10-01T10:00:00Z",
+    "evidenceSnapshotId": "0192f1a0-0000-7000-8000-00000000000e",
+    "sourceFreshness": "fresh",
+    "modelVersion": "model-2026-09",
+    "promptVersion": "lesson-draft-7",
+    "policyVersion": "policy-v1",
+    "reuseCount": 4,
+    "contentHash": "c92ebf1c5e8217459c77b32b502177e4bbcea8b6c095bcba10c5ce2a3048a966"
+  },
+  "tasks": [
+    {
+      "taskId": "guess",
+      "module": "activate",
+      "prompt": "Which change raises the pitch?",
+      "options": ["Loosen the string", "Tighten the string"],
+      "answerIndex": 1,
+      "feedback": ["Only one note", "second", "third"]
+    },
+    {
+      "taskId": "tune-up",
+      "module": "apply",
+      "prompt": "Set the tension so the string sounds at least 180 Hz.",
+      "options": ["Raise the tension", "Lower the tension"],
+      "answerIndex": 0,
+      "feedback": [
+        "Right: pitch grows with the square root of tension.",
+        "Lowering tension drops the pitch."
+      ],
+      "setup": [
+        {
+          "controlId": "tension",
+          "value": 110
+        }
+      ],
+      "goal": {
+        "readoutId": "pitch",
+        "op": "atLeast",
+        "value": 180
+      },
+      "claimIds": ["0192f1a0-0000-7000-8000-000000000004"]
+    },
+    {
+      "taskId": "match",
+      "module": "apply",
+      "prompt": "Make the string sound near 147 Hz again.",
+      "options": ["About 110 N", "About 200 N"],
+      "answerIndex": 0,
+      "feedback": ["Yes: that is where we started.", "That is far too tight for 147 Hz."],
+      "setup": [
+        {
+          "controlId": "tension",
+          "value": 180
+        }
+      ],
+      "goal": {
+        "readoutId": "pitch",
+        "op": "near",
+        "value": 147,
+        "tolerance": 5
+      }
+    }
+  ],
+  "experiment": {
+    "controls": [
+      {
+        "id": "tension",
+        "label": "Tension",
+        "unit": "N",
+        "min": 40,
+        "max": 200,
+        "value": 110
+      }
+    ],
+    "readouts": [
+      {
+        "id": "pitch",
+        "label": "Pitch",
+        "unit": "Hz"
+      }
+    ]
+  }
+}

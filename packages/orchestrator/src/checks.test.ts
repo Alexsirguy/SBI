@@ -7,7 +7,7 @@ import {
   schemaCheck,
   type LessonCheck,
 } from "./checks";
-import { makeLesson } from "./lesson-fixture";
+import { CLAIM_A, CLAIM_B, makeLesson } from "./lesson-fixture";
 
 const UNKNOWN = "123e4567-e89b-12d3-a456-426614174009";
 
@@ -87,6 +87,48 @@ describe("citationCheck on uncited sections", () => {
       },
     ]);
     expect((await citationCheck.run(lesson)).passed).toBe(true);
+  });
+});
+
+describe("citationCheck on a Merrill lesson", () => {
+  it("lets problem, activate and integrate go uncited, and apply when its challenges cite", async () => {
+    const lesson = makeLesson();
+    expect(
+      lesson.sections.filter((section) => section.claimIds.length === 0).map((s) => s.module),
+    ).toEqual(["problem", "activate", "integrate"]);
+    expect((await citationCheck.run(lesson)).passed).toBe(true);
+
+    const sceneOnly = {
+      ...lesson,
+      sections: lesson.sections.map((section) =>
+        section.module === "apply" ? { ...section, claimIds: [] } : section,
+      ),
+      tasks: lesson.tasks.map((task) =>
+        task.module === "apply" ? { ...task, claimIds: [CLAIM_A, CLAIM_B] } : task,
+      ),
+    };
+    expect((await citationCheck.run(sceneOnly)).passed).toBe(true);
+
+    const uncited = {
+      ...sceneOnly,
+      tasks: lesson.tasks.map((task) => ({ ...task, claimIds: [] })),
+    };
+    const result = await citationCheck.run(uncited);
+    expect(result.details).toContain('Section "apply-4" states facts without citing a claim');
+  });
+
+  it("counts a claim cited only by a challenge as cited", async () => {
+    const lesson = makeLesson();
+    const moved = {
+      ...lesson,
+      sections: lesson.sections.map((section) =>
+        section.module === "apply" ? { ...section, claimIds: [CLAIM_A] } : section,
+      ),
+      tasks: lesson.tasks.map((task) =>
+        task.taskId === "apply-2" ? { ...task, claimIds: [CLAIM_B] } : task,
+      ),
+    };
+    expect(await citationCheck.run(moved)).toMatchObject({ passed: true, details: [] });
   });
 });
 
