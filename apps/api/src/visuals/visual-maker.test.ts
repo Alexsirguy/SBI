@@ -34,6 +34,12 @@ const PROCESS = {
 };
 
 const NONE = { ...PROCESS, kind: "none" };
+// A diagram answer lists its stages first; three or more make it worth drawing.
+const STAGED = {
+  ...PROCESS,
+  topic: "process",
+  stages: ["Water boils", "Strip bends", "Switch flips off"],
+};
 
 // The experiment and the diagram are asked side by side, so answers go by prompt.
 function provider(answer: unknown, diagram: unknown = NONE): LlmProvider {
@@ -105,7 +111,7 @@ describe("createVisualMaker", () => {
 
   it("adds a stage diagram beside the experiment, with the experiment first", async () => {
     const store = stores();
-    const diagram = { ...PROCESS, alt: "The stages of switching off" };
+    const diagram = { ...STAGED, alt: "The stages of switching off" };
     const make = createVisualMaker({
       provider: provider(PROCESS, diagram),
       rights: cleared,
@@ -120,7 +126,7 @@ describe("createVisualMaker", () => {
   it("keeps the diagram when the experiment visual cannot be made", async () => {
     const store = stores();
     const make = createVisualMaker({
-      provider: provider(NONE, PROCESS),
+      provider: provider(NONE, STAGED),
       rights: cleared,
       ...store.deps,
     });

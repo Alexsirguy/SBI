@@ -6,7 +6,9 @@ import { RAINBOW_CODE } from "./kinds/rainbow";
 import { REFERENCE_MECHANISMS, REFERENCE_VISUALS } from "./references";
 
 export const VISUAL_PROMPT = { id: "visual-generate", version: "v7" } as const;
-export const DIAGRAM_PROMPT = { id: "visual-diagram", version: "v2" } as const;
+export const DIAGRAM_PROMPT = { id: "visual-diagram", version: "v4" } as const;
+/** A sequence shorter than this is one change, which the experiment already shows. */
+export const MIN_DIAGRAM_STAGES = 3;
 
 const Named = z.string();
 // One flat object with a field per format, because strict JSON schema mode allows no free-form spec.
@@ -162,10 +164,15 @@ Use real physical values and units. Be correct: a learner will trust it.`;
 
 // A second, optional picture for stage-and-flow topics; the experiment visual stays the one to drive.
 export const DIAGRAM_SYSTEM_PROMPT = `You decide whether a science lesson needs a stage diagram beside its interactive experiment, and draw it if so.
-Most lessons need no diagram: answer kind "none" unless the lesson's mechanism is a sequence of at least three different stages, where something different happens at each, in the order they happen in time or along a path (the water cycle, digestion, the four strokes of an engine, how a fridge moves heat round its loop, how a vaccine trains the body).
-Answer "none" when the idea is one quantity changing another (a seesaw's balance, a thermometer's rise, a spring stretching), or a shape, a structure, a set of parts or a list of causes: the experiment already shows it.
-Every lesson's demonstration is written as numbered steps; that alone never makes it a sequence of stages.
-For a diagram, kind is "process"; leave every other kind's fields empty ("" or []), with no controls and no readouts.
+First decide topic, what kind of idea the lesson teaches:
+- "quantity": one amount changes another (a string's pitch with its tension, a seesaw's balance, how fast water heats with power).
+- "mechanism": parts push, turn or act on each other (gears, a lever, a compass needle turning to a magnet).
+- "structure": a shape, arrangement or set of parts (a honeycomb's cells, a salt crystal, the parts of a flower).
+- "process": matter or energy passes through a series of different states or places, each changing it (photosynthesis, the water cycle, digestion, rusting, a fridge moving heat round its loop).
+Any idea can be told as steps, and every lesson's demonstration is, so judge the idea itself, not how it is told.
+Then fill stages: for a process, its distinct stages in order, a few words each; otherwise leave it empty.
+Draw only a process with three or more stages: kind "process", one node per stage in that order. Otherwise kind "none".
+For a diagram, leave every other kind's fields empty ("" or []), with no controls and no readouts.
 - mermaid: a "flowchart LR" with at most 12 short nodes in plain words; no links, HTML, click lines or %% directives. Follow the demonstration's steps in order when they are given.
 - alt: under 120 characters, says what the diagram shows.
 - longDescription and fallbackText: 1 to 2 plain sentences a screen reader or a learner without the picture can follow.
@@ -173,13 +180,26 @@ For a diagram, kind is "process"; leave every other kind's fields empty ("" or [
 - labels: up to 6 named stages; claimId must be one of the lesson's claim ids given below, or leave the label out.
 Every stage and arrow must be correct: a learner will trust it.`;
 
-export const GENERATED_DIAGRAM_SCHEMA: Record<string, unknown> = {
-  ...GENERATED_VISUAL_SCHEMA,
-  properties: {
-    ...(GENERATED_VISUAL_SCHEMA.properties as Record<string, unknown>),
-    kind: { type: "string", enum: ["process", "none"] },
-  },
-};
+// topic and stages come first, so the model judges the idea before it decides to draw it.
+export const GENERATED_DIAGRAM_SCHEMA: Record<string, unknown> = object({
+  topic: { type: "string", enum: ["quantity", "mechanism", "structure", "process"] },
+  stages: list(text),
+  ...(GENERATED_VISUAL_SCHEMA.properties as Record<string, unknown>),
+  kind: { type: "string", enum: ["process", "none"] },
+});
+
+/** The stages of a diagram answer that judged its topic a process; anything else counts as none. */
+export function diagramStages(answer: string): string[] {
+  try {
+    const { topic, stages } = JSON.parse(answer) as { topic?: unknown; stages?: unknown };
+    if (topic !== "process" || !Array.isArray(stages)) return [];
+    return stages.filter(
+      (stage): stage is string => typeof stage === "string" && stage.trim() !== "",
+    );
+  } catch {
+    return [];
+  }
+}
 
 export interface LessonForVisual {
   lessonId: string;

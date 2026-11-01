@@ -323,9 +323,15 @@ describe("generateVisual with the lesson's experiment", () => {
   });
 });
 
+const STAGED = {
+  ...PROCESS,
+  topic: "process",
+  stages: ["Light arrives", "Water splits", "Sugar forms"],
+};
+
 describe("generateVisual in diagram mode", () => {
   it("asks only for a stage diagram or none, on the demonstration steps and not the experiment", async () => {
-    const { provider, requests } = scripted(PROCESS);
+    const { provider, requests } = scripted(STAGED);
     const result = await generateVisual({
       provider,
       lesson: {
@@ -339,8 +345,11 @@ describe("generateVisual in diagram mode", () => {
     expect(result && "manifest" in result && result.manifest.kind).toBe("process");
     expect(requests[0]?.prompt).toEqual(DIAGRAM_PROMPT);
     expect(requests[0]?.jsonSchema?.schema).toEqual(GENERATED_DIAGRAM_SCHEMA);
-    const schema = GENERATED_DIAGRAM_SCHEMA as { properties: { kind: { enum: string[] } } };
+    const schema = GENERATED_DIAGRAM_SCHEMA as {
+      properties: { kind: { enum: string[] } } & Record<string, unknown>;
+    };
     expect(schema.properties.kind.enum).toEqual(["process", "none"]);
+    expect(Object.keys(schema.properties).slice(0, 2)).toEqual(["topic", "stages"]);
     const user = String(requests[0]?.messages[1]?.content);
     expect(user).toContain("Demonstration steps:\n1. Light reaches the leaf.\n2. Sugar forms.");
     expect(user).not.toContain("control ");
@@ -348,7 +357,27 @@ describe("generateVisual in diagram mode", () => {
   });
 
   it("draws nothing when the lesson is not a sequence of stages", async () => {
-    const { provider } = scripted({ ...EMPTY, kind: "none" });
+    const { provider } = scripted({ ...EMPTY, kind: "none", topic: "quantity", stages: [] });
+    expect(await generateVisual({ provider, lesson, pubchem, mode: "diagram" })).toBeUndefined();
+  });
+
+  it("sends back an answer that lists three stages but draws none", async () => {
+    const undrawn = { ...EMPTY, kind: "none", topic: "process", stages: STAGED.stages };
+    const { provider, requests } = scripted(undrawn, STAGED);
+    const result = await generateVisual({ provider, lesson, pubchem, mode: "diagram" });
+    expect(result && "manifest" in result && result.attempts).toBe(2);
+    expect(String(requests[1]?.messages.at(-1)?.content)).toContain(
+      "You listed 3 stages, so draw them",
+    );
+  });
+
+  it("draws nothing for an idea it judges a mechanism, however many steps it lists", async () => {
+    const { provider } = scripted({ ...STAGED, topic: "mechanism" });
+    expect(await generateVisual({ provider, lesson, pubchem, mode: "diagram" })).toBeUndefined();
+  });
+
+  it("drops a drawing with fewer than three stages, which the experiment already shows", async () => {
+    const { provider } = scripted({ ...PROCESS, topic: "process", stages: ["Light", "Sugar"] });
     expect(await generateVisual({ provider, lesson, pubchem, mode: "diagram" })).toBeUndefined();
   });
 });

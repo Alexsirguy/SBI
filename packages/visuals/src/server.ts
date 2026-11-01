@@ -6,6 +6,8 @@ import type mermaidApi from "mermaid";
 import { commonLayerProblems } from "./common/validate";
 import { experimentProblems } from "./experiment";
 import {
+  diagramStages,
+  MIN_DIAGRAM_STAGES,
   DIAGRAM_PROMPT,
   DIAGRAM_SYSTEM_PROMPT,
   GENERATED_DIAGRAM_SCHEMA,
@@ -138,6 +140,14 @@ export async function generateVisual(input: {
   let problems: string[] = [];
   // A picture that misses only experiment ids is still worth showing if the repair does no better.
   let kept: GeneratedResult | undefined;
+  const sendBack = (answer: string) =>
+    messages.push(
+      { role: "assistant", content: answer },
+      {
+        role: "user",
+        content: `That picture cannot be shown yet. Fix these problems and answer again in full:\n${problems.map((p) => `- ${p}`).join("\n")}`,
+      },
+    );
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     const answer = await completeStructured(input.provider, {
       messages,
@@ -155,6 +165,18 @@ export async function generateVisual(input: {
     });
     if (!answer) break;
     const { value, completion } = answer;
+    if (diagram) {
+      // A process topic with its stages decides, not the kind alone, so those get one reliably.
+      const stages = diagramStages(completion.text);
+      if (stages.length < MIN_DIAGRAM_STAGES) return undefined;
+      if (value.kind === "none") {
+        problems = [
+          `You listed ${stages.length} stages, so draw them: kind "process", one node per stage, in order.`,
+        ];
+        sendBack(completion.text);
+        continue;
+      }
+    }
     const checked = await check(value, input);
     if (checked === undefined) return kept && { ...kept, attempts: attempt };
     if ("manifest" in checked) {
@@ -165,13 +187,7 @@ export async function generateVisual(input: {
     } else {
       problems = checked.problems;
     }
-    messages.push(
-      { role: "assistant", content: completion.text },
-      {
-        role: "user",
-        content: `That picture cannot be shown yet. Fix these problems and answer again in full:\n${problems.map((p) => `- ${p}`).join("\n")}`,
-      },
-    );
+    sendBack(completion.text);
   }
   return kept ? { ...kept, attempts: 2 } : { problems, attempts: 2 };
 }
