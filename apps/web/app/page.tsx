@@ -1,29 +1,27 @@
 import { Mark } from "@sbi/ui";
 import Link from "next/link";
 import { PHOTO_RETENTION_DAYS } from "./capture/limits";
-import { LEGACY_MODULES, MODULE_LABELS } from "./lesson/modules/labels";
+import { MERRILL_MODULES } from "@sbi/contracts";
+import { MODULE_LABELS } from "./lesson/modules/labels";
 import "./home.css";
 
-const MODULE_BLURBS: Record<(typeof LEGACY_MODULES)[number], string> = {
-  "what-youre-seeing": "Starts from what you can see and touch.",
-  "short-answer": "The answer in a sentence or two, first.",
-  "first-principles": "The basic ideas the answer is built on.",
-  "how-parts-work": "Each part and the job it does.",
-  "try-an-idea": "A small thing to try or notice yourself.",
-  history: "Where the idea and the object came from.",
-  "check-thinking": "A question to test what you have learned.",
-  "go-further": "Where to read more, with sources.",
+const MODULE_BLURBS: Partial<Record<(typeof MERRILL_MODULES)[number], string>> = {
+  problem: "A real task with your object, to start from.",
+  activate: "Links it to what you already know, then you make a guess.",
+  demonstrate: "The answer worked out step by step, in a live experiment.",
+  apply: "Solve new challenges yourself by changing the experiment.",
+  integrate: "Something to notice or try in your own day.",
 };
 
 const TRUST = [
   {
     title: "Sources you can open",
-    text: "Answers come from open textbooks and public science institutions, and every lesson lists the sources it used.",
+    text: "Lessons draw on open textbooks and public science institutions, and every lesson lists the sources it used.",
     icon: "M5 4h10l4 4v12H5z M9 12h6 M9 16h6",
   },
   {
-    title: "Every statement checked",
-    text: "Each statement is checked against the passage it comes from before it can appear in a lesson.",
+    title: "Sourced statements checked",
+    text: "Each sourced statement is checked against the passage it comes from before it can appear in a lesson.",
     icon: "M5 12l4 4 10-10",
   },
   {
@@ -64,8 +62,8 @@ export default function HomePage() {
           <p className="eyebrow">Science Behind It</p>
           <h1 id="home-title">What&apos;s the science behind that?</h1>
           <p className="home__lead">
-            Point your camera at an everyday object, or describe it. You get a short answer first,
-            then the reasons, one step at a time, with the sources they come from.
+            Point your camera at an everyday object, or describe it. You get a real problem to
+            solve, watch it worked out, then try it yourself by changing a live experiment.
           </p>
           <div className="home__actions">
             <Link href="/capture" className="sbi-button sbi-button--primary">
@@ -96,20 +94,19 @@ export default function HomePage() {
             </p>
           </div>
           <div className="home__answer">
-            <p className="home__tag">The short answer</p>
+            <p className="home__tag">The problem</p>
             <p>
-              The lens makes a <Mark>larger, upright image</Mark> of the object, and that image
-              takes up a larger angle in your eye.
+              The print on a medicine bottle is too small to read.{" "}
+              <Mark>Where do you hold the glass</Mark> to make it bigger?
             </p>
           </div>
           <ol className="home__reasons">
             <li>
-              <strong>Glass bends light.</strong> A curved lens bends rays so they seem to come from
-              a larger object.
+              <strong>You guess first.</strong> Close to the print, or far above it?
             </li>
             <li>
-              <strong>The lens and your eye work together.</strong> Your eye sees the image at a
-              larger angle than the object alone.
+              <strong>Then you try it.</strong> Move the lens in the experiment and watch the
+              magnification change until the print is big enough.
             </li>
           </ol>
           <p className="home__sources">
@@ -130,13 +127,14 @@ export default function HomePage() {
           </li>
           <li>
             <span>
-              <strong>Get the short answer.</strong> It arrives first, checked against its sources.
+              <strong>Start with a problem.</strong> A real task with your object, and a guess
+              before anything is explained.
             </span>
           </li>
           <li>
             <span>
-              <strong>Go as deep as you like.</strong> Eight short sections build the answer from
-              first principles, with every source listed.
+              <strong>Watch it, then do it.</strong> See the answer worked out, then change the
+              experiment yourself to solve new challenges.
             </span>
           </li>
         </ol>
@@ -145,10 +143,10 @@ export default function HomePage() {
       <section id="inside" aria-labelledby="inside-heading" className="home__band">
         <h2 id="inside-heading">What&apos;s in every lesson</h2>
         <p className="home__intro">
-          The same eight sections, in the same order, so you always know where you are.
+          The same five steps, in the same order, so you always know where you are.
         </p>
         <ol className="home__modules" role="list">
-          {LEGACY_MODULES.map((module) => (
+          {MERRILL_MODULES.map((module) => (
             <li key={module}>
               <strong>{MODULE_LABELS[module]}</strong>
               <span>{MODULE_BLURBS[module]}</span>

@@ -1,17 +1,5 @@
 import { type LessonModule, MERRILL_MODULES } from "@sbi/contracts";
 
-/** The eight modules of lessons drafted before ADR 0017, in reader order (ADR 0011). */
-export const LEGACY_MODULES = [
-  "what-youre-seeing",
-  "short-answer",
-  "first-principles",
-  "how-parts-work",
-  "try-an-idea",
-  "history",
-  "check-thinking",
-  "go-further",
-] as const satisfies readonly LessonModule[];
-
 /** New lessons follow Merrill's First Principles, so the steps shown while writing are these. */
 export const MODULES: readonly LessonModule[] = MERRILL_MODULES;
 

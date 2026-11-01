@@ -37,7 +37,7 @@ export function SiteFooter() {
             <strong>Science Behind It</strong>
             <br />
             The science of everyday objects, from what you can see to why it works. Every lesson
-            shows its sources.
+            says where it comes from.
           </p>
         </div>
         <nav aria-label="Footer" className="site-footer__groups">

@@ -28,7 +28,8 @@ test("home page sells the idea with an example, the lesson shape, trust and a cl
   ]) {
     await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
   }
-  await expect(page.locator("#inside li")).toHaveCount(8);
+  await expect(page.locator("#inside li")).toHaveCount(5);
+  await expect(page.locator("#inside")).toContainText("Your turn");
   await page
     .getByRole("navigation", { name: "Footer" })
     .getByRole("link", { name: "What's in a lesson" })
