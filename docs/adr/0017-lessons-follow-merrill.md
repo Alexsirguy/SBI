@@ -39,6 +39,15 @@ From lesson-draft v6 (ADR 0011), every lesson had the same eight modules: what-y
 
 **Reuse.** Cached lessons and fallbacks are served only when they were drafted with the current draft prompt, so 8-module lessons stop being served.
 
+**A stage diagram beside the experiment.** The experiment visual needs sliders, so a process diagram can never be a Merrill lesson's only visual. Some ideas, though, are a sequence of stages the learner should first see as a whole: photosynthesis, the water cycle, a fridge's loop.
+
+- Alongside the experiment visual, and at the same time, the generator is asked for a diagram (prompt `visual-diagram`). It may answer only `process` or `none`.
+- It first judges the topic as a quantity, a mechanism, a structure or a process. It draws only a process with three or more stages; the code checks this, rather than trusting the model's choice of kind. A process answered with "none" is sent back once to be drawn.
+- Asking only "is this a sequence of stages?" failed both ways. Without listing stages, photosynthesis got a diagram in 5 of 8 runs. With stages listed but no topic, 13 of 16 seed lessons got one, because any idea can be told as steps.
+- The diagram follows the demonstration's steps. It sits after the experiment in the lesson's visuals, and the experiment controller always drives the first visual that is not a diagram.
+- If the experiment visual fails, as the leaf's playground did, the diagram still gives the lesson a correct picture.
+- With the topic judged first, photosynthesis gets a diagram in 8 of 8 runs and a guitar in 0 of 8. On the seed set, 8 of 16 lessons get one, each a correct sequence of stages.
+
 ## Consequences
 
 - Lessons ask the learner to think and act before they explain. The visual becomes the place where the learner applies the idea.

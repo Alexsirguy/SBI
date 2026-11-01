@@ -44,8 +44,18 @@
   height: auto;
 }
 
-.visual-graph {
+.visual-graph,
+.visual-process {
   width: 100%;
+}
+
+.visual-process {
+  overflow-x: auto;
+}
+
+.visual-process svg {
+  display: block;
+  margin-inline: auto;
 }
 
 .visual-layer__controls {
@@ -87,6 +97,10 @@
 .visual-layer__labels {
   margin: 0;
   padding-left: 1.6rem;
+}
+
+.visual-layer__labels[hidden] {
+  display: none;
 }
 
 .visual-layer__waiting,

@@ -23,3 +23,8 @@ export function processSpecProblems(spec: unknown): string[] {
     problems.push("remove links and HTML from labels");
   return problems;
 }
+
+/** The same flowchart drawn top to bottom, for a box too narrow to read a long row of stages. */
+export function stackedFlowchart(spec: string): string {
+  return spec.replace(/^(\s*(?:flowchart|graph)\s+)(LR|RL)\b/, "$1TD");
+}
