@@ -6,6 +6,7 @@ import { RAINBOW_CODE } from "./kinds/rainbow";
 import { REFERENCE_MECHANISMS, REFERENCE_VISUALS } from "./references";
 
 export const VISUAL_PROMPT = { id: "visual-generate", version: "v7" } as const;
+export const DIAGRAM_PROMPT = { id: "visual-diagram", version: "v2" } as const;
 
 const Named = z.string();
 // One flat object with a field per format, because strict JSON schema mode allows no free-form spec.
@@ -159,12 +160,35 @@ For every kind except molecule, process and none: give a control for each experi
 and a readout for each experiment readout with the SAME id, writing its formula yourself from the controls. Keep within the limits above.
 Use real physical values and units. Be correct: a learner will trust it.`;
 
+// A second, optional picture for stage-and-flow topics; the experiment visual stays the one to drive.
+export const DIAGRAM_SYSTEM_PROMPT = `You decide whether a science lesson needs a stage diagram beside its interactive experiment, and draw it if so.
+Most lessons need no diagram: answer kind "none" unless the lesson's mechanism is a sequence of at least three different stages, where something different happens at each, in the order they happen in time or along a path (the water cycle, digestion, the four strokes of an engine, how a fridge moves heat round its loop, how a vaccine trains the body).
+Answer "none" when the idea is one quantity changing another (a seesaw's balance, a thermometer's rise, a spring stretching), or a shape, a structure, a set of parts or a list of causes: the experiment already shows it.
+Every lesson's demonstration is written as numbered steps; that alone never makes it a sequence of stages.
+For a diagram, kind is "process"; leave every other kind's fields empty ("" or []), with no controls and no readouts.
+- mermaid: a "flowchart LR" with at most 12 short nodes in plain words; no links, HTML, click lines or %% directives. Follow the demonstration's steps in order when they are given.
+- alt: under 120 characters, says what the diagram shows.
+- longDescription and fallbackText: 1 to 2 plain sentences a screen reader or a learner without the picture can follow.
+- assumptions: the simplifications, such as "Only the main stages".
+- labels: up to 6 named stages; claimId must be one of the lesson's claim ids given below, or leave the label out.
+Every stage and arrow must be correct: a learner will trust it.`;
+
+export const GENERATED_DIAGRAM_SCHEMA: Record<string, unknown> = {
+  ...GENERATED_VISUAL_SCHEMA,
+  properties: {
+    ...(GENERATED_VISUAL_SCHEMA.properties as Record<string, unknown>),
+    kind: { type: "string", enum: ["process", "none"] },
+  },
+};
+
 export interface LessonForVisual {
   lessonId: string;
   title: string;
   summary: string;
   readingLevel: string;
   claims: { claimId: string; text: string }[];
+  /** The demonstration's worked steps, which a stage diagram follows. */
+  steps?: string[];
   /** The sliders and readouts the lesson's demonstration and challenges name. */
   experiment?: ExperimentForVisual;
 }
@@ -184,7 +208,10 @@ function renderExperiment(experiment: ExperimentForVisual | undefined): string {
 
 export function visualUserPrompt(lesson: LessonForVisual): string {
   const claims = lesson.claims.map((claim) => `- ${claim.claimId}: ${claim.text}`).join("\n");
-  return `Lesson: ${lesson.title}\nReading level: ${lesson.readingLevel}\nSummary: ${lesson.summary}\nClaims:\n${claims}${renderExperiment(lesson.experiment)}`;
+  const steps = lesson.steps?.length
+    ? `\nDemonstration steps:\n${lesson.steps.map((step, index) => `${index + 1}. ${step}`).join("\n")}`
+    : "";
+  return `Lesson: ${lesson.title}\nReading level: ${lesson.readingLevel}\nSummary: ${lesson.summary}\nClaims:\n${claims}${steps}${renderExperiment(lesson.experiment)}`;
 }
 
 /** Turns the AI's flat answer into a manifest; labels citing claims outside the lesson are dropped. */

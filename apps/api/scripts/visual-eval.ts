@@ -55,6 +55,8 @@ interface Outcome {
   challenges: number;
   challengesInVisual: number;
   unverified: string[];
+  /** A stage diagram drawn beside the experiment (ADR 0017). */
+  diagram: boolean;
   error?: string;
 }
 
@@ -105,6 +107,7 @@ async function evaluate(prompt: SeedPrompt): Promise<Outcome> {
     challenges: 0,
     challengesInVisual: 0,
     unverified: [],
+    diagram: false,
   };
   const started = Date.now();
   const response = await fetch(`${API}/lessons`, {
@@ -134,7 +137,9 @@ async function evaluate(prompt: SeedPrompt): Promise<Outcome> {
     } else if (event.type === "error") {
       outcome.error = (event.data as { error?: string }).error;
     } else if (event.type === "visuals") {
-      const [ref] = LessonVisuals.parse(event.data).visuals;
+      const all = LessonVisuals.parse(event.data).visuals;
+      outcome.diagram = all.some((visual) => visual.kind === "process");
+      const ref = all.find((visual) => visual.kind !== "process");
       outcome.visualSeconds = Math.round((Date.now() - lessonAt) / 100) / 10;
       if (!ref) continue;
       const manifest = VisualManifest.parse(await (await fetch(`${API}${ref.manifestUri}`)).json());
@@ -185,6 +190,7 @@ await Promise.all(
         challenges: 0,
         challengesInVisual: 0,
         unverified: [],
+        diagram: false,
         error: String(error),
       }));
       outcomes.push(outcome);
@@ -218,6 +224,7 @@ console.log(
     kinds,
     allIdsOffered: made.filter((outcome) => outcome.missingIds.length === 0).length,
     challengesInVisual: `${sum((outcome) => outcome.challengesInVisual)}/${sum((outcome) => outcome.challenges)}`,
+    diagrams: outcomes.filter((outcome) => outcome.diagram).length,
     fullyVerified: outcomes.filter((outcome) => !outcome.error && outcome.unverified.length === 0)
       .length,
   }),

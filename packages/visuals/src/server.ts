@@ -6,6 +6,9 @@ import type mermaidApi from "mermaid";
 import { commonLayerProblems } from "./common/validate";
 import { experimentProblems } from "./experiment";
 import {
+  DIAGRAM_PROMPT,
+  DIAGRAM_SYSTEM_PROMPT,
+  GENERATED_DIAGRAM_SCHEMA,
   GENERATED_VISUAL_SCHEMA,
   GeneratedVisual,
   PLAYGROUND_REVIEW_PROMPT,
@@ -121,10 +124,16 @@ export async function generateVisual(input: {
   lesson: LessonForVisual;
   pubchem: { cache: PubChemCache; fetch?: typeof fetch };
   signal?: AbortSignal;
+  /** "diagram" asks only for a stage diagram beside the experiment, or none (ADR 0017). */
+  mode?: "experiment" | "diagram";
 }): Promise<GeneratedResult | { problems: string[]; attempts: number } | undefined> {
+  const diagram = input.mode === "diagram";
+  // A diagram has no sliders, so it never sees the experiment it could not offer.
+  const lesson = diagram ? { ...input.lesson, experiment: undefined } : input.lesson;
+  input = { ...input, lesson };
   const messages: ChatMessage[] = [
-    { role: "system", content: VISUAL_SYSTEM_PROMPT },
-    { role: "user", content: visualUserPrompt(input.lesson) },
+    { role: "system", content: diagram ? DIAGRAM_SYSTEM_PROMPT : VISUAL_SYSTEM_PROMPT },
+    { role: "user", content: visualUserPrompt(lesson) },
   ];
   let problems: string[] = [];
   // A picture that misses only experiment ids is still worth showing if the repair does no better.
@@ -132,9 +141,12 @@ export async function generateVisual(input: {
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     const answer = await completeStructured(input.provider, {
       messages,
-      jsonSchema: { name: "Visual", schema: GENERATED_VISUAL_SCHEMA },
+      jsonSchema: {
+        name: "Visual",
+        schema: diagram ? GENERATED_DIAGRAM_SCHEMA : GENERATED_VISUAL_SCHEMA,
+      },
       maxTokens: 8000,
-      prompt: VISUAL_PROMPT,
+      prompt: diagram ? DIAGRAM_PROMPT : VISUAL_PROMPT,
       signal: input.signal,
       parse: (text) => GeneratedVisual.parse(JSON.parse(text)),
     }).catch((error: unknown) => {

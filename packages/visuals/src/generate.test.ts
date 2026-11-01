@@ -3,6 +3,9 @@ import { LlmError, type CompletionRequest, type LlmProvider } from "@sbi/llm";
 import { describe, expect, it, vi } from "vitest";
 import { compileFormula } from "./formula";
 import {
+  DIAGRAM_PROMPT,
+  DIAGRAM_SYSTEM_PROMPT,
+  GENERATED_DIAGRAM_SCHEMA,
   GENERATED_VISUAL_SCHEMA,
   PITCH_EXAMPLE,
   VISUAL_PROMPT,
@@ -317,6 +320,36 @@ describe("generateVisual with the lesson's experiment", () => {
       pubchem,
     });
     expect(result && "manifest" in result && result.missing).toEqual([]);
+  });
+});
+
+describe("generateVisual in diagram mode", () => {
+  it("asks only for a stage diagram or none, on the demonstration steps and not the experiment", async () => {
+    const { provider, requests } = scripted(PROCESS);
+    const result = await generateVisual({
+      provider,
+      lesson: {
+        ...lesson,
+        experiment: EXPERIMENT,
+        steps: ["Light reaches the leaf.", "Sugar forms."],
+      },
+      pubchem,
+      mode: "diagram",
+    });
+    expect(result && "manifest" in result && result.manifest.kind).toBe("process");
+    expect(requests[0]?.prompt).toEqual(DIAGRAM_PROMPT);
+    expect(requests[0]?.jsonSchema?.schema).toEqual(GENERATED_DIAGRAM_SCHEMA);
+    const schema = GENERATED_DIAGRAM_SCHEMA as { properties: { kind: { enum: string[] } } };
+    expect(schema.properties.kind.enum).toEqual(["process", "none"]);
+    const user = String(requests[0]?.messages[1]?.content);
+    expect(user).toContain("Demonstration steps:\n1. Light reaches the leaf.\n2. Sugar forms.");
+    expect(user).not.toContain("control ");
+    expect(String(requests[0]?.messages[0]?.content)).toBe(DIAGRAM_SYSTEM_PROMPT);
+  });
+
+  it("draws nothing when the lesson is not a sequence of stages", async () => {
+    const { provider } = scripted({ ...EMPTY, kind: "none" });
+    expect(await generateVisual({ provider, lesson, pubchem, mode: "diagram" })).toBeUndefined();
   });
 });
 
