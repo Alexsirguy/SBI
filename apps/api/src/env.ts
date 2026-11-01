@@ -24,6 +24,8 @@ const schema = z.object({
   EVIDENCE_RECHECK_BATCH: z.coerce.number().int().positive().max(200).default(20),
   // Overrides the contact in the evidence crawler's User-Agent (default in @sbi/evidence).
   EVIDENCE_CONTACT: z.string().min(1).max(200).optional(),
+  // Background gathering (ADR 0016) never delays a lesson; this only bounds a stuck gather.
+  EVIDENCE_BUDGET_MS: z.coerce.number().int().positive().default(120_000),
   // Free text may hold personal details despite the form's hint, so it does not outlive triage.
   FEEDBACK_DETAILS_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
   FEEDBACK_MAX_PER_HOUR: z.coerce.number().int().positive().default(20),

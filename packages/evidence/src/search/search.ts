@@ -22,7 +22,7 @@ export async function searchWikipedia(
 export interface SourceSearchDeps {
   searchWikipedia: (query: string, limit: number, signal?: AbortSignal) => Promise<string[]>;
   discoverReferences: (title: string, signal?: AbortSignal) => Promise<SourceRef[]>;
-  libretexts?: LibreTextsIndex;
+  libretexts?: Pick<LibreTextsIndex, "search">;
 }
 
 export interface SourceSearchOptions {
@@ -62,7 +62,7 @@ export async function searchSources(
   const query = question.searchTerms.join(" ");
   const textbookPages = deps.libretexts
     ? await deps.libretexts
-        .search(`${question.question} ${query}`, options.booksPerQuestion ?? 3, {
+        .search(`${question.question} ${query}`, options.booksPerQuestion ?? 2, {
           preferSites: DISCIPLINE_SITES[question.discipline] ?? [],
         })
         .catch((error: unknown) => {
@@ -77,7 +77,7 @@ export async function searchSources(
   });
   const articles = [...new Set([...question.wikipediaArticles, ...found])].slice(
     0,
-    options.articlesPerQuestion ?? 4,
+    options.articlesPerQuestion ?? 2,
   );
 
   const refs = new Map<string, SourceRef>();
@@ -89,12 +89,12 @@ export async function searchSources(
         failures.push(`references of ${title}: ${String(error)}`);
         return [];
       });
-    for (const ref of discovered.slice(0, options.refsPerArticle ?? 3)) {
+    for (const ref of discovered.slice(0, options.refsPerArticle ?? 1)) {
       if (!refs.has(refKey(ref))) refs.set(refKey(ref), ref);
     }
   }
   return {
-    refs: [...refs.values()].slice(0, options.maxRefs ?? 8),
+    refs: [...refs.values()].slice(0, options.maxRefs ?? 3),
     articles,
     textbookPages,
     failures,

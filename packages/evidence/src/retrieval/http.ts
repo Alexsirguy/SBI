@@ -5,6 +5,8 @@ export interface HttpOptions {
   retryDelayMs?: number;
   timeoutMs?: number;
   maxBytes?: number;
+  /** Tries per GET, counting the first; 429 and 5xx answers are retried. */
+  attempts?: number;
 }
 
 // Wikimedia's User-Agent policy asks automated clients to name a contact (owner's choice).
@@ -28,7 +30,6 @@ export class SourceFetchError extends Error {
 }
 
 const RETRYABLE = new Set([429, 502, 503, 504]);
-const ATTEMPTS = 3;
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -52,7 +53,7 @@ export async function getText(
       headers: { "User-Agent": options.userAgent ?? USER_AGENT },
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });
-    if (RETRYABLE.has(response.status) && attempt < ATTEMPTS - 1) {
+    if (RETRYABLE.has(response.status) && attempt < (options.attempts ?? 3) - 1) {
       await sleep((options.retryDelayMs ?? 1000) * 2 ** attempt);
       continue;
     }

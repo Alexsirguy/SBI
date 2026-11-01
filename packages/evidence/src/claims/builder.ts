@@ -131,7 +131,7 @@ async function judgeDraft(
   );
   const candidates = [...firsts, ...ranked.filter((item) => !firsts.includes(item))].slice(
     0,
-    options.maxPassagesPerClaim ?? 3,
+    options.maxPassagesPerClaim ?? 2,
   );
   const judged: Judged[] = [];
   const verdicts = await Promise.all(
