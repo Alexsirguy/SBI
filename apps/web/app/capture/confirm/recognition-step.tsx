@@ -25,8 +25,8 @@ export function RecognitionStep({
 }: {
   reply?: ApiResponse<"recognisePhoto">;
   error?: string;
-  /** Hands the photo on to the lesson page before it opens. */
-  onStart: () => void;
+  /** Hands the photo on to the lesson page before it opens, for lessons about this label only. */
+  onStart: (label: string) => void;
   onRetake: () => void;
 }) {
   const router = useRouter();
@@ -37,7 +37,7 @@ export function RecognitionStep({
   useEffect(() => headingRef.current?.focus(), []);
 
   function start(label: string) {
-    onStart();
+    onStart(label);
     router.push(lessonHref({ label }, { prefs: readPrefs() }));
   }
 
