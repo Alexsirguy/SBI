@@ -49,6 +49,21 @@ test.describe("visual gallery", () => {
     await expectNoAxeViolations(page);
   });
 
+  test("stacks the stages on a phone so their names stay readable", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto("/visuals");
+    const process = page.getByRole("figure", { name: /Photosynthesis/ });
+    await process.getByRole("button", { name: "Show the diagram" }).click();
+    const diagram = process.getByRole("img", { name: /Photosynthesis/ });
+    await expect(diagram).toBeVisible();
+    const scale = await diagram.evaluate((svg) => {
+      const drawn = svg as SVGSVGElement;
+      return drawn.getBoundingClientRect().width / drawn.viewBox.baseVal.width;
+    });
+    expect(scale).toBeGreaterThanOrEqual(0.75);
+    await expect(process.getByRole("list", { name: "Parts" })).toBeHidden();
+  });
+
   test("runs the engine only when asked, and lets the learner pause it", async ({ page }) => {
     await page.goto("/visuals");
     const engine = page.getByRole("figure", { name: /piston engine/ });

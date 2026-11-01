@@ -1,7 +1,7 @@
 import { VisualManifest } from "@sbi/contracts";
 import { describe, expect, it } from "vitest";
 import { graphProblems, graphRows, planGraph, vegaLiteSpec } from "./graph-spec";
-import { processSpecProblems } from "./process-spec";
+import { processSpecProblems, stackedFlowchart } from "./process-spec";
 
 describe("processSpecProblems", () => {
   it("accepts a plain flowchart", () => {
@@ -17,6 +17,20 @@ describe("processSpecProblems", () => {
     ["HTML in a label", 'flowchart LR\n  A["<img src=x>"] --> B', /links and HTML/],
   ])("refuses %s", (_case, spec, message) => {
     expect(processSpecProblems(spec).join("; ")).toMatch(message);
+  });
+});
+
+describe("stackedFlowchart", () => {
+  it("turns a row of stages into a column", () => {
+    expect(stackedFlowchart("flowchart LR\n  A[Light] --> B[Leaf]")).toBe(
+      "flowchart TD\n  A[Light] --> B[Leaf]",
+    );
+    expect(stackedFlowchart("graph RL\n  A --> B")).toBe("graph TD\n  A --> B");
+  });
+
+  it("leaves a column and other diagram types as they are", () => {
+    expect(stackedFlowchart("flowchart TD\n  A --> B")).toBe("flowchart TD\n  A --> B");
+    expect(stackedFlowchart("timeline\n  LR : a")).toBe("timeline\n  LR : a");
   });
 });
 
