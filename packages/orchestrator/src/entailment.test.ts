@@ -115,7 +115,7 @@ describe("prompt versions", () => {
   });
 
   it("pins judge prompt versions", () => {
-    expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.4");
+    expect(ENTAILMENT_PROMPT_VERSION).toBe("orchestrator-entailment-p0.5");
     expect(CONTRADICTION_PROMPT_VERSION).toBe("orchestrator-contradiction-p0.1");
   });
 
@@ -161,6 +161,25 @@ describe("prompt versions", () => {
     expect(judged("apply")).toContain("That boils it far too fast.");
     expect(judged("apply")).not.toContain("No timer is involved.");
     expect(String(seen[0]?.messages[0]?.content)).toContain("scenarios, not facts");
+  });
+
+  it("shows the judge the AI's own claims as general knowledge, not as unsupported", async () => {
+    const seen: CompletionRequest[] = [];
+    const base = makeLesson();
+    const lesson = {
+      ...base,
+      claims: base.claims.map((claim) => ({
+        ...claim,
+        origin: "model" as const,
+        status: "unsupported" as const,
+        sourceIds: [],
+      })),
+    };
+    await createEntailmentCheck(scriptedProvider([supports, supports], seen)).run(lesson);
+    const prompt = String(seen[0]?.messages[1]?.content);
+    expect(prompt).toContain(`${CLAIM_A} [general-knowledge]`);
+    expect(prompt).not.toContain("[unsupported]");
+    expect(String(seen[0]?.messages[0]?.content)).toContain("supports a plain statement of it");
   });
 
   it("judges apply against its challenges' claims when its text only sets the scene", async () => {

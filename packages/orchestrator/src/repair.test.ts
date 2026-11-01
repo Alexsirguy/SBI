@@ -68,17 +68,63 @@ describe("reviseSections", () => {
     expect(String(seen[0]?.messages[1]?.content)).toContain("adds uncited detail");
   });
 
-  it("never rewrites apply's scene, since its challenges hold what was doubted", async () => {
+  it("rewrites apply's challenge feedback and leaves its scene alone", async () => {
     const lesson = makeLesson();
+    const apply = lesson.tasks.filter((task) => task.module === "apply");
     const seen: CompletionRequest[] = [];
+    const challenges = apply.map((task) => ({
+      feedback: task.options.map((_, at) => `Only what the claims say, ${at + 1}.`),
+    }));
+    const stub: LlmProvider = {
+      ...provider("unused", seen),
+      async complete(request) {
+        seen.push(request);
+        return {
+          text: JSON.stringify({ challenges }),
+          model: "stub-1",
+          latencyMs: 1,
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 },
+          prompt: request.prompt,
+        };
+      },
+    };
     const finding = { sectionId: "apply-4", reason: "insufficient: a feedback adds detail" };
     const revised = await reviseSections(
       lesson,
       report([{ ...entailmentFailure, sections: [finding] }]),
-      { provider: provider("Think about a kettle.", seen) },
+      { provider: stub },
     );
-    expect(seen).toHaveLength(0);
+    expect(seen.map((request) => request.prompt?.id)).toEqual(["lesson-revise-challenges"]);
+    expect(String(seen[0]?.messages[1]?.content)).toContain(apply[0]?.prompt);
     expect(revised.sections).toEqual(lesson.sections);
+    const after = revised.tasks.filter((task) => task.module === "apply");
+    expect(after.map((task) => task.feedback)).toEqual(challenges.map((item) => item.feedback));
+    expect(revised.tasks.find((task) => task.module === "activate")).toEqual(
+      lesson.tasks.find((task) => task.module === "activate"),
+    );
+  });
+
+  it("keeps the old feedback when a challenge revision drops one", async () => {
+    const lesson = makeLesson();
+    const stub: LlmProvider = {
+      ...provider("unused"),
+      async complete(request) {
+        return {
+          text: JSON.stringify({ challenges: [{ feedback: ["Only one."] }] }),
+          model: "stub-1",
+          latencyMs: 1,
+          usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 },
+          prompt: request.prompt,
+        };
+      },
+    };
+    const finding = { sectionId: "apply-4", reason: "insufficient" };
+    const revised = await reviseSections(
+      lesson,
+      report([{ ...entailmentFailure, sections: [finding] }]),
+      { provider: stub },
+    );
+    expect(revised.tasks).toEqual(lesson.tasks);
   });
 
   it("replaces a heading the reviser corrects, and keeps one it leaves out", async () => {

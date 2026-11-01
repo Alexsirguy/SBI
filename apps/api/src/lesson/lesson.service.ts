@@ -269,6 +269,7 @@ export class LessonService {
       kind = "cached";
     } else {
       let held = false;
+      let revisedModules: string[] = [];
       const record = (audit: PublishAudit) => this.reviewAudit.record(audit);
       const resolver = createCitationResolver(this.evidence);
       const events = createEventQueue<LessonStreamEvent>();
@@ -377,8 +378,16 @@ export class LessonService {
             onAudit: record,
           });
           // Drafts often add true but uncited detail; one rewrite of just those sections, then
-          // every check again, so a repair can never slip past the gate.
+          // every check that a text change could fail, so a repair can never slip past the gate.
           if (!report.passed && repairable(report)) {
+            const rewritten = new Set(
+              (report.results.find((item) => item.name === "entailment")?.sections ?? []).map(
+                (finding) => finding.sectionId,
+              ),
+            );
+            revisedModules = checked.sections
+              .filter((section) => rewritten.has(section.sectionId))
+              .map((section) => section.module);
             // A failed rewrite leaves the draft as it was; its doubts are then disclosed (ADR 0011).
             const revised = await reviseSections(checked, report, {
               provider,
@@ -388,9 +397,24 @@ export class LessonService {
               throw error;
             });
             if (revised) {
-              ({ lesson: checked, report } = await runLessonChecks(revised, checks, {
+              // A rewrite keeps every claim, so the contradiction verdict stands and only the
+              // rewritten sections need judging again.
+              const contradictions = report.results.find((item) => item.name === "contradictions");
+              const recheck = checks
+                .filter((check) => check.name !== "contradictions")
+                .map((check) =>
+                  check.name === "entailment"
+                    ? createEntailmentCheck(provider, {
+                        objectLabel: entry.label,
+                        sectionIds: rewritten,
+                      })
+                    : check,
+                );
+              ({ lesson: checked, report } = await runLessonChecks(revised, recheck, {
                 onAudit: record,
               }));
+              if (contradictions)
+                report = { ...report, results: [...report.results, contradictions] };
             }
           }
           // High-risk, low-confidence, failed or rights-blocked lessons wait for a reviewer.
@@ -436,6 +460,7 @@ export class LessonService {
           reusedPack: gathered?.reused ?? false,
           claims: claims.length,
           modelClaims: fromModel.length,
+          revisedModules,
         }),
       );
       if (outcome.kind !== "fresh") {

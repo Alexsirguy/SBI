@@ -207,6 +207,8 @@ interface Script {
   entailment?: string;
   /** When set, revised sections are judged as supported, so a repair succeeds. */
   revisionPasses?: boolean;
+  /** When set, only this module's section gets the entailment verdict; the rest are supported. */
+  rejects?: string;
   fragment?: typeof FRAGMENT;
 }
 
@@ -227,7 +229,8 @@ function scriptedProvider(options: Script = {}): LlmProvider {
       } else if (text.includes("<section-") && options.revisionPasses && text.includes(REVISED)) {
         payload = SUPPORTS;
       } else if (text.includes("<section-")) {
-        payload = options.entailment ?? SUPPORTS;
+        const rejected = !options.rejects || text.includes(`Module: ${options.rejects}`);
+        payload = rejected ? (options.entailment ?? SUPPORTS) : SUPPORTS;
       } else {
         payload = AGREE;
       }
@@ -824,7 +827,7 @@ describe("LessonService", () => {
 
   it("serves a lesson once a rewrite fixes the sections the judge rejected", async () => {
     const { lessons, service } = setup(
-      scriptedProvider({ entailment: CONTRADICTS, revisionPasses: true }),
+      scriptedProvider({ entailment: CONTRADICTS, revisionPasses: true, rejects: "demonstrate" }),
     );
     const events = await collect(service);
     expect(events.map((event) => event.type)).toEqual([
@@ -837,9 +840,34 @@ describe("LessonService", () => {
     expect(lesson?.reviewStatus).toBe("auto-validated");
     const cited = lesson?.sections.filter((section) => section.claimIds.length > 0) ?? [];
     expect(cited.map((section) => section.module)).toEqual(["demonstrate", "apply"]);
-    expect(cited.every((section) => section.text === REVISED)).toBe(true);
+    expect(cited[0]?.text).toBe(REVISED);
+    // Apply's text is only its scene, so a rewrite never touches it.
+    expect(cited[1]?.text).not.toBe(REVISED);
     expect(cited[0]?.steps).toEqual(FRAGMENT.sections[2]?.steps);
     expect(lessons.at(-1)?.reviewStatus).toBe("auto-validated");
+  });
+
+  it("after a rewrite judges only the rewritten section and keeps the contradiction verdict", async () => {
+    const base = scriptedProvider({
+      entailment: CONTRADICTS,
+      revisionPasses: true,
+      rejects: "demonstrate",
+    });
+    const calls: string[] = [];
+    const provider: LlmProvider = {
+      ...base,
+      complete: async (request) => {
+        calls.push(request.prompt?.id ?? "");
+        return base.complete(request);
+      },
+    };
+    const { service } = setup(provider);
+    await collect(service);
+    const count = (id: string) => calls.filter((call) => call === id).length;
+    expect(count("lesson-revise")).toBe(1);
+    // Demonstrate and apply on the first pass, then only the rewritten demonstrate.
+    expect(count("orchestrator-entailment")).toBe(3);
+    expect(count("orchestrator-contradiction")).toBe(1);
   });
 
   it("serves the unrepaired draft with its doubts disclosed when the rewrite itself fails", async () => {
