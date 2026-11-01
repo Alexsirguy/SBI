@@ -58,7 +58,14 @@ The AI fills in the same layer for every kind, and our renderer draws it, so no 
 1. The visual is generated after the lesson is published, so the text never waits for it. It arrives on the lesson's `visuals` stream event.
 2. Validation failures go back to the AI once for repair. If the repair fails, the AI tries the `playground` fallback. If that fails too, the lesson ships without a visual. A lesson is never held for its visual (ADR 0011).
 3. The manifest is stored with its sha256 and served at `GET /visuals/{id}`. It is cached per subject, age and depth, as lessons are.
-4. The lesson notes that the visual was made by AI for this lesson and is simplified, and lists its assumptions.
+4. A mechanism must also be watchable and hold together (#321):
+   - every joint range includes 0, because MuJoCo measures a range from where the body starts;
+   - no part turns more than 10 times a second at any slider's ends. The picture runs in real time, and stored mechanisms showed a gap between 7 turns a second and wild spins of 16 or more;
+   - a piston driven by a crank is joined to its rod with `<equality><connect>`.
+
+   For any piston turning a crank, the prompt's example is the reference engine. Before this, 2 of 8 stored car-engine visuals had a working linkage. With it, 16 of 16 fresh ones did.
+
+5. The lesson notes that the visual was made by AI for this lesson and is simplified, and lists its assumptions.
 
 ### The playground sandbox
 

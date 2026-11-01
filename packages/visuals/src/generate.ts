@@ -5,7 +5,7 @@ import { alignedControls, type ExperimentForVisual } from "./experiment";
 import { RAINBOW_CODE } from "./kinds/rainbow";
 import { REFERENCE_MECHANISMS, REFERENCE_VISUALS } from "./references";
 
-export const VISUAL_PROMPT = { id: "visual-generate", version: "v7" } as const;
+export const VISUAL_PROMPT = { id: "visual-generate", version: "v8" } as const;
 export const DIAGRAM_PROMPT = { id: "visual-diagram", version: "v4" } as const;
 /** A sequence shorter than this is one change, which the experiment already shows. */
 export const MIN_DIAGRAM_STAGES = 3;
@@ -98,6 +98,7 @@ export const GENERATED_VISUAL_SCHEMA = object({
 });
 
 const LEVER_MJCF = (REFERENCE_MECHANISMS.lever.spec as { mjcf: string }).mjcf;
+const ENGINE_MJCF = (REFERENCE_MECHANISMS.engine.spec as { mjcf: string }).mjcf;
 const HEATING_SERIES = (REFERENCE_VISUALS.heating.spec as { series: unknown }).series;
 
 /** A string's pitch against its length (Mersenne's law), so sound topics get a graph, not a playground. */
@@ -125,10 +126,18 @@ Kinds:
   never use files, meshes, <include> or plugins; at most 30 bodies; give joints damping; turn gravity off unless gravity is the point;
   add a <motor name=".." joint=".." gear=".."/> actuator for each slider that drives something and list it in "bindings"
   ({control: slider id, actuator: actuator name}); the slider sets the motor's control, so never write ctrl= or ctrlrange= yourself;
+  the picture runs in real time, so pick each gear for at most 2 turns a second at the slider's largest value
+  (steady speed in radians a second is about gear × slider value ÷ the joint's damping);
+  a joint's range is measured from where its body starts, so it must include 0, and a piston needs no range because its crank limits it;
   name bodies with short camelCase names, and use those names as label ids so labels point at parts. Colour parts with rgba;
   make casings, cylinders and housings see-through (alpha 0.25) so the moving parts inside stay visible; add no floor plane.
   Example (a lever):
 ${LEVER_MJCF}
+  A piston turning a crank (car engines, steam engines, compressors) is a slider-crank: a motor turns the crank, a rod hangs
+  from the crank pin, and <equality><connect> joins the rod's top end to the piston, so the piston can only follow the crank.
+  Start from this engine: keep its joints, the connect and the motor on the crank, and change only sizes, colours and names.
+  A slider that moves nothing, such as fuel or compression, has no binding and changes only the readouts.
+${ENGINE_MJCF}
 - molecule: the substance itself matters (water, ice, sugar, caffeine, carbon dioxide). List up to 3 common names in "molecules"; never write coordinates.
   Only small covalent molecules work: never ionic solids, metals, rust, minerals or polymers (salt, iron oxide, glass, starch).
 - process: stages or flows (photosynthesis, the water cycle, digestion, the four strokes). Write "mermaid": a "flowchart LR" with at most 12 short nodes;

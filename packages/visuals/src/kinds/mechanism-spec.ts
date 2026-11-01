@@ -30,5 +30,13 @@ export function mjcfTextProblems(mjcf: string): string[] {
   const problems: string[] = [];
   if (!/^\s*<mujoco\b/.test(mjcf)) problems.push("the model must start with <mujoco>");
   for (const [pattern, message] of FORBIDDEN) if (pattern.test(mjcf)) problems.push(message);
+  // Without the loop closed, a piston slides on its own instead of following the crank; a pump has no crank.
+  const named = (part: string) => new RegExp(`name\\s*=\\s*["'][^"']*${part}`, "i").test(mjcf);
+  const sliding = /type\s*=\s*["']slide["']/i.test(mjcf);
+  if (named("piston") && named("crank") && sliding && !/<\s*connect\b/i.test(mjcf)) {
+    problems.push(
+      'the piston is not joined to the crank: add <equality><connect body1="connectingRod" body2="piston" anchor="..."/></equality> at the rod\'s top end, as the engine example does',
+    );
+  }
   return problems;
 }

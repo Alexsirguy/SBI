@@ -58,6 +58,7 @@ export function loadMechanism(
     if (index < 0) problems.push(`binding names unknown actuator "${binding.actuator}"`);
     else actuators.set(binding.control, index);
   }
+  problems.push(...rangeProblems(model));
   if (problems.length > 0) {
     model.delete();
     return { problems };
@@ -72,6 +73,26 @@ export function loadMechanism(
       model.delete();
     },
   };
+}
+
+const SLIDE = 2;
+const HINGE = 3;
+
+// MuJoCo measures a joint's range from where its body starts, so a range missing 0 fights the joint from the start.
+function rangeProblems(model: MjModel): string[] {
+  const problems: string[] = [];
+  for (let index = 0; index < model.njnt; index += 1) {
+    const type = model.jnt_type[index] as number;
+    if ((type !== SLIDE && type !== HINGE) || !model.jnt_limited[index]) continue;
+    const low = model.jnt_range[2 * index] as number;
+    const high = model.jnt_range[2 * index + 1] as number;
+    if (low > 0 || high < 0) {
+      problems.push(
+        `joint "${model.jnt(index)?.name ?? index}" has range ${low} ${high}, which leaves out 0: a range is measured from where the body starts, so include 0 or remove the range`,
+      );
+    }
+  }
+  return problems;
 }
 
 function actuatorIndex(model: MjModel, name: string): number {
@@ -96,6 +117,8 @@ function numbers(view: unknown): number[] {
 // Bounds in metres: anything this far away has flown off, which a stable model never does.
 const MAX_DISTANCE = 100;
 const RUN_SECONDS = 2;
+// The picture runs in real time, and a part turning faster than this is a blur the learner cannot follow.
+const MAX_TURNS_PER_SECOND = 10;
 
 /** Runs the model for two seconds at each slider's start and ends: it must stay finite and bounded. */
 export function physicsProblems(mujoco: MainModule, manifest: VisualManifest): string[] {
@@ -126,6 +149,12 @@ export function physicsProblems(mujoco: MainModule, manifest: VisualManifest): s
       if (positions.some((value) => Math.abs(value) > MAX_DISTANCE)) {
         return [`a part flew more than ${MAX_DISTANCE} m away at ${JSON.stringify(values)}`];
       }
+      const fastest = fastestTurn(loaded.model, numbers(loaded.data.qvel));
+      if (fastest && fastest.turns > MAX_TURNS_PER_SECOND) {
+        return [
+          `joint "${fastest.name}" turns ${fastest.turns.toFixed(0)} times a second at ${JSON.stringify(values)}; scale the motor's gear down so every part turns at most ${MAX_TURNS_PER_SECOND} times a second at each slider's ends`,
+        ];
+      }
       if (values === base) {
         moved = qpos.some((value, index) => Math.abs(value - (start[index] ?? 0)) > 1e-3);
       }
@@ -138,4 +167,16 @@ export function physicsProblems(mujoco: MainModule, manifest: VisualManifest): s
     : [
         "nothing moves at the starting slider values; add an actuator with a non-zero control or a joint gravity can move",
       ];
+}
+
+function fastestTurn(model: MjModel, qvel: number[]): { name: string; turns: number } | undefined {
+  let fastest: { name: string; turns: number } | undefined;
+  for (let index = 0; index < model.njnt; index += 1) {
+    if (model.jnt_type[index] !== HINGE) continue;
+    const turns = Math.abs(qvel[model.jnt_dofadr[index] as number] ?? 0) / (2 * Math.PI);
+    if (!fastest || turns > fastest.turns) {
+      fastest = { name: model.jnt(index)?.name || `joint ${index}`, turns };
+    }
+  }
+  return fastest;
 }
