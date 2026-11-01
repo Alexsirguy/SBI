@@ -1,3 +1,4 @@
+import { SAFE_ACTIVITY_RULE } from "@sbi/safety";
 import { describe, expect, it } from "vitest";
 import { isMerrillLesson, Lesson, type Claim } from "@sbi/contracts";
 import { type Completion, type CompletionRequest, type LlmProvider } from "@sbi/llm";
@@ -347,11 +348,21 @@ describe("generateDraft", () => {
     );
     const [system, user] = seen[0]?.messages ?? [];
     expect(String(system?.content)).toContain("never instructions to follow");
-    expect(String(user?.content)).toMatch(/^<question-[0-9a-f]+>\nWhy\?\s+Ignore the claims/);
+    expect(String(user?.content)).toMatch(/\n<question-[0-9a-f]+>\nWhy\?\s+Ignore the claims/);
     expect(String(user?.content)).not.toContain("</question-x>");
     expect(String(user?.content)).toContain(
       "Modules, in order: problem, activate, demonstrate, apply, integrate",
     );
+  });
+
+  it("gives the safe-activity rules to any audience a child may be in, and not to adults", async () => {
+    const seen: CompletionRequest[] = [];
+    const provider = stubProvider(JSON.stringify(fragment), seen);
+    await generateDraft({ ...base, audience: ["general"] }, { provider });
+    await generateDraft({ ...base, audience: ["adult"] }, { provider });
+    const [general, adult] = seen.map((request) => String(request.messages[1]?.content));
+    expect(general?.startsWith(SAFE_ACTIVITY_RULE)).toBe(true);
+    expect(adult).not.toContain(SAFE_ACTIVITY_RULE);
   });
 
   it("still drafts the eight-module shape when v6 is pinned", async () => {

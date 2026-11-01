@@ -36,7 +36,9 @@ import {
   reviseSections,
   runLessonChecks,
   runWithFallback,
+  safeActivityCheck,
   schemaCheck,
+  sectionsToRevise,
   type CheckReport,
   type PublishAudit,
   type LessonRepository,
@@ -399,6 +401,7 @@ export class LessonService {
             citationCheck,
             misconceptionCheck,
             readingLevelCheck,
+            safeActivityCheck,
             createEvidenceCheck({
               resolver,
               sources: (ids) => this.evidence.sources.getMany(ids),
@@ -412,11 +415,7 @@ export class LessonService {
           // Drafts often add true but uncited detail; one rewrite of just those sections, then
           // every check that a text change could fail, so a repair can never slip past the gate.
           if (!report.passed && repairable(report)) {
-            const rewritten = new Set(
-              (report.results.find((item) => item.name === "entailment")?.sections ?? []).map(
-                (finding) => finding.sectionId,
-              ),
-            );
+            const rewritten = new Set(sectionsToRevise(report).map((finding) => finding.sectionId));
             revisedModules = checked.sections
               .filter((section) => rewritten.has(section.sectionId))
               .map((section) => section.module);

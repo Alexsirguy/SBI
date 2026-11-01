@@ -1,7 +1,7 @@
 import type { PolicyResponse, SafetyCategory } from "@sbi/contracts";
 
 /** Recorded on every lesson, so a policy change stops older lessons being reused. */
-export const SAFETY_POLICY_VERSION = "safety-1";
+export const SAFETY_POLICY_VERSION = "safety-2";
 
 const EMERGENCY = "If someone is in danger or hurt, call your local emergency number now.";
 const POISON =

@@ -2,7 +2,7 @@ import type { Completion, CompletionRequest, LlmProvider } from "@sbi/llm";
 import { describe, expect, it } from "vitest";
 import type { CheckReport } from "./checks";
 import { makeLesson } from "./lesson-fixture";
-import { repairable, REVISE_PROMPT_VERSION, reviseSections } from "./repair";
+import { repairable, REVISE_PROMPT_VERSION, reviseSections, sectionsToRevise } from "./repair";
 
 function provider(text: string, seen: CompletionRequest[] = [], heading?: string): LlmProvider {
   return {
@@ -36,7 +36,33 @@ const entailmentFailure = {
   sections: [{ sectionId: "demonstrate-3", reason: "insufficient: adds uncited detail" }],
 };
 
+const activityFailure = {
+  name: "safe-activities",
+  passed: false,
+  details: ["integrate-5: Asks the learner to open a mains device"],
+  sections: [{ sectionId: "integrate-5", reason: "Asks the learner to open a mains device" }],
+};
+
 describe("repairable", () => {
+  it("is true when unsafe activities, alone or with entailment, are the only failures", () => {
+    expect(repairable(report([activityFailure]))).toBe(true);
+    expect(repairable(report([entailmentFailure, activityFailure]))).toBe(true);
+    expect(
+      repairable(report([activityFailure, { name: "schema", passed: false, details: ["x"] }])),
+    ).toBe(false);
+  });
+
+  it("gathers every reason per section, for one rewrite each", () => {
+    const both = {
+      ...activityFailure,
+      sections: [{ sectionId: "demonstrate-3", reason: "unsafe" }],
+    };
+    expect(sectionsToRevise(report([entailmentFailure, both, activityFailure]))).toEqual([
+      { sectionId: "demonstrate-3", reason: "insufficient: adds uncited detail unsafe" },
+      { sectionId: "integrate-5", reason: "Asks the learner to open a mains device" },
+    ]);
+  });
+
   it("is true only when entailment findings are the sole failure", () => {
     expect(repairable(report([entailmentFailure]))).toBe(true);
     expect(
@@ -47,6 +73,19 @@ describe("repairable", () => {
 });
 
 describe("reviseSections", () => {
+  it("rewrites an unsafe activity into something safe to notice", async () => {
+    const lesson = makeLesson();
+    const seen: CompletionRequest[] = [];
+    const revised = await reviseSections(lesson, report([activityFailure]), {
+      provider: provider("Listen for the click when your kettle switches off.", seen),
+      objectLabel: "Electric kettle",
+    });
+    const after = revised.sections.find((section) => section.sectionId === "integrate-5");
+    expect(after?.text).toBe("Listen for the click when your kettle switches off.");
+    expect(String(seen[0]?.messages[0]?.content)).toContain("unsafe activity");
+    expect(String(seen[0]?.messages[1]?.content)).toContain("open a mains device");
+  });
+
   it("rewrites only the rejected sections, keeps their citations and refreshes the hash", async () => {
     const lesson = makeLesson();
     const seen: CompletionRequest[] = [];

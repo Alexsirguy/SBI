@@ -30,6 +30,7 @@ export {
   type LessonCheck,
 } from "./checks";
 export { readingEase, readingLevelCheck } from "./reading";
+export { safeActivityCheck } from "./safe-activities";
 export {
   CONTRADICTION_PROMPT_VERSION,
   createContradictionCheck,
@@ -68,7 +69,7 @@ export {
   type GenerationAttempt,
   type PipelineOutcome,
 } from "./pipeline";
-export { repairable, REVISE_PROMPT_VERSION, reviseSections } from "./repair";
+export { repairable, REVISE_PROMPT_VERSION, reviseSections, sectionsToRevise } from "./repair";
 export {
   QUESTION_SUGGEST_PROMPT_VERSION,
   suggestQuestions,

@@ -358,6 +358,9 @@ importers:
       '@sbi/llm':
         specifier: workspace:*
         version: link:../llm
+      '@sbi/safety':
+        specifier: workspace:*
+        version: link:../safety
     devDependencies:
       '@sbi/config':
         specifier: workspace:*

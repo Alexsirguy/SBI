@@ -8,3 +8,11 @@ export {
 } from "./classify";
 export { CATEGORY_NOTICES, policyResponse, SAFETY_POLICY_VERSION } from "./policy";
 export { matchRules, type RuleMatch } from "./rules";
+export {
+  activityReason,
+  findUnsafeActivities,
+  SAFE_ACTIVITY_RULE,
+  safeActivityRulesApply,
+  type ActivityFinding,
+  type ActivityHazard,
+} from "./activities";

@@ -15,7 +15,8 @@
   "dependencies": {
     "@sbi/contracts": "workspace:*",
     "@sbi/evidence": "workspace:*",
-    "@sbi/llm": "workspace:*"
+    "@sbi/llm": "workspace:*",
+    "@sbi/safety": "workspace:*"
   },
   "devDependencies": {
     "@sbi/config": "workspace:*",
