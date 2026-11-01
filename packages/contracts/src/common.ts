@@ -25,3 +25,4 @@ export const Locale = z
 export const Confidence = z.enum(["high", "medium", "low"]);
 
 export const SafetyClass = z.enum(["low", "medium", "high"]);
+export type SafetyClass = z.infer<typeof SafetyClass>;

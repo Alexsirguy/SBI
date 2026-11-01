@@ -4,8 +4,8 @@ import type { Taxonomy, TaxonomyEntry } from "@sbi/taxonomy";
 /** What a lesson is about: a catalogue entry, or a stand-in for a subject the catalogue lacks. */
 export type LessonSubject = Pick<TaxonomyEntry, "id" | "label" | "parentId" | "facts">;
 
-// Subjects outside the catalogue still get the high-risk notice of the topic they belong to, so
-// "every lesson on medicines starts with a safety note" holds for any wording. TODO(#67)
+// Common risky subjects borrow their catalogue topic's own notice and fallbacks; the classifier
+// in @sbi/safety catches every other wording.
 const RISKY_TOPICS: readonly (readonly [RegExp, string])[] = [
   [
     /\b(medicines?|medications?|pills?|painkillers?|paracetamol|acetaminophen|ibuprofen|aspirin|antibiotics?|vitamins?|inhalers?)\b/,

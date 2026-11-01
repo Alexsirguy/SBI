@@ -21,7 +21,7 @@ function streaming(events: { type: string; data: unknown }[]): typeof fetch {
     );
 }
 
-async function read(events: { type: string; data: unknown }[], label: string) {
+async function render(events: { type: string; data: unknown }[], label: string) {
   const view = await mount(
     <QueryClientProvider client={new QueryClient()}>
       <LessonReader
@@ -41,6 +41,11 @@ async function read(events: { type: string; data: unknown }[], label: string) {
       />
     </QueryClientProvider>,
   );
+  return view;
+}
+
+async function read(events: { type: string; data: unknown }[], label: string) {
+  const view = await render(events, label);
   await vi.waitFor(() => expect(text(view.container)).toContain("Lesson ready."));
   await act(async () => undefined);
   return view;
@@ -76,5 +81,27 @@ describe("LessonReader", () => {
     );
     expect(container.querySelectorAll(".rail h2")).toHaveLength(8);
     expect(container.querySelector(".guess-reveal")).toBeNull();
+  });
+
+  it("shows help, and no lesson or error, when the question sought harm", async () => {
+    const policy = {
+      category: "self-harm",
+      message: "It sounds like things might be really hard right now.",
+      help: ["If you might hurt yourself, call your local emergency number now."],
+      policyVersion: "safety-1",
+    };
+    const { container } = await render([{ type: "policy", data: policy }], "Rope");
+    const heading = await vi.waitFor(() => {
+      const found = container.querySelector<HTMLElement>("#policy-heading");
+      if (!found) throw new Error("no help yet");
+      return found;
+    });
+    expect(text(heading)).toBe("You don't have to face this alone");
+    expect(document.activeElement).toBe(heading);
+    expect(text(container)).toContain("call your local emergency number now");
+    expect(container.querySelector(".lesson-body")).toBeNull();
+    expect(container.querySelector(".sbi-notice--error, [role=alert]")).toBeNull();
+    expect(container.querySelector("a[href='/capture']")).not.toBeNull();
+    expect(text(container)).not.toContain("Get a fresh answer");
   });
 });

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import type { LessonDisclaimer, LessonRequest } from "@sbi/contracts";
+import type { LessonDisclaimer, LessonRequest, PolicyResponse } from "@sbi/contracts";
 import { Button, Mark, Notice, StatusLine } from "@sbi/ui";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { handedOffPhoto } from "../photo-handoff";
 import { Scanner } from "../scanner";
 import { AskQuestion } from "./ask-question";
@@ -46,6 +46,33 @@ function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
   );
 }
 
+/** Help instead of a lesson: what we can't do, who to turn to, and a way to learn something else. */
+function PolicyHelp({ policy }: { policy: PolicyResponse }) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  // The loader that held focus is gone, so the learner lands on the help.
+  useEffect(() => heading.current?.focus(), []);
+  return (
+    <section aria-labelledby="policy-heading" className="policy-help">
+      <h2 id="policy-heading" tabIndex={-1} ref={heading}>
+        {policy.category === "self-harm"
+          ? "You don't have to face this alone"
+          : "Let's try a safer question"}
+      </h2>
+      <Notice kind="safety">
+        <p>{policy.message}</p>
+        <ul>
+          {policy.help.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </Notice>
+      <Link href="/capture" className="policy-help__next">
+        Learn about something else
+      </Link>
+    </section>
+  );
+}
+
 const noSubscription = () => () => undefined;
 
 /** The learner's photo of this object, if this visit came from one; never on the server. */
@@ -75,16 +102,14 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
       scroll: false,
     });
   };
-  const { status, progress, answer, lesson, sources, visuals, error, retry } = useLessonStream(
-    request,
-    fetcher,
-  );
+  const { status, progress, answer, lesson, sources, visuals, policy, error, retry } =
+    useLessonStream(request, fetcher);
   // The spec promises a fresh answer is always available, so a reused lesson can be replaced.
   const askFresh = () => router.push(lessonHref(subject, { question, prefs, fresh: true }));
   const written = lesson ? new Date(lesson.reuse.generatedAt) : undefined;
   const loading = status === "loading";
   const disclaimers = lesson?.disclaimers ?? answer?.disclaimers ?? [];
-  const writing = loading && !answer && !lesson;
+  const writing = loading && !answer && !lesson && !policy;
   const railVisuals = visuals?.visuals ?? (status === "loading" ? undefined : []);
   const experiment = useLessonExperiment(lesson, railVisuals);
   return (
@@ -99,11 +124,13 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
         <DepthControls prefs={chosen} onChange={choose} />
       </header>
       <StatusLine>
-        {status === "ready"
-          ? "Lesson ready."
-          : loading
-            ? (progress?.message ?? "Starting your lesson…")
-            : ""}
+        {policy
+          ? ""
+          : status === "ready"
+            ? "Lesson ready."
+            : loading
+              ? (progress?.message ?? "Starting your lesson…")
+              : ""}
       </StatusLine>
       {error ? (
         <Notice kind="error" live>
@@ -133,7 +160,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
       ) : null}
       {(answer?.kind === "cached" && written) ||
       answer?.kind === "fallback" ||
-      status === "ready" ? (
+      (status === "ready" && !policy) ? (
         <p className="provenance">
           {answer?.kind === "cached" && written
             ? `This lesson was written earlier for a similar question, on ${written.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}. `
@@ -147,7 +174,8 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
           ) : null}
         </p>
       ) : null}
-      {writing || (error && !lesson) ? null : (
+      {policy ? <PolicyHelp policy={policy} /> : null}
+      {writing || policy || (error && !lesson) ? null : (
         <div aria-busy={!lesson} className="lesson-body">
           <PracticeProvider experiment={experiment}>
             <LessonRail

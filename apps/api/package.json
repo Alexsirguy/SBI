@@ -29,6 +29,7 @@
     "@sbi/orchestrator": "workspace:*",
     "@sbi/recognition": "workspace:*",
     "@sbi/rights": "workspace:*",
+    "@sbi/safety": "workspace:*",
     "@sbi/taxonomy": "workspace:*",
     "@sbi/visuals": "workspace:*",
     "reflect-metadata": "0.2.2",

@@ -24,4 +24,5 @@ export const FEEDBACK_LIMITER = Symbol("FEEDBACK_LIMITER");
 export const QUESTIONS_LIMITER = Symbol("QUESTIONS_LIMITER");
 export const VISUAL_MANIFESTS = Symbol("VISUAL_MANIFESTS");
 export const VISUAL_MAKER = Symbol("VISUAL_MAKER");
+export const RISK_CLASSIFIER = Symbol("RISK_CLASSIFIER");
 export const VISUAL_INTEGRITY = Symbol("VISUAL_INTEGRITY");

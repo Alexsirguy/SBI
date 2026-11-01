@@ -8,6 +8,7 @@ import {
   newId,
   type Claim,
   type LessonRequest,
+  type PolicyResponse,
 } from "@sbi/contracts";
 import {
   createCitationResolver,
@@ -43,6 +44,14 @@ import {
   type RightsGate,
   type TaxonomyLessonLookup,
 } from "@sbi/orchestrator";
+import {
+  CATEGORY_NOTICES,
+  createRiskClassifier,
+  policyResponse,
+  SAFETY_POLICY_VERSION,
+  type RiskAssessment,
+  type RiskClassifier,
+} from "@sbi/safety";
 import { sourcedFacts, type Taxonomy } from "@sbi/taxonomy";
 import {
   LESSON_EVIDENCE,
@@ -52,6 +61,7 @@ import {
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
+  RISK_CLASSIFIER,
   TAXONOMY,
 } from "../tokens";
 import { createEventQueue } from "./event-queue";
@@ -69,11 +79,11 @@ const NO_EVIDENCE =
 const MAX_LESSON_CLAIMS = 30;
 const HELD = "A reviewer needs to check this lesson before we can show it. Try again later.";
 
-// Policy versions come from E8; one stable value keeps reuse matching exact until then.
-export const LESSON_POLICY_VERSION = "1";
+// Lessons written under an older safety policy are not reused.
+export const LESSON_POLICY_VERSION = SAFETY_POLICY_VERSION;
 
-// Topics the E4 gate flagged as high risk; the client cannot lower them. Each carries the
-// safety notice shown first with its lesson (ADR 0010). TODO(#67) server-side classifier.
+// Catalogue topics with their own wording for the safety notice shown first (ADR 0010); other
+// risky topics get their category's notice from the classifier.
 const SAFETY_NOTICES: Readonly<Record<string, string>> = {
   "object.medicine-tablets":
     "Medicines: this lesson explains how medicines work in general, not how to use one. Never take or give a medicine because of this lesson; follow the label or a doctor or pharmacist. If someone may have taken too much, call your local poison control centre or emergency number.",
@@ -87,18 +97,29 @@ const SAFETY_NOTICES: Readonly<Record<string, string>> = {
     "Wild mushrooms: this lesson explains the biology only and cannot tell you whether a mushroom is safe. Never eat or taste a wild mushroom because of a photo or this lesson; some are deadly. If someone may have eaten one, call your local poison control centre or emergency number.",
 };
 
-export function safetyNoticeFor(entry: { id: string; parentId?: string }): string | undefined {
-  return SAFETY_NOTICES[entry.id] ?? SAFETY_NOTICES[entry.parentId ?? ""];
+export function safetyNoticeFor(
+  entry: { id: string; parentId?: string },
+  risk?: Pick<RiskAssessment, "categories">,
+): string | undefined {
+  const category = risk?.categories[0];
+  return (
+    SAFETY_NOTICES[entry.id] ??
+    SAFETY_NOTICES[entry.parentId ?? ""] ??
+    (category ? CATEGORY_NOTICES[category] : undefined)
+  );
 }
 
 const SAFETY_ORDER = ["low", "medium", "high"] as const;
 
+/** The highest of what the client asked, the catalogue's flag and the classifier's verdict. */
 export function effectiveSafetyClass(
   requested: LessonRequest["safetyClass"],
   entry: { id: string; parentId?: string },
+  risk?: Pick<RiskAssessment, "safetyClass">,
 ): LessonRequest["safetyClass"] {
-  const floor = safetyNoticeFor(entry) ? "high" : "low";
-  return SAFETY_ORDER.indexOf(requested) >= SAFETY_ORDER.indexOf(floor) ? requested : floor;
+  const flagged = SAFETY_NOTICES[entry.id] ?? SAFETY_NOTICES[entry.parentId ?? ""];
+  const levels = [requested, flagged ? "high" : "low", risk?.safetyClass ?? "low"] as const;
+  return SAFETY_ORDER[Math.max(...levels.map((level) => SAFETY_ORDER.indexOf(level)))] ?? "high";
 }
 
 /** Evidence ready for this lesson, or undefined while it is gathered for later ones (ADR 0016). */
@@ -108,6 +129,7 @@ export type EvidenceGatherer = (
 ) => Promise<GatheredEvidence | undefined>;
 
 export type LessonStreamEvent =
+  | { type: "policy"; data: PolicyResponse }
   | { type: "progress"; data: LessonProgress }
   | { type: "quick-answer"; data: QuickAnswer }
   | { type: "lesson"; data: Lesson }
@@ -201,6 +223,7 @@ function heldForReview(report: CheckReport, reasons: string[]): CheckReport {
 @Injectable()
 export class LessonService {
   private readonly logger = new Logger("LessonService");
+  private readonly classify: RiskClassifier;
 
   constructor(
     @Inject(LESSON_LLM) private readonly provider: LlmProvider | null,
@@ -211,7 +234,10 @@ export class LessonService {
     @Inject(LESSON_GATHERER) private readonly gather: EvidenceGatherer,
     @Inject(LESSON_RIGHTS) private readonly rights: RightsGate,
     @Optional() @Inject(VISUAL_MAKER) private readonly makeVisual?: VisualMaker,
-  ) {}
+    @Optional() @Inject(RISK_CLASSIFIER) classify?: RiskClassifier,
+  ) {
+    this.classify = classify ?? createRiskClassifier({ provider: null });
+  }
 
   // Events leave as their stage completes; the answer waits for the lesson, so the learner guesses
   // before anything gives it away (ADR 0017).
@@ -233,7 +259,13 @@ export class LessonService {
     if (concepts.length === 0) {
       concepts.push({ conceptId: slug(entry.label, taken), label: entry.label, prerequisites: [] });
     }
-    const safetyClass = effectiveSafetyClass(request.safetyClass, entry);
+    const risk = await this.classify({ subject: entry.label, question: request.question });
+    // A question that seeks harm gets help and safe alternatives, never a lesson (spec §12).
+    if (risk.intent === "harm") {
+      yield { type: "policy", data: policyResponse(risk.categories[0]) };
+      return;
+    }
+    const safetyClass = effectiveSafetyClass(request.safetyClass, entry, risk);
     const stored = await this.evidence.claims.getMany(
       entry.facts.flatMap((fact) => (fact.claimId ? [fact.claimId] : [])),
     );
@@ -421,7 +453,7 @@ export class LessonService {
           const routed = await createPublisher({ rights: this.rights, onAudit: record }).route(
             checked,
             report,
-            { safetyNotice: safetyNoticeFor(entry) },
+            { safetyNotice: safetyNoticeFor(entry, risk) },
           );
           await this.lessons.save(routed.lesson);
           if (routed.decision.action === "approve") return { lesson: routed.lesson, report };

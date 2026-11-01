@@ -6,11 +6,13 @@ import {
   LessonRequest,
   LessonSources,
   LessonVisuals,
+  PolicyResponse,
   QuickAnswer,
 } from "@sbi/contracts";
 import { ApiRequestError, UNREACHABLE } from "../api-client";
 
 export type LessonEvent =
+  | { type: "policy"; data: PolicyResponse }
   | { type: "progress"; data: LessonProgress }
   | { type: "quick-answer"; data: QuickAnswer }
   | { type: "lesson"; data: Lesson }
@@ -18,6 +20,7 @@ export type LessonEvent =
   | { type: "visuals"; data: LessonVisuals };
 
 const PARSERS = {
+  policy: PolicyResponse,
   progress: LessonProgress,
   "quick-answer": QuickAnswer,
   lesson: Lesson,

@@ -98,6 +98,27 @@ main.lesson {
   margin-top: var(--sbi-space-2);
 }
 
+/* Help sent instead of a lesson: the message, who to turn to, then a way on. */
+.policy-help {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.policy-help h2:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.policy-help .sbi-notice p,
+.policy-help .sbi-notice ul {
+  margin: 0;
+}
+
+.policy-help .sbi-notice ul {
+  margin-top: var(--sbi-space-2);
+  padding-left: var(--sbi-space-4);
+}
+
 /* The writing loader: the prototype's scanline over the learner's photo, or the subject's name. */
 .writing {
   display: grid;
