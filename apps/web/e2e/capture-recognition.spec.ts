@@ -4,12 +4,14 @@ import {
   expectLessonOpened,
   lessonRequests,
   mockLesson,
+  mockQuestions,
   mockRecognition,
   mockUploads,
   PHOTO_KEY,
   RECOGNITION_OFF,
   SESSION_ID,
   pressDone,
+  suggestedQuestions,
 } from "./mock-api";
 
 const tinyPng = Buffer.from(
@@ -38,7 +40,7 @@ const KETTLE_LIKE = [
   { label: "Coffee pot", certainty: "unsure" },
 ];
 
-test("recognition offers three options in the model's words, and a pick starts the lesson", async ({
+test("recognition offers three options in the model's words, and a pick asks what to learn", async ({
   page,
 }) => {
   const sent = lessonRequests(page);
@@ -55,8 +57,61 @@ test("recognition offers three options in the model's words, and a pick starts t
   await expectNoAxeViolations(page);
 
   await choices.getByRole("button", { name: /^Stovetop kettle/ }).click();
+  const step = page.locator(".photo-questions");
+  await expect(
+    step.getByRole("heading", { name: "What would you like to know about the stovetop kettle?" }),
+  ).toBeFocused();
+  await expect(
+    step.getByRole("list", { name: "Questions you could ask" }).getByRole("button"),
+  ).toHaveText(suggestedQuestions("stovetop kettle"));
+  await expect(step.getByLabel("Or ask your own question")).toBeVisible();
+  expect(sent).toEqual([]);
+  await expectNoAxeViolations(page);
+
+  await step.getByRole("button", { name: "Why does the stovetop kettle whistle?" }).click();
   await expectLessonOpened(page, "Stovetop kettle");
-  await expect.poll(() => sent.at(0)).toMatchObject({ subject: "Stovetop kettle" });
+  await expect
+    .poll(() => sent.at(0))
+    .toMatchObject({
+      subject: "Stovetop kettle",
+      question: "Why does the stovetop kettle whistle?",
+    });
+});
+
+test("the learner can ask their own question about the object instead", async ({ page }) => {
+  const sent = lessonRequests(page);
+  await mockRecognition(page, { candidates: [], options: KETTLE_LIKE, next: { kind: "describe" } });
+  const choices = await uploadPhoto(page);
+  await choices.getByRole("button", { name: /^Teapot/ }).click();
+
+  const step = page.locator(".photo-questions");
+  await step.getByLabel("Or ask your own question").fill("Why do teapots drip?");
+  await step.getByRole("button", { name: "Ask" }).click();
+  await expectLessonOpened(page, "Teapot");
+  await expect
+    .poll(() => sent.at(0))
+    .toMatchObject({ subject: "Teapot", question: "Why do teapots drip?" });
+});
+
+test("the learner can go back and choose another object", async ({ page }) => {
+  await mockRecognition(page, { candidates: [], options: KETTLE_LIKE, next: { kind: "describe" } });
+  const choices = await uploadPhoto(page);
+  await choices.getByRole("button", { name: /^Teapot/ }).click();
+  await page.getByRole("button", { name: "Not a teapot? Choose again" }).click();
+  await expect(page.getByRole("heading", { name: "Which one is it?" })).toBeFocused();
+});
+
+test("fixed questions stand in when suggestions fail", async ({ page }) => {
+  await mockQuestions(page, 500);
+  await mockRecognition(page, { candidates: [], options: KETTLE_LIKE, next: { kind: "describe" } });
+  const choices = await uploadPhoto(page);
+  await choices.getByRole("button", { name: /^Teapot/ }).click();
+  await expect(
+    page.getByRole("list", { name: "Questions you could ask" }).getByRole("button"),
+  ).toHaveCount(5);
+  await expect(
+    page.getByRole("button", { name: "What is the science behind the teapot?" }),
+  ).toBeVisible();
 });
 
 test("the photo shows on its own lesson, and not on the next object the learner types", async ({
@@ -66,6 +121,7 @@ test("the photo shows on its own lesson, and not on the next object the learner 
   await mockRecognition(page, { candidates: [], options: KETTLE_LIKE, next: { kind: "describe" } });
   const choices = await uploadPhoto(page);
   await choices.getByRole("button", { name: /^Stovetop kettle/ }).click();
+  await page.getByRole("button", { name: "Why does the stovetop kettle whistle?" }).click();
   await expectLessonOpened(page, "Stovetop kettle");
   await expect(page.getByAltText("Your photo")).toBeVisible();
 
@@ -83,6 +139,7 @@ test("the learner can say what it is instead of picking", async ({ page }) => {
 
   await choices.getByLabel("Something else? Tell us what it is").fill("camping kettle");
   await choices.getByRole("button", { name: "Use this" }).click();
+  await page.getByRole("button", { name: "Why does the camping kettle whistle?" }).click();
   await expectLessonOpened(page, "Camping kettle");
 });
 
@@ -101,6 +158,7 @@ test("a photo the model cannot name asks the learner to say what it is", async (
   await expect(photo.getByRole("status").first()).toContainText("We couldn't tell what this is.");
   await photo.getByLabel("Something else? Tell us what it is").fill("kite");
   await photo.getByRole("button", { name: "Use this" }).click();
+  await page.getByRole("button", { name: "Why does the kite whistle?" }).click();
   await expectLessonOpened(page, "Kite");
 });
 

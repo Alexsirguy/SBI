@@ -1,6 +1,12 @@
 import type { z } from "zod";
 import { Lesson } from "./lesson";
-import { LessonFeedbackReceipt, LessonFeedbackRequest, LessonRequest } from "./lesson-api";
+import {
+  LessonFeedbackReceipt,
+  LessonFeedbackRequest,
+  LessonRequest,
+  QuestionSuggestionRequest,
+  QuestionSuggestions,
+} from "./lesson-api";
 import {
   ConfirmedPhoto,
   ConfirmUploadRequest,
@@ -89,6 +95,15 @@ export const API_ROUTES = {
     request: LessonFeedbackRequest,
     response: LessonFeedbackReceipt,
     errors: [400, 404],
+  },
+  suggestQuestions: {
+    method: "post",
+    path: "/lessons/questions",
+    summary:
+      "Suggest five questions a learner might ask about an object, before any lesson is written.",
+    request: QuestionSuggestionRequest,
+    response: QuestionSuggestions,
+    errors: [400],
   },
   requestLesson: {
     method: "post",

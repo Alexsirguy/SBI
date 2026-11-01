@@ -35,8 +35,32 @@ export async function mockUploads(page: Page) {
   await mockApi(page, "/uploads/confirm", () => ({
     json: { contentType: "image/jpeg", key: PHOTO_KEY },
   }));
+  await mockQuestions(page);
   // Specs see the describe fallback, as when recognition is switched off, unless they opt in.
   await mockApi(page, "/recognitions", () => ({ json: { error: RECOGNITION_OFF }, status: 503 }));
+}
+
+/** Five questions written for whatever object is named, as the model would; `status` makes it fail. */
+export async function mockQuestions(page: Page, status = 200) {
+  const asked: unknown[] = [];
+  await mockApi(page, "/lessons/questions", (body) => {
+    asked.push(body);
+    const name = String((body as { subject?: string }).subject ?? "").toLowerCase();
+    return status === 200
+      ? { json: { questions: suggestedQuestions(name), source: "model" } }
+      : { json: { error: "Something went wrong." }, status };
+  });
+  return asked;
+}
+
+export function suggestedQuestions(name: string): string[] {
+  return [
+    `Why does the ${name} whistle?`,
+    `How does the ${name} heat water?`,
+    `Why is the ${name} made of metal?`,
+    `What makes the ${name} handle stay cool?`,
+    `Does a fuller ${name} take longer?`,
+  ];
 }
 
 export const RECOGNITION_OFF =

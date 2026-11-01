@@ -22,6 +22,38 @@ export const LessonRequest = z
     path: ["subject"],
   });
 
+/** Asks for questions a learner might have about the object they just named (#325). */
+export const QuestionSuggestionRequest = z.object({
+  subject: z.string().trim().min(2).max(80),
+  audience: AudienceBand.default("general"),
+  readingLevel: ReadingLevel.default("plain"),
+});
+
+export const SUGGESTED_QUESTION_COUNT = 5;
+
+export const QuestionSuggestions = z.object({
+  questions: z.array(z.string().trim().min(3).max(200)).min(1).max(SUGGESTED_QUESTION_COUNT),
+  /** "fixed" when the model was off or failed, so the same five stood in. */
+  source: z.enum(["model", "fixed"]),
+});
+export type QuestionSuggestions = z.infer<typeof QuestionSuggestions>;
+
+/** Questions that fit any object, for when no model can suggest better ones. */
+export function fixedQuestions(subject: string): string[] {
+  const name = subject
+    .trim()
+    .toLowerCase()
+    .replace(/^(a|an|the)\s+/, "");
+  // Worded so they read right for any object, one or many, made or living.
+  return [
+    `What is the science behind the ${name}?`,
+    `What materials are in the ${name}, and why?`,
+    `Which forces or energy act on the ${name}?`,
+    `What would change if the ${name} were bigger or smaller?`,
+    `What do people often get wrong about the ${name}?`,
+  ];
+}
+
 export const LessonKind = z.enum(["fresh", "cached", "fallback"]);
 
 export const QuickAnswer = z.object({
