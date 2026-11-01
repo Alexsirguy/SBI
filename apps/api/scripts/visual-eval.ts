@@ -47,7 +47,28 @@ interface Outcome {
   labelsCiteLesson: boolean;
   controls: number;
   readouts: number;
+  /** Seconds from the request to the lesson. */
+  lessonSeconds?: number;
+  /** The lesson's experiment ids the visual does not offer; challenges on them fall back. */
+  missingIds: string[];
+  /** Apply challenges whose goal and setup the visual can drive (ADR 0017). */
+  challenges: number;
+  challengesInVisual: number;
+  unverified: string[];
   error?: string;
+}
+
+// A challenge can be checked in the visual when its goal readout and every setup control exist.
+function usableChallenges(lesson: Lesson, manifest: VisualManifest): number {
+  const controls = new Set(manifest.controls.map((control) => control.id));
+  const readouts = new Set(manifest.readouts.map((readout) => readout.id));
+  return lesson.tasks.filter(
+    (task) =>
+      task.module === "apply" &&
+      task.goal !== undefined &&
+      readouts.has(task.goal.readoutId) &&
+      task.setup.every((setting) => controls.has(setting.controlId)),
+  ).length;
 }
 
 async function* events(response: Response): AsyncGenerator<{ type: string; data: unknown }> {
@@ -80,7 +101,12 @@ async function evaluate(prompt: SeedPrompt): Promise<Outcome> {
     labelsCiteLesson: true,
     controls: 0,
     readouts: 0,
+    missingIds: [],
+    challenges: 0,
+    challengesInVisual: 0,
+    unverified: [],
   };
+  const started = Date.now();
   const response = await fetch(`${API}/lessons`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -100,6 +126,11 @@ async function evaluate(prompt: SeedPrompt): Promise<Outcome> {
     if (event.type === "lesson") {
       lesson = Lesson.parse(event.data);
       lessonAt = Date.now();
+      outcome.lessonSeconds = Math.round((lessonAt - started) / 100) / 10;
+      outcome.challenges = lesson.tasks.filter((task) => task.module === "apply").length;
+      outcome.unverified = (lesson.disclaimers ?? [])
+        .filter((item) => item.kind === "unverified-sections")
+        .flatMap((item) => item.sectionIds);
     } else if (event.type === "error") {
       outcome.error = (event.data as { error?: string }).error;
     } else if (event.type === "visuals") {
@@ -116,6 +147,17 @@ async function evaluate(prompt: SeedPrompt): Promise<Outcome> {
         controls: manifest.controls.length,
         readouts: manifest.readouts.length,
       });
+      if (lesson?.experiment) {
+        const offered = new Set([
+          ...manifest.controls.map((control) => control.id),
+          ...manifest.readouts.map((readout) => readout.id),
+        ]);
+        outcome.missingIds = [
+          ...lesson.experiment.controls.map((control) => control.id),
+          ...lesson.experiment.readouts.map((readout) => readout.id),
+        ].filter((id) => !offered.has(id));
+        outcome.challengesInVisual = usableChallenges(lesson, manifest);
+      }
     }
   }
   if (!lesson && !outcome.error) outcome.error = "no lesson";
@@ -139,6 +181,10 @@ await Promise.all(
         labelsCiteLesson: true,
         controls: 0,
         readouts: 0,
+        missingIds: [],
+        challenges: 0,
+        challengesInVisual: 0,
+        unverified: [],
         error: String(error),
       }));
       outcomes.push(outcome);
@@ -156,3 +202,23 @@ writeFileSync(
   `${JSON.stringify({ api: API, ranAt: new Date().toISOString(), outcomes }, null, 2)}\n`,
 );
 console.log(`Wrote ${file}`);
+const made = outcomes.filter((outcome) => outcome.kind !== "none");
+const kinds = Object.fromEntries(
+  [...new Set(made.map((outcome) => outcome.kind))].map((kind) => [
+    kind,
+    made.filter((outcome) => outcome.kind === kind).length,
+  ]),
+);
+const sum = (pick: (outcome: Outcome) => number) =>
+  outcomes.reduce((total, outcome) => total + pick(outcome), 0);
+console.log(
+  JSON.stringify({
+    lessons: outcomes.filter((outcome) => !outcome.error).length,
+    visuals: made.length,
+    kinds,
+    allIdsOffered: made.filter((outcome) => outcome.missingIds.length === 0).length,
+    challengesInVisual: `${sum((outcome) => outcome.challengesInVisual)}/${sum((outcome) => outcome.challenges)}`,
+    fullyVerified: outcomes.filter((outcome) => !outcome.error && outcome.unverified.length === 0)
+      .length,
+  }),
+);
