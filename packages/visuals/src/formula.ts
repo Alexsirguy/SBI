@@ -1,30 +1,127 @@
-import { all, create, type MathNode } from "mathjs";
+import {
+  absDependencies,
+  acosDependencies,
+  addDependencies,
+  asinDependencies,
+  atan2Dependencies,
+  atanDependencies,
+  cbrtDependencies,
+  ceilDependencies,
+  cosDependencies,
+  coshDependencies,
+  create,
+  divideDependencies,
+  eDependencies,
+  equalDependencies,
+  expDependencies,
+  floorDependencies,
+  hypotDependencies,
+  largerDependencies,
+  largerEqDependencies,
+  log10Dependencies,
+  log2Dependencies,
+  logDependencies,
+  maxDependencies,
+  minDependencies,
+  modDependencies,
+  multiplyDependencies,
+  parseDependencies,
+  piDependencies,
+  powDependencies,
+  roundDependencies,
+  signDependencies,
+  sinDependencies,
+  sinhDependencies,
+  smallerDependencies,
+  smallerEqDependencies,
+  sqrtDependencies,
+  subtractDependencies,
+  tanDependencies,
+  tanhDependencies,
+  unaryMinusDependencies,
+  unaryPlusDependencies,
+  unequalDependencies,
+  type FactoryFunctionMap,
+  type MathNode,
+} from "mathjs/number";
 
-const math = create(all ?? {});
+// Only what readout formulas use (seen in every stored manifest), so a visual does not carry all
+// of mathjs; the comparisons let a ConditionalNode such as "x > 1 ? a : b" evaluate.
+const DEPENDENCIES = {
+  absDependencies,
+  acosDependencies,
+  addDependencies,
+  asinDependencies,
+  atan2Dependencies,
+  atanDependencies,
+  cbrtDependencies,
+  ceilDependencies,
+  cosDependencies,
+  coshDependencies,
+  divideDependencies,
+  eDependencies,
+  equalDependencies,
+  expDependencies,
+  floorDependencies,
+  hypotDependencies,
+  largerDependencies,
+  largerEqDependencies,
+  log10Dependencies,
+  log2Dependencies,
+  logDependencies,
+  maxDependencies,
+  minDependencies,
+  modDependencies,
+  multiplyDependencies,
+  parseDependencies,
+  piDependencies,
+  powDependencies,
+  roundDependencies,
+  signDependencies,
+  sinDependencies,
+  sinhDependencies,
+  smallerDependencies,
+  smallerEqDependencies,
+  sqrtDependencies,
+  subtractDependencies,
+  tanDependencies,
+  tanhDependencies,
+  unaryMinusDependencies,
+  unaryPlusDependencies,
+  unequalDependencies,
+};
+// The typings mark every dependency map optional; each one here is a real export.
+const math = create(DEPENDENCIES as Record<keyof typeof DEPENDENCIES, FactoryFunctionMap>);
 const parse = math.parse;
-// mathjs warns that these can rewrite its own functions, so formulas from the AI never reach them.
-const BLOCKED = [
-  "import",
-  "createUnit",
-  "evaluate",
-  "parse",
-  "simplify",
-  "derivative",
-  "resolve",
-  "reviver",
-  "compile",
-];
-math.import(
-  Object.fromEntries(
-    BLOCKED.map((name) => [
-      name,
-      () => {
-        throw new Error(`${name} is not allowed in a formula`);
-      },
-    ]),
-  ),
-  { override: true },
-);
+
+// The instance also carries config, typed, import and the like, so callable names are listed.
+const FUNCTIONS = new Set([
+  "abs",
+  "acos",
+  "asin",
+  "atan",
+  "atan2",
+  "cbrt",
+  "ceil",
+  "cos",
+  "cosh",
+  "exp",
+  "floor",
+  "hypot",
+  "log",
+  "log10",
+  "log2",
+  "max",
+  "min",
+  "mod",
+  "round",
+  "sign",
+  "sin",
+  "sinh",
+  "sqrt",
+  "tan",
+  "tanh",
+]);
 
 const ALLOWED_NODES = new Set([
   "ConstantNode",
@@ -38,10 +135,7 @@ const ALLOWED_NODES = new Set([
 const CONSTANTS = new Set(["pi", "e"]);
 
 function isFunctionName(name: string): boolean {
-  return (
-    typeof (math as unknown as Record<string, unknown>)[name] === "function" &&
-    !BLOCKED.includes(name)
-  );
+  return FUNCTIONS.has(name);
 }
 
 export interface CompiledFormula {
