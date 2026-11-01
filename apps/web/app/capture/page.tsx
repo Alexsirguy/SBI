@@ -15,6 +15,10 @@ export default function CapturePage() {
       <section aria-labelledby="privacy-cue" className="privacy-cue">
         <h2 id="privacy-cue">How your photo is handled</h2>
         <ul>
+          <li>
+            Photograph the object, not people. Keep faces, documents, addresses and private rooms
+            out of the picture; any face we spot is blurred on your device before it is uploaded.
+          </li>
           <li>We use your photo only to recognise the object for your lesson.</li>
           <li>
             It is stored privately on Cloudflare R2 and never shown to other learners. When photo

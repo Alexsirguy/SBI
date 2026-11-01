@@ -5,7 +5,9 @@
   "description": "Next.js client: capture, confirmation, lesson reader, visuals and tutor UI.",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/copy-mediapipe.mjs",
     "dev": "next dev --port 3000",
+    "prebuild": "node scripts/copy-mediapipe.mjs",
     "build": "next build",
     "start": "next start --port 3000",
     "lint": "eslint .",
@@ -15,6 +17,7 @@
     "test:screenshots:update": "bash scripts/screenshots.sh"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.1.1",
     "@sbi/contracts": "workspace:*",
     "@sbi/env": "workspace:*",
     "@sbi/media": "workspace:*",

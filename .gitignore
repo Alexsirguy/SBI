@@ -13,3 +13,6 @@ playwright-report
 test-results
 .cache
 docs/Science_Behind_It_Product_Specification.docx
+
+# Copied from @mediapipe/tasks-vision on dev and build (scripts/copy-mediapipe.mjs).
+apps/web/public/mediapipe/wasm/

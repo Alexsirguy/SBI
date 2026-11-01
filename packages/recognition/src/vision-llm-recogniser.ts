@@ -2,7 +2,7 @@ import { RecognitionCandidate } from "@sbi/contracts";
 import type { LlmProvider, Usage } from "@sbi/llm";
 import { z } from "zod";
 
-export const RECOGNITION_PROMPT_VERSION = "recognition-p0.2";
+export const RECOGNITION_PROMPT_VERSION = "recognition-p0.3";
 
 export interface RecognitionImage {
   bytes: Uint8Array;
@@ -44,7 +44,29 @@ status:
 - "recognised" when the top candidate is clearly identifiable.
 - "ambiguous" when two or more candidates are similarly plausible or key details are hidden (e.g. a clear liquid, a white powder, a wild mushroom).
 - "unsupported" when the photo shows medicine, people as the subject, personal documents, or nothing identifiable; return no candidates in that case.
-observations: up to 3 short visual details that justify your answer. Never describe people.`;
+observations: up to 3 short visual details that justify your answer.
+Never identify, name or describe a person, even a famous one, and never guess anyone's age, gender, ethnicity or identity; a person is never a candidate.`;
+
+// Words for people as a label's head noun; "baby bottle" is a bottle, "baby" is a person.
+const PERSON =
+  /^(person|people|man|men|woman|women|boy|boys|girl|girls|child|children|kid|kids|baby|babies|toddler|teen|teens|teenager|teenagers|adult|adults|human|humans|face|faces|selfie|portrait|crowd|family|friend|friends|lady|ladies|gentleman|guy|player|celebrity|me|you|someone)$/;
+const MENTIONS_PEOPLE =
+  /\b(person|people|man|men|woman|women|boy|girl|child|children|kid|baby|toddler|teen|face|faces|selfie|hand|hands|finger|fingers|someone|he|she|his|her)\b/;
+
+/** The model's answer with any person removed, so recognition can never return who someone is. */
+export function withoutPeople(
+  output: z.infer<typeof RecognitionOutput>,
+): z.infer<typeof RecognitionOutput> {
+  const candidates = output.candidates.filter((candidate) => {
+    const head = candidate.label.trim().toLowerCase().split(/\s+/).at(-1) ?? "";
+    return !PERSON.test(head.replace(/[^a-z]/g, ""));
+  });
+  const observations = output.observations.filter(
+    (observation) => !MENTIONS_PEOPLE.test(observation.toLowerCase()),
+  );
+  const emptied = candidates.length === 0 && output.candidates.length > 0;
+  return { status: emptied ? "unsupported" : output.status, candidates, observations };
+}
 
 const OUTPUT_SCHEMA = {
   type: "object",
@@ -95,7 +117,7 @@ export function createVisionLlmRecogniser(llm: LlmProvider): RecognitionProvider
         maxTokens: 2000,
         signal: options.signal,
       });
-      const output = RecognitionOutput.parse(JSON.parse(completion.text));
+      const output = withoutPeople(RecognitionOutput.parse(JSON.parse(completion.text)));
       return {
         ...output,
         provider: llm.id,

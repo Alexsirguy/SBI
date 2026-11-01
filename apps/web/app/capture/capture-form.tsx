@@ -14,6 +14,7 @@ import {
   validateSelection,
 } from "./limits";
 import { CropOverlay } from "./crop-overlay";
+import { blurFaces, type BlurResult } from "./face-blur";
 import {
   cropImage,
   normaliseImage,
@@ -56,6 +57,19 @@ function UploadIcon() {
 }
 
 // The prototype's flow: choose a photo, see only what would stop it working, then upload and pick.
+/** Says when faces were hidden, or when the check could not run, so the learner can decide. */
+function FaceNote({ check }: { check: Pick<BlurResult, "faces" | "checked"> | null }) {
+  if (!check || (check.checked && check.faces === 0)) return null;
+  const { faces } = check;
+  return (
+    <p className="face-note">
+      {check.checked
+        ? `We blurred ${faces === 1 ? "a face" : `${faces} faces`} on your device, so no one can be recognised.`
+        : "We couldn't check this photo for faces. If anyone is in it, choose another photo."}
+    </p>
+  );
+}
+
 export function CaptureForm() {
   const limits = webEnv.capture;
   const uploadId = useId();
@@ -77,6 +91,7 @@ export function CaptureForm() {
   const [prepared, setPrepared] = useState<ProcessedImage | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [issues, setIssues] = useState<QualityCheck[]>([]);
+  const [faceCheck, setFaceCheck] = useState<Pick<BlurResult, "faces" | "checked"> | null>(null);
   const photoUpload = usePhotoUpload();
   const recognition = useRecognisePhoto();
   // One session per visit groups retakes; accounts will replace it (#102).
@@ -144,6 +159,7 @@ export function CaptureForm() {
 
   function clear() {
     runRef.current += 1;
+    setFaceCheck(null);
     setProblem(null);
     setBusy(false);
     setOriginal(null);
@@ -196,8 +212,11 @@ export function CaptureForm() {
     }
     setBusy(true);
     try {
-      const image = await stripUploadMetadata(await normaliseImage(selected, limits));
+      // Faces are hidden before the crop, so every copy that is shown or sent is already blurred.
+      const blurred = await blurFaces(await normaliseImage(selected, limits));
+      const image = await stripUploadMetadata(blurred.image);
       if (run !== runRef.current) return;
+      setFaceCheck({ faces: blurred.faces, checked: blurred.checked });
       const suggested = await suggest(image);
       if (run !== runRef.current) return;
       setOriginal(image);
@@ -301,6 +320,7 @@ export function CaptureForm() {
         ) : cropping && original && originalUrl && crop ? (
           <div className="cropping">
             <h2>Crop your photo</h2>
+            <FaceNote check={faceCheck} />
             <CropOverlay
               src={originalUrl}
               imageWidth={original.width}
