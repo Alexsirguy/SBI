@@ -45,6 +45,11 @@ export const MERRILL_MODULES: readonly LessonModule[] = [
   "integrate",
 ];
 
+/** The eight modules of lessons drafted before ADR 0017, in reader order (ADR 0011). */
+export const LEGACY_MODULES: readonly LessonModule[] = LessonModule.options.filter(
+  (module) => !MERRILL_MODULES.includes(module),
+);
+
 export function isMerrillLesson(lesson: { sections: { module: LessonModule }[] }): boolean {
   return lesson.sections.some((section) => MERRILL_MODULES.includes(section.module));
 }

@@ -6,7 +6,8 @@ import { promptsFor, runBenchmark } from "./run";
 import { loadSeedSet } from "./seed-set";
 import { judgeGuesses } from "./tasks/guess-judge";
 import { placeGuess, scoreLesson, stepsToSections, type LessonDraft } from "./tasks/lesson";
-import { LessonModule } from "@sbi/contracts";
+import type { LessonModule } from "@sbi/contracts";
+import { LEGACY_MODULES } from "@sbi/contracts";
 
 const set = loadSeedSet();
 
@@ -103,7 +104,7 @@ describe("runBenchmark", () => {
     const summary = summarise(run);
     const row = (task: string) => summary.find((item) => item.task === task);
 
-    expect(run.records.every((record) => record.ok)).toBe(true);
+    expect(run.records.filter((record) => !record.ok)).toEqual([]);
     expect(row("recognition")?.runs).toBe(promptsFor("recognition", set.prompts).length);
     expect(row("lesson")?.metrics).toEqual({
       schemaValid: 1,
@@ -150,7 +151,7 @@ describe("scoreLesson", () => {
     expect(sections.map((section) => section.module)).toEqual([
       ...new Set(draft.steps.map((step) => step.module)),
     ]);
-    expect(sections).toHaveLength(LessonModule.options.length);
+    expect(sections).toHaveLength(LEGACY_MODULES.length);
     expect(sections.find((section) => section.module === "first-principles")?.text).toContain(
       "What follows? Because.",
     );

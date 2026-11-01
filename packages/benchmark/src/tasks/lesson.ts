@@ -1,6 +1,7 @@
+import type { LessonModule } from "@sbi/contracts";
 import {
   Lesson,
-  LessonModule,
+  LEGACY_MODULES,
   lessonContentHash,
   newId,
   type AudienceBand,
@@ -31,7 +32,7 @@ export const LessonDraft = z.object({
   concepts: z.array(z.object({ conceptId: z.string(), label: z.string() })),
   steps: z.array(
     z.object({
-      module: LessonModule,
+      module: z.enum(LEGACY_MODULES as [LessonModule, ...LessonModule[]]),
       title: z.string(),
       text: z.string(),
       guess: z
@@ -90,7 +91,7 @@ export const LESSON_DRAFT_SCHEMA = strictObject({
   steps: {
     type: "array",
     items: strictObject({
-      module: { type: "string", enum: LessonModule.options },
+      module: { type: "string", enum: [...LEGACY_MODULES] },
       title: { type: "string" },
       text: { type: "string" },
       guess: {
@@ -136,7 +137,7 @@ const READING_LEVEL: Record<AudienceBand, ReadingLevelValue> = {
 
 // Mirrors the prototype's live lesson prompt: the short answer first, then a chain that derives it.
 const SYSTEM_PROMPT = `You write short, accurate science lessons about everyday objects. Lessons teach from first principles: the learner should be able to rebuild the answer from basic truths, not just remember it.
-Write 8 to 12 steps, each tagged with a module from: ${LessonModule.options.join(", ")}. In order:
+Write 8 to 12 steps, each tagged with a module from: ${LEGACY_MODULES.join(", ")}. In order:
 1. "what-youre-seeing": what's in front of the learner, ending on the puzzle the question raises.
 2. "short-answer": the answer in 1-2 sentences.
 3. "first-principles", 1-2 steps: basic truths the learner can check or already trusts (e.g. energy isn't created, matter is made of moving particles). Explain any jargon.
@@ -234,6 +235,7 @@ export async function draftToLesson(
       ...(uncertainty ? { uncertainty } : {}),
     })),
     visuals: [],
+    tasks: [],
     safetyClass: "low",
     reviewStatus: "generated",
     reuse: {

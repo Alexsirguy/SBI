@@ -11,8 +11,8 @@ import {
 } from "./merrill-fragment";
 import {
   Lesson,
-  LessonModule,
   lessonContentHash,
+  LEGACY_MODULES,
   MERRILL_MODULES,
   newId,
   REQUIRED_MODULES,
@@ -153,7 +153,10 @@ const LESSON_DRAFT_PROMPT_V7: PromptVersion = {
       "names its idea in plain words, states nothing its claims do not, and cites nothing.",
     "1. problem: name the object and pose one real task with it, in the second person, ending " +
       'in a question. Example: "Your guitar\'s A string sounds flat. What do you change?" Do not ' +
-      "answer it.",
+      'answer it. The task is one specific situation that turns on one mechanism, never "how ' +
+      'does it work" or several things at once. When the question is broad, such as "How does ' +
+      'a fridge work?", choose the everyday problem with the object that best shows its key ' +
+      'mechanism, such as "Your fridge runs nonstop on a hot day. Why, and what helps?"',
     "2. activate: tie the problem to an everyday experience the learner already has. Do not " +
       "give the answer away.",
     "3. demonstrate: the worked solution to the opening problem. text frames it in one or two " +
@@ -252,7 +255,6 @@ interface DraftFragment {
 }
 
 // The eight modules every v6 lesson had (ADR 0011).
-const LEGACY_MODULES = LessonModule.options.filter((module) => !MERRILL_MODULES.includes(module));
 
 // Guides the model; Lesson.parse remains the conformance gate. Drafts before v7 use this shape.
 const LEGACY_FRAGMENT_SCHEMA: Record<string, unknown> = {
