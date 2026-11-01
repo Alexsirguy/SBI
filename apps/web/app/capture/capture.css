@@ -400,3 +400,9 @@
   right: 0;
   bottom: 0;
 }
+
+/* Questions wrap onto two lines on a phone, so they need room above and below. */
+.photo-questions .choice--question {
+  padding-block: var(--sbi-space-2);
+  font-weight: 600;
+}

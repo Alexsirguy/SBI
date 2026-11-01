@@ -18,6 +18,7 @@ import {
   DATABASE,
   LESSON_EVIDENCE,
   FEEDBACK_LIMITER,
+  QUESTIONS_LIMITER,
   LESSON_FEEDBACK,
   LESSON_GATHERER,
   LESSON_RIGHTS,
@@ -33,6 +34,7 @@ import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
 import { LessonService } from "./lesson.service";
+import { QuestionsController } from "./questions.controller";
 import { createVisualMaker } from "../visuals/visual-maker";
 import { VisualsModule } from "../visuals/visuals.module";
 
@@ -74,7 +76,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
 
 @Module({
   imports: [TaxonomyModule, VisualsModule],
-  controllers: [LessonController, LessonFeedbackController],
+  controllers: [LessonController, LessonFeedbackController, QuestionsController],
   providers: [
     LessonService,
     {
@@ -92,6 +94,12 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       inject: [API_ENV],
       useFactory: (env: Pick<ApiEnv, "FEEDBACK_MAX_PER_HOUR">) =>
         createRateLimiter({ limit: env.FEEDBACK_MAX_PER_HOUR, windowMs: 3_600_000 }),
+    },
+    {
+      provide: QUESTIONS_LIMITER,
+      inject: [API_ENV],
+      useFactory: (env: Pick<ApiEnv, "QUESTIONS_MAX_PER_HOUR">) =>
+        createRateLimiter({ limit: env.QUESTIONS_MAX_PER_HOUR, windowMs: 3_600_000 }),
     },
     {
       provide: LESSON_FEEDBACK,

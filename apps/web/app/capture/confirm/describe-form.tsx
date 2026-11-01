@@ -16,6 +16,7 @@ export function DescribeForm({
   submitLabel = "Start lesson",
   message = "",
   onStart,
+  onName,
 }: {
   label?: string;
   hint?: string;
@@ -23,6 +24,8 @@ export function DescribeForm({
   message?: string;
   /** Runs just before the lesson opens, so a photo step can hand its photo on. */
   onStart?: (name: string) => void;
+  /** Takes the name instead of opening a lesson, for a step that asks what to learn first. */
+  onName?: (name: string) => void;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,6 +51,10 @@ export function DescribeForm({
         }
         setError(undefined);
         const named = name.charAt(0).toUpperCase() + name.slice(1);
+        if (onName) {
+          onName(named);
+          return;
+        }
         setStarted(named);
         // Without a photo step this is a new object, so an earlier photo must not show on its lesson.
         if (onStart) onStart(named);
@@ -66,7 +73,7 @@ export function DescribeForm({
         hint={hint}
         onChange={(event) => setText(event.target.value)}
       />
-      <Button type="submit" variant={onStart ? "quiet" : "primary"}>
+      <Button type="submit" variant={onStart || onName ? "quiet" : "primary"}>
         {submitLabel}
       </Button>
       <p role="status" className="sbi-status">

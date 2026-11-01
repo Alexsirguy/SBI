@@ -1174,6 +1174,107 @@
         }
       }
     },
+    "/lessons/questions": {
+      "post": {
+        "operationId": "suggestQuestions",
+        "summary": "Suggest five questions a learner might ask about an object, before any lesson is written.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "subject": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 80
+                  },
+                  "audience": {
+                    "default": "general",
+                    "type": "string",
+                    "enum": [
+                      "child",
+                      "teen",
+                      "adult",
+                      "general"
+                    ]
+                  },
+                  "readingLevel": {
+                    "default": "plain",
+                    "type": "string",
+                    "enum": [
+                      "simple",
+                      "plain",
+                      "technical"
+                    ]
+                  }
+                },
+                "required": [
+                  "subject"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "questions": {
+                      "minItems": 1,
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 200
+                      }
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "model",
+                        "fixed"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "questions",
+                    "source"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/lessons": {
       "post": {
         "operationId": "requestLesson",
