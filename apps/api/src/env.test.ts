@@ -22,13 +22,18 @@ describe("loadEnv", () => {
     expect(env.features).toEqual({ photoRecognition: true, tutor: true, visualLab: false });
   });
 
-  it("keeps accounts off unless both the issuer and audience are set", () => {
-    expect(loadEnv(valid).auth).toBeNull();
+  it("emails through ZeptoMail only when a token and sender are set", () => {
+    expect(loadEnv(valid).mail).toBeNull();
     expect(
-      loadEnv({ ...valid, AUTH_AUDIENCE: "https://api.test", AUTH_ISSUER: "https://id.test/" })
-        .auth,
-    ).toEqual({ audience: "https://api.test", issuer: "https://id.test/" });
-    expect(() => loadEnv({ ...valid, AUTH_ISSUER: "https://id.test/" })).toThrow(/AUTH_AUDIENCE/);
+      loadEnv({ ...valid, ZEPTOMAIL_FROM: "hello@sbi.example", ZEPTOMAIL_TOKEN: "t" }).mail,
+    ).toMatchObject({ from: "hello@sbi.example", token: "t" });
+    expect(() => loadEnv({ ...valid, ZEPTOMAIL_TOKEN: "t" })).toThrow(/ZEPTOMAIL_FROM/);
+  });
+
+  it("marks the session cookie Secure in production unless told otherwise", () => {
+    expect(loadEnv(valid).sessionCookieSecure).toBe(false);
+    expect(loadEnv({ ...valid, NODE_ENV: "production" }).sessionCookieSecure).toBe(true);
+    expect(loadEnv({ ...valid, SESSION_COOKIE_SECURE: "true" }).sessionCookieSecure).toBe(true);
   });
 
   it("reads the purge schedule and retention TTLs", () => {

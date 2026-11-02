@@ -5,4 +5,11 @@ export type {
   LessonFeedbackRepository,
   StoredLessonFeedback,
 } from "./repositories/lesson-feedback";
-export type { AccountRepository, StoredAccount } from "./repositories/accounts";
+export type {
+  AccountRepository,
+  AccountTokenRepository,
+  NewAccount,
+  SessionRepository,
+  StoredAccount,
+  TokenPurpose,
+} from "./repositories/accounts";

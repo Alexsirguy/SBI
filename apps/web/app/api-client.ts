@@ -4,7 +4,7 @@ import {
   type ApiRequest,
   type ApiResponse,
   type ApiRouteName,
-  needsAccount,
+  usesSession,
 } from "@sbi/contracts";
 
 export const UNREACHABLE =
@@ -24,40 +24,32 @@ export type ApiCall = <N extends ApiRouteName>(
   body: ApiRequest<N>,
 ) => Promise<ApiResponse<N>>;
 
-export const SIGN_IN_AGAIN = "Sign in again to use your account.";
-
-/** Returns a bearer token while signed in, or undefined. */
-export type AccountToken = () => Promise<string | undefined>;
+function query(params: Record<string, string>): string {
+  const search = new URLSearchParams(params).toString();
+  return search ? `?${search}` : "";
+}
 
 // Requests and replies are checked against the shared contracts, so a drifted API fails loudly.
-export function createApiClient(
-  baseUrl: string,
-  fetcher: typeof fetch = fetch,
-  accountToken: AccountToken = async () => undefined,
-): ApiCall {
+export function createApiClient(baseUrl: string, fetcher: typeof fetch = fetch): ApiCall {
   const root = baseUrl.replace(/\/+$/, "");
   return async (name, body) => {
     const route = API_ROUTES[name];
     const request = route.request.parse(body);
-    // Only account routes carry the token, so other requests stay anonymous.
-    let auth: Record<string, string> | undefined;
-    if (needsAccount(name)) {
-      const token = await accountToken().catch(() => undefined);
-      if (!token) throw new ApiRequestError(SIGN_IN_AGAIN, 401);
-      auth = { authorization: `Bearer ${token}` };
-    }
+    // Only account and sign-in routes send the session cookie; lessons stay anonymous.
+    const credentials: RequestInit = usesSession(name) ? { credentials: "include" } : {};
     let response: Response;
     try {
-      // Anonymous GETs carry no body or headers, so browsers send them without a CORS preflight.
+      // GETs carry no body or headers, so browsers send them without a CORS preflight.
       response =
         route.method === "get"
-          ? await fetcher(
-              `${root}${route.path}?${new URLSearchParams(request as Record<string, string>)}`,
-              auth ? { headers: auth, method: "GET" } : { method: "GET" },
-            )
+          ? await fetcher(`${root}${route.path}${query(request as Record<string, string>)}`, {
+              ...credentials,
+              method: "GET",
+            })
           : await fetcher(`${root}${route.path}`, {
               body: JSON.stringify(request),
-              headers: { "content-type": "application/json", ...auth },
+              ...credentials,
+              headers: { "content-type": "application/json" },
               method: "POST",
             });
     } catch {

@@ -45,6 +45,8 @@ const TABLES = [
   "evidence_packs",
   "lesson_feedback",
   "accounts",
+  "sessions",
+  "account_tokens",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -620,26 +622,44 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
 
   describe("accounts", () => {
     const now = new Date("2026-11-02T10:00:00Z");
+    const later = (ms: number) => new Date(now.getTime() + ms);
     const photo = (key: string) => ({
       createdAt: now,
       expiresAt: now,
       key,
       kind: "original" as const,
     });
+    const person = (email: string, googleSub: string | null = null) => ({
+      ageAtSignup: 14,
+      createdAt: now,
+      email,
+      emailVerifiedAt: null,
+      firstName: "Ada",
+      googleSub,
+      lastName: "Lovelace",
+      passwordHash: "scrypt$hash",
+    });
 
-    it("creates an account on first sign-in and finds the same one after", async () => {
-      const first = await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now);
-      const again = await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now);
-      const other = await repos.accounts.findOrCreate("https://other.test/", "auth0|a", now);
+    const create = async (email: string, googleSub: string | null = null) => {
+      const account = await repos.accounts.create(person(email, googleSub));
+      if (!account) throw new Error(`could not create ${email}`);
+      return account;
+    };
 
-      expect(again).toEqual(first);
-      expect(first.linkedAt).toBeNull();
-      expect(other.accountId).not.toBe(first.accountId);
+    it("creates an account once per email and Google account", async () => {
+      const ada = await create("ada@example.com", "g-1");
+      expect(ada).toMatchObject({ email: "ada@example.com", firstName: "Ada", linkedAt: null });
+      expect(await repos.accounts.create(person("ada@example.com"))).toBeUndefined();
+      expect(await repos.accounts.create(person("other@example.com", "g-1"))).toBeUndefined();
+      expect((await repos.accounts.findByGoogleSub("g-1"))?.accountId).toBe(ada.accountId);
+
+      await repos.accounts.update(ada.accountId, { emailVerifiedAt: now });
+      expect((await repos.accounts.findByEmail("ada@example.com"))?.emailVerifiedAt).toEqual(now);
     });
 
     it("links only kept photos nobody owns, and unlinks without unkeeping", async () => {
-      const mine = await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now);
-      const theirs = await repos.accounts.findOrCreate("https://id.test/", "auth0|b", now);
+      const mine = await create("a@example.com");
+      const theirs = await create("b@example.com");
       for (const key of ["photos/kept.jpg", "photos/theirs.jpg", "photos/unkept.jpg"]) {
         await repos.mediaRegistry.register(photo(key));
       }
@@ -649,9 +669,7 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
 
       const keys = ["photos/kept.jpg", "photos/theirs.jpg", "photos/unkept.jpg"];
       expect(await repos.accounts.link(mine.accountId, keys, "consent-1", now)).toBe(1);
-      expect(
-        (await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now)).linkedAt,
-      ).toEqual(now);
+      expect((await repos.accounts.get(mine.accountId))?.linkedAt).toEqual(now);
 
       expect(await repos.accounts.unlink(mine.accountId)).toBe(1);
       const [row] = await handle.db
@@ -659,9 +677,45 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         .from(mediaObjects)
         .where(eq(mediaObjects.objectKey, "photos/kept.jpg"));
       expect(row).toMatchObject({ ownerAccountId: null, savedByUser: true });
+      expect((await repos.accounts.get(mine.accountId))?.linkedAt).toBeNull();
+    });
+
+    it("finds live sessions only, and ends them one or all at a time", async () => {
+      const ada = await create("a@example.com");
+      await repos.sessions.create("a".repeat(64), ada.accountId, now, later(1000));
+      await repos.sessions.create("b".repeat(64), ada.accountId, now, later(1000));
+      await repos.sessions.create("c".repeat(64), ada.accountId, now, later(-1));
+
+      expect(await repos.sessions.find("a".repeat(64), now)).toBe(ada.accountId);
+      expect(await repos.sessions.find("c".repeat(64), now)).toBeUndefined();
+      expect(await repos.sessions.deleteExpired(now)).toBe(1);
+      await repos.sessions.delete("a".repeat(64));
+      expect(await repos.sessions.find("a".repeat(64), now)).toBeUndefined();
+      await repos.sessions.deleteForAccount(ada.accountId);
+      expect(await repos.sessions.find("b".repeat(64), now)).toBeUndefined();
+    });
+
+    it("uses a token once, before it expires, and only the latest of its purpose", async () => {
+      const ada = await create("a@example.com");
+      await repos.accountTokens.issue("1".repeat(64), ada.accountId, "verify-email", later(1000));
+      await repos.accountTokens.issue("2".repeat(64), ada.accountId, "verify-email", later(1000));
+      await repos.accountTokens.issue("3".repeat(64), ada.accountId, "reset-password", later(-1));
+
       expect(
-        (await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now)).linkedAt,
-      ).toBeNull();
+        await repos.accountTokens.consume("1".repeat(64), "verify-email", now),
+      ).toBeUndefined();
+      expect(
+        await repos.accountTokens.consume("2".repeat(64), "reset-password", now),
+      ).toBeUndefined();
+      expect(await repos.accountTokens.consume("2".repeat(64), "verify-email", now)).toBe(
+        ada.accountId,
+      );
+      expect(
+        await repos.accountTokens.consume("2".repeat(64), "verify-email", now),
+      ).toBeUndefined();
+      expect(
+        await repos.accountTokens.consume("3".repeat(64), "reset-password", now),
+      ).toBeUndefined();
     });
   });
 

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { webEnv } from "../../env";
 import { PHOTO_RETENTION_DAYS } from "../capture/limits";
 import "../home.css";
 import { YourChoices } from "./your-choices";
@@ -57,21 +56,25 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
-      {webEnv.auth ? (
-        <>
-          <h2>Your account</h2>
-          <ul>
-            <li>Accounts are optional. Every lesson works without signing in.</li>
-            <li>
-              Sign-in is handled by Auth0, which holds your email and name. We keep only the id it
-              gives us.
-            </li>
-            <li>
-              Linking this device to your account is a separate choice, made on your account page.
-            </li>
-          </ul>
-        </>
-      ) : null}
+      <h2>Your account</h2>
+      <ul>
+        <li>Accounts are optional and for people 13 and over. Every lesson works without one.</li>
+        <li>
+          We keep your name, email, the age you gave when signing up, and a scrambled form of your
+          password that cannot be turned back into it. If you sign in with Google, Google tells us
+          your name and email; we never see your Google password.
+        </li>
+        <li>
+          Emails to confirm your address or reset your password are sent through ZeptoMail. They
+          hold only the link.
+        </li>
+        <li>
+          Signing in sets one cookie that keeps you signed in for 30 days, or until you sign out.
+        </li>
+        <li>
+          Linking this device to your account is a separate choice, made on your account page.
+        </li>
+      </ul>
 
       <YourChoices />
 

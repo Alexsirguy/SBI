@@ -38,24 +38,37 @@ const schema = z.object({
   FEEDBACK_MAX_PER_HOUR: z.coerce.number().int().positive().default(20),
   QUESTIONS_MAX_PER_HOUR: z.coerce.number().int().positive().default(60),
   FEATURE_FLAGS: z.string().optional(),
-  // Accounts stay off unless both are set (ADR 0020); the issuer is the provider's OIDC URL.
-  AUTH_ISSUER: z.url().optional(),
-  AUTH_AUDIENCE: z.string().min(1).optional(),
+  // Accounts (ADR 0020): Google sign-in needs only the client id, since its button returns an ID token.
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  // Without a token, verification and reset links are logged instead of emailed (development).
+  ZEPTOMAIL_TOKEN: z.string().min(1).optional(),
+  ZEPTOMAIL_FROM: z.email().optional(),
+  ZEPTOMAIL_FROM_NAME: z.string().min(1).default("Science Behind It"),
+  ZEPTOMAIL_API_URL: z.url().default("https://api.zeptomail.com/v1.1/email"),
+  SESSION_TTL_DAYS: z.coerce.number().int().positive().max(90).default(30),
+  // Browsers drop Secure cookies over plain http, so local development turns it off.
+  SESSION_COOKIE_SECURE: z.stringbool().optional(),
 });
 
-function parseAuth(env: { AUTH_ISSUER?: string; AUTH_AUDIENCE?: string }) {
-  if (!env.AUTH_ISSUER && !env.AUTH_AUDIENCE) return null;
-  if (!env.AUTH_ISSUER || !env.AUTH_AUDIENCE) {
-    throw new Error("Set both AUTH_ISSUER and AUTH_AUDIENCE, or neither to turn accounts off.");
+function parseMail(env: z.infer<typeof schema>) {
+  if (!env.ZEPTOMAIL_TOKEN) return null;
+  if (!env.ZEPTOMAIL_FROM) {
+    throw new Error("Set ZEPTOMAIL_FROM, a sender address verified in ZeptoMail.");
   }
-  return { audience: env.AUTH_AUDIENCE, issuer: env.AUTH_ISSUER };
+  return {
+    apiUrl: env.ZEPTOMAIL_API_URL,
+    from: env.ZEPTOMAIL_FROM,
+    fromName: env.ZEPTOMAIL_FROM_NAME,
+    token: env.ZEPTOMAIL_TOKEN,
+  };
 }
 
 export function loadEnv(source: EnvSource = process.env) {
   const env = createEnv(schema, source);
   return {
     ...env,
-    auth: parseAuth(env),
+    mail: parseMail(env),
+    sessionCookieSecure: env.SESSION_COOKIE_SECURE ?? env.NODE_ENV === "production",
     features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS),
     ranking: parseRankingConfig(source),
     // Provider keys stay in the source; RecognitionModule builds the chain only when one is set.

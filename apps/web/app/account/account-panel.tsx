@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@sbi/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSyncExternalStore } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect, useSyncExternalStore } from "react";
 import { api } from "../api";
 import {
   choicesSnapshot,
@@ -11,81 +12,70 @@ import {
   setConsent,
   subscribeToChoices,
 } from "../consent";
-import { accountSession } from "./account-session";
+import { ACCOUNT_KEY, useAccount, useSignOut } from "./use-account";
 
-const SIGNED_IN = ["account", "signed-in"];
-const ACCOUNT = ["account", "profile"];
-
-/** Signing in is optional; linking this device's kept photos is a separate, explicit choice. */
+/** The signed-in account; linking this device's kept photos is a separate, explicit choice. */
 export function AccountPanel() {
+  const router = useRouter();
   const client = useQueryClient();
-  const session = accountSession;
+  const account = useAccount();
   const snapshot = useSyncExternalStore(
     subscribeToChoices,
     () => choicesSnapshot(),
     () => null,
   );
-  const signedIn = useQuery({
-    enabled: !!session,
-    queryFn: () => session?.signedIn() ?? false,
-    queryKey: SIGNED_IN,
-  });
-  const account = useQuery({
-    enabled: signedIn.data === true,
-    queryFn: () => api("getAccount", {}),
-    queryKey: ACCOUNT,
-  });
+  const refresh = () => client.invalidateQueries({ queryKey: ACCOUNT_KEY });
+  const signOut = useSignOut();
+  const resend = useMutation({ mutationFn: () => api("resendVerification", {}) });
   const link = useMutation({
-    mutationFn: async () => {
-      const consent = setConsent("account", true);
-      return api("linkAccount", {
-        consent,
+    mutationFn: () =>
+      api("linkAccount", {
+        consent: setConsent("account", true),
         photoKeys: readKeptPhotos().map((photo) => photo.key),
-      });
-    },
+      }),
     onError: () => setConsent("account", false),
-    onSuccess: () => client.invalidateQueries({ queryKey: ACCOUNT }),
+    onSuccess: refresh,
   });
   const unlink = useMutation({
     mutationFn: async () => {
       await api("unlinkAccount", {});
       setConsent("account", false);
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: ACCOUNT }),
+    onSuccess: refresh,
   });
 
-  if (!session) {
-    return (
-      <p>
-        Accounts are not available on this site. Everything works without one, and your choices are
-        kept on this device.
-      </p>
-    );
-  }
-  if (signedIn.isPending || snapshot === null) return <p role="status">Checking sign-in…</p>;
+  // Signed out (or after signing out): the account link leads to sign-in instead.
+  useEffect(() => {
+    if (account.data === null) router.replace("/account/sign-in");
+  }, [account.data, router]);
 
-  if (!signedIn.data) {
-    return (
-      <>
-        <p>
-          You never need an account. If you make one, we keep only an id from the sign-in service,
-          not your name or email.
-        </p>
-        <Button onClick={() => void session.signIn("/account")}>
-          Sign in or create an account
-        </Button>
-      </>
-    );
-  }
+  if (account.error) return <p role="alert">{account.error.message}</p>;
+  if (!account.data || snapshot === null) return <p role="status">Checking sign-in…</p>;
 
+  const me = account.data;
   const kept = readKeptPhotos().length;
-  const linked = !!account.data?.linkedAt && hasConsent("account");
+  const linked = !!me.linkedAt && hasConsent("account");
   const busy = link.isPending || unlink.isPending;
-  const error = account.error ?? link.error ?? unlink.error;
+  const error = link.error ?? unlink.error ?? resend.error ?? signOut.error;
 
   return (
     <>
-      <p>You are signed in.</p>
+      <p>
+        Signed in as {me.firstName} {me.lastName} ({me.email}).
+      </p>
+      {me.emailVerified ? null : (
+        <div className="account-notice">
+          <p>Please confirm your email. We sent a link to {me.email}.</p>
+          <Button
+            variant="quiet"
+            size="small"
+            disabled={resend.isPending || resend.isSuccess}
+            onClick={() => resend.mutate()}
+          >
+            {resend.isSuccess ? "Link sent" : "Send the link again"}
+          </Button>
+        </div>
+      )}
       <h2>Link this device</h2>
       {linked ? (
         <>
@@ -104,7 +94,8 @@ export function AccountPanel() {
             {kept > 0 ? ` (${kept})` : ""} to your account, so clearing this browser does not leave
             {kept === 1 ? " it" : " them"} behind. You can unlink at any time.
           </p>
-          <Button disabled={busy || !account.data} onClick={() => link.mutate()}>
+          {me.emailVerified ? null : <p>Confirm your email first.</p>}
+          <Button disabled={busy || !me.emailVerified} onClick={() => link.mutate()}>
             Link this device
           </Button>
         </>
@@ -115,7 +106,7 @@ export function AccountPanel() {
       </div>
       {error ? <p role="alert">{error.message}</p> : null}
       <p>
-        <Button variant="quiet" disabled={busy} onClick={() => void session.signOut()}>
+        <Button variant="quiet" disabled={signOut.isPending} onClick={() => signOut.mutate()}>
           Sign out
         </Button>
       </p>

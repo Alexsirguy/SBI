@@ -1,22 +1,59 @@
 import { newId } from "@sbi/contracts";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import type { Database } from "../client";
-import { accounts, mediaObjects } from "../schema";
+import { accountTokens, accounts, mediaObjects, sessions } from "../schema";
 
-export interface StoredAccount {
-  accountId: string;
+export type StoredAccount = typeof accounts.$inferSelect;
+
+export interface NewAccount {
+  email: string;
+  firstName: string;
+  lastName: string;
+  ageAtSignup: number;
+  passwordHash: string | null;
+  googleSub: string | null;
+  emailVerifiedAt: Date | null;
   createdAt: Date;
-  linkedAt: Date | null;
-  consentVersion: string | null;
 }
 
+export type TokenPurpose = "verify-email" | "reset-password";
+
 export interface AccountRepository {
-  /** First sign-in creates the account; later ones find it. */
-  findOrCreate(issuer: string, subject: string, now: Date): Promise<StoredAccount>;
+  /** Returns undefined when the email or Google account is already registered. */
+  create(account: NewAccount): Promise<StoredAccount | undefined>;
+  get(accountId: string): Promise<StoredAccount | undefined>;
+  findByEmail(email: string): Promise<StoredAccount | undefined>;
+  findByGoogleSub(googleSub: string): Promise<StoredAccount | undefined>;
+  update(
+    accountId: string,
+    changes: Partial<Pick<StoredAccount, "emailVerifiedAt" | "googleSub" | "passwordHash">>,
+  ): Promise<void>;
   /** Claims kept, unowned photos for the account; returns how many it now owns of those keys. */
   link(accountId: string, keys: string[], consentVersion: string, now: Date): Promise<number>;
   /** Withdraws the opt-in: photos stay kept but are no longer tied to the account. */
   unlink(accountId: string): Promise<number>;
+}
+
+export interface SessionRepository {
+  create(sessionHash: string, accountId: string, now: Date, expiresAt: Date): Promise<void>;
+  /** The account behind a live session, or undefined once it has expired or ended. */
+  find(sessionHash: string, now: Date): Promise<string | undefined>;
+  delete(sessionHash: string): Promise<void>;
+  deleteForAccount(accountId: string): Promise<void>;
+  deleteExpired(now: Date): Promise<number>;
+}
+
+export interface AccountTokenRepository {
+  /** Issuing a new link of a purpose cancels any earlier one, so only the latest email works. */
+  issue(
+    tokenHash: string,
+    accountId: string,
+    purpose: TokenPurpose,
+    expiresAt: Date,
+  ): Promise<void>;
+  /** Uses a token up; returns its account only the first time and only before it expires. */
+  consume(tokenHash: string, purpose: TokenPurpose, now: Date): Promise<string | undefined>;
+  deleteExpired(now: Date): Promise<number>;
 }
 
 function affected(result: unknown): number {
@@ -24,36 +61,36 @@ function affected(result: unknown): number {
   return header.affectedRows ?? 0;
 }
 
-function toAccount(row: typeof accounts.$inferSelect): StoredAccount {
-  return {
-    accountId: row.accountId,
-    consentVersion: row.consentVersion,
-    createdAt: row.createdAt,
-    linkedAt: row.linkedAt,
-  };
+function isDuplicate(error: unknown): boolean {
+  const code = (error as { code?: string; cause?: { code?: string } }).code;
+  const causeCode = (error as { cause?: { code?: string } }).cause?.code;
+  return code === "ER_DUP_ENTRY" || causeCode === "ER_DUP_ENTRY";
 }
 
 export function createAccountRepository(db: Database): AccountRepository {
-  const find = async (issuer: string, subject: string) => {
-    const [row] = await db
-      .select()
-      .from(accounts)
-      .where(and(eq(accounts.issuer, issuer), eq(accounts.subject, subject)));
-    return row ? toAccount(row) : undefined;
+  const one = async (condition: ReturnType<typeof eq>) => {
+    const [row] = await db.select().from(accounts).where(condition);
+    return row;
   };
 
   return {
-    async findOrCreate(issuer, subject, now) {
-      const existing = await find(issuer, subject);
-      if (existing) return existing;
-      // Two first requests can race; the unique index keeps one row and both read it back.
-      await db
-        .insert(accounts)
-        .values({ accountId: newId(), createdAt: now, issuer, subject })
-        .onDuplicateKeyUpdate({ set: { issuer } });
-      const created = await find(issuer, subject);
-      if (!created) throw new Error("Account was not created.");
-      return created;
+    async create(account) {
+      const accountId = newId();
+      try {
+        await db.insert(accounts).values({ ...account, accountId });
+      } catch (error) {
+        if (isDuplicate(error)) return undefined;
+        throw error;
+      }
+      return one(eq(accounts.accountId, accountId));
+    },
+
+    get: (accountId) => one(eq(accounts.accountId, accountId)),
+    findByEmail: (email) => one(eq(accounts.email, email)),
+    findByGoogleSub: (googleSub) => one(eq(accounts.googleSub, googleSub)),
+
+    async update(accountId, changes) {
+      await db.update(accounts).set(changes).where(eq(accounts.accountId, accountId));
     },
 
     async link(accountId, keys, consentVersion, now) {
@@ -95,6 +132,56 @@ export function createAccountRepository(db: Database): AccountRepository {
         .set({ consentVersion: null, linkedAt: null })
         .where(eq(accounts.accountId, accountId));
       return affected(result);
+    },
+  };
+}
+
+export function createSessionRepository(db: Database): SessionRepository {
+  return {
+    async create(sessionHash, accountId, now, expiresAt) {
+      await db.insert(sessions).values({ accountId, createdAt: now, expiresAt, sessionHash });
+    },
+    async find(sessionHash, now) {
+      const [row] = await db
+        .select({ accountId: sessions.accountId })
+        .from(sessions)
+        .where(and(eq(sessions.sessionHash, sessionHash), gt(sessions.expiresAt, now)));
+      return row?.accountId;
+    },
+    async delete(sessionHash) {
+      await db.delete(sessions).where(eq(sessions.sessionHash, sessionHash));
+    },
+    async deleteForAccount(accountId) {
+      await db.delete(sessions).where(eq(sessions.accountId, accountId));
+    },
+    async deleteExpired(now) {
+      return affected(await db.delete(sessions).where(lte(sessions.expiresAt, now)));
+    },
+  };
+}
+
+export function createAccountTokenRepository(db: Database): AccountTokenRepository {
+  return {
+    async issue(tokenHash, accountId, purpose, expiresAt) {
+      await db
+        .delete(accountTokens)
+        .where(and(eq(accountTokens.accountId, accountId), eq(accountTokens.purpose, purpose)));
+      await db.insert(accountTokens).values({ accountId, expiresAt, purpose, tokenHash });
+    },
+    async consume(tokenHash, purpose, now) {
+      const [row] = await db
+        .select()
+        .from(accountTokens)
+        .where(and(eq(accountTokens.tokenHash, tokenHash), eq(accountTokens.purpose, purpose)));
+      if (!row) return undefined;
+      // Deleting first means two simultaneous uses cannot both succeed.
+      const deleted = affected(
+        await db.delete(accountTokens).where(eq(accountTokens.tokenHash, tokenHash)),
+      );
+      return deleted === 1 && row.expiresAt > now ? row.accountId : undefined;
+    },
+    async deleteExpired(now) {
+      return affected(await db.delete(accountTokens).where(lte(accountTokens.expiresAt, now)));
     },
   };
 }

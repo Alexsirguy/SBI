@@ -34,6 +34,7 @@ export class AppModule {}
 
 // Shared by the server and tests so both run with the same HTTP behaviour.
 export function configureApp(app: NestFastifyApplication, webOrigins: string[]) {
-  app.enableCors({ methods: ["GET", "POST"], origin: webOrigins });
+  // Credentials let our web app send the session cookie; only listed origins may.
+  app.enableCors({ credentials: true, methods: ["GET", "POST"], origin: webOrigins });
   return app;
 }

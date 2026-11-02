@@ -18,9 +18,9 @@ describe("API_ROUTES", () => {
     }
   });
 
-  it("marks account routes as needing a bearer token, and only them", () => {
+  it("marks account routes as needing a session cookie, and only them", () => {
     expect(paths[API_ROUTES.linkAccount.path]?.post).toMatchObject({
-      security: [{ account: [] }],
+      security: [{ session: [] }],
     });
     expect(paths[API_ROUTES.keepPhoto.path]?.post).not.toHaveProperty("security");
   });

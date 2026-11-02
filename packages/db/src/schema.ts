@@ -225,19 +225,58 @@ export const mediaObjects = mysqlTable(
   ],
 );
 
-// Only the provider's opaque subject is stored; email and name stay with the provider.
+// Accounts are for 13 and over (ADR 0020); email is stored lowercased so it is unique as typed.
 export const accounts = mysqlTable(
   "accounts",
   {
     accountId: uuid("account_id").primaryKey(),
-    issuer: varchar("issuer", { length: 300 }).notNull(),
-    subject: varchar("subject", { length: 255 }).notNull(),
+    email: varchar("email", { length: 254 }).notNull(),
+    emailVerifiedAt: timestamp("email_verified_at"),
+    // scrypt with its parameters (`scrypt$N$r$p$salt$hash`); null for Google-only accounts.
+    passwordHash: varchar("password_hash", { length: 200 }),
+    googleSub: varchar("google_sub", { length: 255 }),
+    firstName: varchar("first_name", { length: 80 }).notNull(),
+    lastName: varchar("last_name", { length: 80 }).notNull(),
+    ageAtSignup: int("age_at_signup").notNull(),
     createdAt: timestamp("created_at").notNull(),
     linkedAt: timestamp("linked_at"),
     // The account opt-in that linking happened under (ADR 0019).
     consentVersion: varchar("consent_version", { length: 40 }),
   },
-  (table) => [uniqueIndex("accounts_issuer_subject_idx").on(table.issuer, table.subject)],
+  (table) => [
+    uniqueIndex("accounts_email_idx").on(table.email),
+    uniqueIndex("accounts_google_sub_idx").on(table.googleSub),
+  ],
+);
+
+// Only a hash of each session token is stored, so a database copy cannot sign anyone in.
+export const sessions = mysqlTable(
+  "sessions",
+  {
+    sessionHash: char("session_hash", { length: 64 }).primaryKey(),
+    accountId: uuid("account_id").notNull(),
+    createdAt: timestamp("created_at").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (table) => [
+    index("sessions_account_idx").on(table.accountId),
+    index("sessions_expires_idx").on(table.expiresAt),
+  ],
+);
+
+// One-time email links (verify, reset); hashed like sessions and deleted once used.
+export const accountTokens = mysqlTable(
+  "account_tokens",
+  {
+    tokenHash: char("token_hash", { length: 64 }).primaryKey(),
+    accountId: uuid("account_id").notNull(),
+    purpose: varchar("purpose", { length: 16 }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (table) => [
+    index("account_tokens_account_idx").on(table.accountId, table.purpose),
+    index("account_tokens_expires_idx").on(table.expiresAt),
+  ],
 );
 
 export const deletionAuditLog = mysqlTable(

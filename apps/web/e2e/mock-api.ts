@@ -17,11 +17,20 @@ export async function mockApi(
   reply: (body: unknown) => { status?: number; json: unknown },
 ) {
   await page.route(`${API_URL}${path}`, async (route) => {
+    // Account calls send cookies, which browsers allow only with the exact origin echoed back.
+    const origin = await route.request().headerValue("origin");
+    const headers = origin
+      ? {
+          ...CORS,
+          "access-control-allow-credentials": "true",
+          "access-control-allow-origin": origin,
+        }
+      : CORS;
     if (route.request().method() === "OPTIONS") {
-      return route.fulfill({ headers: CORS, status: 204 });
+      return route.fulfill({ headers, status: 204 });
     }
     const { json, status = 200 } = reply(route.request().postDataJSON());
-    return route.fulfill({ headers: CORS, json, status });
+    return route.fulfill({ headers, json, status });
   });
 }
 

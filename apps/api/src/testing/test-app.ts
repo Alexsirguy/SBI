@@ -14,10 +14,15 @@ import type { FallbackRecogniser, RecognitionResultRepository } from "@sbi/recog
 import type { CatalogGapRepository } from "@sbi/taxonomy";
 import { AppModule, configureApp } from "../app.module";
 import { loadEnv } from "../env";
-import { fakeAccounts } from "./test-auth";
+import { fakeAccountStore, fakeMailer, TEST_SCRYPT } from "./test-auth";
 import {
+  ACCOUNT_TOKENS,
   ACCOUNTS,
   API_ENV,
+  GOOGLE_VERIFIER,
+  MAILER,
+  PASSWORD_PARAMS,
+  SESSIONS,
   CATALOG_GAPS,
   DATABASE,
   FRESHNESS_PASS,
@@ -143,6 +148,7 @@ export async function startTestApp(
   /** Extra overrides for a test that needs one more provider replaced. */
   configure: (builder: TestingModuleBuilder) => TestingModuleBuilder = (builder) => builder,
 ): Promise<TestApp> {
+  const store = fakeAccountStore();
   const base = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(API_ENV)
     .useValue(testEnv)
@@ -167,7 +173,17 @@ export async function startTestApp(
     .overrideProvider(FRESHNESS_PASS)
     .useValue(async () => ({ acquired: false }))
     .overrideProvider(ACCOUNTS)
-    .useValue(fakeAccounts().repository);
+    .useValue(store.accountRepo)
+    .overrideProvider(SESSIONS)
+    .useValue(store.sessionRepo)
+    .overrideProvider(ACCOUNT_TOKENS)
+    .useValue(store.tokenRepo)
+    .overrideProvider(MAILER)
+    .useValue(fakeMailer().send)
+    .overrideProvider(GOOGLE_VERIFIER)
+    .useValue(null)
+    .overrideProvider(PASSWORD_PARAMS)
+    .useValue(TEST_SCRYPT);
   const moduleRef = await configure(base).compile();
   const app = configureApp(
     moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {

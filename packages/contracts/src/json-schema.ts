@@ -49,7 +49,7 @@ function apiPaths(): JsonObject {
       [route.method]: {
         operationId,
         summary: route.summary,
-        ...(needsAccount(operationId as ApiRouteName) ? { security: [{ account: [] }] } : {}),
+        ...(needsAccount(operationId as ApiRouteName) ? { security: [{ session: [] }] } : {}),
         ...input,
         responses: {
           200: { description: "OK", ...json(inlineSchema(route.response, "output")) },
@@ -75,7 +75,7 @@ export function contractOpenApi(): JsonObject {
     paths: apiPaths(),
     components: {
       schemas,
-      securitySchemes: { account: { type: "http", scheme: "bearer", bearerFormat: "JWT" } },
+      securitySchemes: { session: { type: "apiKey", in: "cookie", name: "sbi_session" } },
     },
   };
 }

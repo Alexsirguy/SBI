@@ -1,46 +1,32 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ApiRequestError } from "../api-client";
 import { button, click, mount, text } from "../lesson/dom-test";
 
 const api = vi.hoisted(() => vi.fn());
-const session = vi.hoisted(() => ({
-  finishSignIn: vi.fn(),
-  signIn: vi.fn(async () => undefined),
-  signOut: vi.fn(async () => undefined),
-  signedIn: vi.fn(async () => true),
-  token: vi.fn(async () => "jwt"),
-}));
-const holder = vi.hoisted(() => ({ session: null as unknown }));
+const router = vi.hoisted(() => ({ replace: vi.fn() }));
 vi.mock("../api", () => ({ api }));
-vi.mock("./account-session", () => ({
-  get accountSession() {
-    return holder.session;
-  },
-}));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const { AccountPanel } = await import("./account-panel");
 const { hasConsent, rememberKeptPhoto, setConsent } = await import("../consent");
 
-const ACCOUNT = {
+const ADA = {
   accountId: "0192f1a0-0000-7000-8000-000000000001",
-  createdAt: "2026-11-02T10:00:00.000Z",
+  email: "ada@example.com",
+  emailVerified: true,
+  firstName: "Ada",
+  lastName: "Lovelace",
+  linkedAt: null as string | null,
 };
 
 afterEach(() => {
   document.body.replaceChildren();
   window.localStorage.clear();
   api.mockReset();
-  holder.session = null;
+  router.replace.mockReset();
 });
-
-// Buttons render disabled until the account loads; clicking one early would do nothing.
-const enabled = (scope: Element, name: string) =>
-  vi.waitFor(() => {
-    const found = button(scope, name);
-    expect(found.disabled).toBe(false);
-    return found;
-  });
 
 const view = () =>
   mount(
@@ -51,32 +37,45 @@ const view = () =>
     </QueryClientProvider>,
   );
 
-describe("AccountPanel", () => {
-  it("explains accounts are unavailable when no provider is configured", async () => {
-    const { container } = await view();
-    expect(text(container)).toContain("Accounts are not available on this site.");
+// Buttons render before the account loads; clicking one early would do nothing.
+const enabled = (scope: Element, name: string) =>
+  vi.waitFor(() => {
+    const found = button(scope, name);
+    expect(found.disabled).toBe(false);
+    return found;
   });
 
-  it("offers sign-in, promising only an id is kept", async () => {
-    holder.session = { ...session, signedIn: vi.fn(async () => false) };
+describe("AccountPanel", () => {
+  it("sends a signed-out learner to the sign-in page", async () => {
+    api.mockRejectedValue(new ApiRequestError("Sign in to use your account.", 401));
+    await view();
+    await vi.waitFor(() => expect(router.replace).toHaveBeenCalledWith("/account/sign-in"));
+  });
+
+  it("asks for a confirmed email before linking, and can resend the link", async () => {
+    api.mockImplementation(async (name: string) =>
+      name === "getAccount" ? { ...ADA, emailVerified: false } : { ok: true },
+    );
     const { container } = await view();
-    await vi.waitFor(() => expect(text(container)).toContain("not your name or email"));
-    await click(button(container, "Sign in or create an account"));
-    expect((holder.session as typeof session).signIn).toHaveBeenCalledWith("/account");
+    await vi.waitFor(() => expect(text(container)).toContain("Please confirm your email."));
+    expect(button(container, "Link this device").disabled).toBe(true);
+
+    await click(button(container, "Send the link again"));
+    await vi.waitFor(() => expect(text(container)).toContain("Link sent"));
+    expect(api).toHaveBeenCalledWith("resendVerification", {});
   });
 
   it("links this device only when asked, sending the consent and kept photos", async () => {
-    holder.session = session;
-    rememberKeptPhoto({ key: "photos/a.jpg", label: "Kettle", keptAt: ACCOUNT.createdAt });
+    rememberKeptPhoto({ key: "photos/a.jpg", label: "Kettle", keptAt: "2026-11-02T10:00:00.000Z" });
     let linkedAt: string | null = null;
     api.mockImplementation(async (name: string) => {
-      if (name === "getAccount") return { ...ACCOUNT, linkedAt };
-      linkedAt = ACCOUNT.createdAt;
-      return { accountId: ACCOUNT.accountId, linkedPhotos: 1 };
+      if (name === "getAccount") return { ...ADA, linkedAt };
+      linkedAt = "2026-11-02T10:00:00.000Z";
+      return { accountId: ADA.accountId, linkedPhotos: 1 };
     });
     const { container } = await view();
     const link = await enabled(container, "Link this device");
-    expect(text(container)).toContain("Off. Linking ties the photo");
+    expect(text(container)).toContain("Signed in as Ada Lovelace (ada@example.com).");
     expect(hasConsent("account")).toBe(false);
 
     await click(link);
@@ -90,9 +89,8 @@ describe("AccountPanel", () => {
   });
 
   it("takes the choice back if linking fails", async () => {
-    holder.session = session;
     api.mockImplementation(async (name: string) => {
-      if (name === "getAccount") return { ...ACCOUNT, linkedAt: null };
+      if (name === "getAccount") return ADA;
       throw new Error("Linking failed.");
     });
     const { container } = await view();
@@ -102,11 +100,10 @@ describe("AccountPanel", () => {
   });
 
   it("unlinks and withdraws the choice", async () => {
-    holder.session = session;
     setConsent("account", true);
-    let linkedAt: string | null = ACCOUNT.createdAt;
+    let linkedAt: string | null = "2026-11-02T10:00:00.000Z";
     api.mockImplementation(async (name: string) => {
-      if (name === "getAccount") return { ...ACCOUNT, linkedAt };
+      if (name === "getAccount") return { ...ADA, linkedAt };
       linkedAt = null;
       return { unlinkedPhotos: 1 };
     });
@@ -114,5 +111,13 @@ describe("AccountPanel", () => {
     await click(await enabled(container, "Unlink this device"));
     await vi.waitFor(() => expect(text(container)).toContain("Off. Linking"));
     expect(hasConsent("account")).toBe(false);
+  });
+
+  it("signs out and returns to the sign-in page", async () => {
+    api.mockImplementation(async (name: string) => (name === "getAccount" ? ADA : { ok: true }));
+    const { container } = await view();
+    await click(await enabled(container, "Sign out"));
+    await vi.waitFor(() => expect(router.replace).toHaveBeenCalledWith("/account/sign-in"));
+    expect(api).toHaveBeenCalledWith("signOut", {});
   });
 });

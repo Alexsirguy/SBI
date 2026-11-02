@@ -35,32 +35,25 @@ describe("createApiClient", () => {
     expect(init).toEqual({ method: "GET" });
   });
 
-  it("sends the bearer token on account routes only", async () => {
-    const fetcher = replying(200, {
-      accountId: "0192f1a0-0000-7000-8000-000000000001",
-      createdAt: "2026-11-02T10:00:00.000Z",
-      linkedAt: null,
-    });
-    const token = vi.fn(async () => "jwt");
-    const api = createApiClient("http://api.test", fetcher, token);
-
-    await api("getAccount", {});
-    await api("searchTaxonomy", { q: "bike" }).catch(() => undefined);
-
-    expect(fetcher.mock.calls[0]?.[1]).toEqual({
-      headers: { authorization: "Bearer jwt" },
-      method: "GET",
-    });
-    expect(fetcher.mock.calls[1]?.[1]).toEqual({ method: "GET" });
-    expect(token).toHaveBeenCalledTimes(1);
-  });
-
-  it("asks the learner to sign in when an account route has no token", async () => {
-    const fetcher = replying(200, {});
+  it("sends the session cookie on account and sign-in routes only", async () => {
+    const fetcher = replying(200, { ok: true });
     const api = createApiClient("http://api.test", fetcher);
 
-    await expect(api("getAccount", {})).rejects.toMatchObject({ status: 401 });
-    expect(fetcher).not.toHaveBeenCalled();
+    await api("signOut", {}).catch(() => undefined);
+    await api("searchTaxonomy", { q: "bike" }).catch(() => undefined);
+
+    expect(fetcher.mock.calls[0]?.[1]).toMatchObject({ credentials: "include", method: "POST" });
+    expect(fetcher.mock.calls[1]?.[1]).toEqual({ method: "GET" });
+  });
+
+  it("leaves off the query string when a GET has no parameters", async () => {
+    const fetcher = replying(401, { error: "Sign in to use your account." });
+    const api = createApiClient("http://api.test", fetcher);
+
+    await api("getAccount", {}).catch(() => undefined);
+
+    expect(fetcher.mock.calls[0]?.[0]).toBe("http://api.test/account");
+    expect(fetcher.mock.calls[0]?.[1]).toEqual({ credentials: "include", method: "GET" });
   });
 
   it("surfaces the API's error message with its status", async () => {

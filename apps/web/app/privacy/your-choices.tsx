@@ -3,7 +3,6 @@
 import { Button } from "@sbi/ui";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
-import { webEnv } from "../../env";
 import { useDeletePhoto } from "../capture/use-photo-upload";
 import {
   choicesSnapshot,
@@ -86,18 +85,14 @@ export function YourChoices() {
           after it is recognised.
         </p>
       )}
-      {webEnv.auth ? (
-        <>
-          <h3>Linking to an account</h3>
-          {state ? (
-            <p>
-              {state.linked
-                ? "On. This device's kept photos are tied to your account."
-                : "Off. Accounts are optional, and linking is a separate choice."}{" "}
-              <Link href="/account">Change this on your account page</Link>.
-            </p>
-          ) : null}
-        </>
+      <h3>Linking to an account</h3>
+      {state ? (
+        <p>
+          {state.linked
+            ? "On. This device's kept photos are tied to your account."
+            : "Off. Accounts are optional, and linking is a separate choice."}{" "}
+          <Link href="/account">Change this on your account page</Link>.
+        </p>
       ) : null}
       <div role="status">{remove.isSuccess ? <p>Deleted.</p> : null}</div>
       {remove.error ? <p role="alert">{remove.error.message}</p> : null}

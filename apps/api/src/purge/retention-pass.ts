@@ -19,12 +19,14 @@ export type RetentionSettings = Pick<
 export interface RetentionDeps {
   repos: Pick<
     Repositories,
+    | "accountTokens"
     | "catalogGaps"
     | "deletionAudit"
     | "evidencePacks"
     | "lessonFeedback"
     | "mediaRegistry"
     | "recognitionResults"
+    | "sessions"
     | "tutorTurns"
   >;
   storage: ObjectStorage;
@@ -66,8 +68,12 @@ export async function runRetentionPass(
   const catalogGapsPurged = await repos.catalogGaps.deleteLastSeenBefore(
     ago(settings.CATALOG_GAP_TTL_DAYS * DAY_MS),
   );
+  // Sessions and email links stop working at expiry; this only removes the dead rows.
+  const accountSecretsPurged =
+    (await repos.sessions.deleteExpired(now)) + (await repos.accountTokens.deleteExpired(now));
   return {
     ...result,
+    accountSecretsPurged,
     recognitionPurged,
     feedbackDetailsCleared,
     tutorTurnsPurged,

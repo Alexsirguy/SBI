@@ -12,6 +12,7 @@ export interface PurgePassResult extends DeletionPassResult {
   tutorTurnsPurged: number;
   evidencePacksPurged: number;
   catalogGapsPurged: number;
+  accountSecretsPurged: number;
 }
 
 export interface PurgeWorkerOptions {
@@ -35,6 +36,7 @@ export function startPurgeWorker(options: PurgeWorkerOptions): PurgeWorker {
       tutorTurnsPurged,
       evidencePacksPurged,
       catalogGapsPurged,
+      accountSecretsPurged,
     }) => ({
       auditPurged,
       deleted: deleted.length,
@@ -44,6 +46,7 @@ export function startPurgeWorker(options: PurgeWorkerOptions): PurgeWorker {
       tutorTurnsPurged,
       evidencePacksPurged,
       catalogGapsPurged,
+      accountSecretsPurged,
     }),
   });
 }
