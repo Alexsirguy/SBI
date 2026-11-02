@@ -71,6 +71,9 @@ importers:
       '@sbi/rights':
         specifier: workspace:*
         version: link:../../packages/rights
+      '@sbi/safety':
+        specifier: workspace:*
+        version: link:../../packages/safety
       '@sbi/taxonomy':
         specifier: workspace:*
         version: link:../../packages/taxonomy
@@ -355,6 +358,9 @@ importers:
       '@sbi/llm':
         specifier: workspace:*
         version: link:../llm
+      '@sbi/safety':
+        specifier: workspace:*
+        version: link:../safety
     devDependencies:
       '@sbi/config':
         specifier: workspace:*
@@ -396,6 +402,13 @@ importers:
         version: link:../config
 
   packages/safety:
+    dependencies:
+      '@sbi/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@sbi/llm':
+        specifier: workspace:*
+        version: link:../llm
     devDependencies:
       '@sbi/config':
         specifier: workspace:*

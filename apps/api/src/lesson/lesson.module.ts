@@ -9,6 +9,7 @@ import {
 } from "@sbi/llm";
 import type { RightsGate } from "@sbi/orchestrator";
 import { createRightsRegister, LIBRARY_ASSET_IDS } from "@sbi/rights";
+import { createRiskClassifier } from "@sbi/safety";
 import { RENDERER_LIBRARIES, type VisualManifestRepository } from "@sbi/visuals";
 import { memoryPubChemCache } from "@sbi/visuals/server";
 import type { ApiEnv } from "../env";
@@ -26,6 +27,7 @@ import {
   LESSON_REVIEW_AUDIT,
   LESSONS,
   REPOSITORIES,
+  RISK_CLASSIFIER,
   VISUAL_MAKER,
   VISUAL_MANIFESTS,
 } from "../tokens";
@@ -83,6 +85,17 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       provide: LESSON_LLM,
       inject: [API_ENV],
       useFactory: lessonProviderFor,
+    },
+    {
+      provide: RISK_CLASSIFIER,
+      inject: [LESSON_LLM],
+      useFactory: (provider: LlmProvider | null) =>
+        createRiskClassifier({
+          provider,
+          // The reason only; the learner's words never reach the logs.
+          onFallback: (error) =>
+            logger.warn(`Risk classifier fell back to rules: ${(error as Error)?.name}`),
+        }),
     },
     {
       provide: LESSONS,

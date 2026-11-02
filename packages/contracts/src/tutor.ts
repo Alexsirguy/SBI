@@ -1,15 +1,9 @@
 import { z } from "zod";
 import { IsoDateTime, Uuid } from "./common";
+import { SafetyCategory } from "./safety";
 
-export const SafetyCategory = z.enum([
-  "none",
-  "medical",
-  "chemical",
-  "weapons",
-  "self-harm",
-  "biological",
-  "other",
-]);
+/** The policy's categories, plus none and other, so every tutor turn records one. */
+export const TurnSafetyCategory = z.enum(["none", ...SafetyCategory.options, "other"]);
 
 export const RetentionClass = z.enum(["session", "quality-review", "research-consented"]);
 
@@ -31,7 +25,7 @@ export const TutorTurn = z
       citedClaimIds: z.array(Uuid).default([]),
       visualAction: VisualAction.optional(),
     }),
-    safetyCategory: SafetyCategory,
+    safetyCategory: TurnSafetyCategory,
     modelVersion: z.string().min(1),
     promptVersion: z.string().min(1),
     feedback: z.enum(["helpful", "not-helpful"]).optional(),
@@ -46,5 +40,4 @@ export const TutorTurn = z
     },
   );
 
-export type SafetyCategory = z.infer<typeof SafetyCategory>;
 export type TutorTurn = z.infer<typeof TutorTurn>;

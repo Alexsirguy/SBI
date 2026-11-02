@@ -26,6 +26,7 @@ import {
   type PromptRegistry,
   type PromptVersion,
 } from "@sbi/llm";
+import { SAFE_ACTIVITY_RULE, safeActivityRulesApply } from "@sbi/safety";
 
 export interface DraftInput {
   intentSignature: string;
@@ -430,7 +431,13 @@ export async function generateDraft(input: DraftInput, deps: DraftDeps): Promise
     LESSON_DRAFT_PROMPT.id,
     {
       question: fencedQuestion(input.question, prompt.version),
-      safetyRule: input.safetyClass === "high" ? `${HIGH_RISK_DRAFT_RULE}\n` : "",
+      safetyRule: [
+        input.safetyClass === "high" ? HIGH_RISK_DRAFT_RULE : "",
+        safeActivityRulesApply(input.audience) ? SAFE_ACTIVITY_RULE : "",
+      ]
+        .filter(Boolean)
+        .map((rule) => `${rule}\n`)
+        .join(""),
       taxonomyId: input.taxonomyId,
       concepts: input.concepts.map((concept) => concept.label).join(", "),
       audience: input.audience.join(", "),

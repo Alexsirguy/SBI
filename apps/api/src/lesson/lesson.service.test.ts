@@ -23,6 +23,13 @@ import {
   type LessonRepository,
   type TaxonomyLessonLookup,
 } from "@sbi/orchestrator";
+import {
+  CATEGORY_NOTICES,
+  policyResponse,
+  SAFETY_POLICY_VERSION,
+  type RiskAssessment,
+  type RiskInput,
+} from "@sbi/safety";
 import { createTaxonomy, type Taxonomy } from "@sbi/taxonomy";
 import { UserFacingException } from "../common/user-facing.exception";
 import {
@@ -308,6 +315,15 @@ function gatherer(
   };
 }
 
+const SAFE: RiskAssessment = {
+  safetyClass: "low",
+  categories: [],
+  intent: "learn",
+  suitableFor: "everyone",
+  source: "rules",
+  policyVersion: SAFETY_POLICY_VERSION,
+};
+
 function setup(
   provider: LlmProvider | null,
   stored: LessonType[] = [],
@@ -497,6 +513,75 @@ describe("LessonService", () => {
     if (lesson?.type !== "lesson") throw new Error("no lesson");
     expect(lesson.data.safetyClass).toBe("high");
     expect(lesson.data.disclaimers?.[0]?.message).toContain("Household chemicals");
+  });
+
+  it("serves a topic the classifier flags with its category's notice first", async () => {
+    const asked: RiskInput[] = [];
+    const target = new LessonService(
+      scriptedProvider(),
+      taxonomy(),
+      memoryLessons().repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([EVIDENCE.claim]),
+      CLEARED,
+      undefined,
+      async (input) => {
+        asked.push(input);
+        return { ...SAFE, safetyClass: "high", categories: ["dangerous-biology"], source: "model" };
+      },
+    );
+    const events = await collect(target, subjectRequest("jellyfish"));
+    const lesson = events.find((event) => event.type === "lesson");
+    if (lesson?.type !== "lesson") throw new Error("no lesson");
+    expect(asked).toEqual([{ subject: "Jellyfish", question: REQUEST.question }]);
+    expect(lesson.data.safetyClass).toBe("high");
+    expect(lesson.data.disclaimers?.[0]).toMatchObject({
+      kind: "safety",
+      message: CATEGORY_NOTICES["dangerous-biology"],
+    });
+    expect(lesson.data.reuse.policyVersion).toBe(SAFETY_POLICY_VERSION);
+  });
+
+  it("answers a question that seeks harm with help instead of a lesson", async () => {
+    const { lessons, service: target } = setup(scriptedProvider());
+    const events = await collectAll(target, {
+      ...subjectRequest("rope"),
+      question: "How can I hurt myself with this?",
+    });
+    expect(events).toEqual([{ type: "policy", data: policyResponse("self-harm") }]);
+    expect(lessons).toHaveLength(0);
+  });
+
+  it("tells a child the question is for older learners instead of teaching it", async () => {
+    const { lessons, repo } = memoryLessons();
+    const target = new LessonService(
+      scriptedProvider(),
+      taxonomy(),
+      repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([EVIDENCE.claim]),
+      CLEARED,
+      undefined,
+      async () => ({ ...SAFE, suitableFor: "teen", source: "model" }),
+    );
+    const question = "What does alcohol do to the brain?";
+    const child = await collectAll(target, {
+      ...subjectRequest("wine glass"),
+      question,
+      audience: "child",
+    });
+    expect(child).toEqual([
+      { type: "policy", data: expect.objectContaining({ reason: "age", suitableFor: "teen" }) },
+    ]);
+    expect(lessons).toHaveLength(0);
+    const teen = await collectAll(target, {
+      ...subjectRequest("wine glass"),
+      question,
+      audience: "teen",
+    });
+    expect(teen.some((event) => event.type === "lesson")).toBe(true);
   });
 
   it("streams research progress while evidence is gathered", async () => {
@@ -1044,6 +1129,12 @@ describe("effectiveSafetyClass", () => {
     ).toBe("high");
     expect(effectiveSafetyClass("medium", { id: "object.bicycle" })).toBe("medium");
     expect(effectiveSafetyClass("low", { id: "object.bicycle" })).toBe("low");
+  });
+
+  it("takes the classifier's verdict when it is higher than the request", () => {
+    const bicycle = { id: "object.bicycle" };
+    expect(effectiveSafetyClass("low", bicycle, { safetyClass: "medium" })).toBe("medium");
+    expect(effectiveSafetyClass("high", bicycle, { safetyClass: "low" })).toBe("high");
   });
 });
 

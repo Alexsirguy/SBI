@@ -12,7 +12,7 @@ export const LessonRequest = z
     audience: AudienceBand,
     readingLevel: ReadingLevel,
     locale: Locale,
-    // Client-declared until E8 lands server-side classification; routing still reviews high-risk topics.
+    // A floor only: the server's classifier can raise it, never lower it.
     safetyClass: SafetyClass,
     assumptions: z.array(z.string().trim().min(1).max(300)).default([]),
     fresh: z.boolean().default(false),

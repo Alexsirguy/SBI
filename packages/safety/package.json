@@ -12,6 +12,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@sbi/contracts": "workspace:*",
+    "@sbi/llm": "workspace:*"
+  },
   "devDependencies": {
     "@sbi/config": "workspace:*"
   }
