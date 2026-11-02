@@ -272,3 +272,16 @@ main.home {
   display: grid;
   gap: var(--sbi-space-2);
 }
+
+.your-choices .kept-photos {
+  list-style: none;
+  padding-left: 0;
+}
+
+.your-choices .kept-photos li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-2);
+}

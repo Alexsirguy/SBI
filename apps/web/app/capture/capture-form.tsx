@@ -7,6 +7,7 @@ import { handedOffPhoto, handOffPhoto } from "../photo-handoff";
 import { Scanner } from "../scanner";
 import { CameraView } from "./camera-view";
 import { RecognitionStep } from "./confirm/recognition-step";
+import { KeepPhoto } from "./keep-photo";
 import {
   ACCEPTED_EXTENSIONS,
   ACCEPTED_FORMATS_LABEL,
@@ -479,6 +480,12 @@ export function CaptureForm() {
           error={recognition.error?.message}
           onStart={(label) => handOffPhoto(previewUrl, label)}
           onRetake={retake}
+        />
+      ) : null}
+      {answered && photoUpload.data && recognition.isSuccess ? (
+        <KeepPhoto
+          photoKey={photoUpload.data.key}
+          label={recognition.data.options[0]?.label ?? "Photo"}
         />
       ) : null}
     </>

@@ -38,7 +38,7 @@ describe("createApiClient", () => {
   it("surfaces the API's error message with its status", async () => {
     const api = createApiClient("http://api.test", replying(409, { error: "Already deleted." }));
 
-    await expect(api("keepPhoto", { key: KEY })).rejects.toEqual(
+    await expect(api("keepPhoto", { key: KEY, consentVersion: "consent-1" })).rejects.toEqual(
       new ApiRequestError("Already deleted.", 409),
     );
   });
@@ -49,7 +49,9 @@ describe("createApiClient", () => {
       vi.fn<typeof fetch>().mockRejectedValue(new TypeError("Failed to fetch")),
     );
 
-    await expect(api("keepPhoto", { key: KEY })).rejects.toThrow(UNREACHABLE);
+    await expect(api("keepPhoto", { key: KEY, consentVersion: "consent-1" })).rejects.toThrow(
+      UNREACHABLE,
+    );
   });
 
   it("rejects replies that break the contract", async () => {
@@ -62,7 +64,9 @@ describe("createApiClient", () => {
     const fetcher = replying(200, {});
     const api = createApiClient("http://api.test", fetcher);
 
-    await expect(api("keepPhoto", { key: "../etc/passwd" })).rejects.toThrow();
+    await expect(
+      api("keepPhoto", { key: "../etc/passwd", consentVersion: "consent-1" }),
+    ).rejects.toThrow();
     expect(fetcher).not.toHaveBeenCalled();
   });
 });

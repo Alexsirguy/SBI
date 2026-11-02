@@ -10,6 +10,8 @@ import {
 import {
   ConfirmedPhoto,
   ConfirmUploadRequest,
+  DeletedPhoto,
+  DeletePhotoRequest,
   KeepPhotoRequest,
   KeptPhoto,
   UploadRequest,
@@ -87,6 +89,14 @@ export const API_ROUTES = {
     request: KeepPhotoRequest,
     response: KeptPhoto,
     errors: [400, 409, 502, 503],
+  },
+  deletePhoto: {
+    method: "post",
+    path: "/photos/delete",
+    summary: "Delete a stored photo now, whether or not it was kept.",
+    request: DeletePhotoRequest,
+    response: DeletedPhoto,
+    errors: [400, 502],
   },
   submitLessonFeedback: {
     method: "post",

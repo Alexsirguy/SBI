@@ -406,3 +406,27 @@
   padding-block: var(--sbi-space-2);
   font-weight: 600;
 }
+
+/* The keep choice sits quietly under the result; asking expands into a plain explanation. */
+.keep-photo {
+  margin-top: var(--sbi-space-4);
+}
+
+.keep-photo--asking {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding: var(--sbi-space-3) var(--sbi-space-4);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper);
+}
+
+.keep-photo h3,
+.keep-photo p {
+  margin: 0;
+}
+
+.keep-photo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+}

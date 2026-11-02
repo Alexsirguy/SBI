@@ -12,11 +12,12 @@ import {
 } from "@sbi/contracts";
 import { DuplicateSourceError } from "@sbi/evidence";
 import { loadFixtures } from "@sbi/testing";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDatabase, type DatabaseHandle } from "./client";
 import { runMigrations } from "./migrate";
 import { createRepositories, type Repositories } from "./repositories";
+import { mediaObjects } from "./schema";
 
 try {
   process.loadEnvFile(join(import.meta.dirname, "../.env"));
@@ -549,7 +550,7 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       await repos.mediaRegistry.register(original("photos/late.jpg", at(-1000)));
       await repos.mediaRegistry.register(original("photos/fresh.jpg", at(1)));
       await repos.mediaRegistry.register(original("photos/kept.jpg", at(-1000)));
-      expect(await repos.mediaRegistry.keep("photos/kept.jpg")).toBe(true);
+      expect(await repos.mediaRegistry.keep("photos/kept.jpg", "consent-1")).toBe(true);
 
       const expired = await repos.mediaRegistry.listExpired(now, 10);
       expect(expired.map((item) => item.key)).toEqual(["photos/late.jpg", "photos/on-time.jpg"]);
@@ -560,21 +561,38 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       await repos.mediaRegistry.register(original("photos/a.jpg", now));
       await repos.mediaRegistry.register(original("photos/b.jpg", now));
 
-      expect(await repos.mediaRegistry.keep("photos/a.jpg")).toBe(true);
-      expect(await repos.mediaRegistry.keep("photos/a.jpg")).toBe(true);
+      expect(await repos.mediaRegistry.keep("photos/a.jpg", "consent-1")).toBe(true);
+      expect(await repos.mediaRegistry.keep("photos/a.jpg", "consent-1")).toBe(true);
       expect(await repos.mediaRegistry.claimForDeletion("photos/a.jpg", now)).toBe(false);
 
       expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", now)).toBe(true);
-      expect(await repos.mediaRegistry.keep("photos/b.jpg")).toBe(false);
+      expect(await repos.mediaRegistry.keep("photos/b.jpg", "consent-1")).toBe(false);
       expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", at(60_000))).toBe(true);
       await repos.mediaRegistry.forget("photos/b.jpg");
       expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", now)).toBe(false);
     });
 
+    it("records the consent a photo was kept under, and releases it for deletion", async () => {
+      await repos.mediaRegistry.register(original("photos/kept.jpg", at(86_400_000)));
+      await repos.mediaRegistry.keep("photos/kept.jpg", "consent-1");
+      const [kept] = await handle.db
+        .select({ consentVersion: mediaObjects.consentVersion })
+        .from(mediaObjects)
+        .where(eq(mediaObjects.objectKey, "photos/kept.jpg"));
+      expect(kept?.consentVersion).toBe("consent-1");
+
+      expect(await repos.mediaRegistry.release("photos/kept.jpg", now)).toBe(true);
+      expect((await repos.mediaRegistry.listExpired(now, 10)).map((item) => item.key)).toEqual([
+        "photos/kept.jpg",
+      ]);
+      expect(await repos.mediaRegistry.release("photos/kept.jpg", now)).toBe(true);
+      expect(await repos.mediaRegistry.release("photos/gone.jpg", now)).toBe(false);
+    });
+
     it("only brings expiry forward, and never for a kept photo", async () => {
       await repos.mediaRegistry.register(original("photos/a.jpg", at(86_400_000)));
       await repos.mediaRegistry.register(original("photos/kept.jpg", at(86_400_000)));
-      await repos.mediaRegistry.keep("photos/kept.jpg");
+      await repos.mediaRegistry.keep("photos/kept.jpg", "consent-1");
 
       await repos.mediaRegistry.expireSooner("photos/a.jpg", at(3_600_000));
       await repos.mediaRegistry.expireSooner("photos/a.jpg", at(2 * 86_400_000));

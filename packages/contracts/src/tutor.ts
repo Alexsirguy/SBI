@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { IsoDateTime, Uuid } from "./common";
+import { ConsentVersion } from "./consent";
 import { SafetyCategory } from "./safety";
 
 /** The policy's categories, plus none and other, so every tutor turn records one. */
@@ -31,7 +32,13 @@ export const TutorTurn = z
     promptVersion: z.string().min(1),
     feedback: z.enum(["helpful", "not-helpful"]).optional(),
     retentionClass: RetentionClass,
+    /** The research opt-in this turn was kept under; required for research-consented turns. */
+    consentVersion: ConsentVersion.optional(),
     createdAt: IsoDateTime,
+  })
+  .refine((turn) => turn.retentionClass !== "research-consented" || !!turn.consentVersion, {
+    message: "Turns kept for research must record the consent they were kept under",
+    path: ["consentVersion"],
   })
   .refine(
     (turn) => turn.response.citedClaimIds.every((id) => turn.retrievedClaimIds.includes(id)),

@@ -213,6 +213,8 @@ export const mediaObjects = mysqlTable(
     createdAt: timestamp("created_at").notNull(),
     expiresAt: timestamp("expires_at"),
     savedByUser: boolean("saved_by_user").notNull().default(false),
+    // The save-photos opt-in a kept photo was kept under (#70).
+    consentVersion: varchar("consent_version", { length: 40 }),
     deletingAt: timestamp("deleting_at"),
   },
   (table) => [index("media_objects_expires_idx").on(table.expiresAt)],
