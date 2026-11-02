@@ -47,6 +47,7 @@ import {
   type TaxonomyLessonLookup,
 } from "@sbi/orchestrator";
 import {
+  ageHold,
   CATEGORY_NOTICES,
   createRiskClassifier,
   policyResponse,
@@ -265,6 +266,12 @@ export class LessonService {
     // A question that seeks harm gets help and safe alternatives, never a lesson (spec §12).
     if (risk.intent === "harm") {
       yield { type: "policy", data: policyResponse(risk.categories[0]) };
+      return;
+    }
+    // A question for an older age band than the one chosen says how to change it instead.
+    const ageNote = ageHold(request.audience, risk);
+    if (ageNote) {
+      yield { type: "policy", data: ageNote };
       return;
     }
     const safetyClass = effectiveSafetyClass(request.safetyClass, entry, risk);

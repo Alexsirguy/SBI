@@ -47,18 +47,27 @@ function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
 }
 
 /** Help instead of a lesson: what we can't do, who to turn to, and a way to learn something else. */
-function PolicyHelp({ policy }: { policy: PolicyResponse }) {
+function PolicyHelp({
+  policy,
+  onChangeAge,
+}: {
+  policy: PolicyResponse;
+  onChangeAge: (age: "teen" | "adult") => void;
+}) {
   const heading = useRef<HTMLHeadingElement>(null);
+  const unlock = policy.reason === "age" ? policy.suitableFor : undefined;
   // The loader that held focus is gone, so the learner lands on the help.
   useEffect(() => heading.current?.focus(), []);
   return (
     <section aria-labelledby="policy-heading" className="policy-help">
       <h2 id="policy-heading" tabIndex={-1} ref={heading}>
-        {policy.category === "self-harm"
-          ? "You don't have to face this alone"
-          : "Let's try a safer question"}
+        {policy.reason === "age"
+          ? "This one is for older learners"
+          : policy.category === "self-harm"
+            ? "You don't have to face this alone"
+            : "Let's try a safer question"}
       </h2>
-      <Notice kind="safety">
+      <Notice kind={policy.reason === "age" ? "note" : "safety"}>
         <p>{policy.message}</p>
         <ul>
           {policy.help.map((item) => (
@@ -66,6 +75,13 @@ function PolicyHelp({ policy }: { policy: PolicyResponse }) {
           ))}
         </ul>
       </Notice>
+      {unlock ? (
+        <Button onClick={() => onChangeAge(unlock)}>
+          {unlock === "adult"
+            ? "I'm an adult: change age band"
+            : "I'm a teen or adult: change age band"}
+        </Button>
+      ) : null}
       <Link href="/capture" className="policy-help__next">
         Learn about something else
       </Link>
@@ -174,7 +190,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
           ) : null}
         </p>
       ) : null}
-      {policy ? <PolicyHelp policy={policy} /> : null}
+      {policy ? (
+        <PolicyHelp policy={policy} onChangeAge={(age) => choose({ ...prefs, age })} />
+      ) : null}
       {writing || policy || (error && !lesson) ? null : (
         <div aria-busy={!lesson} className="lesson-body">
           <PracticeProvider experiment={experiment}>

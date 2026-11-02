@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CATEGORY_NOTICES, policyResponse, SAFETY_POLICY_VERSION } from "./policy";
+import { ageHold, CATEGORY_NOTICES, policyResponse, SAFETY_POLICY_VERSION } from "./policy";
 import { matchRules } from "./rules";
 
 describe("matchRules", () => {
@@ -38,6 +38,31 @@ describe("matchRules", () => {
     expect(match.categories).toContain(category);
   });
 
+  it.each([
+    "How do I make a bath bomb?",
+    "Can we build a water gun from a bottle?",
+    "How do I make a seed bomb for the garden?",
+    "How do I make a glitter bomb?",
+    "How do I make a nerf gun shoot further?",
+    "How do I build a potato gun?",
+    "I cut myself on paper, why does it sting?",
+    "I hurt myself falling off my bike, why is the bruise blue?",
+    "Why does it hurt when I cut myself?",
+    "How do they make bullets in a factory?",
+    "Why did my dog get poisoned by chocolate?",
+    "How do fireworks explode?",
+  ])("never refuses the everyday %s", (text) => {
+    expect(matchRules(text).harm).toBeUndefined();
+  });
+
+  it.each([
+    ["How do I build a time bomb?", "weapons"],
+    ["How to make a gun at home", "weapons"],
+    ["I want to cut myself", "self-harm"],
+  ] as const)("still refuses %s", (text, category) => {
+    expect(matchRules(text).harm).toBe(category);
+  });
+
   it("treats curiosity about how something dangerous works as learning", () => {
     expect(matchRules("How does a bomb disposal robot work?").harm).toBeUndefined();
   });
@@ -64,5 +89,36 @@ describe("policy responses", () => {
     for (const notice of Object.values(CATEGORY_NOTICES)) {
       expect(notice).toMatch(/emergency number/);
     }
+  });
+});
+
+describe("ageHold", () => {
+  const adultsOnly = { suitableFor: "adult", categories: [] } as const;
+  const teensUp = { suitableFor: "teen", categories: [] } as const;
+
+  it("holds nothing back that suits everyone", () => {
+    expect(ageHold("child", { suitableFor: "everyone", categories: [] })).toBeUndefined();
+  });
+
+  it("holds back only adults-only questions when no age band is set", () => {
+    expect(ageHold("general", teensUp)).toBeUndefined();
+    expect(ageHold("general", adultsOnly)).toMatchObject({ reason: "age", suitableFor: "adult" });
+  });
+
+  it("holds back teen questions from a child and says how to change the band", () => {
+    const note = ageHold("child", teensUp);
+    expect(note).toMatchObject({ reason: "age", suitableFor: "teen" });
+    expect(note?.help.join(" ")).toMatch(/change the age band/);
+  });
+
+  it("answers anyone whose band is old enough", () => {
+    expect(ageHold("teen", teensUp)).toBeUndefined();
+    expect(ageHold("adult", adultsOnly)).toBeUndefined();
+  });
+
+  it("gives a young learner asking about self-harm help, not a settings tip", () => {
+    expect(ageHold("child", { suitableFor: "teen", categories: ["self-harm"] })).toEqual(
+      policyResponse("self-harm"),
+    );
   });
 });

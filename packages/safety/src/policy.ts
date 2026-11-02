@@ -1,4 +1,4 @@
-import type { PolicyResponse, SafetyCategory } from "@sbi/contracts";
+import type { AudienceBand, PolicyResponse, SafetyCategory, SuitableFor } from "@sbi/contracts";
 
 /** Recorded on every lesson, so a policy change stops older lessons being reused. */
 export const SAFETY_POLICY_VERSION = "safety-2";
@@ -21,7 +21,9 @@ export const CATEGORY_NOTICES: Readonly<Record<SafetyCategory, string>> = {
     "Living hazards: this lesson explains the biology only. Never touch, taste, collect or grow anything risky because of it, and keep away from wild animals. If someone is bitten, stung or poisoned, call your local poison control centre or emergency number.",
 };
 
-const REDIRECTS: Readonly<Record<SafetyCategory, Omit<PolicyResponse, "policyVersion">>> = {
+type Redirect = Omit<PolicyResponse, "policyVersion" | "reason">;
+
+const REDIRECTS: Readonly<Record<SafetyCategory, Redirect>> = {
   "self-harm": {
     category: "self-harm",
     message:
@@ -58,7 +60,7 @@ const REDIRECTS: Readonly<Record<SafetyCategory, Omit<PolicyResponse, "policyVer
   },
 };
 
-const ANY_HARM: Omit<PolicyResponse, "policyVersion"> = {
+const ANY_HARM: Redirect = {
   message:
     "We can't help with anything that could hurt you or someone else. We can explain the science behind how things work, safely.",
   help: ["Ask how it works or why it behaves as it does instead.", EMERGENCY],
@@ -66,5 +68,54 @@ const ANY_HARM: Omit<PolicyResponse, "policyVersion"> = {
 
 /** The response sent instead of a lesson when a question seeks harm, in its category if known. */
 export function policyResponse(category?: SafetyCategory): PolicyResponse {
-  return { ...(category ? REDIRECTS[category] : ANY_HARM), policyVersion: SAFETY_POLICY_VERSION };
+  return {
+    reason: "harm",
+    ...(category ? REDIRECTS[category] : ANY_HARM),
+    policyVersion: SAFETY_POLICY_VERSION,
+  };
+}
+
+// "general" means no age was given, so only adults-only questions are held back from it.
+const AGE_RANK: Readonly<Record<AudienceBand, number>> = {
+  child: 0,
+  general: 1,
+  teen: 1,
+  adult: 2,
+};
+const NEEDED_RANK: Readonly<Record<SuitableFor, number>> = { everyone: 0, teen: 1, adult: 2 };
+
+const AGE_HOLDS: Readonly<Record<"teen" | "adult", Omit<PolicyResponse, "policyVersion">>> = {
+  teen: {
+    reason: "age",
+    suitableFor: "teen",
+    message:
+      "This question is meant for teens and adults, so we haven't answered it for the age band you chose.",
+    help: [
+      "If you're a teen or an adult, change the age band and we'll answer it.",
+      "Or explore it with a parent, carer or teacher.",
+    ],
+  },
+  adult: {
+    reason: "age",
+    suitableFor: "adult",
+    message:
+      "This question is meant for adults, so we haven't answered it for the age band you chose.",
+    help: [
+      "If you're an adult, change the age band to Adult and we'll answer it.",
+      "Or explore it with a parent, carer or teacher.",
+    ],
+  },
+};
+
+/** The note sent instead of a lesson when the question suits an older band than the one chosen. */
+export function ageHold(
+  audience: AudienceBand,
+  risk: { suitableFor: SuitableFor; categories: readonly SafetyCategory[] },
+): PolicyResponse | undefined {
+  if (risk.suitableFor === "everyone" || AGE_RANK[audience] >= NEEDED_RANK[risk.suitableFor]) {
+    return undefined;
+  }
+  // Someone young asking about self-harm may be struggling, so they get help, not a settings tip.
+  if (risk.categories.includes("self-harm")) return policyResponse("self-harm");
+  return { ...AGE_HOLDS[risk.suitableFor], policyVersion: SAFETY_POLICY_VERSION };
 }

@@ -6,7 +6,7 @@ export {
   type RiskClassifier,
   type RiskInput,
 } from "./classify";
-export { CATEGORY_NOTICES, policyResponse, SAFETY_POLICY_VERSION } from "./policy";
+export { ageHold, CATEGORY_NOTICES, policyResponse, SAFETY_POLICY_VERSION } from "./policy";
 export { matchRules, type RuleMatch } from "./rules";
 export {
   activityReason,

@@ -7,10 +7,11 @@ import { DEFAULT_PREFS } from "./prefs";
 import { SAMPLE_ANSWER, SAMPLE_LESSON, sseFrames } from "./sample-lesson";
 import { SAMPLE_MERRILL_ANSWER, SAMPLE_MERRILL_LESSON } from "./sample-merrill-lesson";
 
-vi.hoisted(() => {
+const router = vi.hoisted(() => {
   process.env.NEXT_PUBLIC_API_URL = "http://api.test";
+  return { push: vi.fn(), replace: vi.fn() };
 });
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const { LessonReader } = await import("./lesson-reader");
 
@@ -103,5 +104,33 @@ describe("LessonReader", () => {
     expect(container.querySelector(".sbi-notice--error, [role=alert]")).toBeNull();
     expect(container.querySelector("a[href='/capture']")).not.toBeNull();
     expect(text(container)).not.toContain("Get a fresh answer");
+  });
+
+  it("offers to change the age band when the question is for older learners", async () => {
+    const policy = {
+      reason: "age",
+      suitableFor: "adult",
+      message:
+        "This question is meant for adults, so we haven't answered it for the age band you chose.",
+      help: ["If you're an adult, change the age band to Adult and we'll answer it."],
+      policyVersion: "safety-2",
+    };
+    const { container } = await render([{ type: "policy", data: policy }], "Wine glass");
+    const heading = await vi.waitFor(() => {
+      const found = container.querySelector<HTMLElement>("#policy-heading");
+      if (!found) throw new Error("no note yet");
+      return found;
+    });
+    expect(text(heading)).toBe("This one is for older learners");
+    expect(container.querySelector(".lesson-body")).toBeNull();
+    const button = [...container.querySelectorAll("button")].find(
+      (item) => text(item) === "I'm an adult: change age band",
+    );
+    expect(button).toBeDefined();
+    router.replace.mockClear();
+    await act(async () => button?.click());
+    expect(router.replace).toHaveBeenCalledWith(expect.stringContaining("age=adult"), {
+      scroll: false,
+    });
   });
 });

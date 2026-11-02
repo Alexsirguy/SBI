@@ -319,6 +319,7 @@ const SAFE: RiskAssessment = {
   safetyClass: "low",
   categories: [],
   intent: "learn",
+  suitableFor: "everyone",
   source: "rules",
   policyVersion: SAFETY_POLICY_VERSION,
 };
@@ -550,6 +551,37 @@ describe("LessonService", () => {
     });
     expect(events).toEqual([{ type: "policy", data: policyResponse("self-harm") }]);
     expect(lessons).toHaveLength(0);
+  });
+
+  it("tells a child the question is for older learners instead of teaching it", async () => {
+    const { lessons, repo } = memoryLessons();
+    const target = new LessonService(
+      scriptedProvider(),
+      taxonomy(),
+      repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([EVIDENCE.claim]),
+      CLEARED,
+      undefined,
+      async () => ({ ...SAFE, suitableFor: "teen", source: "model" }),
+    );
+    const question = "What does alcohol do to the brain?";
+    const child = await collectAll(target, {
+      ...subjectRequest("wine glass"),
+      question,
+      audience: "child",
+    });
+    expect(child).toEqual([
+      { type: "policy", data: expect.objectContaining({ reason: "age", suitableFor: "teen" }) },
+    ]);
+    expect(lessons).toHaveLength(0);
+    const teen = await collectAll(target, {
+      ...subjectRequest("wine glass"),
+      question,
+      audience: "teen",
+    });
+    expect(teen.some((event) => event.type === "lesson")).toBe(true);
   });
 
   it("streams research progress while evidence is gathered", async () => {

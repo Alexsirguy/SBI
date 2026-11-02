@@ -10,8 +10,15 @@ export const SafetyCategory = z.enum([
 ]);
 export type SafetyCategory = z.infer<typeof SafetyCategory>;
 
-/** Sent instead of a lesson when a question seeks harm; it points to safe learning or to help. */
+/** The youngest age band a question suits; most science suits everyone. */
+export const SuitableFor = z.enum(["everyone", "teen", "adult"]);
+export type SuitableFor = z.infer<typeof SuitableFor>;
+
+/** Sent instead of a lesson when a question seeks harm, or suits an older age band than the one chosen. */
 export const PolicyResponse = z.object({
+  reason: z.enum(["harm", "age"]).default("harm"),
+  /** For an age hold, the band that unlocks the answer. */
+  suitableFor: SuitableFor.exclude(["everyone"]).optional(),
   /** Absent when the question seeks harm outside the named categories. */
   category: SafetyCategory.optional(),
   message: z.string().min(1).max(600),

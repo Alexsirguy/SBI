@@ -28,6 +28,29 @@ const failing: LlmProvider = {
 };
 
 describe("classifyRisk", () => {
+  it("passes on the youngest age band the model says the question suits", async () => {
+    const result = await classifyRisk(
+      { subject: "Wine glass", question: "What does alcohol do to the brain?" },
+      {
+        provider: provider({
+          categories: [],
+          safetyClass: "low",
+          intent: "learn",
+          suitableFor: "teen",
+        }),
+      },
+    );
+    expect(result.suitableFor).toBe("teen");
+  });
+
+  it("holds nothing back by age when only the word floor ran", async () => {
+    const result = await classifyRisk(
+      { subject: "Wine glass", question: "What does alcohol do to the brain?" },
+      { provider: null },
+    );
+    expect(result.suitableFor).toBe("everyone");
+  });
+
   it("asks the model, with the learner's words fenced as data, and records the policy", async () => {
     const seen: CompletionRequest[] = [];
     const result = await classifyRisk(
@@ -43,6 +66,7 @@ describe("classifyRisk", () => {
       safetyClass: "high",
       categories: ["chemical-exposure"],
       intent: "learn",
+      suitableFor: "everyone",
       source: "model",
       policyVersion: SAFETY_POLICY_VERSION,
     });
@@ -124,6 +148,7 @@ describe("classifyRisk", () => {
       safetyClass: "high",
       categories: ["chemical-exposure"],
       intent: "learn",
+      suitableFor: "everyone",
       source: "rules",
       policyVersion: SAFETY_POLICY_VERSION,
     });
