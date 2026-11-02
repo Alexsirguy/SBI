@@ -215,9 +215,29 @@ export const mediaObjects = mysqlTable(
     savedByUser: boolean("saved_by_user").notNull().default(false),
     // The save-photos opt-in a kept photo was kept under (#70).
     consentVersion: varchar("consent_version", { length: 40 }),
+    // Set only when the learner links this device to an account with the account opt-in (#102).
+    ownerAccountId: uuid("owner_account_id"),
     deletingAt: timestamp("deleting_at"),
   },
-  (table) => [index("media_objects_expires_idx").on(table.expiresAt)],
+  (table) => [
+    index("media_objects_expires_idx").on(table.expiresAt),
+    index("media_objects_owner_idx").on(table.ownerAccountId),
+  ],
+);
+
+// Only the provider's opaque subject is stored; email and name stay with the provider.
+export const accounts = mysqlTable(
+  "accounts",
+  {
+    accountId: uuid("account_id").primaryKey(),
+    issuer: varchar("issuer", { length: 300 }).notNull(),
+    subject: varchar("subject", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at").notNull(),
+    linkedAt: timestamp("linked_at"),
+    // The account opt-in that linking happened under (ADR 0019).
+    consentVersion: varchar("consent_version", { length: 40 }),
+  },
+  (table) => [uniqueIndex("accounts_issuer_subject_idx").on(table.issuer, table.subject)],
 );
 
 export const deletionAuditLog = mysqlTable(

@@ -4,7 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { button, click, mount, text } from "../lesson/dom-test";
 
 const api = vi.hoisted(() => vi.fn());
+const env = vi.hoisted(() => ({ webEnv: { auth: null as unknown } }));
 vi.mock("../api", () => ({ api }));
+vi.mock("../../env", () => env);
 
 const { YourChoices } = await import("./your-choices");
 const { hasConsent, readKeptPhotos, rememberKeptPhoto, setConsent } = await import("../consent");
@@ -13,6 +15,7 @@ afterEach(() => {
   document.body.replaceChildren();
   window.localStorage.clear();
   api.mockReset();
+  env.webEnv.auth = null;
 });
 
 const view = () =>
@@ -55,5 +58,16 @@ describe("YourChoices", () => {
     expect(api.mock.calls.map(([, body]) => body.key)).toEqual(["photos/a.jpg", "photos/b.jpg"]);
     expect(readKeptPhotos()).toEqual([]);
     expect(hasConsent("save-photos")).toBe(false);
+  });
+
+  it("shows the account link choice only where accounts exist", async () => {
+    const off = await view();
+    expect(text(off.container)).not.toContain("Linking to an account");
+    document.body.replaceChildren();
+
+    env.webEnv.auth = { audience: "a", clientId: "c", domain: "d" };
+    setConsent("account", true);
+    const { container } = await view();
+    expect(text(container)).toContain("On. This device's kept photos are tied to your account.");
   });
 });

@@ -28,3 +28,5 @@ export const VISUAL_MAKER = Symbol("VISUAL_MAKER");
 export const RISK_CLASSIFIER = Symbol("RISK_CLASSIFIER");
 export const VISUAL_INTEGRITY = Symbol("VISUAL_INTEGRITY");
 export const VISUAL_ASSETS = Symbol("VISUAL_ASSETS");
+export const ACCOUNTS = Symbol("ACCOUNTS");
+export const TOKEN_VERIFIER = Symbol("TOKEN_VERIFIER");

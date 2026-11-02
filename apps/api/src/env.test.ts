@@ -22,6 +22,15 @@ describe("loadEnv", () => {
     expect(env.features).toEqual({ photoRecognition: true, tutor: true, visualLab: false });
   });
 
+  it("keeps accounts off unless both the issuer and audience are set", () => {
+    expect(loadEnv(valid).auth).toBeNull();
+    expect(
+      loadEnv({ ...valid, AUTH_AUDIENCE: "https://api.test", AUTH_ISSUER: "https://id.test/" })
+        .auth,
+    ).toEqual({ audience: "https://api.test", issuer: "https://id.test/" });
+    expect(() => loadEnv({ ...valid, AUTH_ISSUER: "https://id.test/" })).toThrow(/AUTH_AUDIENCE/);
+  });
+
   it("reads the purge schedule and retention TTLs", () => {
     const env = loadEnv({
       ...valid,

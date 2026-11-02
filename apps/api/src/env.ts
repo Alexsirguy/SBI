@@ -38,12 +38,24 @@ const schema = z.object({
   FEEDBACK_MAX_PER_HOUR: z.coerce.number().int().positive().default(20),
   QUESTIONS_MAX_PER_HOUR: z.coerce.number().int().positive().default(60),
   FEATURE_FLAGS: z.string().optional(),
+  // Accounts stay off unless both are set (ADR 0020); the issuer is the provider's OIDC URL.
+  AUTH_ISSUER: z.url().optional(),
+  AUTH_AUDIENCE: z.string().min(1).optional(),
 });
+
+function parseAuth(env: { AUTH_ISSUER?: string; AUTH_AUDIENCE?: string }) {
+  if (!env.AUTH_ISSUER && !env.AUTH_AUDIENCE) return null;
+  if (!env.AUTH_ISSUER || !env.AUTH_AUDIENCE) {
+    throw new Error("Set both AUTH_ISSUER and AUTH_AUDIENCE, or neither to turn accounts off.");
+  }
+  return { audience: env.AUTH_AUDIENCE, issuer: env.AUTH_ISSUER };
+}
 
 export function loadEnv(source: EnvSource = process.env) {
   const env = createEnv(schema, source);
   return {
     ...env,
+    auth: parseAuth(env),
     features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS),
     ranking: parseRankingConfig(source),
     // Provider keys stay in the source; RecognitionModule builds the chain only when one is set.

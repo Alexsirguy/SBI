@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import { webEnv } from "../env";
 import { Logo } from "./logo";
 
+// The account link appears only where a sign-in provider is configured (ADR 0020).
 const MAIN_LINKS = [
   { href: "/#how", label: "How it works" },
   { href: "/about", label: "About" },
   { href: "/privacy", label: "Privacy" },
-] as const;
+  ...(webEnv.auth ? [{ href: "/account", label: "Account" }] : []),
+];
 
 // Every page's <main> carries id="main", so keyboard users can skip straight past the header.
 export function SiteHeader() {

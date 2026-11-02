@@ -1,3 +1,4 @@
+export * from "./account-api";
 export * from "./api-routes";
 export * from "./common";
 export * from "./consent";

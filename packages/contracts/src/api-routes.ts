@@ -1,4 +1,12 @@
 import type { z } from "zod";
+import {
+  Account,
+  AccountRequest,
+  LinkAccountRequest,
+  LinkedAccount,
+  UnlinkAccountRequest,
+  UnlinkedAccount,
+} from "./account-api";
 import { Lesson } from "./lesson";
 import {
   LessonFeedbackReceipt,
@@ -32,6 +40,7 @@ import {
 import { ServedVisual, VisualRequest } from "./visual";
 
 // GET routes take their request as query parameters, so their request schemas hold strings only.
+// Routes marked `auth: "account"` need a bearer token from the sign-in provider.
 /** HTTP routes served by `apps/api`; the web client and OpenAPI document both read this table. */
 export const API_ROUTES = {
   requestUpload: {
@@ -132,7 +141,39 @@ export const API_ROUTES = {
     response: ServedVisual,
     errors: [400, 404],
   },
+  getAccount: {
+    method: "get",
+    path: "/account",
+    summary: "Return the signed-in account, creating it on first sign-in.",
+    request: AccountRequest,
+    response: Account,
+    errors: [401, 503],
+    auth: "account",
+  },
+  linkAccount: {
+    method: "post",
+    path: "/account/link",
+    summary: "Link this device's kept photos to the signed-in account, with the account opt-in.",
+    request: LinkAccountRequest,
+    response: LinkedAccount,
+    errors: [400, 401, 503],
+    auth: "account",
+  },
+  unlinkAccount: {
+    method: "post",
+    path: "/account/unlink",
+    summary: "Withdraw the account opt-in: kept photos go back to being found on the device only.",
+    request: UnlinkAccountRequest,
+    response: UnlinkedAccount,
+    errors: [401, 503],
+    auth: "account",
+  },
 } as const;
+
+/** True for routes that need a signed-in account. */
+export function needsAccount(name: ApiRouteName): boolean {
+  return (API_ROUTES[name] as { auth?: string }).auth === "account";
+}
 
 export type ApiRouteName = keyof typeof API_ROUTES;
 export type ApiRequest<N extends ApiRouteName> = z.input<(typeof API_ROUTES)[N]["request"]>;

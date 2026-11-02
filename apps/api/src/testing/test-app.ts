@@ -14,7 +14,9 @@ import type { FallbackRecogniser, RecognitionResultRepository } from "@sbi/recog
 import type { CatalogGapRepository } from "@sbi/taxonomy";
 import { AppModule, configureApp } from "../app.module";
 import { loadEnv } from "../env";
+import { fakeAccounts } from "./test-auth";
 import {
+  ACCOUNTS,
   API_ENV,
   CATALOG_GAPS,
   DATABASE,
@@ -128,6 +130,7 @@ export function fakeGaps() {
 
 export interface TestApp {
   app: NestFastifyApplication;
+  get(path: string, headers?: Record<string, string>): Promise<Response>;
   post(path: string, body: unknown, headers?: Record<string, string>): Promise<Response>;
   url: string;
 }
@@ -162,7 +165,9 @@ export async function startTestApp(
     .overrideProvider(PURGE_PASS)
     .useValue(async () => ({ acquired: false }))
     .overrideProvider(FRESHNESS_PASS)
-    .useValue(async () => ({ acquired: false }));
+    .useValue(async () => ({ acquired: false }))
+    .overrideProvider(ACCOUNTS)
+    .useValue(fakeAccounts().repository);
   const moduleRef = await configure(base).compile();
   const app = configureApp(
     moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
@@ -174,6 +179,7 @@ export async function startTestApp(
   const url = await app.getUrl();
   return {
     app,
+    get: (path, headers = {}) => fetch(`${url}${path}`, { headers }),
     post: (path, body, headers = {}) =>
       fetch(`${url}${path}`, {
         body: typeof body === "string" ? body : JSON.stringify(body),

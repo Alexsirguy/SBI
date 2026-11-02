@@ -44,6 +44,7 @@ const TABLES = [
   "lesson_review_events",
   "evidence_packs",
   "lesson_feedback",
+  "accounts",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -614,6 +615,53 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       }
       expect(await repos.deletionAudit.purgeOlderThan(at(-500))).toBe(2);
       expect(await repos.deletionAudit.purgeOlderThan(at(-500))).toBe(0);
+    });
+  });
+
+  describe("accounts", () => {
+    const now = new Date("2026-11-02T10:00:00Z");
+    const photo = (key: string) => ({
+      createdAt: now,
+      expiresAt: now,
+      key,
+      kind: "original" as const,
+    });
+
+    it("creates an account on first sign-in and finds the same one after", async () => {
+      const first = await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now);
+      const again = await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now);
+      const other = await repos.accounts.findOrCreate("https://other.test/", "auth0|a", now);
+
+      expect(again).toEqual(first);
+      expect(first.linkedAt).toBeNull();
+      expect(other.accountId).not.toBe(first.accountId);
+    });
+
+    it("links only kept photos nobody owns, and unlinks without unkeeping", async () => {
+      const mine = await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now);
+      const theirs = await repos.accounts.findOrCreate("https://id.test/", "auth0|b", now);
+      for (const key of ["photos/kept.jpg", "photos/theirs.jpg", "photos/unkept.jpg"]) {
+        await repos.mediaRegistry.register(photo(key));
+      }
+      await repos.mediaRegistry.keep("photos/kept.jpg", "consent-1");
+      await repos.mediaRegistry.keep("photos/theirs.jpg", "consent-1");
+      await repos.accounts.link(theirs.accountId, ["photos/theirs.jpg"], "consent-1", now);
+
+      const keys = ["photos/kept.jpg", "photos/theirs.jpg", "photos/unkept.jpg"];
+      expect(await repos.accounts.link(mine.accountId, keys, "consent-1", now)).toBe(1);
+      expect(
+        (await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now)).linkedAt,
+      ).toEqual(now);
+
+      expect(await repos.accounts.unlink(mine.accountId)).toBe(1);
+      const [row] = await handle.db
+        .select()
+        .from(mediaObjects)
+        .where(eq(mediaObjects.objectKey, "photos/kept.jpg"));
+      expect(row).toMatchObject({ ownerAccountId: null, savedByUser: true });
+      expect(
+        (await repos.accounts.findOrCreate("https://id.test/", "auth0|a", now)).linkedAt,
+      ).toBeNull();
     });
   });
 
