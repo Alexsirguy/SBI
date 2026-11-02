@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ConsentVersion } from "./consent";
 
 export const ApiError = z.object({ error: z.string().min(1) });
 
@@ -23,6 +24,11 @@ export const ConfirmedPhoto = z.object({
   contentType: z.enum(["image/jpeg", "image/png"]),
 });
 
-export const KeepPhotoRequest = z.object({ key: PhotoKey });
+/** Keeping a photo needs the learner's save-photos opt-in; its version is stored with the photo. */
+export const KeepPhotoRequest = z.object({ key: PhotoKey, consentVersion: ConsentVersion });
 
 export const KeptPhoto = z.object({ kept: z.literal(true) });
+
+export const DeletePhotoRequest = z.object({ key: PhotoKey });
+
+export const DeletedPhoto = z.object({ deleted: z.literal(true) });

@@ -1,0 +1,1 @@
+ALTER TABLE `media_objects` ADD `consent_version` varchar(40);

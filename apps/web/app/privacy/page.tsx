@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PHOTO_RETENTION_DAYS } from "../capture/limits";
 import "../home.css";
+import { YourChoices } from "./your-choices";
 
 export const metadata: Metadata = { title: "Privacy · Science Behind It" };
 
@@ -27,7 +28,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           It is deleted within {PHOTO_RETENTION_DAYS} days, or sooner once recognised, unless you
-          choose to keep it.
+          choose to keep it. A kept photo stays until you delete it, below.
         </li>
       </ul>
 
@@ -54,6 +55,8 @@ export default function PrivacyPage() {
           other personal details.
         </li>
       </ul>
+
+      <YourChoices />
 
       <h2>Fonts and other sites</h2>
       <p>

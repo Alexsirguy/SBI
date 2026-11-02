@@ -78,15 +78,23 @@ export function createMediaRegistry(db: Database): MediaRegistry {
     },
 
     // A claimed row is mid-deletion, so keeping it now would promise something already lost.
-    async keep(key) {
+    async keep(key, consentVersion) {
       const result = await db
         .update(mediaObjects)
-        .set({ expiresAt: null, savedByUser: true })
+        .set({ consentVersion, expiresAt: null, savedByUser: true })
         .where(and(eq(mediaObjects.objectKey, key), isNull(mediaObjects.deletingAt)));
       return (
         affected(result) === 1 ||
         matches(db, key, and(isNull(mediaObjects.deletingAt), eq(mediaObjects.savedByUser, true)))
       );
+    },
+
+    async release(key, now) {
+      const result = await db
+        .update(mediaObjects)
+        .set({ consentVersion: null, expiresAt: now, savedByUser: false })
+        .where(eq(mediaObjects.objectKey, key));
+      return affected(result) === 1 || matches(db, key, undefined);
     },
 
     async listExpired(now, limit) {

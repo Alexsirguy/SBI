@@ -2,11 +2,13 @@ import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
 import type { ApiRequest, ApiResponse } from "@sbi/contracts";
 import {
   confirmUpload,
+  deleteOnRequest,
   issueUploadToken,
   ScanUnavailableError,
   UploadRejectedError,
   validateUploadIntent,
   verifyUploadToken,
+  type DeletionAuditLog,
   type MalwareScanner,
   type MediaRegistry,
   type ObjectStorage,
@@ -17,6 +19,7 @@ import { UserFacingException } from "../common/user-facing.exception";
 import type { ApiEnv } from "../env";
 import {
   API_ENV,
+  DELETION_AUDIT,
   MALWARE_SCANNER,
   MEDIA_REGISTRY,
   OBJECT_STORAGE,
@@ -39,10 +42,15 @@ export class MediaService {
   constructor(
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
     @Inject(MALWARE_SCANNER) private readonly scanner: MalwareScanner,
-    @Inject(MEDIA_REGISTRY) private readonly registry: Pick<MediaRegistry, "register" | "keep">,
+    @Inject(MEDIA_REGISTRY)
+    private readonly registry: Pick<
+      MediaRegistry,
+      "register" | "keep" | "release" | "claimForDeletion" | "forget"
+    >,
     @Inject(RETENTION_POLICY) private readonly retention: RetentionPolicy,
     @Inject(UPLOAD_POLICY) private readonly uploadPolicy: UploadPolicy,
     @Inject(API_ENV) private readonly env: Pick<ApiEnv, "UPLOAD_TOKEN_SECRET">,
+    @Inject(DELETION_AUDIT) private readonly audit: DeletionAuditLog,
   ) {}
 
   async requestUpload(intent: ApiRequest<"requestUpload">): Promise<ApiResponse<"requestUpload">> {
@@ -109,10 +117,13 @@ export class MediaService {
     }
   }
 
-  async keepPhoto({ key }: ApiRequest<"keepPhoto">): Promise<ApiResponse<"keepPhoto">> {
+  async keepPhoto({
+    key,
+    consentVersion,
+  }: ApiRequest<"keepPhoto">): Promise<ApiResponse<"keepPhoto">> {
     let kept: boolean;
     try {
-      kept = await this.registry.keep(key);
+      kept = await this.registry.keep(key, consentVersion);
     } catch (error) {
       this.logger.error(`Keeping failed: ${messageOf(error)}`);
       throw new UserFacingException(
@@ -127,5 +138,22 @@ export class MediaService {
       );
     }
     return { kept: true };
+  }
+
+  async deletePhoto({ key }: ApiRequest<"deletePhoto">): Promise<ApiResponse<"deletePhoto">> {
+    try {
+      await deleteOnRequest(
+        { audit: this.audit, registry: this.registry, storage: this.storage },
+        key,
+        new Date(),
+      );
+    } catch (error) {
+      this.logger.error(`Deleting failed: ${messageOf(error)}`);
+      throw new UserFacingException(
+        "The photo could not be deleted. Try again.",
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+    return { deleted: true };
   }
 }

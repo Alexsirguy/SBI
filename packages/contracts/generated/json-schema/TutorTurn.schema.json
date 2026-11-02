@@ -114,6 +114,10 @@
         "research-consented"
       ]
     },
+    "consentVersion": {
+      "type": "string",
+      "pattern": "^consent-\\d+$"
+    },
     "createdAt": {
       "type": "string",
       "format": "date-time",

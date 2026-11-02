@@ -4,6 +4,7 @@ import { Test, type TestingModuleBuilder } from "@nestjs/testing";
 import {
   ObjectMissingError,
   type MalwareScanner,
+  type DeletionAuditEntry,
   type MediaObjectRecord,
   type ObjectStorage,
   type ScanVerdict,
@@ -19,6 +20,7 @@ import {
   DATABASE,
   FRESHNESS_PASS,
   MALWARE_SCANNER,
+  DELETION_AUDIT,
   MEDIA_REGISTRY,
   OBJECT_STORAGE,
   PURGE_PASS,
@@ -62,13 +64,39 @@ export function fakeMedia(verdict: ScanVerdict = { status: "clean" }) {
     write: async (key, bytes) => void objects.set(key, bytes),
   };
   const scanner: MalwareScanner = { scan: async () => verdict };
+  const consents = new Map<string, string>();
+  const audit: DeletionAuditEntry[] = [];
+  const known = (key: string) => records.some((record) => record.key === key);
   const registry = {
     expireSooner: async (key: string, at: Date) => void expiredSooner.set(key, at),
-    keep: async (key: string) =>
-      records.some((record) => record.key === key) && kept.add(key).has(key),
+    keep: async (key: string, consentVersion: string) =>
+      known(key) && !!consents.set(key, consentVersion) && kept.add(key).has(key),
+    release: async (key: string) => known(key) && (kept.delete(key) || true),
+    claimForDeletion: async (key: string) => known(key),
+    forget: async (key: string) => {
+      records.splice(
+        records.findIndex((record) => record.key === key),
+        1,
+      );
+    },
     register: async (record: MediaObjectRecord) => void records.push(record),
   };
-  return { expiredSooner, kept, objects, records, registry, scanner, storage };
+  const deletionAudit = {
+    record: async (entry: DeletionAuditEntry) => void audit.push(entry),
+    purgeOlderThan: async () => 0,
+  };
+  return {
+    audit,
+    consents,
+    deletionAudit,
+    expiredSooner,
+    kept,
+    objects,
+    records,
+    registry,
+    scanner,
+    storage,
+  };
 }
 
 export function fakeRecognition(recogniser: FallbackRecogniser | null = null) {
@@ -93,6 +121,7 @@ export function fakeGaps() {
   const repository: CatalogGapRepository = {
     record: async (term, source) => void recorded.push({ source, term }),
     top: async () => [],
+    deleteLastSeenBefore: async () => 0,
   };
   return { recorded, repository };
 }
@@ -122,6 +151,8 @@ export async function startTestApp(
     .useValue(media.scanner)
     .overrideProvider(MEDIA_REGISTRY)
     .useValue(media.registry)
+    .overrideProvider(DELETION_AUDIT)
+    .useValue(media.deletionAudit)
     .overrideProvider(RECOGNISER)
     .useValue(recognition.recogniser)
     .overrideProvider(RECOGNITION_RESULTS)

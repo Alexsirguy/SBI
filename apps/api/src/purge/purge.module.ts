@@ -7,7 +7,7 @@ import {
   type OnApplicationShutdown,
 } from "@nestjs/common";
 import type { DatabaseHandle, LockResult, Repositories } from "@sbi/db";
-import { runDeletionPass, type ObjectStorage, type RetentionPolicy } from "@sbi/media";
+import type { ObjectStorage, RetentionPolicy } from "@sbi/media";
 import type { ApiEnv } from "../env";
 import { MediaModule } from "../media/media.module";
 import {
@@ -19,6 +19,7 @@ import {
   RETENTION_POLICY,
 } from "../tokens";
 import { startPurgeWorker, type PurgePassResult, type PurgeWorker } from "./purge-worker";
+import { runRetentionPass, type RetentionSettings } from "./retention-pass";
 
 export type PurgePass = () => Promise<LockResult<PurgePassResult>>;
 
@@ -65,22 +66,12 @@ export class PurgeService implements OnApplicationBootstrap, OnApplicationShutdo
           repos: Repositories,
           storage: ObjectStorage,
           retention: RetentionPolicy,
-          env: Pick<ApiEnv, "FEEDBACK_DETAILS_RETENTION_DAYS">,
+          env: RetentionSettings,
         ): PurgePass =>
         () =>
-          database.withLock("media-purge", async () => {
-            const now = new Date();
-            const media = await runDeletionPass(
-              { audit: repos.deletionAudit, registry: repos.mediaRegistry, storage },
-              now,
-              retention,
-            );
-            const recognitionPurged = await repos.recognitionResults.deleteExpired(now);
-            const feedbackDetailsCleared = await repos.lessonFeedback.clearDetailsBefore(
-              new Date(now.getTime() - env.FEEDBACK_DETAILS_RETENTION_DAYS * 86_400_000),
-            );
-            return { ...media, recognitionPurged, feedbackDetailsCleared };
-          }),
+          database.withLock("media-purge", () =>
+            runRetentionPass({ repos, storage }, new Date(), retention, env),
+          ),
     },
   ],
 })

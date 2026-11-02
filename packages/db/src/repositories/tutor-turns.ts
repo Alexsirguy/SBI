@@ -1,6 +1,6 @@
 import { TutorTurn } from "@sbi/contracts";
 import type { TutorTurnRepository } from "@sbi/tutor";
-import { eq } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
 import type { Database } from "../client";
 import { tutorTurns } from "../schema";
 import { parseDocuments } from "./document";
@@ -30,6 +30,14 @@ export function createTutorTurnRepository(db: Database): TutorTurnRepository {
     },
     async deleteBySession(sessionId) {
       const [result] = await db.delete(tutorTurns).where(eq(tutorTurns.sessionId, sessionId));
+      return result.affectedRows;
+    },
+    async deleteCreatedBefore(retentionClass, before) {
+      const [result] = await db
+        .delete(tutorTurns)
+        .where(
+          and(eq(tutorTurns.retentionClass, retentionClass), lt(tutorTurns.createdAt, before)),
+        );
       return result.affectedRows;
     },
   };

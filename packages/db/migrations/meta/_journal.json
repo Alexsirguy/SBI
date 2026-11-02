@@ -99,6 +99,20 @@
       "when": 1793462625823,
       "tag": "0013_visual_manifests",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1793643143119,
+      "tag": "0014_retention_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1793643717698,
+      "tag": "0015_photo_consent",
+      "breakpoints": true
     }
   ]
 }

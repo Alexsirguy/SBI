@@ -12,11 +12,12 @@ import {
 } from "@sbi/contracts";
 import { DuplicateSourceError } from "@sbi/evidence";
 import { loadFixtures } from "@sbi/testing";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createDatabase, type DatabaseHandle } from "./client";
 import { runMigrations } from "./migrate";
 import { createRepositories, type Repositories } from "./repositories";
+import { mediaObjects } from "./schema";
 
 try {
   process.loadEnvFile(join(import.meta.dirname, "../.env"));
@@ -168,6 +169,29 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       await repos.evidencePacks.save(regathered);
       expect((await repos.evidencePacks.get(pack.packKey))?.createdAt).toBe(regathered.createdAt);
       expect(await repos.evidencePacks.get("b".repeat(64))).toBeUndefined();
+    });
+
+    it("deletes packs gathered before the cutoff", async () => {
+      const base = {
+        taxonomyId: "object.electric-kettle",
+        planVersion: "muse-spark-1.3+inquiry-plan-p0.1",
+        questions: [],
+      };
+      await repos.evidencePacks.save({
+        ...base,
+        packKey: "c".repeat(64),
+        createdAt: "2026-09-01T00:00:00.000Z",
+      });
+      await repos.evidencePacks.save({
+        ...base,
+        packKey: "d".repeat(64),
+        createdAt: "2026-10-30T00:00:00.000Z",
+      });
+      expect(await repos.evidencePacks.deleteCreatedBefore(new Date("2026-10-01T00:00:00Z"))).toBe(
+        1,
+      );
+      expect(await repos.evidencePacks.get("c".repeat(64))).toBeUndefined();
+      expect(await repos.evidencePacks.get("d".repeat(64))).toBeDefined();
     });
   });
 
@@ -468,6 +492,15 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         },
       ]);
     });
+
+    it("forgets terms nobody has used since the cutoff", async () => {
+      await repos.catalogGaps.record("old term", "observation", new Date("2025-01-01T00:00:00Z"));
+      await repos.catalogGaps.record("new term", "observation", new Date("2026-10-28T00:00:00Z"));
+      expect(await repos.catalogGaps.deleteLastSeenBefore(new Date("2026-01-01T00:00:00Z"))).toBe(
+        1,
+      );
+      expect((await repos.catalogGaps.top(5)).map((gap) => gap.term)).toEqual(["new term"]);
+    });
   });
 
   describe("tutor turns", () => {
@@ -482,6 +515,23 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         second.turnId,
       ]);
       expect(await repos.tutorTurns.deleteBySession(turn.sessionId)).toBe(2);
+    });
+
+    it("deletes old turns of one retention class only", async () => {
+      const turn = fixture(TutorTurn, "tutor-turn", "grounded-answer");
+      const old = {
+        ...turn,
+        retentionClass: "session" as const,
+        createdAt: "2026-10-01T10:00:00Z",
+      };
+      const recent = { ...old, turnId: newId(), createdAt: "2026-10-30T10:00:00Z" };
+      const review = { ...old, turnId: newId(), retentionClass: "quality-review" as const };
+      for (const item of [old, recent, review]) await repos.tutorTurns.save(item);
+      const cutoff = new Date("2026-10-15T00:00:00Z");
+      expect(await repos.tutorTurns.deleteCreatedBefore("session", cutoff)).toBe(1);
+      expect(
+        (await repos.tutorTurns.listBySession(turn.sessionId)).map((t) => t.turnId).sort(),
+      ).toEqual([recent.turnId, review.turnId].sort());
     });
   });
 
@@ -500,7 +550,7 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       await repos.mediaRegistry.register(original("photos/late.jpg", at(-1000)));
       await repos.mediaRegistry.register(original("photos/fresh.jpg", at(1)));
       await repos.mediaRegistry.register(original("photos/kept.jpg", at(-1000)));
-      expect(await repos.mediaRegistry.keep("photos/kept.jpg")).toBe(true);
+      expect(await repos.mediaRegistry.keep("photos/kept.jpg", "consent-1")).toBe(true);
 
       const expired = await repos.mediaRegistry.listExpired(now, 10);
       expect(expired.map((item) => item.key)).toEqual(["photos/late.jpg", "photos/on-time.jpg"]);
@@ -511,21 +561,38 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       await repos.mediaRegistry.register(original("photos/a.jpg", now));
       await repos.mediaRegistry.register(original("photos/b.jpg", now));
 
-      expect(await repos.mediaRegistry.keep("photos/a.jpg")).toBe(true);
-      expect(await repos.mediaRegistry.keep("photos/a.jpg")).toBe(true);
+      expect(await repos.mediaRegistry.keep("photos/a.jpg", "consent-1")).toBe(true);
+      expect(await repos.mediaRegistry.keep("photos/a.jpg", "consent-1")).toBe(true);
       expect(await repos.mediaRegistry.claimForDeletion("photos/a.jpg", now)).toBe(false);
 
       expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", now)).toBe(true);
-      expect(await repos.mediaRegistry.keep("photos/b.jpg")).toBe(false);
+      expect(await repos.mediaRegistry.keep("photos/b.jpg", "consent-1")).toBe(false);
       expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", at(60_000))).toBe(true);
       await repos.mediaRegistry.forget("photos/b.jpg");
       expect(await repos.mediaRegistry.claimForDeletion("photos/b.jpg", now)).toBe(false);
     });
 
+    it("records the consent a photo was kept under, and releases it for deletion", async () => {
+      await repos.mediaRegistry.register(original("photos/kept.jpg", at(86_400_000)));
+      await repos.mediaRegistry.keep("photos/kept.jpg", "consent-1");
+      const [kept] = await handle.db
+        .select({ consentVersion: mediaObjects.consentVersion })
+        .from(mediaObjects)
+        .where(eq(mediaObjects.objectKey, "photos/kept.jpg"));
+      expect(kept?.consentVersion).toBe("consent-1");
+
+      expect(await repos.mediaRegistry.release("photos/kept.jpg", now)).toBe(true);
+      expect((await repos.mediaRegistry.listExpired(now, 10)).map((item) => item.key)).toEqual([
+        "photos/kept.jpg",
+      ]);
+      expect(await repos.mediaRegistry.release("photos/kept.jpg", now)).toBe(true);
+      expect(await repos.mediaRegistry.release("photos/gone.jpg", now)).toBe(false);
+    });
+
     it("only brings expiry forward, and never for a kept photo", async () => {
       await repos.mediaRegistry.register(original("photos/a.jpg", at(86_400_000)));
       await repos.mediaRegistry.register(original("photos/kept.jpg", at(86_400_000)));
-      await repos.mediaRegistry.keep("photos/kept.jpg");
+      await repos.mediaRegistry.keep("photos/kept.jpg", "consent-1");
 
       await repos.mediaRegistry.expireSooner("photos/a.jpg", at(3_600_000));
       await repos.mediaRegistry.expireSooner("photos/a.jpg", at(2 * 86_400_000));

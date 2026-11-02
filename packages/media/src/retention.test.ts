@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_RETENTION_POLICY,
+  deleteOnRequest,
   expiryFor,
   parseRetentionPolicy,
   recognisedExpiry,
@@ -45,6 +46,13 @@ function memoryRegistry(rows: Row[], hooks: { beforeClaim?: (key: string) => voi
       }
       row.saved = true;
       row.expiresAt = null;
+      return true;
+    },
+    release: async (key, now) => {
+      const row = rows.find((candidate) => candidate.key === key);
+      if (!row) return false;
+      row.saved = false;
+      row.expiresAt = now;
       return true;
     },
     listExpired: async (now, limit) =>
@@ -111,8 +119,8 @@ describe("retention policy", () => {
     ).toMatchObject({ derivativeTtlDays: 14, logTtlDays: 30, originalTtlDays: 7 });
   });
 
-  it("refuses to keep originals longer than thirty days", () => {
-    expect(() => parseRetentionPolicy({ MEDIA_TTL_ORIGINAL_DAYS: "60" })).toThrow(
+  it("refuses to keep originals longer than the seven days the privacy notice promises", () => {
+    expect(() => parseRetentionPolicy({ MEDIA_TTL_ORIGINAL_DAYS: "8" })).toThrow(
       "MEDIA_TTL_ORIGINAL_DAYS",
     );
   });
@@ -149,7 +157,7 @@ describe("runDeletionPass", () => {
     const rows = [row("photos/a.jpg", NOW)];
     const registry = memoryRegistry(rows, {
       beforeClaim: (key) => {
-        void registry.keep(key);
+        void registry.keep(key, "consent-1");
       },
     });
     const storage = fakeStorage();
@@ -170,7 +178,7 @@ describe("runDeletionPass", () => {
       ),
     ).rejects.toThrow("storage unavailable");
     expect(rows[0]?.claimed).toBe(true);
-    await expect(registry.keep("photos/a.jpg")).resolves.toBe(false);
+    await expect(registry.keep("photos/a.jpg", "consent-1")).resolves.toBe(false);
 
     const retry = await runDeletionPass(
       { audit: auditLog(), registry, storage: fakeStorage() },
@@ -203,5 +211,36 @@ describe("runDeletionPass", () => {
     );
     expect(result.deleted).toHaveLength(2);
     expect(rows).toHaveLength(3);
+  });
+});
+
+describe("deleteOnRequest", () => {
+  it("deletes a kept photo at once and audits why", async () => {
+    const rows = [row("photos/kept.jpg", null, { saved: true })];
+    const storage = fakeStorage();
+    const audit = auditLog();
+    await deleteOnRequest(
+      { audit, registry: memoryRegistry(rows), storage },
+      "photos/kept.jpg",
+      NOW,
+    );
+    expect(storage.removed).toEqual(["photos/kept.jpg"]);
+    expect(rows).toHaveLength(0);
+    expect(audit.entries).toEqual([
+      {
+        deletedAt: NOW,
+        key: "photos/kept.jpg",
+        kind: "original",
+        reason: "deleted at the learner's request",
+      },
+    ]);
+  });
+
+  it("treats a photo that is already gone as deleted", async () => {
+    const storage = fakeStorage();
+    const audit = auditLog();
+    await deleteOnRequest({ audit, registry: memoryRegistry([]), storage }, "photos/gone.jpg", NOW);
+    expect(storage.removed).toEqual([]);
+    expect(audit.entries).toEqual([]);
   });
 });

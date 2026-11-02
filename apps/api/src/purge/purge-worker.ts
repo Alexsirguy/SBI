@@ -9,6 +9,9 @@ import {
 export interface PurgePassResult extends DeletionPassResult {
   recognitionPurged: number;
   feedbackDetailsCleared: number;
+  tutorTurnsPurged: number;
+  evidencePacksPurged: number;
+  catalogGapsPurged: number;
 }
 
 export interface PurgeWorkerOptions {
@@ -29,12 +32,18 @@ export function startPurgeWorker(options: PurgeWorkerOptions): PurgeWorker {
       recognitionPurged,
       stagingDeleted,
       feedbackDetailsCleared,
+      tutorTurnsPurged,
+      evidencePacksPurged,
+      catalogGapsPurged,
     }) => ({
       auditPurged,
       deleted: deleted.length,
       recognitionPurged,
       stagingDeleted,
       feedbackDetailsCleared,
+      tutorTurnsPurged,
+      evidencePacksPurged,
+      catalogGapsPurged,
     }),
   });
 }

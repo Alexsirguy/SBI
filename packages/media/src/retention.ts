@@ -28,7 +28,8 @@ const schema = z.object({
   MEDIA_TTL_AUDIT_DAYS: z.coerce.number().int().positive().default(365),
   MEDIA_TTL_DERIVATIVE_DAYS: z.coerce.number().int().positive().default(30),
   MEDIA_TTL_LOG_DAYS: z.coerce.number().int().positive().default(90),
-  MEDIA_TTL_ORIGINAL_DAYS: z.coerce.number().int().positive().max(30).default(7),
+  // The privacy notice promises seven days, so configuration can only shorten it.
+  MEDIA_TTL_ORIGINAL_DAYS: z.coerce.number().int().positive().max(7).default(7),
   MEDIA_TTL_RECOGNISED_GRACE_HOURS: z.coerce.number().int().nonnegative().default(1),
   MEDIA_TTL_STAGING_HOURS: z.coerce.number().int().positive().default(24),
 });
@@ -69,7 +70,9 @@ export interface MediaRegistry {
   /** Brings expiry forward for an unsaved object; never extends it. */
   expireSooner(key: string, expiresAt: Date): Promise<void>;
   /** Returns false when the object is gone or already being deleted. */
-  keep(key: string): Promise<boolean>;
+  keep(key: string, consentVersion: string): Promise<boolean>;
+  /** Ends a keep so the object is due now; false when it is already gone. */
+  release(key: string, now: Date): Promise<boolean>;
   listExpired(now: Date, limit: number): Promise<MediaObjectRecord[]>;
   /** Atomically marks an expired, unsaved object for deletion so a late keep cannot race it. */
   claimForDeletion(key: string, now: Date): Promise<boolean>;
@@ -141,4 +144,27 @@ export async function runDeletionPass(
     new Date(now.getTime() - policy.auditTtlDays * DAY_MS),
   );
   return { auditPurged, deleted, stagingDeleted: abandoned.length };
+}
+
+/** Deletes one photo at the learner's request, kept or not; already gone counts as done. */
+export async function deleteOnRequest(
+  deps: {
+    registry: Pick<MediaRegistry, "release" | "claimForDeletion" | "forget">;
+    storage: Pick<ObjectStorage, "remove">;
+    audit: DeletionAuditLog;
+  },
+  key: string,
+  now: Date,
+): Promise<void> {
+  if (!(await deps.registry.release(key, now))) return;
+  // Another pass may hold the claim; it will finish the deletion, so this request is still met.
+  if (!(await deps.registry.claimForDeletion(key, now))) return;
+  await deps.storage.remove([key]);
+  await deps.registry.forget(key);
+  await deps.audit.record({
+    deletedAt: now,
+    key,
+    kind: "original",
+    reason: "deleted at the learner's request",
+  });
 }

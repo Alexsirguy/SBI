@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, Inject, Post } from "@nestjs/common";
 import {
   API_ROUTES,
   ConfirmUploadRequest,
+  DeletePhotoRequest,
   KeepPhotoRequest,
   UploadRequest,
   type ApiRequest,
@@ -35,5 +36,13 @@ export class MediaController {
   @HttpCode(200)
   keepPhoto(@Body(new ZodPipe(KeepPhotoRequest, "Unknown photo.")) body: ApiRequest<"keepPhoto">) {
     return this.media.keepPhoto(body);
+  }
+
+  @Post(API_ROUTES.deletePhoto.path)
+  @HttpCode(200)
+  deletePhoto(
+    @Body(new ZodPipe(DeletePhotoRequest, "Unknown photo.")) body: ApiRequest<"deletePhoto">,
+  ) {
+    return this.media.deletePhoto(body);
   }
 }

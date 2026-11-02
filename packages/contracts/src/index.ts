@@ -1,5 +1,6 @@
 export * from "./api-routes";
 export * from "./common";
+export * from "./consent";
 export * from "./content-hash";
 export * from "./evidence";
 export * from "./json-schema";

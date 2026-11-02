@@ -65,9 +65,24 @@ describe("media routes", () => {
     expect(media.records.map((record) => record.key)).toEqual([photo.key]);
     expect([...media.objects.keys()]).toEqual([photo.key]);
 
-    const keep = await test.post("/photos/keep", { key: photo.key });
+    const keep = await test.post("/photos/keep", { key: photo.key, consentVersion: "consent-1" });
     expect(await keep.json()).toEqual({ kept: true });
     expect(media.kept.has(photo.key)).toBe(true);
+    expect(media.consents.get(photo.key)).toBe("consent-1");
+
+    const deleted = await test.post("/photos/delete", { key: photo.key });
+    expect(await deleted.json()).toEqual({ deleted: true });
+    expect(media.objects.size).toBe(0);
+    expect(media.records).toHaveLength(0);
+    expect(media.audit.map((entry) => entry.reason)).toEqual(["deleted at the learner's request"]);
+    expect((await test.post("/photos/delete", { key: photo.key })).status).toBe(200);
+  });
+
+  it("keeps a photo only with the learner's save-photos opt-in", async () => {
+    test = await startTestApp();
+    const key = "photos/0192f1a0-0000-7000-8000-000000000001.jpg";
+    expect((await test.post("/photos/keep", { key })).status).toBe(400);
+    expect((await test.post("/photos/keep", { key, consentVersion: "yes" })).status).toBe(400);
   });
 
   it("refuses forged tokens and photos that could not be scanned", async () => {
@@ -91,9 +106,13 @@ describe("media routes", () => {
   it("reports invalid keys and photos deleted before they could be kept", async () => {
     test = await startTestApp();
 
-    expect((await test.post("/photos/keep", { key: "staging/x.png" })).status).toBe(400);
+    expect(
+      (await test.post("/photos/keep", { key: "staging/x.png", consentVersion: "consent-1" }))
+        .status,
+    ).toBe(400);
     const gone = await test.post("/photos/keep", {
       key: "photos/0192f1a0-0000-7000-8000-000000000001.jpg",
+      consentVersion: "consent-1",
     });
     expect(gone.status).toBe(409);
     expect(await gone.json()).toEqual({

@@ -28,6 +28,13 @@ const schema = z.object({
   EVIDENCE_BUDGET_MS: z.coerce.number().int().positive().default(120_000),
   // Free text may hold personal details despite the form's hint, so it does not outlive triage.
   FEEDBACK_DETAILS_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
+  // Tutor turns by retention class (docs/retention.md); research needs the learner's opt-in.
+  TUTOR_TTL_SESSION_HOURS: z.coerce.number().int().positive().default(24),
+  TUTOR_TTL_QUALITY_DAYS: z.coerce.number().int().positive().default(30),
+  TUTOR_TTL_RESEARCH_DAYS: z.coerce.number().int().positive().max(365).default(365),
+  // Packs older than the 30-day reuse window are never read again.
+  EVIDENCE_PACK_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  CATALOG_GAP_TTL_DAYS: z.coerce.number().int().positive().default(365),
   FEEDBACK_MAX_PER_HOUR: z.coerce.number().int().positive().default(20),
   QUESTIONS_MAX_PER_HOUR: z.coerce.number().int().positive().default(60),
   FEATURE_FLAGS: z.string().optional(),
