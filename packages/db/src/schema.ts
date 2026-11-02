@@ -46,7 +46,10 @@ export const evidencePacks = mysqlTable(
     createdAt: timestamp("created_at").notNull(),
     document: jsonDocument("document").notNull(),
   },
-  (table) => [index("evidence_packs_taxonomy_idx").on(table.taxonomyId)],
+  (table) => [
+    index("evidence_packs_taxonomy_idx").on(table.taxonomyId),
+    index("evidence_packs_created_idx").on(table.createdAt),
+  ],
 );
 
 // Append-only review trail (#55): who moved a lesson version between review states, and when.
@@ -195,7 +198,10 @@ export const tutorTurns = mysqlTable(
     createdAt: timestamp("created_at").notNull(),
     document: jsonDocument("document").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.sessionId, table.turnId] })],
+  (table) => [
+    primaryKey({ columns: [table.sessionId, table.turnId] }),
+    index("tutor_turns_retention_idx").on(table.retentionClass, table.createdAt),
+  ],
 );
 
 // Registry of stored photos and their deletion dates; the bytes live in private object storage.
@@ -237,5 +243,6 @@ export const catalogGaps = mysqlTable(
   (table) => [
     primaryKey({ columns: [table.term, table.source] }),
     index("catalog_gaps_count_idx").on(table.count),
+    index("catalog_gaps_last_seen_idx").on(table.lastSeen),
   ],
 );

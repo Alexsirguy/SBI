@@ -1,5 +1,5 @@
 import type { CatalogGapRepository, GapSource } from "@sbi/taxonomy";
-import { desc, sql } from "drizzle-orm";
+import { desc, lt, sql } from "drizzle-orm";
 import type { Database } from "../client";
 import { catalogGaps } from "../schema";
 
@@ -18,6 +18,10 @@ export function createCatalogGapRepository(db: Database): CatalogGapRepository {
         .orderBy(desc(catalogGaps.count), desc(catalogGaps.lastSeen))
         .limit(limit);
       return rows.map((row) => ({ ...row, source: row.source as GapSource }));
+    },
+    async deleteLastSeenBefore(before) {
+      const [result] = await db.delete(catalogGaps).where(lt(catalogGaps.lastSeen, before));
+      return result.affectedRows;
     },
   };
 }

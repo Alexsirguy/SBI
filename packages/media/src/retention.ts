@@ -28,7 +28,8 @@ const schema = z.object({
   MEDIA_TTL_AUDIT_DAYS: z.coerce.number().int().positive().default(365),
   MEDIA_TTL_DERIVATIVE_DAYS: z.coerce.number().int().positive().default(30),
   MEDIA_TTL_LOG_DAYS: z.coerce.number().int().positive().default(90),
-  MEDIA_TTL_ORIGINAL_DAYS: z.coerce.number().int().positive().max(30).default(7),
+  // The privacy notice promises seven days, so configuration can only shorten it.
+  MEDIA_TTL_ORIGINAL_DAYS: z.coerce.number().int().positive().max(7).default(7),
   MEDIA_TTL_RECOGNISED_GRACE_HOURS: z.coerce.number().int().nonnegative().default(1),
   MEDIA_TTL_STAGING_HOURS: z.coerce.number().int().positive().default(24),
 });

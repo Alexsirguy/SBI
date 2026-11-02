@@ -7,6 +7,9 @@ const RESULT: PurgePassResult = {
   recognitionPurged: 3,
   stagingDeleted: 2,
   feedbackDetailsCleared: 4,
+  tutorTurnsPurged: 5,
+  evidencePacksPurged: 6,
+  catalogGapsPurged: 7,
 };
 
 function logger() {
@@ -36,6 +39,9 @@ describe("startPurgeWorker", () => {
         recognitionPurged: 3,
         stagingDeleted: 2,
         feedbackDetailsCleared: 4,
+        tutorTurnsPurged: 5,
+        evidencePacksPurged: 6,
+        catalogGapsPurged: 7,
       },
       "media purge pass",
     );

@@ -1,5 +1,5 @@
 import { EvidencePack, type EvidencePackRepository } from "@sbi/evidence";
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import type { Database } from "../client";
 import { evidencePacks } from "../schema";
 import { parseDocuments } from "./document";
@@ -23,6 +23,10 @@ export function createEvidencePackRepository(db: Database): EvidencePackReposito
         document: pack,
       };
       await db.insert(evidencePacks).values(row).onDuplicateKeyUpdate({ set: row });
+    },
+    async deleteCreatedBefore(before) {
+      const [result] = await db.delete(evidencePacks).where(lt(evidencePacks.createdAt, before));
+      return result.affectedRows;
     },
   };
 }

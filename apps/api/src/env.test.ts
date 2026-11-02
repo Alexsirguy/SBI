@@ -48,4 +48,10 @@ describe("loadEnv", () => {
   it("fails fast when required variables are missing", () => {
     expect(() => loadEnv({})).toThrow(EnvError);
   });
+
+  it("keeps tutor turns for research no longer than a year", () => {
+    expect(() => loadEnv({ ...valid, TUTOR_TTL_RESEARCH_DAYS: "400" })).toThrow(
+      "TUTOR_TTL_RESEARCH_DAYS",
+    );
+  });
 });

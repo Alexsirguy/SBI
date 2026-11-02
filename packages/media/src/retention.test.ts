@@ -111,8 +111,8 @@ describe("retention policy", () => {
     ).toMatchObject({ derivativeTtlDays: 14, logTtlDays: 30, originalTtlDays: 7 });
   });
 
-  it("refuses to keep originals longer than thirty days", () => {
-    expect(() => parseRetentionPolicy({ MEDIA_TTL_ORIGINAL_DAYS: "60" })).toThrow(
+  it("refuses to keep originals longer than the seven days the privacy notice promises", () => {
+    expect(() => parseRetentionPolicy({ MEDIA_TTL_ORIGINAL_DAYS: "8" })).toThrow(
       "MEDIA_TTL_ORIGINAL_DAYS",
     );
   });

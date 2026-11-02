@@ -15,6 +15,8 @@ export interface CatalogGap {
 export interface CatalogGapRepository {
   record(term: string, source: GapSource, at: Date): Promise<void>;
   top(limit: number): Promise<CatalogGap[]>;
+  /** Terms come from learners' words, so ones nobody has used for a while are forgotten. */
+  deleteLastSeenBefore(before: Date): Promise<number>;
 }
 
 const STOPWORDS = new Set(

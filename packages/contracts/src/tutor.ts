@@ -6,6 +6,7 @@ import { SafetyCategory } from "./safety";
 export const TurnSafetyCategory = z.enum(["none", ...SafetyCategory.options, "other"]);
 
 export const RetentionClass = z.enum(["session", "quality-review", "research-consented"]);
+export type RetentionClass = z.infer<typeof RetentionClass>;
 
 export const VisualAction = z.object({
   visualId: Uuid,

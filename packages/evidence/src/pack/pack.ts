@@ -63,6 +63,8 @@ export type EvidencePack = z.infer<typeof EvidencePack>;
 export interface EvidencePackRepository {
   get(packKey: string): Promise<EvidencePack | undefined>;
   save(pack: EvidencePack): Promise<void>;
+  /** Packs hold sub-questions worded from the learner's, so they don't outlive their reuse. */
+  deleteCreatedBefore(before: Date): Promise<number>;
 }
 
 export function createMemoryEvidencePackRepository(): EvidencePackRepository {
@@ -74,6 +76,13 @@ export function createMemoryEvidencePackRepository(): EvidencePackRepository {
     },
     async save(pack) {
       packs.set(pack.packKey, structuredClone(EvidencePack.parse(pack)));
+    },
+    async deleteCreatedBefore(before) {
+      const old = [...packs.values()].filter(
+        (pack) => Date.parse(pack.createdAt) < before.getTime(),
+      );
+      for (const pack of old) packs.delete(pack.packKey);
+      return old.length;
     },
   };
 }

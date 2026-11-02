@@ -93,6 +93,7 @@ export function fakeGaps() {
   const repository: CatalogGapRepository = {
     record: async (term, source) => void recorded.push({ source, term }),
     top: async () => [],
+    deleteLastSeenBefore: async () => 0,
   };
   return { recorded, repository };
 }
