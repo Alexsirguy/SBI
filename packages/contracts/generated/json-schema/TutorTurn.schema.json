@@ -84,10 +84,10 @@
       "enum": [
         "none",
         "medical",
-        "chemical",
+        "chemical-exposure",
         "weapons",
         "self-harm",
-        "biological",
+        "dangerous-biology",
         "other"
       ]
     },
