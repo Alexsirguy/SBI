@@ -1,5 +1,6 @@
 export { Button, type ButtonProps } from "./components/button";
 export { type Choice, RadioGroup, Scale } from "./components/choice";
+export { AssetCredits, type Credit } from "./components/credits";
 export {
   Card,
   Disclosure,

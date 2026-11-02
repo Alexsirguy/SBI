@@ -27,7 +27,7 @@ import {
   TaxonomySearchRequest,
   TaxonomySearchResults,
 } from "./taxonomy-api";
-import { VisualManifest, VisualRequest } from "./visual";
+import { ServedVisual, VisualRequest } from "./visual";
 
 // GET routes take their request as query parameters, so their request schemas hold strings only.
 /** HTTP routes served by `apps/api`; the web client and OpenAPI document both read this table. */
@@ -119,7 +119,7 @@ export const API_ROUTES = {
     path: "/visuals",
     summary: "Fetch the manifest of one visual a lesson references.",
     request: VisualRequest,
-    response: VisualManifest,
+    response: ServedVisual,
     errors: [400, 404],
   },
 } as const;

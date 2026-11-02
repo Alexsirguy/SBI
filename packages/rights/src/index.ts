@@ -11,3 +11,4 @@ export {
   projectOutputAsset,
   pubChemStructureAsset,
 } from "./libraries";
+export { creditFor, isShareAlike } from "./credit";

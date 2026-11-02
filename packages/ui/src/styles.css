@@ -363,3 +363,23 @@ a {
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
+
+/* Credits read as fine print under a picture, matching its other notes. */
+.sbi-credits {
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.sbi-credits__title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.sbi-credits ul {
+  margin: var(--sbi-space-1) 0 0;
+  padding-left: 1.2rem;
+}
+
+.sbi-credits__share-alike {
+  margin: var(--sbi-space-2) 0 0;
+}

@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
+  AssetCredits,
   Button,
   Card,
   Disclosure,
@@ -131,5 +132,38 @@ describe("display components", () => {
     );
     expect(html(<Mark>The answer</Mark>)).toBe('<mark class="sbi-mark">The answer</mark>');
     expect(html(<Card className="extra">x</Card>)).toBe('<div class="sbi-card extra">x</div>');
+  });
+});
+
+describe("AssetCredits", () => {
+  const credit = {
+    assetId: "a",
+    text: "Kettle by A. Photographer, CC BY-SA 4.0, changed",
+    itemUrl: "https://commons.wikimedia.org/wiki/File:Kettle.jpg",
+    license: { label: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" },
+    shareAlike: true,
+    changes: "Cropped.",
+  };
+
+  it("links each credit to its item page and licence, and says what changed", () => {
+    const out = html(<AssetCredits credits={[credit]} />);
+    expect(out).toContain(
+      '<a href="https://commons.wikimedia.org/wiki/File:Kettle.jpg" rel="noopener noreferrer" target="_blank">Kettle by A. Photographer, CC BY-SA 4.0, changed</a>',
+    );
+    expect(out).toContain('href="https://creativecommons.org/licenses/by-sa/4.0/"');
+    expect(out).toContain("Cropped.");
+  });
+
+  it("states the share-alike obligation once per licence", () => {
+    const out = html(<AssetCredits credits={[credit, { ...credit, assetId: "b" }]} />);
+    expect(out.match(/Share alike:/g)).toHaveLength(1);
+    expect(out).toContain("you must share it under CC BY-SA 4.0 too");
+    expect(html(<AssetCredits credits={[{ ...credit, shareAlike: false }]} />)).not.toContain(
+      "Share alike",
+    );
+  });
+
+  it("renders nothing when there is nothing to credit", () => {
+    expect(html(<AssetCredits credits={[]} />)).toBe("");
   });
 });
