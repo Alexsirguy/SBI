@@ -2493,6 +2493,59 @@
                           "additionalProperties": {}
                         }
                       ]
+                    },
+                    "credits": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "assetId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "text": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "itemUrl": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "license": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "url": {
+                                "type": "string",
+                                "format": "uri"
+                              }
+                            },
+                            "required": [
+                              "label"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "shareAlike": {
+                            "type": "boolean"
+                          },
+                          "changes": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "assetId",
+                          "text",
+                          "license",
+                          "shareAlike"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
@@ -2505,7 +2558,8 @@
                     "params",
                     "labels",
                     "controls",
-                    "readouts"
+                    "readouts",
+                    "credits"
                   ],
                   "additionalProperties": false
                 }

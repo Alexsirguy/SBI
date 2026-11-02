@@ -1,6 +1,7 @@
 "use client";
 
-import type { VisualManifest } from "@sbi/contracts";
+import type { AssetCredit, VisualManifest } from "@sbi/contracts";
+import { AssetCredits } from "@sbi/ui";
 import type { VisualRegistry } from "@sbi/visuals";
 import { useEffect, useId, useRef } from "react";
 import { webRegistry } from "./registry";
@@ -11,7 +12,8 @@ export function VisualMount({
   manifest,
   registry = webRegistry,
 }: {
-  manifest: VisualManifest;
+  /** Served visuals carry the credits their third-party assets require (#73). */
+  manifest: VisualManifest & { credits?: AssetCredit[] };
   registry?: VisualRegistry;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -46,6 +48,7 @@ export function VisualMount({
         Made by AI for this lesson and simplified
         {manifest.assumptions.length > 0 ? `: ${manifest.assumptions.join(", ")}.` : "."}
       </p>
+      <AssetCredits credits={manifest.credits ?? []} />
     </figure>
   );
 }

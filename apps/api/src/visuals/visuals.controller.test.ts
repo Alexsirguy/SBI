@@ -1,8 +1,9 @@
-import { newId, VisualManifest } from "@sbi/contracts";
+import { newId, ServedVisual, VisualManifest } from "@sbi/contracts";
+import { LIBRARY_ASSETS, pubChemStructureAsset } from "@sbi/rights";
 import type { VisualManifestRepository } from "@sbi/visuals";
 import { afterEach, describe, expect, it } from "vitest";
 import { startTestApp, WEB_ORIGIN, type TestApp } from "../testing/test-app";
-import { VISUAL_MANIFESTS } from "../tokens";
+import { VISUAL_ASSETS, VISUAL_INTEGRITY, VISUAL_MANIFESTS } from "../tokens";
 
 const manifest = VisualManifest.parse({
   visualId: newId(),
@@ -36,7 +37,38 @@ describe("visual routes", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("access-control-allow-origin")).toBe(WEB_ORIGIN);
-    expect(VisualManifest.parse(await response.json())).toEqual(manifest);
+    expect(ServedVisual.parse(await response.json())).toEqual({ ...manifest, credits: [] });
+  });
+
+  it("credits the third-party assets a visual uses, and not its software", async () => {
+    const structure = pubChemStructureAsset({
+      assetId: newId(),
+      cid: 962,
+      sha256: "a".repeat(64),
+      sizeBytes: 10,
+      accessibilityFallback: "A water molecule",
+    });
+    const library = LIBRARY_ASSETS[0];
+    if (!library) throw new Error("no library records");
+    const molecule = { ...manifest, assetIds: [library.assetId, structure.assetId] };
+    const assets = [structure, library];
+    test = await startTestApp(undefined, undefined, undefined, (builder) =>
+      withManifests(molecule)(builder)
+        .overrideProvider(VISUAL_INTEGRITY)
+        .useValue(async () => true)
+        .overrideProvider(VISUAL_ASSETS)
+        .useValue({ get: async (id: string) => assets.find((asset) => asset.assetId === id) }),
+    );
+
+    const response = await fetch(`${test.url}/visuals?visualId=${manifest.visualId}`);
+    const served = ServedVisual.parse(await response.json());
+    expect(served.credits).toEqual([
+      expect.objectContaining({
+        assetId: structure.assetId,
+        itemUrl: "https://pubchem.ncbi.nlm.nih.gov/compound/962",
+        shareAlike: false,
+      }),
+    ]);
   });
 
   it("answers 404 for a visual it does not hold", async () => {

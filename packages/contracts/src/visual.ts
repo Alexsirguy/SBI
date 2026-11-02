@@ -101,6 +101,22 @@ export const VisualManifest = z.object({
   spec: z.union([z.string().max(20_000), z.record(z.string(), z.unknown())]).optional(),
 });
 
+/** What a learner sees to credit one third-party asset, as its licence requires (spec §12). */
+export const AssetCredit = z.object({
+  assetId: Uuid,
+  /** Title or creator, licence and changes, in one line, e.g. "3D structure from PubChem…". */
+  text: z.string().min(1),
+  /** The asset's own page, where its creator and terms are published. */
+  itemUrl: z.url().optional(),
+  license: z.object({ label: z.string().min(1), url: z.url().optional() }),
+  /** Reusing or adapting it obliges sharing under the same licence. */
+  shareAlike: z.boolean(),
+  changes: z.string().min(1).optional(),
+});
+
+/** A manifest as served, with the credits of the third-party assets it uses. */
+export const ServedVisual = VisualManifest.extend({ credits: z.array(AssetCredit).default([]) });
+
 export const VisualRef = z.object({
   visualId: Uuid,
   kind: VisualKind,
@@ -115,6 +131,8 @@ export function visualManifestUri(visualId: string): string {
   return `/visuals?visualId=${encodeURIComponent(visualId)}`;
 }
 
+export type AssetCredit = z.infer<typeof AssetCredit>;
+export type ServedVisual = z.infer<typeof ServedVisual>;
 export type VisualAsset = z.infer<typeof VisualAsset>;
 export type VisualFallback = z.infer<typeof VisualFallback>;
 export type VisualControl = z.infer<typeof VisualControl>;

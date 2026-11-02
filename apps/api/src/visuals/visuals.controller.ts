@@ -1,9 +1,10 @@
 import { Controller, Get, HttpStatus, Inject, Query } from "@nestjs/common";
 import { API_ROUTES, VisualRequest, type ApiRequest, type ApiResponse } from "@sbi/contracts";
+import { creditFor, type VisualAssetRepository } from "@sbi/rights";
 import type { VisualManifestRepository } from "@sbi/visuals";
 import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
-import { VISUAL_INTEGRITY, VISUAL_MANIFESTS } from "../tokens";
+import { VISUAL_ASSETS, VISUAL_INTEGRITY, VISUAL_MANIFESTS } from "../tokens";
 import type { SpecIntegrity } from "./integrity";
 
 @Controller()
@@ -11,6 +12,7 @@ export class VisualsController {
   constructor(
     @Inject(VISUAL_MANIFESTS) private readonly manifests: VisualManifestRepository,
     @Inject(VISUAL_INTEGRITY) private readonly intact: SpecIntegrity,
+    @Inject(VISUAL_ASSETS) private readonly assets: Pick<VisualAssetRepository, "get">,
   ) {}
 
   @Get(API_ROUTES.getVisual.path)
@@ -28,6 +30,12 @@ export class VisualsController {
         HttpStatus.CONFLICT,
       );
     }
-    return manifest;
+    // Credits come from the rights register, so a licence fix there reaches every lesson at once.
+    const assets = await Promise.all(manifest.assetIds.map((id) => this.assets.get(id)));
+    const credits = assets.flatMap((asset) => {
+      const credit = asset && creditFor(asset);
+      return credit ? [credit] : [];
+    });
+    return { ...manifest, credits };
   }
 }
