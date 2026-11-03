@@ -97,6 +97,12 @@ export function fakeAccountStore() {
       }
       tokens.set(hash, { accountId, expiresAt, purpose });
     },
+    peek: async (hash, purpose, now) => {
+      const token = tokens.get(hash);
+      return token && token.purpose === purpose && token.expiresAt > now
+        ? token.accountId
+        : undefined;
+    },
     consume: async (hash, purpose, now) => {
       const token = tokens.get(hash);
       if (!token || token.purpose !== purpose) return undefined;
@@ -166,7 +172,9 @@ export function fakeSavedLessons() {
     remove: async (accountId, lessonId) => void rows.delete(key(accountId, lessonId)),
     markShared: async (accountId, lessonId, _sharedId, at) => {
       const row = rows.get(key(accountId, lessonId));
-      if (row) row.sharedAt = at;
+      if (!row || row.sharedAt) return false;
+      row.sharedAt = at;
+      return true;
     },
   };
   return { repository, rows };

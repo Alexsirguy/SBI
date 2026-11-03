@@ -119,10 +119,13 @@ export class SavedLessonsController {
       if (!(error instanceof NotShareableError)) throw error;
       throw new UserFacingException(error.message, HttpStatus.CONFLICT);
     }
+    // Claimed before anything is stored, so two simultaneous shares make one copy, not two.
+    if (!(await this.saved.markShared(account.accountId, lessonId, copy.lesson.lessonId, now))) {
+      throw new UserFacingException("You already shared this lesson.", HttpStatus.CONFLICT);
+    }
     // The audit goes first, so a stored copy always has the trail saying where it came from.
     await this.reviewAudit.record(copy.audit);
     await this.lessons.save(copy.lesson);
-    await this.saved.markShared(account.accountId, lessonId, copy.lesson.lessonId, now);
     return { reviewStatus: "needs-review", sharedAt: now.toISOString() };
   }
 

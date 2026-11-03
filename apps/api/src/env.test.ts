@@ -14,6 +14,8 @@ const valid = {
   WEB_ORIGINS: "http://localhost:3000, https://sbi.example",
 };
 
+const MAIL = { ZEPTOMAIL_FROM: "hello@sbi.example", ZEPTOMAIL_TOKEN: "t" };
+
 describe("loadEnv", () => {
   it("loads defaults and feature flags", () => {
     const env = loadEnv({ ...valid, FEATURE_FLAGS: "tutor" });
@@ -43,9 +45,16 @@ describe("loadEnv", () => {
     expect(() => loadEnv({ ...valid, LESSON_PRICE_INPUT_PER_MTOK: "2" })).toThrow(/LESSON_PRICE/);
   });
 
+  it("refuses production without an email sender or with insecure cookies", () => {
+    expect(() => loadEnv({ ...valid, NODE_ENV: "production" })).toThrow(/ZEPTOMAIL_TOKEN/);
+    expect(() =>
+      loadEnv({ ...valid, ...MAIL, NODE_ENV: "production", SESSION_COOKIE_SECURE: "false" }),
+    ).toThrow(/SESSION_COOKIE_SECURE/);
+  });
+
   it("marks the session cookie Secure in production unless told otherwise", () => {
     expect(loadEnv(valid).sessionCookieSecure).toBe(false);
-    expect(loadEnv({ ...valid, NODE_ENV: "production" }).sessionCookieSecure).toBe(true);
+    expect(loadEnv({ ...valid, ...MAIL, NODE_ENV: "production" }).sessionCookieSecure).toBe(true);
     expect(loadEnv({ ...valid, SESSION_COOKIE_SECURE: "true" }).sessionCookieSecure).toBe(true);
   });
 

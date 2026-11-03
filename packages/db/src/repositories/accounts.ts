@@ -55,6 +55,8 @@ export interface AccountTokenRepository {
     purpose: TokenPurpose,
     expiresAt: Date,
   ): Promise<void>;
+  /** The live token's account without using it up, so a request can be checked first. */
+  peek(tokenHash: string, purpose: TokenPurpose, now: Date): Promise<string | undefined>;
   /** Uses a token up; returns its account only the first time and only before it expires. */
   consume(tokenHash: string, purpose: TokenPurpose, now: Date): Promise<string | undefined>;
   deleteExpired(now: Date): Promise<number>;
@@ -193,6 +195,19 @@ export function createAccountTokenRepository(db: Database): AccountTokenReposito
         .delete(accountTokens)
         .where(and(eq(accountTokens.accountId, accountId), eq(accountTokens.purpose, purpose)));
       await db.insert(accountTokens).values({ accountId, expiresAt, purpose, tokenHash });
+    },
+    async peek(tokenHash, purpose, now) {
+      const [row] = await db
+        .select({ accountId: accountTokens.accountId })
+        .from(accountTokens)
+        .where(
+          and(
+            eq(accountTokens.tokenHash, tokenHash),
+            eq(accountTokens.purpose, purpose),
+            gt(accountTokens.expiresAt, now),
+          ),
+        );
+      return row?.accountId;
     },
     async consume(tokenHash, purpose, now) {
       const [row] = await db

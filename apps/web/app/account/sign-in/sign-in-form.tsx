@@ -12,9 +12,11 @@ import { AuthDivider } from "../auth-card";
 import { fieldErrors } from "../form-errors";
 import { GoogleButton } from "../google-button";
 import { PasswordField } from "../password-field";
-import { ACCOUNT_KEY, safeNext } from "../use-account";
+import { ACCOUNT_KEY, forgetAccountData, safeNext } from "../use-account";
+import { useErrorText } from "../../i18n/error-text";
 
 export function SignInForm() {
+  const errorText = useErrorText();
   const t = useT("account");
   const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
@@ -40,10 +42,12 @@ export function SignInForm() {
     if (!parsed.success) return;
     setBusy(true);
     try {
-      client.setQueryData(ACCOUNT_KEY, await api("signIn", parsed.data));
+      const account = await api("signIn", parsed.data);
+      forgetAccountData(client);
+      client.setQueryData(ACCOUNT_KEY, account);
       done();
     } catch (error) {
-      setFailure((error as Error).message);
+      setFailure(errorText((error as Error).message));
       setBusy(false);
     }
   };

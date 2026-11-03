@@ -7,6 +7,9 @@ describe("lessonText", () => {
     expect(lessonText("es").checking).toBe("Comprobando cada sección con sus fuentes.");
     expect(lessonText("es").writingMixed(3, 2)).toMatch(/^Escribiendo la lección a partir de 3/);
     expect(lessonText("en-GB").checking).toBe("Checking every section against its sources.");
+    // Research questions are English, so Spanish progress gives only their number.
+    expect(lessonText("es").researchingCount(3)).toBe("Investigando 3 preguntas.");
+    expect(lessonText("es").retry).toMatch(/^Ahora mismo no pudimos/);
   });
 
   it("gives the catalogue's safety notices in Spanish, falling back to the category", () => {

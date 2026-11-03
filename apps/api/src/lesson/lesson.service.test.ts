@@ -16,7 +16,15 @@ import {
   type FetchedSource,
   type GatherEvent,
 } from "@sbi/evidence";
-import { LlmError, type Completion, type CompletionRequest, type LlmProvider } from "@sbi/llm";
+import {
+  LlmError,
+  scopedProvider,
+  withUsageScope,
+  type Completion,
+  type CompletionRequest,
+  type LlmProvider,
+  type TokenPrices,
+} from "@sbi/llm";
 import {
   createMemoryReviewAuditLog,
   LESSON_DRAFT_PROMPT_VERSION,
@@ -840,51 +848,47 @@ describe("LessonService", () => {
     expect(events[0].data.kind).toBe("cached");
   });
 
-  it("records what each completed lesson cost, fresh or reused, in tokens and dollars", async () => {
+  it("records what every request cost, served, reused or failed, in tokens and dollars", async () => {
     const events: unknown[] = [];
     const sink = (event: unknown) => void events.push(event);
-    const prices = { cachedInput: 0.5, input: 2, output: 8 };
+    const service = (provider: LlmProvider, stored: LessonType[], prices: TokenPrices | null) =>
+      new LessonService(
+        scopedProvider(provider),
+        taxonomy(),
+        memoryLessons(stored).repo,
+        EVIDENCE.evidence,
+        createMemoryReviewAuditLog(),
+        gatherer(),
+        CLEARED,
+        undefined,
+        undefined,
+        sink,
+        prices,
+      );
     const first = setup(scriptedProvider());
-    const fresh = new LessonService(
-      scriptedProvider(),
-      taxonomy(),
-      memoryLessons([]).repo,
-      EVIDENCE.evidence,
-      createMemoryReviewAuditLog(),
-      gatherer(),
-      CLEARED,
-      undefined,
-      undefined,
-      sink,
-      prices,
-    );
-    await collect(fresh);
     await collect(first.service);
     share(first.lessons);
-    const reused = new LessonService(
-      throwingProvider(new Error("must not be called")),
-      taxonomy(),
-      memoryLessons(first.lessons).repo,
-      EVIDENCE.evidence,
-      createMemoryReviewAuditLog(),
-      gatherer(),
-      CLEARED,
-      undefined,
-      undefined,
-      sink,
-      null,
+
+    await withUsageScope(() =>
+      collect(service(scriptedProvider(), [], { cachedInput: 0.5, input: 2, output: 8 })),
     );
-    await collect(reused);
+    await withUsageScope(() =>
+      collect(service(throwingProvider(new Error("must not be called")), first.lessons, null)),
+    );
+    await withUsageScope(() =>
+      collect(service(throwingProvider(new LlmError("down")), [], null)).catch(() => undefined),
+    );
 
     expect(events).toEqual([
       expect.objectContaining({ outcome: "fresh", type: "lesson-cost" }),
-      expect.objectContaining({ calls: 0, costUsd: null, outcome: "cached", type: "lesson-cost" }),
+      expect.objectContaining({ calls: 0, costUsd: null, outcome: "cached" }),
+      expect.objectContaining({ lessonId: null, outcome: "failed" }),
     ]);
-    const freshCost = events[0] as { calls: number; costUsd: number };
-    expect(freshCost.calls).toBeGreaterThan(0);
-    expect(typeof freshCost.costUsd).toBe("number");
+    const fresh = events[0] as { calls: number; costUsd: number };
+    expect(fresh.calls).toBeGreaterThan(0);
+    expect(typeof fresh.costUsd).toBe("number");
     // Ids, counts and money only: nothing from the question or the lesson text.
-    expect(Object.keys(freshCost).sort()).toEqual([
+    expect(Object.keys(fresh).sort()).toEqual([
       "at",
       "cachedInputTokens",
       "calls",

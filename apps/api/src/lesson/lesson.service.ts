@@ -18,14 +18,7 @@ import {
   type GatherOptions,
   type InquiryInput,
 } from "@sbi/evidence";
-import {
-  costOf,
-  LlmError,
-  meterProvider,
-  type LlmProvider,
-  type MeteredUsage,
-  type TokenPrices,
-} from "@sbi/llm";
+import { costOf, currentUsage, LlmError, type LlmProvider, type TokenPrices } from "@sbi/llm";
 import {
   buildIntentSignature,
   citationCheck,
@@ -204,16 +197,19 @@ function lessonClaims(facts: Claim[], gathered: Claim[], fromModel: Claim[] = []
   return [...[...byId.values()].slice(0, MAX_LESSON_CLAIMS - model.length), ...model];
 }
 
-function progressOf(event: GatherEvent, text: LessonText): LessonProgress {
+function progressOf(event: GatherEvent, text: LessonText, locale: string): LessonProgress {
   if (event.type === "planned") {
+    // Research runs in English to reach English sources, so other languages get only the count.
     return LessonProgress.parse({
       stage: "researching",
-      message: text
-        .researching(
-          event.questions.length,
-          event.questions.map((question) => question.question).join(" "),
-        )
-        .slice(0, 300),
+      message: isSpanish(locale)
+        ? text.researchingCount(event.questions.length)
+        : text
+            .researching(
+              event.questions.length,
+              event.questions.map((question) => question.question).join(" "),
+            )
+            .slice(0, 300),
     });
   }
   if (event.type === "reused") {
@@ -237,6 +233,13 @@ function heldForReview(report: CheckReport, reasons: string[]): CheckReport {
     passed: false,
     results: [...report.results, { name: "review", passed: false, details: reasons }],
   };
+}
+
+/** What one request ended with, filled in as it goes, for its cost record. */
+interface Served {
+  lesson?: Lesson;
+  kind?: QuickAnswer["kind"];
+  refused?: boolean;
 }
 
 @Injectable()
@@ -266,13 +269,25 @@ export class LessonService {
     request: LessonRequest,
     viewer: { ownLessonIds?: ReadonlySet<string> } = {},
   ): AsyncGenerator<LessonStreamEvent> {
+    const outcome: Served = {};
+    try {
+      yield* this.writeLesson(request, viewer, outcome);
+    } finally {
+      // Served, refused or failed, the tokens were spent, so every request is counted (#110).
+      this.recordCost(outcome);
+    }
+  }
+
+  private async *writeLesson(
+    request: LessonRequest,
+    viewer: { ownLessonIds?: ReadonlySet<string> },
+    outcome: Served,
+  ): AsyncGenerator<LessonStreamEvent> {
     const text = lessonText(request.locale);
     if (!this.provider) {
       throw new UserFacingException(text.unavailable, HttpStatus.SERVICE_UNAVAILABLE);
     }
-    // Every model call for this one lesson goes through the meter, so its cost can be told (#110).
-    const meter = meterProvider(this.provider);
-    const provider = meter.provider;
+    const provider = this.provider;
     // Milliseconds from the request to each stage, logged once so cold-lesson latency is visible.
     const started = performance.now();
     const timings: Record<string, number> = {};
@@ -291,12 +306,14 @@ export class LessonService {
     const risk = await this.classify({ subject: entry.label, question: request.question });
     // A question that seeks harm gets help and safe alternatives, never a lesson (spec §12).
     if (risk.intent === "harm") {
+      outcome.refused = true;
       yield { type: "policy", data: policyResponse(risk.categories[0], request.locale) };
       return;
     }
     // A question for an older age band than the one chosen says how to change it instead.
     const ageNote = ageHold(request.audience, risk, request.locale);
     if (ageNote) {
+      outcome.refused = true;
       yield { type: "policy", data: ageNote };
       return;
     }
@@ -352,7 +369,8 @@ export class LessonService {
           safetyClass,
         },
         {
-          onEvent: (event) => events.push({ type: "progress", data: progressOf(event, text) }),
+          onEvent: (event) =>
+            events.push({ type: "progress", data: progressOf(event, text, request.locale) }),
         },
       )
         .catch((error: unknown): GatheredEvidence | undefined => {
@@ -537,7 +555,8 @@ export class LessonService {
       }
       if (outcome.kind === "retry") {
         throw new UserFacingException(
-          held ? text.held : outcome.reason,
+          // The pipeline's reasons are English, for logs; other languages get the plain retry.
+          held ? text.held : isSpanish(request.locale) ? text.retry : outcome.reason,
           HttpStatus.SERVICE_UNAVAILABLE,
         );
       }
@@ -563,7 +582,8 @@ export class LessonService {
       }),
     };
     yield { type: "lesson", data: validated };
-    this.recordCost(validated, kind, meter.usage());
+    outcome.lesson = validated;
+    outcome.kind = kind;
     // After the text, so citation markers can name their sources without delaying the lesson.
     const sourceIds = [...new Set(validated.claims.flatMap((claim) => claim.sourceIds))];
     yield {
@@ -581,15 +601,26 @@ export class LessonService {
     };
   }
 
-  private recordCost(lesson: Lesson, kind: QuickAnswer["kind"], usage: MeteredUsage) {
-    this.events?.({
+  private recordCost(served: Served) {
+    const usage = currentUsage();
+    if (!usage || !this.events) return;
+    const { lesson, kind } = served;
+    this.events({
       ...usage,
       at: new Date().toISOString(),
       costUsd: this.prices ? costOf(usage, this.prices) : null,
-      lessonId: lesson.lessonId,
-      outcome: kind === "cached" ? "cached" : kind === "fallback" ? "fallback" : "fresh",
+      lessonId: lesson?.lessonId ?? null,
+      outcome: lesson
+        ? kind === "cached"
+          ? "cached"
+          : kind === "fallback"
+            ? "fallback"
+            : "fresh"
+        : served.refused
+          ? "refused"
+          : "failed",
       type: "lesson-cost",
-      version: lesson.version,
+      version: lesson?.version ?? null,
     });
   }
 }

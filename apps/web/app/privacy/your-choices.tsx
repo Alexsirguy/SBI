@@ -15,9 +15,11 @@ import {
 } from "../consent";
 import { INTL_LOCALE } from "../i18n/locales";
 import { useLocale, useT } from "../i18n/provider";
+import { useErrorText } from "../i18n/error-text";
 
 /** What this device has agreed to, the photos it kept, and a way to take either back. */
 export function YourChoices() {
+  const errorText = useErrorText();
   const t = useT("site");
   const locale = useLocale();
   const date = useMemo(
@@ -98,7 +100,7 @@ export function YourChoices() {
         </p>
       ) : null}
       <div role="status">{remove.isSuccess ? <p>{t("choicesDeleted")}</p> : null}</div>
-      {remove.error ? <p role="alert">{remove.error.message}</p> : null}
+      {remove.error ? <p role="alert">{errorText(remove.error.message)}</p> : null}
     </section>
   );
 }

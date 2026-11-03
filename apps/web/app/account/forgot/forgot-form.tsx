@@ -6,8 +6,10 @@ import { useState } from "react";
 import { api } from "../../api";
 import { useT } from "../../i18n/provider";
 import { fieldErrors } from "../form-errors";
+import { useErrorText } from "../../i18n/error-text";
 
 export function ForgotForm() {
+  const errorText = useErrorText();
   const t = useT("account");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string>();
@@ -26,7 +28,7 @@ export function ForgotForm() {
       await api("requestPasswordReset", parsed.data);
       setSent(true);
     } catch (failure) {
-      setError((failure as Error).message);
+      setError(errorText((failure as Error).message));
     } finally {
       setBusy(false);
     }

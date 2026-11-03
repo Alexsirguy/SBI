@@ -50,7 +50,8 @@ export function SavedLesson() {
       </main>
     );
   }
-  if (!data) {
+  // A failed refetch keeps the old data, which could be another account's lesson; never show it.
+  if (!data || opened.isError) {
     return (
       <main id="main" className="lesson">
         <h1>{t("savedLesson")}</h1>

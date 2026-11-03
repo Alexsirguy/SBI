@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { costOf, meterProvider } from "./metered";
+import { costOf, currentUsage, meterProvider, scopedProvider, withUsageScope } from "./metered";
 import type { LlmProvider } from "./provider";
 
 const fake: LlmProvider = {
@@ -40,5 +40,28 @@ describe("costOf", () => {
     );
     // 800k × $2 + 200k × $0.5 + 500k × $8, per million.
     expect(cost).toBe(5.7);
+  });
+});
+
+describe("scoped usage", () => {
+  it("adds calls to the request they ran in, including from nested helpers", async () => {
+    const shared = scopedProvider(fake);
+    const helper = () => shared.complete({ messages: [] });
+    const [a, b] = await Promise.all([
+      withUsageScope(async () => {
+        await helper();
+        await Promise.all([helper(), helper()]);
+        return currentUsage();
+      }),
+      withUsageScope(async () => {
+        await helper();
+        return currentUsage();
+      }),
+    ]);
+
+    expect(a?.calls).toBe(3);
+    expect(b?.calls).toBe(1);
+    expect(currentUsage()).toBeUndefined();
+    await shared.complete({ messages: [] });
   });
 });

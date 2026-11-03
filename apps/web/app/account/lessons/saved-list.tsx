@@ -8,8 +8,10 @@ import { INTL_LOCALE } from "../../i18n/locales";
 import { useLocale, useT } from "../../i18n/provider";
 import { useAccount } from "../use-account";
 import { useRemoveSavedLesson, useSavedLessons } from "../use-saved-lessons";
+import { useErrorText } from "../../i18n/error-text";
 
 export function SavedList() {
+  const errorText = useErrorText();
   const t = useT("account");
   const locale = useLocale();
   const date = useMemo(
@@ -26,7 +28,7 @@ export function SavedList() {
   }, [account.data, router]);
 
   if (!account.data || saved.isPending) return <p role="status">{t("savedLoading")}</p>;
-  if (saved.error) return <p role="alert">{saved.error.message}</p>;
+  if (saved.error) return <p role="alert">{errorText(saved.error.message)}</p>;
   if (saved.data.length === 0) {
     return (
       <p>
@@ -59,7 +61,7 @@ export function SavedList() {
         ))}
       </ul>
       <div role="status">{remove.isSuccess ? <p>{t("savedRemoved")}</p> : null}</div>
-      {remove.error ? <p role="alert">{remove.error.message}</p> : null}
+      {remove.error ? <p role="alert">{errorText(remove.error.message)}</p> : null}
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { createLogSink } from "@sbi/analytics";
+import { scopedProvider } from "@sbi/llm";
 import { Logger, Module } from "@nestjs/common";
 import type { DatabaseHandle, Repositories } from "@sbi/db";
 import {
@@ -113,7 +114,11 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
     {
       provide: LESSON_LLM,
       inject: [API_ENV],
-      useFactory: lessonProviderFor,
+      // One shared, scoped provider, so every consumer's calls count towards their lesson (#110).
+      useFactory: (env: ApiEnv) => {
+        const provider = lessonProviderFor(env);
+        return provider ? scopedProvider(provider) : null;
+      },
     },
     {
       provide: RISK_CLASSIFIER,

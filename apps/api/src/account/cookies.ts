@@ -5,7 +5,12 @@ export function readCookie(header: string | undefined, name: string): string | u
   for (const part of (header ?? "").split(";")) {
     const index = part.indexOf("=");
     if (index > 0 && part.slice(0, index).trim() === name) {
-      return decodeURIComponent(part.slice(index + 1).trim());
+      // A garbled cookie is treated as no cookie, so it signs nobody in and breaks nothing.
+      try {
+        return decodeURIComponent(part.slice(index + 1).trim());
+      } catch {
+        return undefined;
+      }
     }
   }
   return undefined;

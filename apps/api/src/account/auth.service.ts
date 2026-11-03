@@ -196,10 +196,15 @@ export class AuthService {
   }
 
   async resetPassword({ token, password }: z.output<typeof ResetPasswordRequest>): Promise<void> {
-    const accountId = await this.tokens.consume(hashSecret(token), "reset-password", new Date());
-    const account = accountId ? await this.accounts.get(accountId) : undefined;
+    const hash = hashSecret(token);
+    // Checked before the link is used up, so a refused password does not cost the learner it.
+    const peeked = await this.tokens.peek(hash, "reset-password", new Date());
+    const account = peeked ? await this.accounts.get(peeked) : undefined;
     if (!account) throw new UserFacingException(BAD_LINK, HttpStatus.BAD_REQUEST);
     this.checkPassword(password, account.email);
+    if ((await this.tokens.consume(hash, "reset-password", new Date())) !== account.accountId) {
+      throw new UserFacingException(BAD_LINK, HttpStatus.BAD_REQUEST);
+    }
     await this.accounts.update(account.accountId, {
       // Opening the emailed link proves the inbox too.
       emailVerifiedAt: account.emailVerifiedAt ?? new Date(),

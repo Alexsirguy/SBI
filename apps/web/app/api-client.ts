@@ -10,6 +10,9 @@ import {
 export const UNREACHABLE =
   "The service is unavailable right now. Check your connection and try again.";
 
+export const BAD_REPLY = "The server sent a reply we could not read.";
+export const UPLOAD_FAILED = "The upload failed. Check your connection and try again.";
+
 export class ApiRequestError extends Error {
   constructor(
     message: string,
@@ -62,7 +65,7 @@ export function createApiClient(baseUrl: string, fetcher: typeof fetch = fetch):
     }
     const parsed = route.response.safeParse(payload);
     if (!parsed.success) {
-      throw new ApiRequestError("The server sent a reply we could not read.", response.status);
+      throw new ApiRequestError(BAD_REPLY, response.status);
     }
     return parsed.data as ApiResponse<typeof name>;
   };
@@ -76,9 +79,6 @@ export async function putObject(url: string, blob: Blob, fetcher: typeof fetch =
     method: "PUT",
   }).catch(() => null);
   if (!response?.ok) {
-    throw new ApiRequestError(
-      "The upload failed. Check your connection and try again.",
-      response?.status ?? 0,
-    );
+    throw new ApiRequestError(UPLOAD_FAILED, response?.status ?? 0);
   }
 }

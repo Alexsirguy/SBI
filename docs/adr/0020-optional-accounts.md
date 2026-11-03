@@ -34,3 +34,4 @@ Spec §3 and §14 Phase 4 add optional accounts, and every lesson must still wor
 - Google and ZeptoMail are new processors.
 - Phone sign-in is left out. Adding it needs an SMS provider.
 - Rate limits are per process (`TODO(#120)`), as elsewhere in the API.
+- **Accepted risk:** any signed-in account can save a lesson it knows the id of. Lesson ids are random UUIDs that aren't shown to anyone else, and we don't record who generated an anonymous lesson, so ownership can't be checked. Private lessons hold no account data (`docs/retention.md`).

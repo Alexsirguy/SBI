@@ -9,8 +9,10 @@ import { api } from "../../api";
 import { useT } from "../../i18n/provider";
 import { issueMessage } from "../form-errors";
 import { PasswordField } from "../password-field";
+import { useErrorText } from "../../i18n/error-text";
 
 export function ResetForm() {
+  const errorText = useErrorText();
   const t = useT("account");
   const token = useSearchParams().get("token") ?? "";
   const [password, setPassword] = useState("");
@@ -36,7 +38,7 @@ export function ResetForm() {
       await api("resetPassword", { password, token });
       setDone(true);
     } catch (failure) {
-      setError((failure as Error).message);
+      setError(errorText((failure as Error).message));
     } finally {
       setBusy(false);
     }

@@ -739,6 +739,10 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       await repos.accountTokens.issue("2".repeat(64), ada.accountId, "verify-email", later(1000));
       await repos.accountTokens.issue("3".repeat(64), ada.accountId, "reset-password", later(-1));
 
+      expect(await repos.accountTokens.peek("2".repeat(64), "verify-email", now)).toBe(
+        ada.accountId,
+      );
+      expect(await repos.accountTokens.peek("3".repeat(64), "reset-password", now)).toBeUndefined();
       expect(
         await repos.accountTokens.consume("1".repeat(64), "verify-email", now),
       ).toBeUndefined();
@@ -793,12 +797,15 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
           version: 2,
         },
       ]);
-      await repos.savedLessons.markShared(
-        account,
-        lessonId,
-        "0192f1a0-0000-7000-8000-0000000000d1",
-        at("2026-11-03T11:00:00Z"),
-      );
+      const share = () =>
+        repos.savedLessons.markShared(
+          account,
+          lessonId,
+          "0192f1a0-0000-7000-8000-0000000000d1",
+          at("2026-11-03T11:00:00Z"),
+        );
+      // Two requests at once: exactly one claims the share.
+      expect((await Promise.all([share(), share()])).sort()).toEqual([false, true]);
       expect((await repos.savedLessons.get(account, lessonId))?.sharedAt).toEqual(
         at("2026-11-03T11:00:00Z"),
       );

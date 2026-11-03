@@ -23,4 +23,12 @@ export {
   type StructuredCompletion,
   type StructuredRequest,
 } from "./structured";
-export { costOf, meterProvider, type MeteredUsage, type TokenPrices } from "./metered";
+export {
+  costOf,
+  currentUsage,
+  meterProvider,
+  scopedProvider,
+  withUsageScope,
+  type MeteredUsage,
+  type TokenPrices,
+} from "./metered";

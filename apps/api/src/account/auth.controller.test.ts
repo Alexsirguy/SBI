@@ -319,4 +319,32 @@ describe("auth routes", () => {
     expect(response.headers.get("access-control-allow-origin")).toBe(WEB_ORIGIN);
     expect(response.headers.get("access-control-allow-credentials")).toBe("true");
   });
+
+  it("keeps a reset link usable when the new password is refused", async () => {
+    const s = await start();
+    test = s.test;
+    await test.post("/auth/sign-up", ADA, s.fromWeb());
+    await test.post("/auth/forgot", { email: ADA.email }, s.fromWeb());
+    const token = s.mail.linkIn(
+      s.mail.sent.find((email) => email.subject === "Reset your password"),
+    );
+
+    const weak = await test.post("/auth/reset", { password: "password123", token }, s.fromWeb());
+    expect(weak.status).toBe(400);
+    const good = await test.post(
+      "/auth/reset",
+      { password: "a sturdier phrase", token },
+      s.fromWeb(),
+    );
+    expect(good.status).toBe(200);
+  });
+
+  it("treats a garbled session cookie as signed out instead of failing", async () => {
+    const s = await start();
+    test = s.test;
+
+    const response = await test.get("/account", { cookie: "sbi_session=%zz" });
+
+    expect(response.status).toBe(401);
+  });
 });

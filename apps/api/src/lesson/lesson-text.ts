@@ -15,6 +15,9 @@ const EN = {
     `Writing the lesson from ${checked} checked claims and ${model} from general knowledge.`,
   checking: "Checking every section against its sources.",
   fallback: "Fresh generation failed; showing a related cached lesson.",
+  retry: "We couldn't write this lesson just now. Try again.",
+  somethingWentWrong: "Something went wrong.",
+  researchingCount: (count: number) => `Researching ${count} questions.`,
 };
 
 const ES: typeof EN = {
@@ -33,6 +36,9 @@ const ES: typeof EN = {
     `Escribiendo la lección a partir de ${checked} afirmaciones comprobadas y ${model} de conocimiento general.`,
   checking: "Comprobando cada sección con sus fuentes.",
   fallback: "No se pudo escribir una lección nueva; mostramos una lección relacionada guardada.",
+  retry: "Ahora mismo no pudimos escribir esta lección. Inténtalo de nuevo.",
+  somethingWentWrong: "Algo ha fallado.",
+  researchingCount: (count) => `Investigando ${count} preguntas.`,
 };
 
 export type LessonText = typeof EN;

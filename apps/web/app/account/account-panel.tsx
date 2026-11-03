@@ -16,9 +16,11 @@ import {
 import { useT } from "../i18n/provider";
 import { ACCOUNT_KEY, useAccount, useSignOut } from "./use-account";
 import { YourData } from "./your-data";
+import { useErrorText } from "../i18n/error-text";
 
 /** The signed-in account; linking this device's kept photos is a separate, explicit choice. */
 export function AccountPanel() {
+  const errorText = useErrorText();
   const t = useT("account");
   const router = useRouter();
   const client = useQueryClient();
@@ -53,7 +55,7 @@ export function AccountPanel() {
     if (account.data === null) router.replace("/account/sign-in");
   }, [account.data, router]);
 
-  if (account.error) return <p role="alert">{account.error.message}</p>;
+  if (account.error) return <p role="alert">{errorText(account.error.message)}</p>;
   if (!account.data || snapshot === null) return <p role="status">{t("accountChecking")}</p>;
 
   const me = account.data;
@@ -115,7 +117,7 @@ export function AccountPanel() {
         {link.isSuccess && linked ? <p>{t("accountLinked")}</p> : null}
         {unlink.isSuccess && !linked ? <p>{t("accountUnlinked")}</p> : null}
       </div>
-      {error ? <p role="alert">{error.message}</p> : null}
+      {error ? <p role="alert">{errorText(error.message)}</p> : null}
       <YourData email={me.email} />
       <p>
         <Button variant="quiet" disabled={signOut.isPending} onClick={() => signOut.mutate()}>

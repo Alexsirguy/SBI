@@ -5,8 +5,10 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../../api";
 import { useT } from "../../i18n/provider";
+import { useErrorText } from "../../i18n/error-text";
 
 export function VerifyEmail() {
+  const errorText = useErrorText();
   const t = useT("account");
   const token = useSearchParams().get("token") ?? "";
   const [state, setState] = useState<"checking" | "done" | string>("checking");
@@ -38,7 +40,8 @@ export function VerifyEmail() {
   }
   return (
     <p role="alert" className="auth__alert">
-      {state} <Link href="/account">{t("verifyAccountLink")}</Link> {t("verifyFailedEnd")}
+      {errorText(state)} <Link href="/account">{t("verifyAccountLink")}</Link>{" "}
+      {t("verifyFailedEnd")}
     </p>
   );
 }

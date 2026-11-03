@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import { ApiRequestError } from "../api-client";
 
@@ -22,15 +22,32 @@ export function useAccount() {
   });
 }
 
+/** Drops everything cached for the last account, so a shared device never shows it to the next. */
+export function forgetAccountData(client: QueryClient) {
+  client.removeQueries({ queryKey: ACCOUNT_KEY });
+}
+
 export function useSignOut() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: () => api("signOut", {}),
-    onSuccess: () => client.setQueryData(ACCOUNT_KEY, null),
+    onSuccess: () => {
+      forgetAccountData(client);
+      client.setQueryData(ACCOUNT_KEY, null);
+    },
   });
 }
 
 /** Keeps only paths on this site, so a crafted link cannot send the learner elsewhere. */
 export function safeNext(value: string | null): string {
-  return value && /^\/(?!\/)/.test(value) ? value : "/account";
+  // Backslashes, spaces and control characters can turn "/x" into another origin in a browser.
+  const unsafe =
+    !value ||
+    !/^\/(?![/\\])/.test(value) ||
+    /[\\\s]/.test(value) ||
+    [...value].some((char) => char.charCodeAt(0) < 32);
+  if (!value || unsafe) return "/account";
+  const base = "https://sbi.invalid";
+  const url = new URL(value, base);
+  return url.origin === base ? `${url.pathname}${url.search}${url.hash}` : "/account";
 }

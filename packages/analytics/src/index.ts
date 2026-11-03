@@ -11,10 +11,11 @@ export interface NextConceptEvent {
 /** What writing or serving one completed lesson cost (#110); tokens, never text or learner. */
 export interface LessonCostEvent {
   type: "lesson-cost";
-  lessonId: string;
-  version: number;
-  /** "cached" lessons cost only the checks before reuse; "fallback" means generation failed. */
-  outcome: "fresh" | "cached" | "fallback";
+  /** Null when no lesson was served: refused for safety or age, or failed. */
+  lessonId: string | null;
+  version: number | null;
+  /** "cached" costs only the checks before reuse; "fallback" served a related lesson instead. */
+  outcome: "fresh" | "cached" | "fallback" | "refused" | "failed";
   calls: number;
   inputTokens: number;
   cachedInputTokens: number;

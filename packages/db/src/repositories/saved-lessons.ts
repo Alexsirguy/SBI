@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import type { Database } from "../client";
 import { savedLessons } from "../schema";
 
@@ -16,7 +16,13 @@ export interface SavedLessonRepository {
   list(accountId: string): Promise<StoredSavedLesson[]>;
   get(accountId: string, lessonId: string): Promise<StoredSavedLesson | undefined>;
   remove(accountId: string, lessonId: string): Promise<void>;
-  markShared(accountId: string, lessonId: string, sharedLessonId: string, at: Date): Promise<void>;
+  /** Marks the lesson shared only if it was not yet; false means another request got there first. */
+  markShared(
+    accountId: string,
+    lessonId: string,
+    sharedLessonId: string,
+    at: Date,
+  ): Promise<boolean>;
 }
 
 const toSaved = (row: typeof savedLessons.$inferSelect): StoredSavedLesson => ({
@@ -51,10 +57,17 @@ export function createSavedLessonRepository(db: Database): SavedLessonRepository
       return row ? toSaved(row) : undefined;
     },
     async markShared(accountId, lessonId, sharedLessonId, at) {
-      await db
+      const [header] = (await db
         .update(savedLessons)
         .set({ sharedAt: at, sharedLessonId })
-        .where(and(eq(savedLessons.accountId, accountId), eq(savedLessons.lessonId, lessonId)));
+        .where(
+          and(
+            eq(savedLessons.accountId, accountId),
+            eq(savedLessons.lessonId, lessonId),
+            isNull(savedLessons.sharedAt),
+          ),
+        )) as unknown as [{ affectedRows?: number }];
+      return (header.affectedRows ?? 0) === 1;
     },
     async remove(accountId, lessonId) {
       await db

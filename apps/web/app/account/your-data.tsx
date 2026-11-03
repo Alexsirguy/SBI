@@ -2,13 +2,14 @@
 
 import { DeleteAccountRequest } from "@sbi/contracts";
 import { Button, Disclosure, TextField } from "@sbi/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { webEnv } from "../../env";
 import { api } from "../api";
 import { forgetKeptPhoto, setConsent } from "../consent";
 import { useT } from "../i18n/provider";
+import { useErrorText } from "../i18n/error-text";
 
 // A file the learner keeps; the browser saves it without another round trip.
 function saveFile(name: string, data: unknown) {
@@ -22,9 +23,9 @@ function saveFile(name: string, data: unknown) {
 
 /** Download everything held for the account, or delete it all (#105). */
 export function YourData({ email }: { email: string }) {
-  const t = useT("account");
+  const errorText = useErrorText();
   const router = useRouter();
-  const client = useQueryClient();
+  const t = useT("account");
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string>();
   const exported = useMutation({ mutationFn: () => api("exportAccount", {}) });
@@ -34,15 +35,16 @@ export function YourData({ email }: { email: string }) {
       // The device's own list would otherwise point at photos that no longer exist.
       for (const key of deletedPhotos) forgetKeptPhoto(key);
       setConsent("account", false);
-      client.clear();
+      // The cache is cleared by the next page, so this one never flips to "signed out" first.
       router.replace("/account/deleted");
     },
   });
 
-  const download = async () => {
-    const bundle = await exported.mutateAsync();
-    saveFile(`science-behind-it-${bundle.exportedAt.slice(0, 10)}.json`, bundle);
-  };
+  const download = () =>
+    exported.mutate(undefined, {
+      onSuccess: (bundle) =>
+        saveFile(`science-behind-it-${bundle.exportedAt.slice(0, 10)}.json`, bundle),
+    });
 
   const confirmDelete = (event: React.FormEvent) => {
     event.preventDefault();
@@ -60,7 +62,7 @@ export function YourData({ email }: { email: string }) {
     <section aria-labelledby="your-data">
       <h2 id="your-data">{t("dataHeading")}</h2>
       <p>{t("dataIntro")}</p>
-      <Button variant="quiet" disabled={exported.isPending} onClick={() => void download()}>
+      <Button variant="quiet" disabled={exported.isPending} onClick={download}>
         {exported.isPending ? t("dataPreparing") : t("dataDownload")}
       </Button>
       <div role="status">{exported.isSuccess ? <p>{t("dataSaved")}</p> : null}</div>
@@ -75,7 +77,7 @@ export function YourData({ email }: { email: string }) {
           ))}
         </ul>
       ) : null}
-      {exported.error ? <p role="alert">{exported.error.message}</p> : null}
+      {exported.error ? <p role="alert">{errorText(exported.error.message)}</p> : null}
 
       <Disclosure summary={t("dataDeleteAccount")}>
         <form className="your-data__delete" onSubmit={confirmDelete} noValidate>
@@ -88,7 +90,7 @@ export function YourData({ email }: { email: string }) {
             error={error}
             onChange={(event) => setTyped(event.target.value)}
           />
-          {remove.error ? <p role="alert">{remove.error.message}</p> : null}
+          {remove.error ? <p role="alert">{errorText(remove.error.message)}</p> : null}
           <Button type="submit" disabled={remove.isPending}>
             {remove.isPending ? t("dataDeleting") : t("dataDeleteAccount")}
           </Button>

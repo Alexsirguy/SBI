@@ -65,7 +65,18 @@ function parsePrices(env: z.infer<typeof schema>) {
   return { cachedInput, input, output };
 }
 
+function parseCookieSecure(env: z.infer<typeof schema>): boolean {
+  if (env.NODE_ENV === "production" && env.SESSION_COOKIE_SECURE === false) {
+    throw new Error("SESSION_COOKIE_SECURE cannot be false in production.");
+  }
+  return env.SESSION_COOKIE_SECURE ?? env.NODE_ENV === "production";
+}
+
 function parseMail(env: z.infer<typeof schema>) {
+  // Without a sender, links are logged for development; in production that would leak them.
+  if (!env.ZEPTOMAIL_TOKEN && env.NODE_ENV === "production") {
+    throw new Error("Set ZEPTOMAIL_TOKEN and ZEPTOMAIL_FROM in production; links must be emailed.");
+  }
   if (!env.ZEPTOMAIL_TOKEN) return null;
   if (!env.ZEPTOMAIL_FROM) {
     throw new Error("Set ZEPTOMAIL_FROM, a sender address verified in ZeptoMail.");
@@ -84,7 +95,7 @@ export function loadEnv(source: EnvSource = process.env) {
     ...env,
     lessonPrices: parsePrices(env),
     mail: parseMail(env),
-    sessionCookieSecure: env.SESSION_COOKIE_SECURE ?? env.NODE_ENV === "production",
+    sessionCookieSecure: parseCookieSecure(env),
     features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS),
     ranking: parseRankingConfig(source),
     // Provider keys stay in the source; RecognitionModule builds the chain only when one is set.

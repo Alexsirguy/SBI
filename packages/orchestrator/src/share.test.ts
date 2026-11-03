@@ -66,9 +66,20 @@ describe("shareLesson", () => {
 });
 
 describe("redactContact", () => {
+  it.each([
+    ["555-123-4567", "[number removed]"],
+    ["(555) 123-4567", "[number removed]"],
+    ["555.123.4567", "[number removed]"],
+    ["020 7946 0958", "[number removed]"],
+    ["612-345-678", "[number removed]"],
+    ["josé@ejemplo.es", "[email removed]"],
+    ["muñoz.a@correo.com.mx", "[email removed]"],
+  ])("removes %s", (input, output) => {
+    expect(redactContact(`Call ${input} today`)).toBe(`Call ${output} today`);
+  });
+
   it("leaves dates, years and quantities alone", () => {
-    expect(redactContact("Boils at 100 °C; 1,500 W kettles; 2026-11-03; 3 500 mL")).toBe(
-      "Boils at 100 °C; 1,500 W kettles; 2026-11-03; 3 500 mL",
-    );
+    const text = "Boils at 100 °C; 1,500 W; 2026-11-03; 3 500 mL; steps 100 200 300; 1.5-2.0 kg";
+    expect(redactContact(text)).toBe(text);
   });
 });

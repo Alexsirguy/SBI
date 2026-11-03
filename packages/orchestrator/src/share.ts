@@ -3,14 +3,25 @@ import { transitionLesson, type PublishAudit } from "./publish";
 
 export class NotShareableError extends Error {}
 
-const EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g;
-// International or long spaced numbers only, so dates, years and quantities are left alone.
-const PHONE = /\+\d[\d ()-]{7,}\d|\b\d{3,5}[ ]\d{3,4}[ ]\d{3,4}\b/g;
+// Unicode letters too, so Spanish addresses like josé@ejemplo.es are caught.
+const EMAIL = /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(\.[\p{L}\p{N}-]+)+/gu;
+// Runs of digits joined by spaces, dots, dashes or brackets; tested for length below.
+const NUMBER_RUN = /\+?\(?\d[\d ().-]{6,}\d/g;
 // Ids, hashes and links are structure, not prose, and must survive untouched.
-const STRUCTURAL_KEY = /(Id|Ids|id|url|Url|Hash|hash|Signature|locator)$/;
+const STRUCTURAL_KEY = /^(id|url|locator)$|(Id|Ids|Url|Hash|Signature|Locator)$/;
+
+// A phone number has 10+ digits, or 9+ when written with phone punctuation; dates and
+// measurements stay below that or lack the punctuation.
+function looksLikePhone(run: string): boolean {
+  const digits = run.replace(/\D/g, "").length;
+  if (digits > 15) return false;
+  return digits >= 10 || (digits >= 9 && /^\+|[().-]/.test(run));
+}
 
 export function redactContact(text: string): string {
-  return text.replace(EMAIL, "[email removed]").replace(PHONE, "[number removed]");
+  return text
+    .replace(EMAIL, "[email removed]")
+    .replace(NUMBER_RUN, (run) => (looksLikePhone(run) ? "[number removed]" : run));
 }
 
 function scrub(value: unknown, key = ""): unknown {

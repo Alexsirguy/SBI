@@ -7,7 +7,8 @@ import { webEnv } from "../../env";
 import { api } from "../api";
 import { useLocale, useT } from "../i18n/provider";
 import { AgeSelect, readAge } from "./age-select";
-import { ACCOUNT_KEY } from "./use-account";
+import { forgetAccountData } from "./use-account";
+import { useErrorText } from "../i18n/error-text";
 
 interface GoogleIdentity {
   accounts: {
@@ -76,6 +77,7 @@ export function GoogleButton({
   onSignedIn: () => void;
 }) {
   const t = useT("account");
+  const errorText = useErrorText();
   const locale = useLocale();
   const target = useRef<HTMLDivElement>(null);
   const client = useQueryClient();
@@ -106,7 +108,7 @@ export function GoogleButton({
                   });
                   return;
                 }
-                await client.invalidateQueries({ queryKey: ACCOUNT_KEY });
+                forgetAccountData(client);
                 onSignedIn();
               },
               (failure: Error) => setError(failure.message),
@@ -139,7 +141,7 @@ export function GoogleButton({
       <GoogleDetails
         {...details}
         onDone={async () => {
-          await client.invalidateQueries({ queryKey: ACCOUNT_KEY });
+          forgetAccountData(client);
           onSignedIn();
         }}
       />
@@ -150,7 +152,7 @@ export function GoogleButton({
       <div ref={target} />
       {error ? (
         <p role="alert" className="auth__alert">
-          {error}
+          {errorText(error)}
         </p>
       ) : null}
     </div>
@@ -170,6 +172,7 @@ function GoogleDetails({
   onDone: () => Promise<void>;
 }) {
   const t = useT("account");
+  const errorText = useErrorText();
   const [values, setValues] = useState({ age: "", firstName, lastName });
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -190,7 +193,7 @@ function GoogleDetails({
       await api("finishGoogleSignUp", { ...values, age: age.age, credential });
       await onDone();
     } catch (failure) {
-      setError((failure as Error).message);
+      setError(errorText((failure as Error).message));
     } finally {
       setBusy(false);
     }

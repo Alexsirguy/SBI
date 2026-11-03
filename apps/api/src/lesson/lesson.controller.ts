@@ -1,6 +1,7 @@
 import { Body, Controller, Inject, Logger, Post, Req, Res } from "@nestjs/common";
 import type { ServerResponse } from "node:http";
 import { API_ROUTES, LessonRequest } from "@sbi/contracts";
+import { withUsageScope } from "@sbi/llm";
 import type { SavedLessonRepository } from "@sbi/db";
 import { sessionToken, type SessionRequest } from "../account/account.guard";
 import { AuthService } from "../account/auth.service";
@@ -8,6 +9,7 @@ import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
 import { SAVED_LESSONS } from "../tokens";
 import { LessonService, type LessonStreamEvent } from "./lesson.service";
+import { lessonText } from "./lesson-text";
 
 const logger = new Logger("LessonController");
 
@@ -57,6 +59,11 @@ export class LessonController {
     @Req() request: SessionRequest,
     @Res() res: RawResponse,
   ): Promise<void> {
+    // The whole stream runs in one usage scope, so the lesson's cost covers every model call.
+    return withUsageScope(() => this.respond(body, request, res));
+  }
+
+  private async respond(body: LessonRequest, request: SessionRequest, res: RawResponse) {
     const events = this.lessons.streamLesson(body, {
       ownLessonIds: await this.ownLessonIds(request),
     });
@@ -72,7 +79,9 @@ export class LessonController {
         logger.error(`Lesson stream failed: ${(error as Error)?.stack ?? String(error)}`);
       }
       const message =
-        error instanceof UserFacingException ? error.message : "Something went wrong.";
+        error instanceof UserFacingException
+          ? error.message
+          : lessonText(body.locale).somethingWentWrong;
       res.raw.write(frame({ type: "error", data: { error: message } }));
     } finally {
       res.raw.end();

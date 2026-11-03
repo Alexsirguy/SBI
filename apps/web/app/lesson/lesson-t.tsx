@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from "react";
-import { UNREACHABLE } from "../api-client";
+import { useErrorText as useGeneralErrorText } from "../i18n/error-text";
 import { useT } from "../i18n/provider";
 import type { Messages } from "../i18n/messages";
 import { UNREADABLE } from "./stream";
@@ -16,9 +16,10 @@ export function rich(template: string, slots: Record<string, ReactNode>): ReactN
     ));
 }
 
-/** The web app's own failure messages in the page's language; the API's arrive already written. */
+/** The general translations plus the lesson stream's own "could not read" message. */
 export function useErrorText() {
   const t = useT("lesson");
+  const general = useGeneralErrorText();
   return (message: string | undefined) =>
-    message === UNREACHABLE ? t("unreachable") : message === UNREADABLE ? t("unreadable") : message;
+    message === UNREADABLE ? t("unreadable") : general(message);
 }

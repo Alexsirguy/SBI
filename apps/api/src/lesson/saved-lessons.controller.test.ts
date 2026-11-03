@@ -205,4 +205,17 @@ describe("saved lessons", () => {
     expect(response.status).toBe(404);
     expect(s.stored).toHaveLength(0);
   });
+
+  it("makes one copy when two shares of the same lesson arrive together", async () => {
+    const s = await start();
+    test = s.test;
+    await test.post("/account/lessons/save", { lessonId: kettle.lessonId, version: 1 }, s.headers);
+
+    const share = () =>
+      s.test.post("/account/lessons/share", { lessonId: kettle.lessonId }, s.headers);
+    const statuses = (await Promise.all([share(), share()])).map((response) => response.status);
+
+    expect(statuses.sort()).toEqual([200, 409]);
+    expect(s.stored).toHaveLength(1);
+  });
 });

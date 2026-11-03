@@ -13,11 +13,13 @@ import { AuthDivider } from "../auth-card";
 import { fieldErrors } from "../form-errors";
 import { GoogleButton } from "../google-button";
 import { PasswordField } from "../password-field";
-import { ACCOUNT_KEY } from "../use-account";
+import { ACCOUNT_KEY, forgetAccountData } from "../use-account";
+import { useErrorText } from "../../i18n/error-text";
 
 const EMPTY = { age: "", email: "", firstName: "", lastName: "", password: "" };
 
 export function SignUpForm() {
+  const errorText = useErrorText();
   const t = useT("account");
   const router = useRouter();
   const client = useQueryClient();
@@ -53,10 +55,12 @@ export function SignUpForm() {
     if (!parsed.success) return;
     setBusy(true);
     try {
-      client.setQueryData(ACCOUNT_KEY, await api("signUp", parsed.data));
+      const account = await api("signUp", parsed.data);
+      forgetAccountData(client);
+      client.setQueryData(ACCOUNT_KEY, account);
       done();
     } catch (error) {
-      setFailure((error as Error).message);
+      setFailure(errorText((error as Error).message));
       setBusy(false);
     }
   };

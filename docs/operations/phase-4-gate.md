@@ -7,11 +7,11 @@ Spec §14 makes Phase 4 depend on an operational review: moderation capacity, co
 **How it's measured.** Every lesson that reaches the learner logs one `lesson-cost` event (`@sbi/analytics`, written by `LessonService`). The event holds:
 
 - the lesson id and version;
-- the outcome: `fresh`, `cached` (reused) or `fallback`;
+- the outcome: `fresh`, `cached` (reused), `fallback`, `refused` (a safety or age hold) or `failed`;
 - model calls, input, cached-input and output tokens;
 - `costUsd`, if prices are configured.
 
-It holds nothing from the question or the lesson text. Every model call made while writing that lesson goes through one meter (`meterProvider` in `@sbi/llm`). That covers research gaps, model knowledge, the draft, the checks and the repairs.
+It holds nothing from the question or the lesson text. The lesson model's provider is wrapped once (`scopedProvider` in `@sbi/llm`), and each lesson request runs in its own usage scope. So every call made for that request counts: the risk classifier, evidence planning and extraction, model knowledge, the draft, the checks, the repairs and the visuals. Refused and failed requests are recorded too, because they spent tokens.
 
 **Turning on prices.** Set `LESSON_PRICE_INPUT_PER_MTOK`, `LESSON_PRICE_CACHED_INPUT_PER_MTOK` and `LESSON_PRICE_OUTPUT_PER_MTOK` (US dollars per million tokens) to the lesson model's current price. Without them, tokens are still logged and `costUsd` is `null`.
 
@@ -25,7 +25,7 @@ grep '"type":"lesson-cost"' api.log | grep '"outcome":"fresh"' \
 
 Report three numbers: mean `costUsd` for `fresh`, the share of lessons that are `cached`, and the blended mean. Reuse is the biggest cost lever: a reused lesson costs no model calls.
 
-**Not counted:** the risk classifier and the visual maker use their own providers, so they're outside the meter. Recognition is per photo, not per lesson. Add these from the general `LessonLlm` and recognition telemetry if they matter at your volume.
+**Not counted:** recognition, which is billed per photo rather than per lesson, and question suggestions, which are a separate request. Add them from the recognition and `LessonLlm` telemetry if they matter at your volume.
 
 ## 2. Cost controls
 
