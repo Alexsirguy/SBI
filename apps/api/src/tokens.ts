@@ -39,3 +39,4 @@ export const SAVED_LESSONS = Symbol("SAVED_LESSONS");
 export const EVENT_SINK = Symbol("EVENT_SINK");
 export const EVENTS_LIMITER = Symbol("EVENTS_LIMITER");
 export const COVERAGE = Symbol("COVERAGE");
+export const LESSON_PRICES = Symbol("LESSON_PRICES");

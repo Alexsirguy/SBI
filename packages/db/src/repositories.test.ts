@@ -847,6 +847,8 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         { lessons: 1, taxonomyId: lesson.taxonomyId },
         { lessons: 1, taxonomyId: "subject.car-engine" },
       ]);
+      const queue = await repos.coverage.reviewQueue();
+      expect(queue).toEqual([{ status: lesson.reviewStatus, versions: 3 }]);
     });
   });
 

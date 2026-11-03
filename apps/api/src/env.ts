@@ -45,10 +45,25 @@ const schema = z.object({
   ZEPTOMAIL_FROM: z.email().optional(),
   ZEPTOMAIL_FROM_NAME: z.string().min(1).default("Science Behind It"),
   ZEPTOMAIL_API_URL: z.url().default("https://api.zeptomail.com/v1.1/email"),
+  // US dollars per million tokens for the lesson model; set all three to price each lesson (#110).
+  LESSON_PRICE_INPUT_PER_MTOK: z.coerce.number().nonnegative().optional(),
+  LESSON_PRICE_CACHED_INPUT_PER_MTOK: z.coerce.number().nonnegative().optional(),
+  LESSON_PRICE_OUTPUT_PER_MTOK: z.coerce.number().nonnegative().optional(),
   SESSION_TTL_DAYS: z.coerce.number().int().positive().max(90).default(30),
   // Browsers drop Secure cookies over plain http, so local development turns it off.
   SESSION_COOKIE_SECURE: z.stringbool().optional(),
 });
+
+function parsePrices(env: z.infer<typeof schema>) {
+  const input = env.LESSON_PRICE_INPUT_PER_MTOK;
+  const cachedInput = env.LESSON_PRICE_CACHED_INPUT_PER_MTOK;
+  const output = env.LESSON_PRICE_OUTPUT_PER_MTOK;
+  if (input === undefined && cachedInput === undefined && output === undefined) return null;
+  if (input === undefined || cachedInput === undefined || output === undefined) {
+    throw new Error("Set all three LESSON_PRICE_* values, or none to log tokens without a price.");
+  }
+  return { cachedInput, input, output };
+}
 
 function parseMail(env: z.infer<typeof schema>) {
   if (!env.ZEPTOMAIL_TOKEN) return null;
@@ -67,6 +82,7 @@ export function loadEnv(source: EnvSource = process.env) {
   const env = createEnv(schema, source);
   return {
     ...env,
+    lessonPrices: parsePrices(env),
     mail: parseMail(env),
     sessionCookieSecure: env.SESSION_COOKIE_SECURE ?? env.NODE_ENV === "production",
     features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS),

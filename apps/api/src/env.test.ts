@@ -30,6 +30,19 @@ describe("loadEnv", () => {
     expect(() => loadEnv({ ...valid, ZEPTOMAIL_TOKEN: "t" })).toThrow(/ZEPTOMAIL_FROM/);
   });
 
+  it("prices lessons only when all three token prices are set", () => {
+    expect(loadEnv(valid).lessonPrices).toBeNull();
+    expect(
+      loadEnv({
+        ...valid,
+        LESSON_PRICE_CACHED_INPUT_PER_MTOK: "0.5",
+        LESSON_PRICE_INPUT_PER_MTOK: "2",
+        LESSON_PRICE_OUTPUT_PER_MTOK: "8",
+      }).lessonPrices,
+    ).toEqual({ cachedInput: 0.5, input: 2, output: 8 });
+    expect(() => loadEnv({ ...valid, LESSON_PRICE_INPUT_PER_MTOK: "2" })).toThrow(/LESSON_PRICE/);
+  });
+
   it("marks the session cookie Secure in production unless told otherwise", () => {
     expect(loadEnv(valid).sessionCookieSecure).toBe(false);
     expect(loadEnv({ ...valid, NODE_ENV: "production" }).sessionCookieSecure).toBe(true);

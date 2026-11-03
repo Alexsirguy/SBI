@@ -29,6 +29,7 @@ import {
   LESSONS,
   EVENT_SINK,
   EVENTS_LIMITER,
+  LESSON_PRICES,
   REPOSITORIES,
   RISK_CLASSIFIER,
   VISUAL_MAKER,
@@ -99,6 +100,11 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
         const logger = new Logger("Events");
         return createLogSink((line) => logger.log(line));
       },
+    },
+    {
+      provide: LESSON_PRICES,
+      inject: [API_ENV],
+      useFactory: (env: ApiEnv) => env.lessonPrices,
     },
     {
       provide: EVENTS_LIMITER,

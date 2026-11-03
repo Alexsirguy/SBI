@@ -195,6 +195,7 @@ export async function startTestApp(
         { lessons: 2, taxonomyId: "subject.hovercraft" },
         { lessons: 1, taxonomyId: "subject.rainbow" },
       ],
+      reviewQueue: async () => [],
     });
   const moduleRef = await configure(base).compile();
   const app = configureApp(

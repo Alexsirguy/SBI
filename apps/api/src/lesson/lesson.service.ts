@@ -18,7 +18,14 @@ import {
   type GatherOptions,
   type InquiryInput,
 } from "@sbi/evidence";
-import { LlmError, type LlmProvider } from "@sbi/llm";
+import {
+  costOf,
+  LlmError,
+  meterProvider,
+  type LlmProvider,
+  type MeteredUsage,
+  type TokenPrices,
+} from "@sbi/llm";
 import {
   buildIntentSignature,
   citationCheck,
@@ -62,7 +69,9 @@ import {
   LESSON_GATHERER,
   LESSON_RIGHTS,
   VISUAL_MAKER,
+  EVENT_SINK,
   LESSON_LLM,
+  LESSON_PRICES,
   LESSON_REVIEW_AUDIT,
   LESSONS,
   RISK_CLASSIFIER,
@@ -71,6 +80,7 @@ import {
 import { createEventQueue } from "./event-queue";
 import { resolveSubject } from "./subject";
 import type { VisualMaker } from "../visuals/visual-maker";
+import type { EventSink } from "@sbi/analytics";
 import { lessonText, SAFETY_NOTICES_ES, type LessonText } from "./lesson-text";
 import { lessonSources } from "./sources";
 import { UserFacingException } from "../common/user-facing.exception";
@@ -244,6 +254,8 @@ export class LessonService {
     @Inject(LESSON_RIGHTS) private readonly rights: RightsGate,
     @Optional() @Inject(VISUAL_MAKER) private readonly makeVisual?: VisualMaker,
     @Optional() @Inject(RISK_CLASSIFIER) classify?: RiskClassifier,
+    @Optional() @Inject(EVENT_SINK) private readonly events?: EventSink,
+    @Optional() @Inject(LESSON_PRICES) private readonly prices?: TokenPrices | null,
   ) {
     this.classify = classify ?? createRiskClassifier({ provider: null });
   }
@@ -254,9 +266,13 @@ export class LessonService {
     request: LessonRequest,
     viewer: { ownLessonIds?: ReadonlySet<string> } = {},
   ): AsyncGenerator<LessonStreamEvent> {
-    const provider = this.provider;
     const text = lessonText(request.locale);
-    if (!provider) throw new UserFacingException(text.unavailable, HttpStatus.SERVICE_UNAVAILABLE);
+    if (!this.provider) {
+      throw new UserFacingException(text.unavailable, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+    // Every model call for this one lesson goes through the meter, so its cost can be told (#110).
+    const meter = meterProvider(this.provider);
+    const provider = meter.provider;
     // Milliseconds from the request to each stage, logged once so cold-lesson latency is visible.
     const started = performance.now();
     const timings: Record<string, number> = {};
@@ -547,6 +563,7 @@ export class LessonService {
       }),
     };
     yield { type: "lesson", data: validated };
+    this.recordCost(validated, kind, meter.usage());
     // After the text, so citation markers can name their sources without delaying the lesson.
     const sourceIds = [...new Set(validated.claims.flatMap((claim) => claim.sourceIds))];
     yield {
@@ -562,5 +579,17 @@ export class LessonService {
       type: "visuals",
       data: LessonVisuals.parse({ lessonId: validated.lessonId, visuals }),
     };
+  }
+
+  private recordCost(lesson: Lesson, kind: QuickAnswer["kind"], usage: MeteredUsage) {
+    this.events?.({
+      ...usage,
+      at: new Date().toISOString(),
+      costUsd: this.prices ? costOf(usage, this.prices) : null,
+      lessonId: lesson.lessonId,
+      outcome: kind === "cached" ? "cached" : kind === "fallback" ? "fallback" : "fresh",
+      type: "lesson-cost",
+      version: lesson.version,
+    });
   }
 }

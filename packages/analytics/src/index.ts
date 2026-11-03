@@ -8,7 +8,23 @@ export interface NextConceptEvent {
   at: string;
 }
 
-export type AnalyticsEvent = NextConceptEvent;
+/** What writing or serving one completed lesson cost (#110); tokens, never text or learner. */
+export interface LessonCostEvent {
+  type: "lesson-cost";
+  lessonId: string;
+  version: number;
+  /** "cached" lessons cost only the checks before reuse; "fallback" means generation failed. */
+  outcome: "fresh" | "cached" | "fallback";
+  calls: number;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  /** Null until token prices are configured. */
+  costUsd: number | null;
+  at: string;
+}
+
+export type AnalyticsEvent = NextConceptEvent | LessonCostEvent;
 
 export type EventSink = (event: AnalyticsEvent) => void;
 

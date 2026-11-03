@@ -840,6 +840,64 @@ describe("LessonService", () => {
     expect(events[0].data.kind).toBe("cached");
   });
 
+  it("records what each completed lesson cost, fresh or reused, in tokens and dollars", async () => {
+    const events: unknown[] = [];
+    const sink = (event: unknown) => void events.push(event);
+    const prices = { cachedInput: 0.5, input: 2, output: 8 };
+    const first = setup(scriptedProvider());
+    const fresh = new LessonService(
+      scriptedProvider(),
+      taxonomy(),
+      memoryLessons([]).repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer(),
+      CLEARED,
+      undefined,
+      undefined,
+      sink,
+      prices,
+    );
+    await collect(fresh);
+    await collect(first.service);
+    share(first.lessons);
+    const reused = new LessonService(
+      throwingProvider(new Error("must not be called")),
+      taxonomy(),
+      memoryLessons(first.lessons).repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer(),
+      CLEARED,
+      undefined,
+      undefined,
+      sink,
+      null,
+    );
+    await collect(reused);
+
+    expect(events).toEqual([
+      expect.objectContaining({ outcome: "fresh", type: "lesson-cost" }),
+      expect.objectContaining({ calls: 0, costUsd: null, outcome: "cached", type: "lesson-cost" }),
+    ]);
+    const freshCost = events[0] as { calls: number; costUsd: number };
+    expect(freshCost.calls).toBeGreaterThan(0);
+    expect(typeof freshCost.costUsd).toBe("number");
+    // Ids, counts and money only: nothing from the question or the lesson text.
+    expect(Object.keys(freshCost).sort()).toEqual([
+      "at",
+      "cachedInputTokens",
+      "calls",
+      "costUsd",
+      "inputTokens",
+      "lessonId",
+      "outcome",
+      "outputTokens",
+      "type",
+      "version",
+    ]);
+  });
+
   it("never serves a cached lesson drafted before the Merrill prompt", async () => {
     const first = setup(scriptedProvider());
     await collect(first.service);
