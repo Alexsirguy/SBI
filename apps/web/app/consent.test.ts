@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  consentChoice,
   forgetKeptPhoto,
   hasConsent,
   readConsent,
   readKeptPhotos,
   rememberKeptPhoto,
   setConsent,
+  setConsents,
 } from "./consent";
 
 function memory() {
@@ -30,18 +32,24 @@ describe("consent", () => {
     const now = new Date("2026-11-02T10:00:00.000Z");
     expect(setConsent("save-photos", true, storage, now)).toEqual({
       version: "consent-1",
-      choices: {
-        "save-photos": true,
-        account: false,
-        "model-improvement": false,
-        research: false,
-      },
+      choices: { "save-photos": true },
       decidedAt: now.toISOString(),
     });
     expect(hasConsent("save-photos", storage)).toBe(true);
     expect(hasConsent("research", storage)).toBe(false);
     setConsent("save-photos", false, storage);
     expect(hasConsent("save-photos", storage)).toBe(false);
+  });
+
+  it("tells an unanswered request from a declined one, and records several at once", () => {
+    const storage = memory();
+    expect(consentChoice("research", storage)).toBeUndefined();
+    setConsents({ research: false, "model-improvement": true }, storage);
+    setConsent("save-photos", true, storage);
+    expect(consentChoice("research", storage)).toBe(false);
+    expect(consentChoice("model-improvement", storage)).toBe(true);
+    expect(consentChoice("save-photos", storage)).toBe(true);
+    expect(consentChoice("account", storage)).toBeUndefined();
   });
 
   it("asks again when the agreement was made under older wording", () => {

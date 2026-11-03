@@ -9,10 +9,6 @@ import { z } from "zod";
 const CONSENT_KEY = "sbi.consent";
 const KEPT_KEY = "sbi.kept-photos";
 
-const NO_CHOICES = Object.fromEntries(
-  ConsentPurpose.options.map((purpose) => [purpose, false]),
-) as Record<ConsentPurpose, boolean>;
-
 const KeptPhoto = z.object({ key: z.string().min(1), label: z.string(), keptAt: z.string() });
 export type KeptPhoto = z.infer<typeof KeptPhoto>;
 
@@ -79,24 +75,38 @@ export function hasConsent(purpose: ConsentPurpose, storage?: Store): boolean {
   return record?.version === CONSENT_VERSION && record.choices[purpose] === true;
 }
 
+/** Accepted, declined, or undefined while the learner has not answered under current wording. */
+export function consentChoice(purpose: ConsentPurpose, storage?: Store): boolean | undefined {
+  const record = readConsent(storage);
+  return record?.version === CONSENT_VERSION ? record.choices[purpose] : undefined;
+}
+
 export function setConsent(
   purpose: ConsentPurpose,
   allowed: boolean,
   storage?: Store,
   now = new Date(),
 ): Consent {
+  return setConsents({ [purpose]: allowed }, storage, now);
+}
+
+/** Records several answers at once; purposes not named keep their earlier answer. */
+export function setConsents(
+  answers: Partial<Record<ConsentPurpose, boolean>>,
+  storage?: Store,
+  now = new Date(),
+): Consent {
   const current = readConsent(storage);
   const record: Consent = {
     version: CONSENT_VERSION,
-    choices: {
-      ...(current?.version === CONSENT_VERSION ? current.choices : NO_CHOICES),
-      [purpose]: allowed,
-    },
+    choices: { ...(current?.version === CONSENT_VERSION ? current.choices : {}), ...answers },
     decidedAt: now.toISOString(),
   };
   write(CONSENT_KEY, record, storage);
   return record;
 }
+
+export const CONSENT_PURPOSES = ConsentPurpose.options;
 
 /** Kept photos are listed on this device only, so the learner can find and delete them. */
 export function readKeptPhotos(storage?: Store): KeptPhoto[] {

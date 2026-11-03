@@ -11,6 +11,7 @@ import { I18nProvider } from "./i18n/provider";
 import { PathwayProvider } from "./pathway/provider";
 import { getPathway } from "./pathway/server";
 import { getT } from "./i18n/server";
+import { PrivacyCorner } from "./privacy-corner";
 import { Providers } from "./providers";
 import { SiteHeader } from "./site-chrome";
 import { SiteFooter } from "./site-footer";
@@ -54,7 +55,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <I18nProvider locale={locale} messages={messages}>
           <PathwayProvider initial={pathway}>
             <SiteHeader />
-            <Providers>{children}</Providers>
+            <Providers>
+              {children}
+              <PrivacyCorner />
+            </Providers>
             <SiteFooter />
           </PathwayProvider>
         </I18nProvider>

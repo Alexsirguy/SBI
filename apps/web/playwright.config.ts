@@ -10,7 +10,19 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}`,
     trace: "retain-on-failure",
+    // Specs start with the privacy notes folded away, so they never cover what a test clicks.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: `http://localhost:${port}`,
+          localStorage: [{ name: "sbi.privacy-corner", value: "collapsed" }],
+        },
+      ],
+    },
   },
+  // Its own spec checks the privacy tab; baselines stay about the page beneath it.
+  expect: { toHaveScreenshot: { stylePath: "./e2e/screenshot.css" } },
   projects: [
     {
       name: "chromium",

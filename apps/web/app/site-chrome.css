@@ -290,3 +290,305 @@
   text-transform: uppercase;
   color: var(--sbi-ink-soft);
 }
+
+/* Privacy notes docked to the right edge like a drawer pulled from the bench: the tab never
+   moves, and the panel opens above it, joined to it. */
+.privacy-corner {
+  position: fixed;
+  right: 0;
+  bottom: max(var(--sbi-space-4), env(safe-area-inset-bottom, 0px));
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: calc(100vw - var(--sbi-space-4));
+  pointer-events: none;
+}
+
+.privacy-corner > * {
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.privacy-corner__panel {
+  width: min(24rem, calc(100vw - var(--sbi-space-4)));
+  padding: var(--sbi-space-5) max(var(--sbi-space-5), env(safe-area-inset-right, 0px))
+    var(--sbi-space-4) var(--sbi-space-5);
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  border: 1px solid var(--sbi-control-edge);
+  border-right: 0;
+  border-left: 4px solid var(--sbi-note);
+  border-bottom: 0;
+  border-radius: var(--sbi-radius-l) 0 0 0;
+  box-shadow: var(--sbi-lift);
+  max-height: calc(100dvh - 160px);
+  overflow-y: auto;
+  transform-origin: bottom right;
+  animation: privacy-corner-out var(--sbi-duration-settle) var(--sbi-ease);
+}
+
+@keyframes privacy-corner-out {
+  from {
+    opacity: 0;
+    transform: translateX(var(--sbi-space-5));
+  }
+}
+
+.privacy-corner__heading {
+  margin: 0 0 var(--sbi-space-3);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: var(--sbi-text-heading);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.privacy-corner__notes {
+  margin: 0 0 var(--sbi-space-4);
+  display: grid;
+  gap: var(--sbi-space-3);
+  font-size: var(--sbi-text-small);
+  line-height: 1.5;
+}
+
+.privacy-corner__notes > div {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: var(--sbi-space-3);
+  padding-top: var(--sbi-space-3);
+  border-top: 1px dashed var(--sbi-rule);
+}
+
+.privacy-corner__notes > div:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.privacy-corner__notes dt {
+  font-weight: 700;
+}
+
+.privacy-corner__notes dd {
+  margin: 0;
+  color: var(--sbi-ink-soft);
+}
+
+.privacy-corner__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sbi-touch-min);
+  color: var(--sbi-ink);
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.privacy-corner__tab {
+  /* Above the panel's shadow, which its entrance transform lifts into its own layer. */
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sbi-space-2);
+  min-height: var(--sbi-touch);
+  padding: 0 max(var(--sbi-space-4), env(safe-area-inset-right, 0px)) 0 var(--sbi-space-4);
+  border: 1px solid var(--sbi-control-edge);
+  border-right: 0;
+  border-radius: var(--sbi-radius-m) 0 0 var(--sbi-radius-m);
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  font: inherit;
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+  box-shadow: var(--sbi-lift);
+  cursor: pointer;
+  transition: background var(--sbi-duration-quick) var(--sbi-ease);
+}
+
+.privacy-corner__tab:hover {
+  background: var(--sbi-paper-sunk);
+}
+
+.privacy-corner__tab:focus-visible,
+.privacy-corner__link:focus-visible {
+  outline: 3px solid var(--sbi-focus);
+  outline-offset: 2px;
+}
+
+/* Joined to the panel above it, so the two read as one drawer. */
+.privacy-corner[data-open="true"] .privacy-corner__tab {
+  width: min(24rem, calc(100vw - var(--sbi-space-4)));
+  padding-left: var(--sbi-space-5);
+  border-top: 1px dashed var(--sbi-rule);
+  border-left: 4px solid var(--sbi-note);
+  border-radius: 0 0 0 var(--sbi-radius-l);
+  box-shadow: var(--sbi-lift);
+}
+
+.privacy-corner__chevron {
+  transition: transform var(--sbi-duration-quick) var(--sbi-ease);
+}
+
+.privacy-corner[data-open="true"] .privacy-corner__chevron {
+  transform: rotate(180deg);
+}
+
+/* Leaves room at the end of every page so the tab never covers the footer's last line. */
+.site-footer {
+  padding-bottom: calc(var(--sbi-touch) + var(--sbi-space-5));
+}
+
+@media print {
+  .privacy-corner {
+    display: none;
+  }
+}
+
+.privacy-corner__count {
+  padding: 0 var(--sbi-space-2);
+  border: 1px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-pill);
+  font-weight: 600;
+  font-size: var(--sbi-text-label);
+  line-height: 1.6;
+}
+
+.privacy-corner .consent-requests {
+  margin-bottom: var(--sbi-space-4);
+  padding-bottom: var(--sbi-space-4);
+  border-bottom: 1px solid var(--sbi-rule);
+}
+
+/* Consent requests: the corner panel and the privacy page share these. */
+.consent-requests__intro {
+  margin: 0 0 var(--sbi-space-3);
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.consent-requests__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.consent-request {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding-block: var(--sbi-space-3);
+  border-top: 1px dashed var(--sbi-rule);
+}
+
+.consent-request:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.consent-request__title {
+  margin: 0;
+  font-family: var(--sbi-font-body);
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.consent-request__text,
+.consent-request__unanswered {
+  margin: 0;
+  font-size: var(--sbi-text-small);
+  line-height: 1.5;
+  color: var(--sbi-ink-soft);
+}
+
+.consent-request__unanswered {
+  font-style: italic;
+}
+
+/* A two-way switch: the answer given is filled in ink, with its tick or cross, never colour alone. */
+.consent-request__answer {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  justify-self: start;
+  border: 1px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-m);
+  overflow: hidden;
+}
+
+.consent-request__answer button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sbi-space-1);
+  min-height: var(--sbi-touch-min);
+  min-width: 5.75rem;
+  padding: 0 var(--sbi-space-3);
+  border: 0;
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  font: inherit;
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--sbi-duration-quick) var(--sbi-ease);
+}
+
+.consent-request__answer button + button {
+  border-left: 1px solid var(--sbi-control-edge);
+}
+
+.consent-request__answer svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.35;
+}
+
+.consent-request__answer button:hover {
+  background: var(--sbi-paper-sunk);
+}
+
+.consent-request__answer button[aria-pressed="true"] {
+  background: var(--sbi-ink);
+  color: var(--sbi-paper);
+}
+
+.consent-request__answer button[aria-pressed="true"] svg {
+  opacity: 1;
+}
+
+.consent-request__answer button:focus-visible {
+  outline: 3px solid var(--sbi-focus);
+  outline-offset: -3px;
+}
+
+.consent-request__answer button:disabled {
+  cursor: progress;
+}
+
+.consent-requests__all {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+  margin-bottom: var(--sbi-space-3);
+}
+
+.consent-request__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+}
+
+.consent-requests__status:empty {
+  display: none;
+}
+
+.consent-requests__status {
+  margin-top: var(--sbi-space-2);
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+}
