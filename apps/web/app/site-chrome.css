@@ -242,10 +242,32 @@
 }
 
 .site-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-3);
   max-width: 72rem;
   margin: 0 auto;
   padding-block: var(--sbi-space-4);
   border-top: 1px solid var(--sbi-rule);
+}
+
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--sbi-space-2);
+  font-size: var(--sbi-text-small);
+}
+
+.language-switcher select {
+  min-height: var(--sbi-touch-min);
+  padding: 0 var(--sbi-space-3);
+  border: 1.5px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-s);
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  font: inherit;
 }
 
 .site-footer__legal p {

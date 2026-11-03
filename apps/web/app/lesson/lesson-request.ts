@@ -1,4 +1,5 @@
 import { Id, LessonRequest } from "@sbi/contracts";
+import type { Locale } from "../i18n/locales";
 import { DEFAULT_PREFS, DEPTHS, type LessonPrefs, parsePrefs } from "./prefs";
 
 export interface LessonParams {
@@ -9,6 +10,8 @@ export interface LessonParams {
   age?: string;
   /** "1" asks for a newly written lesson instead of a reused one. */
   fresh?: string;
+  /** The page's language; the lesson is written in it (#107). */
+  locale?: Locale;
 }
 
 /** What a lesson is about: any subject by name, tied to a catalogue object when there is one. */
@@ -32,8 +35,12 @@ export function lessonHref(
   return `/lesson?${params}`;
 }
 
-export function defaultQuestion(label: string): string {
+export function defaultQuestion(label: string, locale: Locale = "en"): string {
   // Learners often type "a rainbow"; the question already supplies its own article.
+  if (locale === "es") {
+    const name = label.toLowerCase().replace(/^(un|una|el|la|los|las)\s+/, "");
+    return `¿Cuál es la ciencia detrás de ${name}?`;
+  }
   const name = label.toLowerCase().replace(/^(a|an|the)\s+/, "");
   return `What is the science behind the ${name}?`;
 }
@@ -45,13 +52,18 @@ export function lessonRequestFrom(params: LessonParams): LessonRequest | undefin
   if (!taxonomyId.success && !label) return undefined;
   const prefs = parsePrefs(params.depth, params.age);
   const request = LessonRequest.safeParse({
-    question: params.q?.trim() || defaultQuestion(label || "this object"),
+    question:
+      params.q?.trim() ||
+      defaultQuestion(
+        label || (params.locale === "es" ? "este objeto" : "this object"),
+        params.locale,
+      ),
     // An unknown or missing id still leaves the named subject to learn about (ADR 0013).
     ...(taxonomyId.success ? { taxonomyId: taxonomyId.data } : { subject: label }),
     audience: prefs.age === "none" ? "general" : prefs.age,
     readingLevel: DEPTHS[prefs.depth].readingLevel,
     fresh: params.fresh === "1",
-    locale: "en",
+    locale: params.locale ?? "en",
     safetyClass: "low",
   });
   return request.success ? request.data : undefined;

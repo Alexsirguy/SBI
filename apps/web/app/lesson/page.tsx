@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getLocale } from "../i18n/load";
 import { LessonReader } from "./lesson-reader";
 import "./lesson.css";
 import { lessonRequestFrom } from "./lesson-request";
@@ -23,6 +24,7 @@ export default async function LessonPage({
     depth: prefs.depth,
     age: prefs.age,
     fresh: param(params.fresh),
+    locale: await getLocale(),
   });
   if (!request) {
     return (

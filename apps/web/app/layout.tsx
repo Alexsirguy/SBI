@@ -6,6 +6,8 @@ import "../env";
 import "@sbi/ui/styles.css";
 import "./globals.css";
 import "./site-chrome.css";
+import { getLocale, getMessages } from "./i18n/load";
+import { I18nProvider } from "./i18n/provider";
 import { Providers } from "./providers";
 import { SiteHeader } from "./site-chrome";
 import { SiteFooter } from "./site-footer";
@@ -36,13 +38,20 @@ export const metadata: Metadata = {
   description: "Explore the science behind everyday objects.",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages(locale);
   return (
-    <html lang="en" className={`${bodyFace.variable} ${displayFace.variable} ${monoFace.variable}`}>
+    <html
+      lang={locale}
+      className={`${bodyFace.variable} ${displayFace.variable} ${monoFace.variable}`}
+    >
       <body>
-        <SiteHeader />
-        <Providers>{children}</Providers>
-        <SiteFooter />
+        <I18nProvider locale={locale} messages={messages}>
+          <SiteHeader />
+          <Providers>{children}</Providers>
+          <SiteFooter />
+        </I18nProvider>
       </body>
     </html>
   );

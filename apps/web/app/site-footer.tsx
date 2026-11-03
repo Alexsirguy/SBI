@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LanguageSwitcher } from "./i18n/language-switcher";
 import { LogoMark } from "./logo";
 
 const FOOTER_GROUPS = [
@@ -60,6 +61,7 @@ export function SiteFooter() {
           © {new Date().getFullYear()} Science Behind It. Lessons explain science; they are not
           professional advice.
         </p>
+        <LanguageSwitcher />
       </div>
     </footer>
   );
