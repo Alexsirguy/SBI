@@ -68,7 +68,14 @@ const everyday: RiskClassifier = async () => ({
   policyVersion: "safety-2",
 });
 
-async function start(options: { tutor?: boolean; limit?: number; provider?: LlmProvider } = {}) {
+async function start(
+  options: {
+    tutor?: boolean;
+    limit?: number;
+    provider?: LlmProvider;
+    classify?: RiskClassifier;
+  } = {},
+) {
   const turns = memoryTurns();
   const env = { ...testEnv, features: { ...testEnv.features, tutor: options.tutor ?? true } };
   const test = await startTestApp(fakeMedia(), fakeRecognition(), fakeGaps(), (builder) =>
@@ -83,7 +90,7 @@ async function start(options: { tutor?: boolean; limit?: number; provider?: LlmP
       .overrideProvider(LESSON_LLM)
       .useValue(options.provider ?? answering)
       .overrideProvider(RISK_CLASSIFIER)
-      .useValue(everyday)
+      .useValue(options.classify ?? everyday)
       .overrideProvider(TUTOR_TURNS)
       .useValue(turns.repository)
       .overrideProvider(TUTOR_LIMITER)
@@ -123,7 +130,7 @@ describe("tutor endpoints", () => {
       expect.objectContaining({
         turnId: exchange.turnId,
         modelVersion: "scripted-1@2026",
-        promptVersion: "tutor-answer-p0.2",
+        promptVersion: "tutor-answer-p0.3",
         retentionClass: "session",
       }),
     ]);
@@ -190,5 +197,31 @@ describe("tutor endpoints", () => {
     test = started.test;
     expect((await test.post("/tutor/turns", question())).status).toBe(503);
     expect(started.turns.saved).toEqual([]);
+  });
+
+  it("redirects harm-seeking questions, then pauses the client after three of them", async () => {
+    let classified = 0;
+    const seekingHarm: RiskClassifier = async (input) => {
+      classified += 1;
+      return { ...(await everyday(input)), intent: "harm", categories: ["weapons"] };
+    };
+    ({ test } = await start({ classify: seekingHarm }));
+    for (let strike = 0; strike < 3; strike += 1) {
+      const response = await test.post(
+        "/tutor/turns",
+        question({ text: "How do I hurt someone?" }),
+      );
+      const { exchange } = TutorReply.parse(await response.json());
+      expect(exchange).toMatchObject({ kind: "policy", policy: { reason: "harm" } });
+    }
+    const paused = await test.post("/tutor/turns", question());
+    expect(paused.status).toBe(429);
+    expect(JSON.stringify(await paused.json())).toContain("pause the questions");
+    const freshVisit = await test.post(
+      "/tutor/turns",
+      question({ sessionId: "0192f1a0-0000-7000-8000-00000000b002" }),
+    );
+    expect(freshVisit.status).toBe(429);
+    expect(classified).toBe(3);
   });
 });

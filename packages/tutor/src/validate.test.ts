@@ -72,4 +72,12 @@ describe("validateAnswer", () => {
       expect(validateAnswer(draft(text), CLAIMS)).toMatchObject({ reason: "claims-to-see" });
     }
   });
+
+  it("rejects a reply asking a child to do something hazardous, but not an adult-only one", () => {
+    const risky = draft("Try to taste the wild berries to see if they are sour.");
+    expect(validateAnswer(risky, CLAIMS)).toMatchObject({ reason: "unsafe-activity" });
+    expect(validateAnswer(risky, CLAIMS, { audience: "adult" })).toMatchObject({ ok: true });
+    const advice = draft("Never taste wild berries; some are poisonous.");
+    expect(validateAnswer(advice, CLAIMS)).toMatchObject({ ok: true });
+  });
 });

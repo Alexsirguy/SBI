@@ -1,4 +1,5 @@
-import type { Claim, TutorReplyKind } from "@sbi/contracts";
+import type { AudienceBand, Claim, TutorReplyKind } from "@sbi/contracts";
+import { findUnsafeActivities, safeActivityRulesApply } from "@sbi/safety";
 import { factRef, type DraftAnswer } from "./answer";
 
 /** Three short sentences fit well inside this; anything longer is the lecture the owner ruled out. */
@@ -25,6 +26,7 @@ export type Validated =
         | "too-long"
         | "unknown-citation"
         | "claims-to-see"
+        | "unsafe-activity"
         | "not-a-question"
         | "clarified-twice";
     };
@@ -33,12 +35,17 @@ export type Validated =
 export function validateAnswer(
   draft: DraftAnswer,
   retrieved: readonly Claim[],
-  options: { justClarified?: boolean } = {},
+  options: { justClarified?: boolean; audience?: AudienceBand } = {},
 ): Validated {
   const text = draft.text.trim().replace(/\s+/g, " ");
   if (!text) return { ok: false, reason: "empty" };
   if (text.length > REPLY_MAX_CHARS) return { ok: false, reason: "too-long" };
   if (CLAIMS_TO_SEE.test(text)) return { ok: false, reason: "claims-to-see" };
+  // Off-lesson answers skip the lesson's activity check, so the tutor applies it to every reply.
+  const childMayRead = safeActivityRulesApply([options.audience ?? "general"]);
+  if (childMayRead && findUnsafeActivities(text).length > 0) {
+    return { ok: false, reason: "unsafe-activity" };
+  }
 
   if (draft.kind === "clarify") {
     if (options.justClarified) return { ok: false, reason: "clarified-twice" };

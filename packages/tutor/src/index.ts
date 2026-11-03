@@ -5,3 +5,11 @@ export { runTutorTurn, type TutorDeps } from "./pipeline";
 export { RETRIEVED_CLAIMS, retrieveClaims } from "./retrieve";
 export type { TutorTurnRepository } from "./tutor-turn-repository";
 export { REPLY_MAX_CHARS, validateAnswer, type Validated } from "./validate";
+export {
+  COOLDOWN_MS,
+  cooldownRemaining,
+  createStrikeCounter,
+  HARM_STRIKES,
+  STRIKE_WINDOW_MS,
+  type StrikeCounter,
+} from "./abuse";

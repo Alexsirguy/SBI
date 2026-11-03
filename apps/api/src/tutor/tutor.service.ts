@@ -3,7 +3,12 @@ import type { TutorExchange, TutorTurn, TutorTurnRequest } from "@sbi/contracts"
 import type { LlmProvider } from "@sbi/llm";
 import type { LessonRepository } from "@sbi/orchestrator";
 import type { RiskClassifier } from "@sbi/safety";
-import { runTutorTurn, type TutorTurnRepository } from "@sbi/tutor";
+import {
+  cooldownRemaining,
+  runTutorTurn,
+  type StrikeCounter,
+  type TutorTurnRepository,
+} from "@sbi/tutor";
 import type { z } from "zod";
 import type { RateLimiter } from "../common/rate-limiter";
 import { UserFacingException } from "../common/user-facing.exception";
@@ -14,6 +19,7 @@ import {
   LESSONS,
   RISK_CLASSIFIER,
   TUTOR_LIMITER,
+  TUTOR_STRIKES,
   TUTOR_TURNS,
 } from "../tokens";
 import { tutorText } from "./tutor-text";
@@ -48,6 +54,7 @@ export class TutorService {
     @Inject(RISK_CLASSIFIER) private readonly classify: RiskClassifier,
     @Inject(TUTOR_TURNS) private readonly turns: TutorTurnRepository,
     @Inject(TUTOR_LIMITER) private readonly limiter: RateLimiter,
+    @Inject(TUTOR_STRIKES) private readonly strikes: StrikeCounter,
   ) {}
 
   private available(locale?: string): LlmProvider {
@@ -66,6 +73,11 @@ export class TutorService {
     const lesson = await this.lessons.get(request.lessonId, request.lessonVersion);
     if (!lesson) throw new UserFacingException(text.noLesson, HttpStatus.NOT_FOUND);
     const history = await this.turns.listBySession(request.sessionId);
+    const wait = Math.max(cooldownRemaining(history, new Date()), this.strikes.remaining(client));
+    if (wait > 0) {
+      const minutes = Math.ceil(wait / 60_000);
+      throw new UserFacingException(text.coolingDown(minutes), HttpStatus.TOO_MANY_REQUESTS);
+    }
     let turn: TutorTurn;
     try {
       turn = await runTutorTurn(
@@ -77,6 +89,7 @@ export class TutorService {
       logger.warn(`Tutor turn failed: ${(error as Error)?.name ?? "unknown"}`);
       throw new UserFacingException(text.unavailable, HttpStatus.SERVICE_UNAVAILABLE);
     }
+    if (turn.response.policy?.reason === "harm") this.strikes.strike(client);
     await this.turns.save(turn);
     return toExchange(turn, request.locale);
   }

@@ -42,3 +42,4 @@ export const COVERAGE = Symbol("COVERAGE");
 export const LESSON_PRICES = Symbol("LESSON_PRICES");
 export const TUTOR_TURNS = Symbol("TUTOR_TURNS");
 export const TUTOR_LIMITER = Symbol("TUTOR_LIMITER");
+export const TUTOR_STRIKES = Symbol("TUTOR_STRIKES");

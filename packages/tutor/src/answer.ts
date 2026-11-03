@@ -1,10 +1,10 @@
 import { randomBytes } from "node:crypto";
 import type { Claim } from "@sbi/contracts";
 import { completeStructured, type Completion, type LlmProvider } from "@sbi/llm";
-import { isSpanish } from "@sbi/safety";
+import { isSpanish, SAFE_ACTIVITY_RULE, safeActivityRulesApply } from "@sbi/safety";
 import type { TutorContext } from "./context";
 
-export const TUTOR_ANSWER_PROMPT_VERSION = "tutor-answer-p0.2";
+export const TUTOR_ANSWER_PROMPT_VERSION = "tutor-answer-p0.3";
 
 const SYSTEM = `You are the tutor beside a science lesson for curious families and children.
 Answer the learner's question in at most three short sentences, in plain words at the reading level given. Never lecture or list.
@@ -76,6 +76,7 @@ export async function answerTurn(
           `Lesson: ${context.title}. ${context.summary}`,
           `Audience: ${context.audience} | Reading level: ${context.readingLevel}`,
           isSpanish(context.locale) ? "Reply in Spanish (español), using tú." : "",
+          safeActivityRulesApply([context.audience]) ? SAFE_ACTIVITY_RULE : "",
           `Lesson facts:\n${facts}`,
           history ? `<data-${tag}>Earlier messages:\n${history}</data-${tag}>` : "",
           justAsked

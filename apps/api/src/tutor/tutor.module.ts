@@ -3,7 +3,8 @@ import type { Repositories } from "@sbi/db";
 import { createRateLimiter } from "../common/rate-limiter";
 import type { ApiEnv } from "../env";
 import { LessonModule } from "../lesson/lesson.module";
-import { API_ENV, REPOSITORIES, TUTOR_LIMITER, TUTOR_TURNS } from "../tokens";
+import { API_ENV, REPOSITORIES, TUTOR_LIMITER, TUTOR_STRIKES, TUTOR_TURNS } from "../tokens";
+import { createStrikeCounter } from "@sbi/tutor";
 import { TutorController } from "./tutor.controller";
 import { TutorService } from "./tutor.service";
 
@@ -23,6 +24,7 @@ import { TutorService } from "./tutor.service";
       useFactory: (env: Pick<ApiEnv, "TUTOR_MAX_PER_HOUR">) =>
         createRateLimiter({ limit: env.TUTOR_MAX_PER_HOUR, windowMs: 3_600_000 }),
     },
+    { provide: TUTOR_STRIKES, useFactory: () => createStrikeCounter() },
   ],
 })
 export class TutorModule {}

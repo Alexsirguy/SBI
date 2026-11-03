@@ -80,7 +80,9 @@ export async function runTutorTurn(
       deps.signal,
     );
     modelVersion = completion.model;
-    const checked = draft ? validateAnswer(draft, retrieved, { justClarified }) : undefined;
+    const checked = draft
+      ? validateAnswer(draft, retrieved, { justClarified, audience: question.audience })
+      : undefined;
     if (!checked?.ok) continue;
     return {
       ...base,

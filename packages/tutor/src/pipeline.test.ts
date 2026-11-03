@@ -1,4 +1,5 @@
 import { TutorTurn } from "@sbi/contracts";
+import { SAFE_ACTIVITY_RULE } from "@sbi/safety";
 import { describe, expect, it } from "vitest";
 import { TUTOR_ANSWER_PROMPT_VERSION } from "./answer";
 import { runTutorTurn } from "./pipeline";
@@ -171,5 +172,18 @@ describe("runTutorTurn", () => {
     expect(request?.messages.every((message) => typeof message.content === "string")).toBe(true);
     expect(String(request?.messages[0]?.content)).toContain("You cannot see the learner's photo");
     expect(turn.response.text).toBe("The lesson doesn't say what colour it is.");
+  });
+
+  it("gives the safe-activity rule to every reply a child may read", async () => {
+    const { provider, requests } = scriptedProvider([reply("Ok.", []), reply("Ok.", [])]);
+    const deps = { provider, classify: classifierSaying(), ...fixed };
+    await runTutorTurn(deps, { lesson: LESSON, question: QUESTION, history: [] });
+    await runTutorTurn(deps, {
+      lesson: LESSON,
+      question: { ...QUESTION, audience: "adult" },
+      history: [],
+    });
+    expect(userPrompt(requests[0])).toContain(SAFE_ACTIVITY_RULE);
+    expect(userPrompt(requests[1])).not.toContain(SAFE_ACTIVITY_RULE);
   });
 });
