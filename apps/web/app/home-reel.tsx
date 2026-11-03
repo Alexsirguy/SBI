@@ -16,6 +16,17 @@ export function HomeReel() {
       <figcaption id="reel-caption" className="reel__caption">
         {t("reelCaption")}
       </figcaption>
+      <button
+        type="button"
+        className="reel__pause"
+        aria-pressed={paused}
+        onClick={() => setPaused(!paused)}
+      >
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          {paused ? <path d="M4 2l10 6-10 6z" /> : <path d="M3 2h4v12H3zM9 2h4v12H9z" />}
+        </svg>
+        <span className="sbi-visually-hidden">{paused ? t("reelPlay") : t("reelPause")}</span>
+      </button>
       <div className="reel__stage" aria-hidden="true">
         <div className="reel__scene reel__scene--show">
           <ScanArt className="reel__art" />
@@ -45,22 +56,6 @@ export function HomeReel() {
           <li key={step}>{step}</li>
         ))}
       </ol>
-      <div className="reel__foot">
-        <p className="reel__sources">
-          {t("exampleSourcesTag")}: LibreTexts Physics, CC BY 4.0 · LibreTexts Physics, CC BY-SA 2.5
-        </p>
-        <button
-          type="button"
-          className="reel__pause"
-          aria-pressed={paused}
-          onClick={() => setPaused(!paused)}
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-            {paused ? <path d="M4 2l10 6-10 6z" /> : <path d="M3 2h4v12H3zM9 2h4v12H9z" />}
-          </svg>
-          <span className="sbi-visually-hidden">{paused ? t("reelPlay") : t("reelPause")}</span>
-        </button>
-      </div>
     </figure>
   );
 }

@@ -26,7 +26,6 @@ test("home page sells the idea with an example, the lesson shape, trust and a cl
     "Watch it work",
     "Your turn",
   ]);
-  await expect(example).toContainText("Sources");
   for (const name of [
     "How a lesson works",
     "What's in every lesson",

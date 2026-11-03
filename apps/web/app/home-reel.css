@@ -123,20 +123,39 @@
   stroke-width: 5;
 }
 
-.art-chip {
+.art-option {
   fill: var(--sbi-paper);
-  stroke: var(--sbi-control-edge);
+  stroke: var(--sbi-rule);
   stroke-width: 2;
 }
 
-.art-chip--chosen {
-  fill: var(--sbi-ink);
-  stroke: var(--sbi-ink);
+.art-option--chosen {
+  stroke: var(--sbi-action);
+  stroke-width: 3;
+}
+
+.art-radio {
+  fill: var(--sbi-paper);
+  stroke: var(--sbi-control-edge);
+  stroke-width: 3;
+}
+
+.art-radio--chosen {
+  fill: var(--sbi-action);
+  stroke: var(--sbi-action);
+}
+
+.art-radio-dot {
+  fill: var(--sbi-paper);
+}
+
+.art-lines--strong {
+  stroke: var(--sbi-ink-soft);
 }
 
 .art-tick {
   fill: none;
-  stroke: var(--sbi-paper);
+  stroke: var(--sbi-action);
   stroke-width: 5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -144,6 +163,7 @@
 
 /* The reel */
 .reel {
+  position: relative;
   margin: 0;
   display: grid;
   gap: var(--sbi-space-4);
@@ -154,7 +174,12 @@
   box-shadow: var(--sbi-lift);
 }
 
+/* Leaves room for the pause button, which sits in the caption's row at the top right. */
 .reel__caption {
+  min-height: var(--sbi-touch-min);
+  display: flex;
+  align-items: center;
+  padding-right: calc(var(--sbi-touch-min) + var(--sbi-space-2));
   font-weight: 700;
   font-size: var(--sbi-text-small);
   color: var(--sbi-action);
@@ -300,23 +325,10 @@
   background: var(--sbi-rule);
 }
 
-.reel__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sbi-space-3);
-  padding-top: var(--sbi-space-3);
-  border-top: 1px solid var(--sbi-rule);
-}
-
-.reel__sources {
-  margin: 0;
-  font-size: var(--sbi-text-label);
-  color: var(--sbi-ink-soft);
-}
-
 button.reel__pause {
-  flex: none;
+  position: absolute;
+  top: var(--sbi-space-5);
+  right: var(--sbi-space-5);
   display: grid;
   place-items: center;
   margin: 0;

@@ -63,12 +63,24 @@ export function TryArt({ className }: { className?: string }) {
 export function GuessArt({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 400 300" className={className} aria-hidden="true" focusable="false">
-      <rect x="60" y="50" width="280" height="110" rx="14" className="art-paper" />
-      <path d="M88 86h200 M88 110h150" className="art-lines" />
-      <rect x="88" y="124" width="120" height="16" rx="4" className="art-marker" />
-      <rect x="60" y="190" width="132" height="48" rx="24" className="art-chip art-chip--chosen" />
-      <rect x="208" y="190" width="132" height="48" rx="24" className="art-chip" />
-      <path d="M100 214l10 10 20-20" className="art-tick" />
+      <rect x="60" y="34" width="280" height="96" rx="14" className="art-paper" />
+      <path d="M88 64h200 M88 88h90" className="art-lines" />
+      <rect x="190" y="80" width="110" height="16" rx="4" className="art-marker" />
+      <rect
+        x="60"
+        y="148"
+        width="280"
+        height="50"
+        rx="12"
+        className="art-option art-option--chosen"
+      />
+      <circle cx="88" cy="173" r="11" className="art-radio art-radio--chosen" />
+      <circle cx="88" cy="173" r="4.5" className="art-radio-dot" />
+      <path d="M114 173h130" className="art-lines art-lines--strong" />
+      <path d="M296 173l9 9 17-17" className="art-tick" />
+      <rect x="60" y="210" width="280" height="50" rx="12" className="art-option" />
+      <circle cx="88" cy="235" r="11" className="art-radio" />
+      <path d="M114 235h104" className="art-lines" />
     </svg>
   );
 }
