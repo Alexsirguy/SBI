@@ -4218,13 +4218,7 @@
                         },
                         "additionalProperties": {
                           "type": "boolean"
-                        },
-                        "required": [
-                          "save-photos",
-                          "account",
-                          "model-improvement",
-                          "research"
-                        ]
+                        }
                       },
                       "decidedAt": {
                         "type": "string",

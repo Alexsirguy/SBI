@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useId, useRef, useSyncExternalStore, type KeyboardEvent } from "react";
 import { useAccount } from "./account/use-account";
 import { PHOTO_RETENTION_DAYS } from "./capture/limits";
+import { ConsentRequests, useUnanswered } from "./consent-requests";
 import { useT } from "./i18n/provider";
 
 const KEY = "sbi.privacy-corner";
@@ -37,7 +38,8 @@ function subscribe(listener: () => void) {
   };
 }
 
-/** Short privacy notes docked to the right edge; open on a first visit, then as the learner left them. */
+/** Consent requests and privacy notes docked to the right edge; open on a first visit, then as
+ * the learner left them. */
 export function PrivacyCorner() {
   const t = useT("site");
   const pathname = usePathname();
@@ -46,6 +48,7 @@ export function PrivacyCorner() {
   const toggleRef = useRef<HTMLButtonElement>(null);
   // Storage exists only in the browser, so the server renders nothing here.
   const open = useSyncExternalStore(subscribe, readOpen, () => null);
+  const unanswered = useUnanswered();
 
   // The privacy page already says all of this at length.
   if (open === null || pathname === "/privacy") return null;
@@ -69,6 +72,7 @@ export function PrivacyCorner() {
           <h2 id={headingId} className="privacy-corner__heading">
             {t("privacyCornerHeading")}
           </h2>
+          <ConsentRequests />
           <PrivacyNotes />
           <Link href="/privacy#choices" className="privacy-corner__link">
             {t("privacyCornerChoices")}
@@ -104,6 +108,13 @@ export function PrivacyCorner() {
           <circle cx="10" cy="13" r="1.4" fill="currentColor" />
         </svg>
         <span>{open ? t("privacyCornerHide") : t("privacyCornerOpen")}</span>
+        {/* The space keeps "Privacy" and the count apart when read aloud. */}
+        {!open && unanswered ? " " : null}
+        {!open && unanswered ? (
+          <span className="privacy-corner__count">
+            {t("privacyCornerToAnswer", { count: unanswered })}
+          </span>
+        ) : null}
         <svg
           className="privacy-corner__chevron"
           width="14"

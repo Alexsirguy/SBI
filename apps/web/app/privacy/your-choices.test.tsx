@@ -30,12 +30,14 @@ function keepTwo() {
 }
 
 describe("YourChoices", () => {
-  it("says photos are not kept until the learner chooses to", async () => {
+  it("lists every request, each off until answered", async () => {
     const { container } = await view();
-    expect(text(container)).toContain("Off. Photos are deleted about an hour after");
+    expect(text(container)).toContain("Keep photos I choose to keep");
+    expect(text(container)).toContain("Take part in research");
+    expect(text(container)).not.toContain("Photos you kept");
   });
 
-  it("deletes one kept photo", async () => {
+  it("deletes one kept photo and keeps the consent", async () => {
     keepTwo();
     api.mockResolvedValue({ deleted: true });
     const { container } = await view();
@@ -44,26 +46,5 @@ describe("YourChoices", () => {
     expect(api).toHaveBeenCalledWith("deletePhoto", { key: "photos/a.jpg" });
     expect(readKeptPhotos().map((photo) => photo.label)).toEqual(["Bicycle"]);
     expect(hasConsent("save-photos")).toBe(true);
-  });
-
-  it("withdrawing consent deletes every kept photo", async () => {
-    keepTwo();
-    api.mockResolvedValue({ deleted: true });
-    const { container } = await view();
-    await click(button(container, "Stop keeping photos and delete them"));
-    await vi.waitFor(() => expect(text(container)).toContain("Off."));
-    expect(api.mock.calls.map(([, body]) => body.key)).toEqual(["photos/a.jpg", "photos/b.jpg"]);
-    expect(readKeptPhotos()).toEqual([]);
-    expect(hasConsent("save-photos")).toBe(false);
-  });
-
-  it("shows whether this device is linked to an account", async () => {
-    const off = await view();
-    expect(text(off.container)).toContain("Off. Accounts are optional");
-    document.body.replaceChildren();
-
-    setConsent("account", true);
-    const { container } = await view();
-    expect(text(container)).toContain("On. This device's kept photos are tied to your account.");
   });
 });

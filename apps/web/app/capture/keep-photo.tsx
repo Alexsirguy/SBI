@@ -4,7 +4,7 @@ import { CONSENT_VERSION } from "@sbi/contracts";
 import { Button } from "@sbi/ui";
 import Link from "next/link";
 import { useState } from "react";
-import { rememberKeptPhoto, setConsent } from "../consent";
+import { hasConsent, rememberKeptPhoto, setConsent } from "../consent";
 import { useT } from "../i18n/provider";
 import { GrownUpGate } from "../pathway/grown-up-gate";
 import { usePathway } from "../pathway/provider";
@@ -43,9 +43,18 @@ export function KeepPhoto({ photoKey, label }: { photoKey: string; label: string
   if (!asking) {
     return (
       <div className="keep-photo">
-        <Button variant="quiet" size="small" onClick={() => setAsking(true)}>
+        <Button
+          variant="quiet"
+          size="small"
+          disabled={keep.isPending}
+          // Already accepted (and not a child's device): no need to explain it again.
+          onClick={() =>
+            hasConsent("save-photos") && pathway !== "child" ? keepNow() : setAsking(true)
+          }
+        >
           {t("keepThisPhoto")}
         </Button>
+        {keep.error ? <p role="alert">{errorText(keep.error.message)}</p> : null}
       </div>
     );
   }

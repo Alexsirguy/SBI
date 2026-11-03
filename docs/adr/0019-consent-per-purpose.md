@@ -1,6 +1,6 @@
 # 0019. Consent is asked per purpose, when it would do something
 
-- Status: accepted
+- Status: accepted, amended 2026-11-03 (every request can be answered)
 - Date: 2026-11-02
 - Issue: #70
 
@@ -13,9 +13,15 @@ Spec §12 requires separate opt-ins for saving photos, account linking, model im
 - **Four purposes, all off:**
   - The contract (`ConsentRecord` in `@sbi/contracts`) has `save-photos`, `account`, `model-improvement` and `research`. Each starts off and is recorded separately with `CONSENT_VERSION` (`consent-1`) and the time it was decided.
   - A choice made under older wording counts as not given, so the learner is asked again.
-- **Only purposes with a feature are asked for (owner's choice).** The other three appear when their feature ships, so nobody is asked to agree to something that does nothing.
+- **Every request can be accepted or declined (owner's choice, 2026-11-03).** This replaces the first rule, "only purposes with a feature are asked for".
+  - The privacy panel in the corner of every page, and "Your choices" on the privacy page, list all four requests. Each has its own Accept and Decline, with Accept all and Decline all given equal weight.
+  - Nothing is blocked while a request is unanswered. An unanswered request is left out of `ConsentRecord.choices` and counts as declined. The collapsed tab shows how many are unanswered.
+  - Model improvement and research say they are not used yet. An Accept is recorded so it can be honoured if they ship, and their wording is reviewed with a `CONSENT_VERSION` bump first.
+  - Declining photos deletes every kept photo. Accepting the account link while signed in with a confirmed email links the device, and declining unlinks it.
+  - In the child pathway, any Accept first passes the grown-up check; a Decline never waits.
 - **Saving photos is asked at the moment it matters.**
   - After recognition, the learner sees a quiet "Keep this photo" button. It opens a plain explanation, and the photo is kept only when they press "Keep it".
+  - A learner who already accepted keeps the photo in one press, except in the child pathway, which still asks.
   - A kept photo stays until the learner deletes it (owner's choice).
 - **The consent version is recorded with what it allows:**
   - `POST /photos/keep` requires `consentVersion`, and `media_objects.consent_version` stores it.
