@@ -38,10 +38,20 @@ async function type(scope: Element, label: string, value: string) {
   });
 }
 
+async function choose(scope: Element, label: string, value: string) {
+  const field = [...scope.querySelectorAll("label")].find((item) => text(item) === label);
+  const select = scope.querySelector<HTMLSelectElement>(`#${CSS.escape(field?.htmlFor ?? "")}`);
+  if (!select) throw new Error(`no select labelled ${label}`);
+  await act(async () => {
+    select.value = value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+
 async function fill(scope: Element, age: string) {
   await type(scope, "First name", "Ada");
   await type(scope, "Last name", "Lovelace");
-  await type(scope, "Age", age);
+  await choose(scope, "Age", age);
   await type(scope, "Email", "ada@example.com");
   await type(scope, "Password", "analytical engine notes");
 }
@@ -49,7 +59,7 @@ async function fill(scope: Element, age: string) {
 describe("SignUpForm", () => {
   it("stops under-13s on the device, sending nothing", async () => {
     const { container } = await view();
-    await fill(container, "12");
+    await fill(container, "under-13");
     await click(button(container, "Create Account"));
 
     expect(text(container)).toContain(UNDER_MIN_AGE);
@@ -62,6 +72,7 @@ describe("SignUpForm", () => {
     await type(container, "Password", "short");
     await click(button(container, "Create Account"));
 
+    expect(text(container)).toContain("Choose your age.");
     expect(text(container)).toContain("Enter a valid email address.");
     expect(text(container)).toContain("Use at least 10 characters.");
     expect(api).not.toHaveBeenCalled();

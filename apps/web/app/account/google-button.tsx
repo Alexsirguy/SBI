@@ -1,11 +1,11 @@
 "use client";
 
-import { MIN_ACCOUNT_AGE, UNDER_MIN_AGE } from "@sbi/contracts";
 import { Button, TextField } from "@sbi/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { webEnv } from "../../env";
 import { api } from "../api";
+import { AgeSelect, readAge } from "./age-select";
 import { ACCOUNT_KEY } from "./use-account";
 
 interface GoogleIdentity {
@@ -170,18 +170,18 @@ function GoogleDetails({
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const age = Number(values.age);
-    if (!values.firstName.trim() || !values.lastName.trim() || !values.age) {
-      setError("Fill in your name and age.");
+    if (!values.firstName.trim() || !values.lastName.trim()) {
+      setError("Fill in your name.");
       return;
     }
-    if (age < MIN_ACCOUNT_AGE) {
-      setError(UNDER_MIN_AGE);
+    const age = readAge(values.age);
+    if ("problem" in age) {
+      setError(age.problem);
       return;
     }
     setBusy(true);
     try {
-      await api("finishGoogleSignUp", { ...values, age, credential });
+      await api("finishGoogleSignUp", { ...values, age: age.age, credential });
       await onDone();
     } catch (failure) {
       setError((failure as Error).message);
@@ -208,15 +208,7 @@ function GoogleDetails({
           onChange={(event) => setValues({ ...values, lastName: event.target.value })}
         />
       </div>
-      <div className="auth__age">
-        <TextField
-          label="Age"
-          inputMode="numeric"
-          hint="Accounts are for people 13 and over."
-          value={values.age}
-          onChange={(event) => setValues({ ...values, age: event.target.value.replace(/\D/g, "") })}
-        />
-      </div>
+      <AgeSelect value={values.age} onChange={(age) => setValues({ ...values, age })} />
       {error ? (
         <p role="alert" className="auth__alert">
           {error}

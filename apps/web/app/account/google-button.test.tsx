@@ -45,14 +45,13 @@ async function view() {
   return { ...mounted, onSignedIn };
 }
 
-async function type(scope: Element, label: string, value: string) {
+async function choose(scope: Element, label: string, value: string) {
   const field = [...scope.querySelectorAll("label")].find((item) => text(item) === label);
-  const input = scope.querySelector<HTMLInputElement>(`#${CSS.escape(field?.htmlFor ?? "")}`);
-  if (!input) throw new Error(`no field labelled ${label}`);
-  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  const select = scope.querySelector<HTMLSelectElement>(`#${CSS.escape(field?.htmlFor ?? "")}`);
+  if (!select) throw new Error(`no select labelled ${label}`);
   await act(async () => {
-    setter?.call(input, value);
-    input.dispatchEvent(new Event("input", { bubbles: true }));
+    select.value = value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
   });
 }
 
@@ -80,12 +79,12 @@ describe("GoogleButton", () => {
     await act(async () => google.state.callback?.({ credential: "google-id-token" }));
     await vi.waitFor(() => expect(text(container)).toContain("One more step"));
 
-    await type(container, "Age", "12");
+    await choose(container, "Age", "under-13");
     await click(button(container, "Finish"));
     expect(text(container)).toContain(UNDER_MIN_AGE);
     expect(api).not.toHaveBeenCalledWith("finishGoogleSignUp", expect.anything());
 
-    await type(container, "Age", "15");
+    await choose(container, "Age", "15");
     await click(button(container, "Finish"));
     await vi.waitFor(() => expect(onSignedIn).toHaveBeenCalled());
     expect(api).toHaveBeenCalledWith("finishGoogleSignUp", {

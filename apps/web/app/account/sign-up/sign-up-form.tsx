@@ -1,12 +1,13 @@
 "use client";
 
-import { MIN_ACCOUNT_AGE, SignUpRequest, UNDER_MIN_AGE } from "@sbi/contracts";
+import { SignUpRequest } from "@sbi/contracts";
 import { Button, TextField } from "@sbi/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { api } from "../../api";
+import { AgeSelect, readAge } from "../age-select";
 import { AuthDivider } from "../auth-card";
 import { fieldErrors } from "../form-errors";
 import { GoogleButton } from "../google-button";
@@ -29,14 +30,16 @@ export function SignUpForm() {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setFailure(undefined);
-    const parsed = SignUpRequest.safeParse(values);
-    const found = parsed.success ? {} : fieldErrors(parsed.error);
+    const age = readAge(values.age);
     // Under-13s are stopped here, before anything about them leaves the device.
-    if (parsed.success && parsed.data.age < MIN_ACCOUNT_AGE) {
+    if ("underAge" in age && age.underAge) {
       setErrors({});
-      setFailure(UNDER_MIN_AGE);
+      setFailure(age.problem);
       return;
     }
+    const parsed = SignUpRequest.safeParse({ ...values, age: "age" in age ? age.age : undefined });
+    const found: Record<string, string> = parsed.success ? {} : fieldErrors(parsed.error);
+    if ("problem" in age) found.age = age.problem;
     setErrors(found);
     if (!parsed.success) return;
     setBusy(true);
@@ -70,19 +73,11 @@ export function SignUpForm() {
             onChange={set("lastName")}
           />
         </div>
-        <div className="auth__age">
-          <TextField
-            label="Age"
-            inputMode="numeric"
-            maxLength={3}
-            hint="Accounts are for people 13 and over."
-            value={values.age}
-            error={errors.age}
-            onChange={(event) =>
-              setValues({ ...values, age: event.target.value.replace(/\D/g, "") })
-            }
-          />
-        </div>
+        <AgeSelect
+          value={values.age}
+          error={errors.age}
+          onChange={(age) => setValues({ ...values, age })}
+        />
         <TextField
           label="Email"
           type="email"
