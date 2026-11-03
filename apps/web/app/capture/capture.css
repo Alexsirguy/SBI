@@ -6,8 +6,34 @@
 }
 
 .capture h1 {
-  font-size: var(--sbi-text-display);
+  font-size: clamp(2.125rem, 1.6rem + 2vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
   margin: var(--sbi-space-1) 0 var(--sbi-space-2);
+}
+
+.capture__intro .eyebrow {
+  font-family: var(--sbi-font-body);
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--sbi-action);
+}
+
+.capture__intro p:last-child {
+  font-size: var(--sbi-text-answer);
+  max-width: 36rem;
+}
+
+.capture__notes {
+  display: grid;
+  gap: var(--sbi-space-4);
+  align-content: start;
+}
+
+.capture__notes .who-learning {
+  margin: 0;
 }
 
 .capture h2 {
@@ -50,7 +76,8 @@
   background: var(--sbi-paper);
   border: 1px solid var(--sbi-rule);
   border-radius: var(--sbi-radius-l);
-  padding: var(--sbi-space-4);
+  box-shadow: var(--sbi-lift);
+  padding: var(--sbi-space-5);
   display: grid;
   gap: var(--sbi-space-3);
 }
@@ -73,14 +100,25 @@
 .photo-choice legend {
   padding: 0;
   margin-bottom: var(--sbi-space-2);
-  font-weight: 700;
-  font-size: var(--sbi-text-heading);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: var(--sbi-text-title);
+  letter-spacing: -0.015em;
 }
 
+/* The two ways in sit on a marked-out tray, the one place on the page that asks for action. */
 .photo-choice__actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: var(--sbi-space-2);
+  gap: var(--sbi-space-3);
+  padding: var(--sbi-space-5);
+  border: 2px dashed var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+}
+
+.photo-choice__actions .sbi-button {
+  min-height: 56px;
 }
 
 .photo-choice .sbi-button {
@@ -434,4 +472,26 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sbi-space-2);
+}
+
+/* Wide screens: the photo and describe steps lead; who's learning and the photo notes sit beside
+   them, still read first in page order and in view before any photo is chosen. */
+@media (min-width: 960px) {
+  main.capture {
+    max-width: 66rem;
+    grid-template-columns: minmax(0, 1fr) 21rem;
+    column-gap: var(--sbi-space-7);
+    padding-top: var(--sbi-space-6);
+  }
+
+  .capture > :not(.capture__notes) {
+    grid-column: 1;
+  }
+
+  .capture__notes {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    position: sticky;
+    top: var(--sbi-space-5);
+  }
 }

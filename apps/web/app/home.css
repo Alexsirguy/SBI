@@ -12,6 +12,26 @@ main.home {
   margin: 0;
 }
 
+.home h1 {
+  font-size: clamp(2.5rem, 1.7rem + 2.6vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.home h2 {
+  letter-spacing: -0.02em;
+}
+
+/* Labels on this page name things in plain words, so they read as text rather than stamps. */
+.home .eyebrow {
+  font-family: var(--sbi-font-body);
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--sbi-action);
+}
+
 .home h2,
 .prose-page h2 {
   font-size: var(--sbi-text-title);
@@ -66,11 +86,8 @@ main.home {
 .home__tag {
   display: block;
   margin: 0;
-  font-family: var(--sbi-font-mono);
-  font-weight: 500;
-  font-size: var(--sbi-text-label);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
   color: var(--sbi-ink-soft);
 }
 
@@ -112,11 +129,38 @@ main.home {
   line-height: 1.35;
 }
 
+/* The example's steps use the lesson rail's numbered markers, so the preview matches the real thing. */
 .home__reasons {
   margin: 0;
-  padding-left: 1.3rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: reason;
   display: grid;
-  gap: var(--sbi-space-2);
+  gap: var(--sbi-space-3);
+}
+
+.home__reasons li {
+  counter-increment: reason;
+  position: relative;
+  min-height: 28px;
+  padding-left: 40px;
+}
+
+.home__reasons li::before {
+  content: counter(reason) / "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--sbi-action);
+  color: var(--sbi-action-ink);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: var(--sbi-text-small);
 }
 
 .home__sources {
@@ -170,15 +214,16 @@ main.home {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid var(--sbi-action);
-  color: var(--sbi-action);
-  font-family: var(--sbi-font-mono);
-  font-weight: 500;
+  background: var(--sbi-action);
+  color: var(--sbi-action-ink);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: var(--sbi-text-small);
 }
 
 .home__modules {
   counter-reset: step;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
   gap: var(--sbi-space-3);
 }
 
@@ -206,6 +251,10 @@ main.home {
 }
 
 .home__trust svg {
+  box-sizing: content-box;
+  padding: 10px;
+  border-radius: 50%;
+  background: var(--sbi-paper-sunk);
   color: var(--sbi-action);
 }
 
@@ -225,8 +274,20 @@ main.home {
 .home__depths li {
   display: grid;
   gap: var(--sbi-space-2);
+  align-content: start;
+  justify-items: start;
   padding-top: var(--sbi-space-3);
   border-top: 3px solid var(--sbi-action);
+}
+
+.home__depths .home__tag {
+  padding: 1px 10px 2px;
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-pill);
+}
+
+.home__depths h3 {
+  margin: 0;
 }
 
 .home__cta {
@@ -254,7 +315,7 @@ main.home {
 @media (min-width: 900px) {
   .home__hero {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    padding-block: var(--sbi-space-6);
+    padding-block: var(--sbi-space-7);
   }
 
   .home__steps {
