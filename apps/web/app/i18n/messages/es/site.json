@@ -141,5 +141,17 @@
   "supportNextHeading": "Qué añadimos después",
   "supportNext": "Añadimos lo que más pregunta la gente y que el catálogo aún no conoce. Solo miramos cuántas veces, nunca quién preguntó.",
   "supportLoading": "Cargando lo que cubrimos…",
-  "supportError": "Ahora mismo no podemos cargar esto. Inténtalo más tarde."
+  "supportError": "Ahora mismo no podemos cargar esto. Inténtalo más tarde.",
+  "privacyCornerLabel": "Notas de privacidad",
+  "privacyCornerOpen": "Privacidad",
+  "privacyCornerHide": "Ocultar",
+  "privacyCornerHeading": "Tu privacidad aquí",
+  "privacyCornerPhotosTerm": "Fotos",
+  "privacyCornerPhotos": "Las caras se difuminan en tu dispositivo antes de subir la foto. La foto se borra en un plazo de {days} días, antes si ya se reconoció, salvo que decidas guardarla.",
+  "privacyCornerTrackingTerm": "Seguimiento",
+  "privacyCornerTracking": "Ninguno. Sin anuncios ni analítica.",
+  "privacyCornerCookiesTerm": "Cookies",
+  "privacyCornerSignedOut": "Ninguna mientras no inicies sesión. Iniciar sesión es opcional y guarda una cookie para mantenerla abierta.",
+  "privacyCornerSignedIn": "Una, para mantener tu sesión abierta. Vincular las fotos de este dispositivo a tu cuenta es una decisión aparte.",
+  "privacyCornerChoices": "Ver y cambiar tus opciones"
 }

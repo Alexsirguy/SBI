@@ -141,5 +141,17 @@
   "supportNextHeading": "What we add next",
   "supportNext": "We add the things people ask about most that the catalogue does not know yet. We look only at counts, never at who asked.",
   "supportLoading": "Loading what we cover…",
-  "supportError": "We could not load this right now. Try again later."
+  "supportError": "We could not load this right now. Try again later.",
+  "privacyCornerLabel": "Privacy notes",
+  "privacyCornerOpen": "Privacy",
+  "privacyCornerHide": "Hide",
+  "privacyCornerHeading": "Your privacy here",
+  "privacyCornerPhotosTerm": "Photos",
+  "privacyCornerPhotos": "Faces are blurred on your device before upload. The photo is deleted within {days} days, sooner once recognised, unless you keep it.",
+  "privacyCornerTrackingTerm": "Tracking",
+  "privacyCornerTracking": "None. No ads, no analytics.",
+  "privacyCornerCookiesTerm": "Cookies",
+  "privacyCornerSignedOut": "None while you are signed out. Signing in is optional and sets one cookie to keep you signed in.",
+  "privacyCornerSignedIn": "One, to keep you signed in. Linking this device's photos to your account is a separate choice.",
+  "privacyCornerChoices": "See and change your choices"
 }
