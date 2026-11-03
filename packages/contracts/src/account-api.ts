@@ -142,6 +142,18 @@ export const AccountExport = z.object({
   photos: z.array(
     z.object({ key: PhotoKey, consentVersion: z.string().nullable(), download: z.string() }),
   ),
+  /** Kept 30 days per lesson (ADR 0025); turns asked while signed out are never listed here. */
+  tutorTurns: z
+    .array(
+      z.object({
+        lessonId: Uuid,
+        lessonVersion: z.number().int().positive(),
+        question: z.string(),
+        reply: z.string(),
+        askedAt: z.iso.datetime({ offset: true }),
+      }),
+    )
+    .default([]),
   notes: z.array(z.string()),
 });
 

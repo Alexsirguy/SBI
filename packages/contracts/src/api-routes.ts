@@ -39,6 +39,8 @@ import {
 import {
   TutorConversation,
   TutorConversationRequest,
+  TutorReset,
+  TutorResetRequest,
   TutorReply,
   TutorTurnRequest,
 } from "./tutor-api";
@@ -173,10 +175,19 @@ export const API_ROUTES = {
   tutorConversation: {
     method: "get",
     path: "/tutor/conversation",
-    summary: "List the exchanges of one visit's conversation about a lesson, oldest first.",
+    summary:
+      "List a lesson's conversation, oldest first: the account's when signed in, else this visit's.",
     request: TutorConversationRequest,
     response: TutorConversation,
     errors: [400, 503],
+  },
+  resetTutorConversation: {
+    method: "post",
+    path: "/tutor/conversation/reset",
+    summary: "Delete a lesson's tutor conversation now, for this visit and the signed-in account.",
+    request: TutorResetRequest,
+    response: TutorReset,
+    errors: [400, 403],
   },
   requestLesson: {
     method: "post",

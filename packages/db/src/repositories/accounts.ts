@@ -1,7 +1,14 @@
 import { newId } from "@sbi/contracts";
 import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import type { Database } from "../client";
-import { accountTokens, accounts, mediaObjects, savedLessons, sessions } from "../schema";
+import {
+  accountTokens,
+  accounts,
+  mediaObjects,
+  savedLessons,
+  sessions,
+  tutorTurns,
+} from "../schema";
 
 export type StoredAccount = typeof accounts.$inferSelect;
 
@@ -140,6 +147,7 @@ export function createAccountRepository(db: Database): AccountRepository {
       // One transaction, so a failure part-way never leaves a half-deleted account behind.
       await db.transaction(async (tx) => {
         await tx.delete(savedLessons).where(eq(savedLessons.accountId, accountId));
+        await tx.delete(tutorTurns).where(eq(tutorTurns.accountId, accountId));
         await tx.delete(accountTokens).where(eq(accountTokens.accountId, accountId));
         await tx.delete(sessions).where(eq(sessions.accountId, accountId));
         await tx

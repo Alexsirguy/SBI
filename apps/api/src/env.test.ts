@@ -85,6 +85,13 @@ describe("loadEnv", () => {
     expect(() => loadEnv({})).toThrow(EnvError);
   });
 
+  it("keeps a signed-in learner's tutor conversations no longer than 30 days", () => {
+    expect(loadEnv(valid).TUTOR_TTL_ACCOUNT_DAYS).toBe(30);
+    expect(() => loadEnv({ ...valid, TUTOR_TTL_ACCOUNT_DAYS: "31" })).toThrow(
+      "TUTOR_TTL_ACCOUNT_DAYS",
+    );
+  });
+
   it("keeps tutor turns for research no longer than a year", () => {
     expect(() => loadEnv({ ...valid, TUTOR_TTL_RESEARCH_DAYS: "400" })).toThrow(
       "TUTOR_TTL_RESEARCH_DAYS",

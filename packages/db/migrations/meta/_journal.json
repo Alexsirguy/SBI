@@ -134,6 +134,13 @@
       "when": 1793701937869,
       "tag": "0018_shared_lessons",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1793735770349,
+      "tag": "0019_tutor_accounts",
+      "breakpoints": true
     }
   ]
 }

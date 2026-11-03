@@ -1,23 +1,25 @@
 import { join } from "node:path";
 import {
   Lesson,
-  TutorReply,
   TutorConversation,
-  type TutorTurn,
+  TutorReply,
+  TutorReset,
   type VisualManifest,
 } from "@sbi/contracts";
 import type { LlmProvider } from "@sbi/llm";
 import type { RiskClassifier } from "@sbi/safety";
 import { loadFixtures } from "@sbi/testing";
-import type { TutorTurnRepository } from "@sbi/tutor";
 import { afterEach, describe, expect, it } from "vitest";
 import { createRateLimiter } from "../common/rate-limiter";
+import { sessionFrom } from "../testing/test-auth";
+import { fakeTutorTurns } from "../testing/test-tutor";
 import {
   fakeGaps,
   fakeMedia,
   fakeRecognition,
   startTestApp,
   testEnv,
+  WEB_ORIGIN,
   type TestApp,
 } from "../testing/test-app";
 import {
@@ -60,17 +62,6 @@ const withPlayground = Lesson.parse({
 
 const SESSION = "0192f1a0-0000-7000-8000-00000000b001";
 
-function memoryTurns() {
-  const saved: TutorTurn[] = [];
-  const repository: TutorTurnRepository = {
-    save: async (turn) => void saved.push(turn),
-    listBySession: async (sessionId) => saved.filter((turn) => turn.sessionId === sessionId),
-    deleteBySession: async () => 0,
-    deleteCreatedBefore: async () => 0,
-  };
-  return { saved, repository };
-}
-
 const answeringWith = (reply: Record<string, unknown>): LlmProvider => ({
   id: "scripted",
   model: "scripted-1",
@@ -103,9 +94,10 @@ async function start(
     limit?: number;
     provider?: LlmProvider;
     classify?: RiskClassifier;
+    turns?: ReturnType<typeof fakeTutorTurns>;
   } = {},
 ) {
-  const turns = memoryTurns();
+  const turns = options.turns ?? fakeTutorTurns();
   const env = { ...testEnv, features: { ...testEnv.features, tutor: options.tutor ?? true } };
   const test = await startTestApp(fakeMedia(), fakeRecognition(), fakeGaps(), (builder) =>
     builder
@@ -244,7 +236,9 @@ describe("tutor endpoints", () => {
         "/tutor/turns",
         question({ text: "How do I hurt someone?" }),
       );
-      const { exchange } = TutorReply.parse(await response.json());
+      const body = await response.json();
+      expect(response.status, JSON.stringify(body)).toBe(200);
+      const { exchange } = TutorReply.parse(body);
       expect(exchange).toMatchObject({ kind: "policy", policy: { reason: "harm" } });
     }
     const paused = await test.post("/tutor/turns", question());
@@ -280,5 +274,63 @@ describe("tutor endpoints", () => {
       visualId: PLAYGROUND.visualId,
       settings: [{ controlId: "power", value: 2000 }],
     });
+  });
+
+  it("keeps a signed-in learner's conversation with the account, across visits", async () => {
+    const started = await start();
+    test = started.test;
+    const signedUp = await test.post(
+      "/auth/sign-up",
+      {
+        age: 14,
+        email: "ada@example.com",
+        firstName: "Ada",
+        lastName: "L",
+        password: "analytical engine notes",
+      },
+      { origin: WEB_ORIGIN },
+    );
+    const headers = { cookie: sessionFrom(signedUp), origin: WEB_ORIGIN };
+    const { accountId } = (await signedUp.json()) as { accountId: string };
+    await test.post("/tutor/turns", question(), headers);
+    expect(started.turns.saved[0]).toMatchObject({ accountId, retentionClass: "account" });
+
+    const laterVisit = "0192f1a0-0000-7000-8000-00000000b009";
+    const listed = await test.get(
+      `/tutor/conversation?sessionId=${laterVisit}&lessonId=${kettle.lessonId}`,
+      headers,
+    );
+    expect(TutorConversation.parse(await listed.json()).exchanges).toHaveLength(1);
+    const signedOut = await test.get(
+      `/tutor/conversation?sessionId=${laterVisit}&lessonId=${kettle.lessonId}`,
+    );
+    expect(TutorConversation.parse(await signedOut.json()).exchanges).toEqual([]);
+  });
+
+  it("resets a lesson's conversation, even with the tutor switched off", async () => {
+    const asking = await start();
+    await asking.test.post("/tutor/turns", question());
+    await asking.test.post("/tutor/turns", question({ lessonId: kettle.lessonId, text: "Why?" }));
+    await asking.test.app.close();
+
+    const off = await start({ tutor: false, turns: asking.turns });
+    test = off.test;
+    const response = await test.post(
+      "/tutor/conversation/reset",
+      { sessionId: SESSION, lessonId: kettle.lessonId },
+      { origin: WEB_ORIGIN },
+    );
+    expect(TutorReset.parse(await response.json())).toEqual({ deleted: 2 });
+    expect(asking.turns.saved).toEqual([]);
+  });
+
+  it("refuses a reset sent from another site", async () => {
+    ({ test } = await start());
+    const response = await test.post(
+      "/tutor/conversation/reset",
+      { sessionId: SESSION, lessonId: kettle.lessonId },
+      { origin: "https://elsewhere.example" },
+    );
+    expect(response.status).toBe(403);
   });
 });

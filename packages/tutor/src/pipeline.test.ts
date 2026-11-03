@@ -214,4 +214,14 @@ describe("runTutorTurn", () => {
     });
     expect(asked.response.visualAction).toBeUndefined();
   });
+
+  it("keeps a signed-in learner's turn under the account class, tied to the account", async () => {
+    const { provider } = scriptedProvider([reply("Pressure.", ["f1"])]);
+    const accountId = "0192f1a0-0000-7000-8000-0000000acc01";
+    const turn = await runTutorTurn(
+      { provider, classify: classifierSaying(), ...fixed },
+      { lesson: LESSON, question: QUESTION, history: [], accountId },
+    );
+    expect(TutorTurn.parse(turn)).toMatchObject({ accountId, retentionClass: "account" });
+  });
 });

@@ -192,6 +192,8 @@ export const tutorTurns = mysqlTable(
   {
     sessionId: uuid("session_id").notNull(),
     turnId: uuid("turn_id").notNull(),
+    // Set only when a signed-in learner asked, so export and account deletion find the turn (#99).
+    accountId: uuid("account_id"),
     lessonId: uuid("lesson_id").notNull(),
     lessonVersion: int("lesson_version").notNull(),
     retentionClass: varchar("retention_class", { length: 32 }).notNull(),
@@ -201,6 +203,7 @@ export const tutorTurns = mysqlTable(
   (table) => [
     primaryKey({ columns: [table.sessionId, table.turnId] }),
     index("tutor_turns_retention_idx").on(table.retentionClass, table.createdAt),
+    index("tutor_turns_account_idx").on(table.accountId, table.lessonId),
   ],
 );
 

@@ -30,6 +30,8 @@ const schema = z.object({
   FEEDBACK_DETAILS_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
   // Tutor turns by retention class (docs/retention.md); research needs the learner's opt-in.
   TUTOR_TTL_SESSION_HOURS: z.coerce.number().int().positive().default(24),
+  // A signed-in learner is told 30 days (ADR 0025), so it can be shortened but not lengthened.
+  TUTOR_TTL_ACCOUNT_DAYS: z.coerce.number().int().positive().max(30).default(30),
   TUTOR_TTL_QUALITY_DAYS: z.coerce.number().int().positive().default(30),
   TUTOR_TTL_RESEARCH_DAYS: z.coerce.number().int().positive().max(365).default(365),
   // Packs older than the 30-day reuse window are never read again.

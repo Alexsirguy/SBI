@@ -7,6 +7,7 @@ import type { VisualManifestRepository } from "@sbi/visuals";
 import {
   cooldownRemaining,
   runTutorTurn,
+  type ConversationOwner,
   type StrikeCounter,
   type TutorTurnRepository,
 } from "@sbi/tutor";
@@ -48,6 +49,10 @@ export function toExchange(turn: TutorTurn, locale?: string): TutorExchange {
   };
 }
 
+// Signed in, the account's conversation follows the learner across visits and devices.
+const owner = (sessionId: string, accountId?: string): ConversationOwner =>
+  accountId ? { accountId } : { sessionId };
+
 @Injectable()
 export class TutorService {
   constructor(
@@ -74,7 +79,11 @@ export class TutorService {
     return this.provider;
   }
 
-  async ask(request: z.output<typeof TutorTurnRequest>, client: string): Promise<TutorExchange> {
+  async ask(
+    request: z.output<typeof TutorTurnRequest>,
+    client: string,
+    accountId?: string,
+  ): Promise<TutorExchange> {
     const text = tutorText(request.locale);
     const provider = this.available(request.locale);
     if (!this.limiter.allow(client)) {
@@ -82,8 +91,17 @@ export class TutorService {
     }
     const lesson = await this.lessons.get(request.lessonId, request.lessonVersion);
     if (!lesson) throw new UserFacingException(text.noLesson, HttpStatus.NOT_FOUND);
-    const history = await this.turns.listBySession(request.sessionId);
-    const wait = Math.max(cooldownRemaining(history, new Date()), this.strikes.remaining(client));
+    const [visit, history] = await Promise.all([
+      this.turns.listBySession(request.sessionId),
+      this.turns.listConversation(owner(request.sessionId, accountId), request.lessonId),
+    ]);
+    const wait = Math.max(
+      cooldownRemaining(
+        [...new Map([...visit, ...history].map((turn) => [turn.turnId, turn])).values()],
+        new Date(),
+      ),
+      this.strikes.remaining(client),
+    );
     if (wait > 0) {
       const minutes = Math.ceil(wait / 60_000);
       throw new UserFacingException(text.coolingDown(minutes), HttpStatus.TOO_MANY_REQUESTS);
@@ -92,7 +110,13 @@ export class TutorService {
     try {
       turn = await runTutorTurn(
         { provider, classify: this.classify, signal: AbortSignal.timeout(TURN_TIMEOUT_MS) },
-        { lesson, question: request, history, manifest: await this.experimentVisual(lesson) },
+        {
+          lesson,
+          question: request,
+          history,
+          manifest: await this.experimentVisual(lesson),
+          ...(accountId ? { accountId } : {}),
+        },
       );
     } catch (error) {
       // The failure's name only; the learner's words never reach the logs.
@@ -105,14 +129,21 @@ export class TutorService {
   }
 
   async conversation(
-    sessionId: string,
-    lessonId: string,
-    locale?: string,
+    query: { sessionId: string; lessonId: string; locale?: string },
+    accountId?: string,
   ): Promise<TutorExchange[]> {
-    this.available(locale);
-    const turns = await this.turns.listBySession(sessionId);
-    return turns
-      .filter((turn) => turn.lessonId === lessonId)
-      .map((turn) => toExchange(turn, locale));
+    this.available(query.locale);
+    const turns = await this.turns.listConversation(
+      owner(query.sessionId, accountId),
+      query.lessonId,
+    );
+    return turns.map((turn) => toExchange(turn, query.locale));
+  }
+
+  /** Works even with the tutor switched off, so a learner can always clear what was kept. */
+  async reset(sessionId: string, lessonId: string, accountId?: string): Promise<number> {
+    const visit = await this.turns.deleteConversation({ sessionId }, lessonId);
+    const account = accountId ? await this.turns.deleteConversation({ accountId }, lessonId) : 0;
+    return visit + account;
   }
 }

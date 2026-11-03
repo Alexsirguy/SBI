@@ -9,7 +9,8 @@ import {
   type TestApp,
 } from "../testing/test-app";
 import { fakeAccountStore, fakeSavedLessons, sessionFrom } from "../testing/test-auth";
-import { ACCOUNT_TOKENS, ACCOUNTS, SAVED_LESSONS, SESSIONS } from "../tokens";
+import { fakeTutorTurns } from "../testing/test-tutor";
+import { ACCOUNT_TOKENS, ACCOUNTS, SAVED_LESSONS, SESSIONS, TUTOR_TURNS } from "../tokens";
 
 const FILE = "0192f1a0-0000-7000-8000-000000000001.jpg";
 const KEY = `photos/${FILE}`;
@@ -25,11 +26,13 @@ const LESSON = "0192f1a0-0000-7000-8000-0000000000c1";
 async function start() {
   const store = fakeAccountStore();
   const saved = fakeSavedLessons();
-  // The real delete clears saved lessons in the same transaction (see the MariaDB tests).
+  const tutor = fakeTutorTurns();
+  // The real delete clears saved lessons and tutor turns in the same transaction (MariaDB tests).
   const deleteAccount = store.accountRepo.delete;
   store.accountRepo.delete = async (accountId) => {
     for (const key of saved.rows.keys())
       if (key.startsWith(`${accountId} `)) saved.rows.delete(key);
+    tutor.remove((turn) => turn.accountId !== accountId);
     await deleteAccount(accountId);
   };
   const media = fakeMedia();
@@ -42,7 +45,9 @@ async function start() {
       .overrideProvider(ACCOUNT_TOKENS)
       .useValue(store.tokenRepo)
       .overrideProvider(SAVED_LESSONS)
-      .useValue(saved.repository),
+      .useValue(saved.repository)
+      .overrideProvider(TUTOR_TURNS)
+      .useValue(tutor.repository),
   );
   const signUp = async (email: string) => {
     const response = await test.post("/auth/sign-up", { ...ADA, email }, { origin: WEB_ORIGIN });
@@ -63,7 +68,22 @@ async function start() {
     title: "Kettles",
     version: 2,
   });
-  return { ada, media, saved, signUp, store, test };
+  await tutor.repository.save({
+    sessionId: "0192f1a0-0000-7000-8000-00000000b001",
+    accountId: ada.accountId,
+    turnId: "0192f1a0-0000-7000-8000-00000000d001",
+    lessonId: LESSON,
+    lessonVersion: 2,
+    userText: "Why does it click off?",
+    retrievedClaimIds: [],
+    response: { text: "A strip bends when hot.", citedClaimIds: [], kind: "beyond-lesson" },
+    safetyCategory: "none",
+    modelVersion: "scripted-1",
+    promptVersion: "tutor-answer-p0.4",
+    retentionClass: "account",
+    createdAt: "2026-11-03T09:30:00.000Z",
+  });
+  return { ada, media, saved, signUp, store, test, tutor };
 }
 
 describe("account export and deletion", () => {
@@ -99,6 +119,15 @@ describe("account export and deletion", () => {
     expect(bundle.photos).toEqual([
       { consentVersion: "consent-1", download: `/account/photos/${FILE}`, key: KEY },
     ]);
+    expect(bundle.tutorTurns).toEqual([
+      {
+        askedAt: "2026-11-03T09:30:00.000Z",
+        lessonId: LESSON,
+        lessonVersion: 2,
+        question: "Why does it click off?",
+        reply: "A strip bends when hot.",
+      },
+    ]);
     expect(bundle.notes.length).toBeGreaterThan(0);
   });
 
@@ -132,7 +161,7 @@ describe("account export and deletion", () => {
     expect((await test.get("/account", s.ada.headers)).status).toBe(200);
   });
 
-  it("deletes the photos' bytes, saved lessons, sessions and the account itself", async () => {
+  it("deletes the photos' bytes, saved lessons, tutor turns, sessions and the account", async () => {
     const s = await start();
     test = s.test;
 
@@ -149,6 +178,7 @@ describe("account export and deletion", () => {
       expect.objectContaining({ key: KEY, reason: "deleted at the learner's request" }),
     ]);
     expect(await s.saved.repository.list(s.ada.accountId)).toEqual([]);
+    expect(s.tutor.saved).toEqual([]);
     expect(s.store.accounts.has(s.ada.accountId)).toBe(false);
     expect((await test.get("/account", s.ada.headers)).status).toBe(401);
     const again = await test.post(

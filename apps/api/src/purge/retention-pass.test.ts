@@ -44,6 +44,7 @@ describe("runRetentionPass", () => {
     expect(repos.lessonFeedback.clearDetailsBefore).toHaveBeenCalledWith(days(90));
     expect(repos.tutorTurns.deleteCreatedBefore.mock.calls).toEqual([
       ["session", days(1)],
+      ["account", days(30)],
       ["quality-review", days(30)],
       ["research-consented", days(365)],
     ]);
@@ -55,7 +56,7 @@ describe("runRetentionPass", () => {
     expect(result).toMatchObject({
       recognitionPurged: 4,
       feedbackDetailsCleared: 3,
-      tutorTurnsPurged: 3,
+      tutorTurnsPurged: 4,
       evidencePacksPurged: 2,
       catalogGapsPurged: 1,
       accountSecretsPurged: 3,

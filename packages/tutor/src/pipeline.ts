@@ -34,6 +34,8 @@ export async function runTutorTurn(
     history: readonly TutorTurn[];
     /** The lesson's experiment visual, so "watch this" can only move what it really offers. */
     manifest?: VisualManifest;
+    /** A signed-in learner's account, whose conversations are kept 30 days instead of one visit. */
+    accountId?: string;
   },
 ): Promise<TutorTurn> {
   const { lesson, question } = input;
@@ -44,7 +46,9 @@ export async function runTutorTurn(
     lessonId: lesson.lessonId,
     lessonVersion: lesson.version,
     userText: question.text,
-    retentionClass: "session" as const,
+    ...(input.accountId
+      ? { accountId: input.accountId, retentionClass: "account" as const }
+      : { retentionClass: "session" as const }),
     createdAt: (deps.now?.() ?? new Date()).toISOString(),
   };
 

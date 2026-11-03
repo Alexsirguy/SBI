@@ -42,3 +42,8 @@ export const TutorConversationRequest = z.object({
 });
 
 export const TutorConversation = z.object({ exchanges: z.array(TutorExchange) });
+
+/** Clears one lesson's conversation: this visit's turns, and the account's when signed in. */
+export const TutorResetRequest = z.object({ sessionId: Uuid, lessonId: Uuid });
+
+export const TutorReset = z.object({ deleted: z.int().nonnegative() });

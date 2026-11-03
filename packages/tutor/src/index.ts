@@ -9,7 +9,7 @@ export {
 } from "./context";
 export { runTutorTurn, type TutorDeps } from "./pipeline";
 export { RETRIEVED_CLAIMS, retrieveClaims } from "./retrieve";
-export type { TutorTurnRepository } from "./tutor-turn-repository";
+export type { ConversationOwner, TutorTurnRepository } from "./tutor-turn-repository";
 export { REPLY_MAX_CHARS, validateAnswer, type Validated } from "./validate";
 export {
   COOLDOWN_MS,
