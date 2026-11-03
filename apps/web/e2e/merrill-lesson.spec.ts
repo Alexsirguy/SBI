@@ -7,11 +7,11 @@ import {
 } from "../app/lesson/sample-merrill-lesson";
 import { sseFrames } from "../app/lesson/sample-lesson";
 import { expectNoAxeViolations } from "./a11y";
-import { mockLesson } from "./mock-api";
+import { mockLesson, CREDENTIALED_CORS } from "./mock-api";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/+$/, "");
 const LESSON_URL = "/lesson?taxonomyId=object.acoustic-guitar&label=Guitar";
-const CORS = { "access-control-allow-origin": "*" };
+const CORS = CREDENTIALED_CORS;
 
 const FULL = sseFrames([
   { type: "progress", data: { stage: "drafting", message: "Writing the lesson." } },

@@ -4,6 +4,13 @@ const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").rep
 const STORAGE_PUT = "https://storage.test/fake-put";
 export const PHOTO_KEY = "photos/0192f1a0-0000-7000-8000-000000000001.jpg";
 
+/** For hand-written mocks of credentialed calls: browsers refuse "*" once cookies are sent. */
+export const CREDENTIALED_CORS = {
+  "access-control-allow-credentials": "true",
+  // The test server's origin (playwright.config.ts).
+  "access-control-allow-origin": "http://localhost:3100",
+};
+
 // The API and bucket are other origins, so mocks must answer CORS preflights like the real ones.
 const CORS = {
   "access-control-allow-headers": "content-type",
@@ -113,14 +120,23 @@ export function lessonRequests(page: Page) {
 /** Answers POST /lessons with server-sent event frames, or holds it open when `frames` is null. */
 export async function mockLesson(page: Page, frames: string | null, status = 200) {
   await page.route(`${API_URL}/lessons`, async (route) => {
+    // The lesson request carries the session (#342), so the origin is echoed, never "*".
+    const origin = await route.request().headerValue("origin");
+    const headers = origin
+      ? {
+          ...CORS,
+          "access-control-allow-credentials": "true",
+          "access-control-allow-origin": origin,
+        }
+      : CORS;
     if (route.request().method() === "OPTIONS") {
-      return route.fulfill({ headers: CORS, status: 204 });
+      return route.fulfill({ headers, status: 204 });
     }
     if (frames === null) return;
     return route.fulfill({
       body: frames,
       headers: {
-        ...CORS,
+        ...headers,
         "content-type": status === 200 ? "text/event-stream" : "application/json",
       },
       status,

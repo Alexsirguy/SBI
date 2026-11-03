@@ -244,7 +244,10 @@ export class LessonService {
 
   // Events leave as their stage completes; the answer waits for the lesson, so the learner guesses
   // before anything gives it away (ADR 0017).
-  async *streamLesson(request: LessonRequest): AsyncGenerator<LessonStreamEvent> {
+  async *streamLesson(
+    request: LessonRequest,
+    viewer: { ownLessonIds?: ReadonlySet<string> } = {},
+  ): AsyncGenerator<LessonStreamEvent> {
     const provider = this.provider;
     if (!provider) throw new UserFacingException(UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
     // Milliseconds from the request to each stage, logged once so cold-lesson latency is visible.
@@ -301,6 +304,7 @@ export class LessonService {
       policyVersion: LESSON_POLICY_VERSION,
       promptVersion: LESSON_DRAFT_PROMPT_VERSION,
       fresh: request.fresh,
+      ownLessonIds: viewer.ownLessonIds,
     });
     const intentSignature = buildIntentSignature(intent);
     let lesson: Lesson;

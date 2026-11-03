@@ -6,7 +6,7 @@ import {
   sseFrames,
 } from "../app/lesson/sample-lesson";
 import { expectNoAxeViolations } from "./a11y";
-import { mockApi, mockLesson } from "./mock-api";
+import { mockApi, mockLesson, CREDENTIALED_CORS } from "./mock-api";
 
 const LESSON_URL = "/lesson?taxonomyId=object.magnifying-glass&label=Magnifying+glass";
 
@@ -120,7 +120,7 @@ test("explains a failure and tries again on request", async ({ page }) => {
     if (route.request().method() === "OPTIONS") {
       return route.fulfill({
         headers: {
-          "access-control-allow-origin": "*",
+          ...CREDENTIALED_CORS,
           "access-control-allow-headers": "content-type",
           "access-control-allow-methods": "GET, POST",
         },
@@ -130,13 +130,13 @@ test("explains a failure and tries again on request", async ({ page }) => {
     calls += 1;
     return calls === 1
       ? route.fulfill({
-          headers: { "access-control-allow-origin": "*" },
+          headers: CREDENTIALED_CORS,
           json: { error: "Generation failed; try again" },
           status: 503,
         })
       : route.fulfill({
           body: FULL,
-          headers: { "access-control-allow-origin": "*", "content-type": "text/event-stream" },
+          headers: { ...CREDENTIALED_CORS, "content-type": "text/event-stream" },
         });
   });
   await page.goto(LESSON_URL);
@@ -157,7 +157,7 @@ test("depth and age band request the matching lesson and last for the session", 
     if (route.request().method() === "OPTIONS") {
       return route.fulfill({
         headers: {
-          "access-control-allow-origin": "*",
+          ...CREDENTIALED_CORS,
           "access-control-allow-headers": "content-type",
           "access-control-allow-methods": "GET, POST",
         },
@@ -167,7 +167,7 @@ test("depth and age band request the matching lesson and last for the session", 
     requests.push(route.request().postDataJSON() as { readingLevel: string; audience: string });
     return route.fulfill({
       body: FULL,
-      headers: { "access-control-allow-origin": "*", "content-type": "text/event-stream" },
+      headers: { ...CREDENTIALED_CORS, "content-type": "text/event-stream" },
     });
   });
   await page.goto(LESSON_URL);
@@ -242,7 +242,7 @@ test("names the object and its assumptions, and says when a lesson is reused", a
     if (route.request().method() === "OPTIONS") {
       return route.fulfill({
         headers: {
-          "access-control-allow-origin": "*",
+          ...CREDENTIALED_CORS,
           "access-control-allow-headers": "content-type",
           "access-control-allow-methods": "GET, POST",
         },
@@ -252,7 +252,7 @@ test("names the object and its assumptions, and says when a lesson is reused", a
     requests.push(route.request().postDataJSON() as { fresh?: boolean; question: string });
     return route.fulfill({
       body: cached,
-      headers: { "access-control-allow-origin": "*", "content-type": "text/event-stream" },
+      headers: { ...CREDENTIALED_CORS, "content-type": "text/event-stream" },
     });
   });
   await page.goto(LESSON_URL);

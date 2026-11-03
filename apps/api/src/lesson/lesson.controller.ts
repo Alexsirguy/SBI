@@ -1,8 +1,12 @@
-import { Body, Controller, Inject, Logger, Post, Res } from "@nestjs/common";
+import { Body, Controller, Inject, Logger, Post, Req, Res } from "@nestjs/common";
 import type { ServerResponse } from "node:http";
 import { API_ROUTES, LessonRequest } from "@sbi/contracts";
+import type { SavedLessonRepository } from "@sbi/db";
+import { sessionToken, type SessionRequest } from "../account/account.guard";
+import { AuthService } from "../account/auth.service";
 import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
+import { SAVED_LESSONS } from "../tokens";
 import { LessonService, type LessonStreamEvent } from "./lesson.service";
 
 const logger = new Logger("LessonController");
@@ -33,15 +37,29 @@ function frame(event: LessonStreamEvent | { type: "error"; data: { error: string
 
 @Controller()
 export class LessonController {
-  constructor(@Inject(LessonService) private readonly lessons: LessonService) {}
+  constructor(
+    @Inject(LessonService) private readonly lessons: LessonService,
+    @Inject(AuthService) private readonly auth: Pick<AuthService, "current">,
+    @Inject(SAVED_LESSONS) private readonly saved: Pick<SavedLessonRepository, "list">,
+  ) {}
+
+  // Lessons work signed out; a session only adds the asker's own saved lessons to reuse (#342).
+  private async ownLessonIds(request: SessionRequest): Promise<Set<string> | undefined> {
+    const account = await this.auth.current(sessionToken(request)).catch(() => undefined);
+    if (!account) return undefined;
+    return new Set((await this.saved.list(account.accountId)).map((item) => item.lessonId));
+  }
 
   @Post(API_ROUTES.requestLesson.path)
   async stream(
     @Body(new ZodPipe(LessonRequest, "Ask a question of at least 3 characters."))
     body: LessonRequest,
+    @Req() request: SessionRequest,
     @Res() res: RawResponse,
   ): Promise<void> {
-    const events = this.lessons.streamLesson(body);
+    const events = this.lessons.streamLesson(body, {
+      ownLessonIds: await this.ownLessonIds(request),
+    });
     const first = await events.next();
     // Headers wait for the first event, so pre-stream failures still map to HTTP errors.
     res.raw.writeHead(200, streamHeaders(res));

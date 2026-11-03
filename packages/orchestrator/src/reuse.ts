@@ -13,6 +13,8 @@ export interface ReuseQuery {
   promptVersion: string;
   /** 'Get a fresh answer': skip the cache entirely. */
   fresh?: boolean;
+  /** Private lessons the signed-in asker saved; only they may be served one of these (#342). */
+  ownLessonIds?: ReadonlySet<string>;
 }
 
 export interface ReuseHit {
@@ -74,9 +76,11 @@ export function createReuseMatcher(
         .filter((lesson) => isReusable(lesson) && VALIDATED.has(lesson.reviewStatus))
         .filter((lesson) => lesson.reuse.policyVersion === query.policyVersion)
         .filter((lesson) => lesson.reuse.promptVersion === query.promptVersion)
-        // Private lessons have no owner to match yet, so serving one could leak another learner's.
-        // TODO(#342) reuse private lessons for the account that saved them.
-        .filter((lesson) => lesson.reuse.cacheScope === "shared")
+        // A private lesson goes only to the account that saved it, never to anyone else.
+        .filter(
+          (lesson) =>
+            lesson.reuse.cacheScope === "shared" || !!query.ownLessonIds?.has(lesson.lessonId),
+        )
         .filter((lesson) => depthMatches(lesson, query.intent))
         .filter((lesson) => lesson.locale === query.intent.locale)
         .filter((lesson) => sameSet([...lesson.assumptions].sort(), assumptions))

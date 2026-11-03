@@ -60,7 +60,8 @@ describe("streamLesson", () => {
     expect(events[2]).toEqual({ type: "lesson", data: SAMPLE_LESSON });
     const [url, init] = fetcher.mock.calls[0] ?? [];
     expect(url).toBe("http://api.test/lessons");
-    expect(init).toMatchObject({ method: "POST" });
+    // The session rides along, so a signed-in learner can be given back their own lessons.
+    expect(init).toMatchObject({ credentials: "include", method: "POST" });
   });
 
   it("raises a mid-stream error after the events before it", async () => {
