@@ -101,7 +101,7 @@ main.lesson {
 }
 
 .lesson-head .depth-controls .sbi-choice__option {
-  min-height: calc(var(--sbi-touch-min) - 6px);
+  min-height: var(--sbi-touch-min);
   padding: 0 var(--sbi-space-4);
   border: 0;
   border-radius: var(--sbi-radius-pill);
