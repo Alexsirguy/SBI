@@ -36,7 +36,12 @@ export function SectionFrame({
     >
       <p className="module-label">
         {moduleLabel}
-        {evidence ? <span className="evidence-tag"> · {t(EVIDENCE_LABELS[evidence])}</span> : null}
+        {evidence ? (
+          <>
+            <span className="sbi-visually-hidden">, </span>
+            <span className="evidence-tag">{t(EVIDENCE_LABELS[evidence])}</span>
+          </>
+        ) : null}
       </p>
       <h2 id={headingId}>{section.heading ?? moduleLabel}</h2>
       {children}

@@ -9,8 +9,8 @@
 
 .auth__card {
   width: 100%;
-  max-width: 440px;
-  padding: var(--sbi-space-6);
+  max-width: 460px;
+  padding: var(--sbi-space-6) var(--sbi-space-6) var(--sbi-space-7);
   background: var(--sbi-paper);
   border: 1px solid var(--sbi-rule);
   border-radius: var(--sbi-radius-l);
@@ -47,9 +47,9 @@
 .auth__title {
   margin: 0;
   font-family: var(--sbi-font-display);
-  font-size: var(--sbi-text-title);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-size: var(--sbi-text-display);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .auth__intro {
@@ -240,4 +240,172 @@
   margin: var(--sbi-space-2) 0 0;
   font-family: var(--sbi-font-display);
   font-size: var(--sbi-text-heading);
+}
+
+/* Signed-in account: who you are on the left, each thing you can do on its own sheet. */
+main.account {
+  max-width: 64rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sbi-space-5);
+  align-content: start;
+}
+
+main.account h1 {
+  margin: 0;
+  font-size: clamp(2.125rem, 4vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.account-profile {
+  display: grid;
+  gap: var(--sbi-space-3);
+  justify-items: start;
+}
+
+.account-profile__mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--sbi-marker);
+  color: var(--sbi-marker-ink);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: 1.375rem;
+  letter-spacing: 0.02em;
+}
+
+.account-profile__who {
+  margin: 0;
+  color: var(--sbi-ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.account-profile .account-notice {
+  display: grid;
+  gap: var(--sbi-space-2);
+  justify-items: start;
+  padding: var(--sbi-space-3) var(--sbi-space-4);
+  border-left: 3px solid var(--sbi-note);
+  border-radius: var(--sbi-radius-s);
+  background: var(--sbi-note-wash);
+  font-size: var(--sbi-text-small);
+}
+
+.account-notice p {
+  margin: 0;
+}
+
+.account-cards {
+  display: grid;
+  gap: var(--sbi-space-4);
+}
+
+.account-card {
+  display: grid;
+  gap: var(--sbi-space-3);
+  justify-items: start;
+  padding: var(--sbi-space-5);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  box-shadow: var(--sbi-lift);
+}
+
+.account-card > * {
+  margin: 0;
+}
+
+.account-card h2 {
+  font-size: var(--sbi-text-heading);
+  letter-spacing: -0.01em;
+}
+
+.account-card p {
+  max-width: var(--sbi-measure);
+}
+
+.account-card [role="status"]:empty {
+  display: none;
+}
+
+.account-card__hint {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}
+
+/* The whole row is the link, so it reads as a place to go rather than a sentence. */
+.account-card__row {
+  justify-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-3);
+  min-height: var(--sbi-touch);
+  padding: 0 var(--sbi-space-4);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+  color: var(--sbi-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.account-card__row::after {
+  content: "›" / "";
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--sbi-action);
+}
+
+.account-card__row:hover {
+  background: var(--sbi-bench);
+}
+
+/* Deleting sits apart from the everyday actions, behind its own fold. */
+.account-card__danger {
+  justify-self: stretch;
+  margin-top: var(--sbi-space-2);
+}
+
+.account-card__danger .sbi-disclosure__summary {
+  color: var(--sbi-caution);
+}
+
+.account-card__danger .your-data__delete {
+  padding-top: var(--sbi-space-2);
+}
+
+.account-card .your-data__photos {
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.account-signout {
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  main.account {
+    grid-template-columns: 19rem minmax(0, 1fr);
+    column-gap: var(--sbi-space-7);
+    padding-top: var(--sbi-space-7);
+  }
+
+  main.account > :not(.account-cards) {
+    grid-column: 1;
+  }
+
+  .account-cards {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+  }
+
+  .account-profile {
+    position: sticky;
+    top: var(--sbi-space-5);
+  }
 }

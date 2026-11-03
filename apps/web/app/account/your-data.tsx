@@ -59,7 +59,7 @@ export function YourData({ email }: { email: string }) {
 
   const photos = exported.data?.photos ?? [];
   return (
-    <section aria-labelledby="your-data">
+    <section className="account-card" aria-labelledby="your-data">
       <h2 id="your-data">{t("dataHeading")}</h2>
       <p>{t("dataIntro")}</p>
       <Button variant="quiet" disabled={exported.isPending} onClick={download}>
@@ -79,23 +79,25 @@ export function YourData({ email }: { email: string }) {
       ) : null}
       {exported.error ? <p role="alert">{errorText(exported.error.message)}</p> : null}
 
-      <Disclosure summary={t("dataDeleteAccount")}>
-        <form className="your-data__delete" onSubmit={confirmDelete} noValidate>
-          <p>{t("dataDeleteWarning")}</p>
-          <TextField
-            label={t("dataConfirmLabel", { email })}
-            type="email"
-            autoComplete="off"
-            value={typed}
-            error={error}
-            onChange={(event) => setTyped(event.target.value)}
-          />
-          {remove.error ? <p role="alert">{errorText(remove.error.message)}</p> : null}
-          <Button type="submit" disabled={remove.isPending}>
-            {remove.isPending ? t("dataDeleting") : t("dataDeleteAccount")}
-          </Button>
-        </form>
-      </Disclosure>
+      <div className="account-card__danger">
+        <Disclosure summary={t("dataDeleteAccount")}>
+          <form className="your-data__delete" onSubmit={confirmDelete} noValidate>
+            <p>{t("dataDeleteWarning")}</p>
+            <TextField
+              label={t("dataConfirmLabel", { email })}
+              type="email"
+              autoComplete="off"
+              value={typed}
+              error={error}
+              onChange={(event) => setTyped(event.target.value)}
+            />
+            {remove.error ? <p role="alert">{errorText(remove.error.message)}</p> : null}
+            <Button type="submit" disabled={remove.isPending}>
+              {remove.isPending ? t("dataDeleting") : t("dataDeleteAccount")}
+            </Button>
+          </form>
+        </Disclosure>
+      </div>
     </section>
   );
 }

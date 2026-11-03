@@ -1,35 +1,54 @@
-/* Lesson reader (E15-13): one reading column laid out like the prototype's rail. */
+/* Lesson reader (E15-13): a paper title band over one reading column with a numbered rail. */
 main.lesson {
-  max-width: var(--sbi-measure);
+  --lesson-column: 44rem;
+  max-width: var(--lesson-column);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--sbi-space-4);
+  gap: var(--sbi-space-5);
+  padding-top: 0;
 }
 
+/* Full-bleed paper without 100vw overflow: the spread shadow is clipped to the band's own height. */
 .lesson-head {
   display: grid;
-  gap: var(--sbi-space-2);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sbi-space-3);
   justify-items: start;
+  padding-block: var(--sbi-space-6) var(--sbi-space-5);
+  background: var(--sbi-paper);
+  box-shadow:
+    0 0 0 100vmax var(--sbi-paper),
+    0 1px 0 100vmax var(--sbi-rule);
+  clip-path: inset(0 -100vmax -1px);
 }
 
 .lesson-head h1 {
-  font-size: var(--sbi-text-display);
-  margin: 0;
   justify-self: stretch;
+  margin: 0 0 var(--sbi-space-2);
+  font-size: clamp(2.125rem, 1.5rem + 2.6vw, 3.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
 }
 
 .lesson-head__change {
   display: inline-flex;
   align-items: center;
   min-height: var(--sbi-touch-min);
+  margin-bottom: calc(-1 * var(--sbi-space-2));
   font-size: var(--sbi-text-small);
   font-weight: 700;
   color: var(--sbi-ink-soft);
+  text-decoration-color: var(--sbi-rule);
+}
+
+.lesson-head__change:hover {
+  color: var(--sbi-action);
+  text-decoration-color: currentColor;
 }
 
 .topic-chip {
   margin: 0;
-  padding: 2px 10px 3px;
+  padding: 3px 12px 4px;
   border-radius: var(--sbi-radius-pill);
   background: var(--sbi-marker);
   color: var(--sbi-marker-ink);
@@ -37,11 +56,19 @@ main.lesson {
   font-size: var(--sbi-text-small);
 }
 
-/* "Explain it" pills, as in the prototype; the chosen one is filled with ink. */
+/* Depth sits in a sunk track like a physical switch; the chosen setting is filled with ink. */
+/* The switch on its own line; the chosen depth's meaning and the age fold share the line below. */
 .lesson-head .depth-controls {
-  display: grid;
-  gap: var(--sbi-space-1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-1) var(--sbi-space-4);
   justify-self: stretch;
+}
+
+.lesson-head .depth-controls > .sbi-choice,
+.lesson-head .depth-controls > .sbi-disclosure[open] {
+  flex-basis: 100%;
 }
 
 .lesson-head .depth-controls .sbi-choice {
@@ -49,45 +76,135 @@ main.lesson {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--sbi-space-2);
+  gap: var(--sbi-space-3);
 }
 
 .lesson-head .depth-controls .sbi-choice__legend {
   float: left;
-  margin: 0 var(--sbi-space-1) 0 0;
+  margin: 0;
   padding: 0;
-  font-weight: 400;
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
   color: var(--sbi-ink-soft);
 }
 
 .lesson-head .depth-controls .sbi-choice__options {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sbi-space-1);
-  padding: 0;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
   border: 0;
-  background: none;
+  border-radius: var(--sbi-radius-pill);
+  background: var(--sbi-paper-sunk);
+  box-shadow: inset 0 0 0 1px var(--sbi-rule);
 }
 
 .lesson-head .depth-controls .sbi-choice__option {
-  min-height: var(--sbi-touch-min);
+  min-height: calc(var(--sbi-touch-min) - 6px);
   padding: 0 var(--sbi-space-4);
-  border: 1px solid var(--sbi-rule);
+  border: 0;
   border-radius: var(--sbi-radius-pill);
-  background: var(--sbi-paper);
+  background: transparent;
+  color: var(--sbi-ink-soft);
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+  cursor: pointer;
+  transition:
+    background var(--sbi-duration-quick) var(--sbi-ease),
+    color var(--sbi-duration-quick) var(--sbi-ease);
+}
+
+.lesson-head .depth-controls .sbi-choice__option:hover {
   color: var(--sbi-ink);
 }
 
 .lesson-head .depth-controls .sbi-choice__option:has(input:checked) {
   background: var(--sbi-ink);
-  border-color: var(--sbi-ink);
   color: var(--sbi-paper);
+}
+
+.lesson-head .depth-controls > .sbi-field__hint {
+  margin: 0;
+}
+
+.lesson-head .depth-controls > .sbi-field__hint::after {
+  content: "·" / "";
+  margin-left: var(--sbi-space-4);
+  color: var(--sbi-rule);
 }
 
 .lesson-head .depth-controls .sbi-disclosure {
   border-top: 0;
   padding-block: 0;
   font-size: var(--sbi-text-small);
+}
+
+.lesson-head .depth-controls .sbi-disclosure__summary {
+  gap: var(--sbi-space-1);
+  color: var(--sbi-action);
+}
+
+.lesson-head .depth-controls .sbi-disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+
+.lesson-head .depth-controls .sbi-disclosure__summary::after {
+  content: "▾" / "";
+  font-size: 0.8em;
+}
+
+.lesson-head .depth-controls .sbi-disclosure[open] .sbi-disclosure__summary::after {
+  content: "▴" / "";
+}
+
+.lesson-head .depth-controls .sbi-disclosure__body .sbi-field {
+  max-width: 20rem;
+  margin-top: 0;
+}
+
+/* Saving is a quiet pill beside the controls, never louder than the lesson itself. */
+.lesson-head a.save-lesson {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sbi-touch-min);
+  margin: 0;
+  padding: 0 var(--sbi-space-4);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-pill);
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.lesson-head a.save-lesson:hover {
+  border-color: var(--sbi-action);
+}
+
+@media (min-width: 720px) {
+  .lesson-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--sbi-space-5);
+    padding-block: var(--sbi-space-7) var(--sbi-space-6);
+  }
+
+  .lesson-head > :not(.depth-controls, .save-lesson) {
+    grid-column: 1 / -1;
+  }
+
+  .lesson-head > .save-lesson {
+    align-self: start;
+    justify-self: end;
+    margin: 0;
+  }
+}
+
+.lesson > .sbi-status:empty {
+  display: none;
+}
+
+.lesson > .sbi-status {
+  margin: 0;
 }
 
 .lesson-notices .sbi-notice p {
@@ -172,39 +289,50 @@ main.lesson {
   gap: var(--sbi-space-6);
 }
 
-/* The rail: a filled dot and line for open steps, a hollow dot and faint title for the rest. */
+/* The rail: numbered markers for written steps, hollow ones for steps still being written. */
 .rail {
+  --rail-gutter: 56px;
+  --rail-mark: 32px;
   list-style: none;
   margin: 0;
-  padding: 0 0 0 28px;
+  padding: 0 0 0 var(--rail-gutter);
+  counter-reset: rail-step;
 }
 
 .rail__step {
   position: relative;
-  padding-bottom: var(--sbi-space-5);
+  padding-bottom: var(--sbi-space-7);
+  counter-increment: rail-step;
 }
 
 .rail__step::before {
-  content: "";
+  content: counter(rail-step) / "";
   position: absolute;
-  left: -28px;
-  top: 6px;
-  width: 15px;
-  height: 15px;
+  left: calc(-1 * var(--rail-gutter));
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: var(--rail-mark);
+  height: var(--rail-mark);
   border-radius: 50%;
   background: var(--sbi-action);
-  box-shadow: 0 0 0 3px var(--sbi-bench);
+  color: var(--sbi-action-ink);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: var(--sbi-text-small);
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 4px var(--sbi-bench);
   z-index: 1;
 }
 
 .rail__step::after {
   content: "";
   position: absolute;
-  left: -22px;
-  top: 12px;
-  bottom: -6px;
-  width: 3px;
-  background: var(--sbi-action);
+  left: calc(-1 * var(--rail-gutter) + var(--rail-mark) / 2 - 1px);
+  top: var(--rail-mark);
+  bottom: 0;
+  width: 2px;
+  background: color-mix(in srgb, var(--sbi-action) 45%, var(--sbi-rule));
 }
 
 .rail__step:last-child::after {
@@ -212,15 +340,19 @@ main.lesson {
 }
 
 .rail__step--ghost {
-  padding-bottom: var(--sbi-space-3);
+  padding-bottom: var(--sbi-space-4);
+  min-height: calc(var(--rail-mark) + var(--sbi-space-4));
+  padding-top: 4px;
   color: var(--sbi-ink-soft);
+  font-weight: 700;
 }
 
 .rail__step--ghost::before {
   background: var(--sbi-bench);
+  color: var(--sbi-ink-soft);
   box-shadow:
     inset 0 0 0 2px var(--sbi-rule),
-    0 0 0 3px var(--sbi-bench);
+    0 0 0 4px var(--sbi-bench);
 }
 
 .rail__step--ghost::after {
@@ -229,6 +361,13 @@ main.lesson {
 
 .rail__step:not(.rail__step--ghost):has(+ .rail__step--ghost)::after {
   background: linear-gradient(var(--sbi-action), var(--sbi-rule));
+}
+
+@media (max-width: 479px) {
+  .rail {
+    --rail-gutter: 42px;
+    --rail-mark: 28px;
+  }
 }
 
 .rail .lesson-section {
@@ -241,6 +380,12 @@ main.lesson {
 .rail__step--answer .short-answer {
   font-size: var(--sbi-text-answer);
   line-height: 1.5;
+}
+
+.rail__step--answer .short-answer mark {
+  padding-inline: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 /* Says what the faint titles are, so a learner waiting on them knows more is coming. */
@@ -257,7 +402,8 @@ main.lesson {
 
 .lesson-section h2 {
   font-size: var(--sbi-text-title);
-  margin: 0;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--sbi-space-1);
 }
 
 .lesson-section h3 {
@@ -269,9 +415,40 @@ main.lesson {
   margin: 0;
 }
 
-.evidence-tag {
+/* A link that is a whole list item is a tap target, so it gets the room WCAG 2.5.8 asks for. */
+.lesson-section li > a:only-child {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+}
+
+/* The step's kind in plain words, aligned with its numbered marker. */
+.rail .module-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-2);
+  min-height: var(--rail-mark);
+  font-family: var(--sbi-font-body);
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
   text-transform: none;
   letter-spacing: 0;
+  color: var(--sbi-action);
+}
+
+/* Observation and explanation differ in edge style as well as words, never by colour alone. */
+.evidence-tag {
+  padding: 1px 8px 2px;
+  border: 1px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-pill);
+  font-weight: 400;
+  font-size: var(--sbi-text-label);
+  color: var(--sbi-ink-soft);
+}
+
+.evidence-inference .evidence-tag {
+  border-style: dashed;
 }
 
 .concepts,
@@ -295,9 +472,12 @@ main.lesson {
 }
 
 .ask-question {
-  margin-top: var(--sbi-space-3);
-  padding-top: var(--sbi-space-3);
-  border-top: 1px solid var(--sbi-rule);
+  margin-top: var(--sbi-space-4);
+  padding: var(--sbi-space-4) var(--sbi-space-5) var(--sbi-space-5);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  box-shadow: var(--sbi-lift);
 }
 
 /* Sources come last, so the lesson reads as reasoning rather than citations. */
@@ -369,7 +549,7 @@ main.lesson {
   background: var(--sbi-paper);
   border: 1px solid var(--sbi-rule);
   border-radius: var(--sbi-radius-l);
-  padding: var(--sbi-space-4);
+  padding: var(--sbi-space-5);
   display: grid;
   gap: var(--sbi-space-3);
 }
@@ -593,15 +773,52 @@ main.lesson {
   list-style: none;
 }
 
+.next-concepts h2 {
+  font-size: var(--sbi-text-title);
+  margin: 0;
+}
+
 .next-concepts li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sbi-space-1) var(--sbi-space-3);
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: var(--sbi-space-3) var(--sbi-space-7) var(--sbi-space-3) var(--sbi-space-4);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+}
+
+.next-concepts li:hover {
+  border-color: var(--sbi-action);
+}
+
+.next-concepts li:has(a:focus-visible) {
+  outline: 3px solid var(--sbi-focus);
+  outline-offset: 2px;
+}
+
+.next-concepts li a:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .next-concepts li a {
   font-weight: 700;
+  color: var(--sbi-ink);
+  text-decoration: none;
+}
+
+/* The whole row opens the next lesson; the link's own box is stretched over it. */
+.next-concepts li a::after {
+  content: "›" / "";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: var(--sbi-space-4);
+  font-size: 1.5rem;
+  color: var(--sbi-action);
 }
 
 .next-concepts__why {
