@@ -20,16 +20,22 @@ export function VerifyEmail() {
     );
   }, [token]);
 
-  if (state === "checking") return <p role="status">Confirming your email…</p>;
+  if (state === "checking") {
+    return (
+      <p role="status" className="auth__intro">
+        Confirming your email…
+      </p>
+    );
+  }
   if (state === "done") {
     return (
-      <p role="status">
+      <p role="status" className="auth__done">
         Your email is confirmed. <Link href="/account">Go to your account</Link>.
       </p>
     );
   }
   return (
-    <p role="alert">
+    <p role="alert" className="auth__alert">
       {state} <Link href="/account">Go to your account</Link> to send a new link.
     </p>
   );

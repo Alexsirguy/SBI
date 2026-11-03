@@ -50,7 +50,7 @@ describe("SignUpForm", () => {
   it("stops under-13s on the device, sending nothing", async () => {
     const { container } = await view();
     await fill(container, "12");
-    await click(button(container, "Make my account"));
+    await click(button(container, "Create Account"));
 
     expect(text(container)).toContain(UNDER_MIN_AGE);
     expect(api).not.toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe("SignUpForm", () => {
     const { container } = await view();
     await type(container, "Email", "not-an-email");
     await type(container, "Password", "short");
-    await click(button(container, "Make my account"));
+    await click(button(container, "Create Account"));
 
     expect(text(container)).toContain("Enter a valid email address.");
     expect(text(container)).toContain("Use at least 10 characters.");
@@ -78,7 +78,7 @@ describe("SignUpForm", () => {
     });
     const { container } = await view();
     await fill(container, "14");
-    await click(button(container, "Make my account"));
+    await click(button(container, "Create Account"));
 
     await vi.waitFor(() => expect(router.replace).toHaveBeenCalledWith("/account"));
     expect(api).toHaveBeenCalledWith("signUp", {
@@ -94,7 +94,7 @@ describe("SignUpForm", () => {
     api.mockRejectedValue(new Error("An account already uses that email. Sign in instead."));
     const { container } = await view();
     await fill(container, "14");
-    await click(button(container, "Make my account"));
+    await click(button(container, "Create Account"));
     await vi.waitFor(() => expect(text(container)).toContain("already uses that email"));
   });
 });

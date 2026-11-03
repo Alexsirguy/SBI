@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import "../../home.css";
+import { AuthCard } from "../auth-card";
 import { ResetForm } from "./reset-form";
 
 export const metadata: Metadata = { title: "Choose a new password · Science Behind It" };
 
 export default function ResetPage() {
   return (
-    <main id="main" className="prose-page">
-      <h1>Choose a new password</h1>
+    <AuthCard title="Choose a new password" intro="This signs you out on every other device.">
       <Suspense>
         <ResetForm />
       </Suspense>
-    </main>
+    </AuthCard>
   );
 }

@@ -7,8 +7,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { api } from "../../api";
+import { AuthDivider } from "../auth-card";
 import { fieldErrors } from "../form-errors";
 import { GoogleButton } from "../google-button";
+import { PasswordField } from "../password-field";
 import { ACCOUNT_KEY } from "../use-account";
 
 const EMPTY = { age: "", email: "", firstName: "", lastName: "", password: "" };
@@ -50,29 +52,37 @@ export function SignUpForm() {
   return (
     <>
       <GoogleButton mode="signup" onSignedIn={done} />
-      <form className="account-form" onSubmit={(event) => void submit(event)} noValidate>
-        <TextField
-          label="First name"
-          autoComplete="given-name"
-          value={values.firstName}
-          error={errors.firstName}
-          onChange={set("firstName")}
-        />
-        <TextField
-          label="Last name"
-          autoComplete="family-name"
-          value={values.lastName}
-          error={errors.lastName}
-          onChange={set("lastName")}
-        />
-        <TextField
-          label="Age"
-          inputMode="numeric"
-          hint="Accounts are for people 13 and over."
-          value={values.age}
-          error={errors.age}
-          onChange={(event) => setValues({ ...values, age: event.target.value.replace(/\D/g, "") })}
-        />
+      <AuthDivider />
+      <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
+        <div className="auth__row">
+          <TextField
+            label="First name"
+            autoComplete="given-name"
+            value={values.firstName}
+            error={errors.firstName}
+            onChange={set("firstName")}
+          />
+          <TextField
+            label="Last name"
+            autoComplete="family-name"
+            value={values.lastName}
+            error={errors.lastName}
+            onChange={set("lastName")}
+          />
+        </div>
+        <div className="auth__age">
+          <TextField
+            label="Age"
+            inputMode="numeric"
+            maxLength={3}
+            hint="Accounts are for people 13 and over."
+            value={values.age}
+            error={errors.age}
+            onChange={(event) =>
+              setValues({ ...values, age: event.target.value.replace(/\D/g, "") })
+            }
+          />
+        </div>
         <TextField
           label="Email"
           type="email"
@@ -81,22 +91,26 @@ export function SignUpForm() {
           error={errors.email}
           onChange={set("email")}
         />
-        <TextField
+        <PasswordField
           label="Password"
-          type="password"
           autoComplete="new-password"
-          hint="At least 10 characters. A short phrase is easy to remember and hard to guess."
+          hint="At least 10 characters. A short phrase is easy to remember."
           value={values.password}
           error={errors.password}
           onChange={set("password")}
         />
-        {failure ? <p role="alert">{failure}</p> : null}
-        <Button type="submit" disabled={busy}>
-          Make my account
+        {failure ? (
+          <p role="alert" className="auth__alert">
+            {failure}
+          </p>
+        ) : null}
+        <Button type="submit" block className="auth__submit" disabled={busy}>
+          {busy ? "Creating account…" : "Create Account"}
         </Button>
       </form>
-      <p>
-        Already have an account? <Link href="/account/sign-in">Sign in</Link>
+      <p className="auth__fineprint">
+        We keep your name, email and age to run your account, and nothing else.{" "}
+        <Link href="/privacy">How we handle your data</Link>
       </p>
     </>
   );

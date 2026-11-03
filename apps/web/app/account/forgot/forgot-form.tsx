@@ -2,7 +2,6 @@
 
 import { ForgotPasswordRequest } from "@sbi/contracts";
 import { Button, TextField } from "@sbi/ui";
-import Link from "next/link";
 import { useState } from "react";
 import { api } from "../../api";
 import { fieldErrors } from "../form-errors";
@@ -33,14 +32,14 @@ export function ForgotForm() {
 
   if (sent) {
     return (
-      <p role="status">
+      <p role="status" className="auth__done">
         If that email has an account, we have sent it a link to choose a new password. The link
-        works for 1 hour. <Link href="/account/sign-in">Back to sign in</Link>
+        works for 1 hour.
       </p>
     );
   }
   return (
-    <form className="account-form" onSubmit={(event) => void submit(event)} noValidate>
+    <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
       <TextField
         label="Email"
         type="email"
@@ -49,7 +48,7 @@ export function ForgotForm() {
         error={error}
         onChange={(event) => setEmail(event.target.value)}
       />
-      <Button type="submit" disabled={busy}>
+      <Button type="submit" block className="auth__submit" disabled={busy}>
         Send me a link
       </Button>
     </form>

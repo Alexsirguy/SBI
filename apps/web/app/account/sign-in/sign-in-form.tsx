@@ -7,8 +7,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { api } from "../../api";
+import { AuthDivider } from "../auth-card";
 import { fieldErrors } from "../form-errors";
 import { GoogleButton } from "../google-button";
+import { PasswordField } from "../password-field";
 import { ACCOUNT_KEY, safeNext } from "../use-account";
 
 export function SignInForm() {
@@ -40,7 +42,8 @@ export function SignInForm() {
   return (
     <>
       <GoogleButton mode="signin" onSignedIn={done} />
-      <form className="account-form" onSubmit={(event) => void submit(event)} noValidate>
+      <AuthDivider />
+      <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
         <TextField
           label="Email"
           type="email"
@@ -49,25 +52,23 @@ export function SignInForm() {
           error={errors.email}
           onChange={(event) => setValues({ ...values, email: event.target.value })}
         />
-        <TextField
+        <PasswordField
           label="Password"
-          type="password"
           autoComplete="current-password"
           value={values.password}
           error={errors.password}
+          aside={<Link href="/account/forgot">Forgot password?</Link>}
           onChange={(event) => setValues({ ...values, password: event.target.value })}
         />
-        {failure ? <p role="alert">{failure}</p> : null}
-        <Button type="submit" disabled={busy}>
-          Sign in
+        {failure ? (
+          <p role="alert" className="auth__alert">
+            {failure}
+          </p>
+        ) : null}
+        <Button type="submit" block className="auth__submit" disabled={busy}>
+          {busy ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-      <p>
-        <Link href="/account/forgot">Forgot your password?</Link>
-      </p>
-      <p>
-        New here? <Link href="/account/sign-up">Make an account</Link>
-      </p>
     </>
   );
 }

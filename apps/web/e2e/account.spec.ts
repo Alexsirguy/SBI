@@ -24,7 +24,7 @@ test("the Account link leads a signed-out learner to sign in", async ({ page }) 
     .click();
 
   await expect(page).toHaveURL(/\/account\/sign-in$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Welcome back" })).toBeVisible();
   await expectNoAxeViolations(page);
 });
 
@@ -55,7 +55,7 @@ test("under-13s are told to ask a grown-up, and nothing is sent", async ({ page 
   await page.getByLabel("Age").fill("11");
   await page.getByLabel("Email").fill("sam@example.com");
   await page.getByLabel("Password").fill("a very long phrase");
-  await page.getByRole("button", { name: "Make my account" }).click();
+  await page.getByRole("button", { name: "Create Account" }).click();
 
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "You need to be 13 or older",
@@ -80,7 +80,7 @@ test("signing up lands on the account page, which asks to confirm the email", as
   await page.getByLabel("Age").fill("14");
   await page.getByLabel("Email").fill("ada@example.com");
   await page.getByLabel("Password").fill("analytical engine notes");
-  await page.getByRole("button", { name: "Make my account" }).click();
+  await page.getByRole("button", { name: "Create Account" }).click();
 
   await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByText("Signed in as Ada Lovelace (ada@example.com).")).toBeVisible();

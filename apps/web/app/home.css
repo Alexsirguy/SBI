@@ -286,22 +286,6 @@ main.home {
   gap: var(--sbi-space-2);
 }
 
-.account-form {
-  display: grid;
-  gap: var(--sbi-space-3);
-  max-width: 28rem;
-  margin-block: var(--sbi-space-4);
-}
-
-.account-form .sbi-button {
-  justify-self: start;
-}
-
-.account-google {
-  margin-block: var(--sbi-space-3);
-  min-height: 44px;
-}
-
 .account-notice {
   display: flex;
   flex-wrap: wrap;

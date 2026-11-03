@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
-import "../../home.css";
+import Link from "next/link";
+import { AuthCard } from "../auth-card";
 import { SignUpForm } from "./sign-up-form";
 
-export const metadata: Metadata = { title: "Make an account · Science Behind It" };
+export const metadata: Metadata = { title: "Create an account · Science Behind It" };
 
 export default function SignUpPage() {
   return (
-    <main id="main" className="prose-page">
-      <h1>Make an account</h1>
-      <p className="home__lead">
-        Optional, and for people 13 and over. Every lesson works without one.
-      </p>
+    <AuthCard
+      tab="sign-up"
+      title="Create your account"
+      intro="Optional, for people 13 and over. Every lesson works without one."
+      footer={
+        <p>
+          Already have an account? <Link href="/account/sign-in">Sign in</Link>
+        </p>
+      }
+    >
       <SignUpForm />
-    </main>
+    </AuthCard>
   );
 }
