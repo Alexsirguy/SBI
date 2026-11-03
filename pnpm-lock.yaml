@@ -80,6 +80,9 @@ importers:
       '@sbi/taxonomy':
         specifier: workspace:*
         version: link:../../packages/taxonomy
+      '@sbi/tutor':
+        specifier: workspace:*
+        version: link:../../packages/tutor
       '@sbi/visuals':
         specifier: workspace:*
         version: link:../../packages/visuals
@@ -453,6 +456,12 @@ importers:
       '@sbi/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@sbi/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@sbi/safety':
+        specifier: workspace:*
+        version: link:../safety
     devDependencies:
       '@sbi/config':
         specifier: workspace:*

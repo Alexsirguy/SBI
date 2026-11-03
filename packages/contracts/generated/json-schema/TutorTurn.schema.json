@@ -71,6 +71,62 @@
             "state"
           ],
           "additionalProperties": false
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "default": "harm",
+              "type": "string",
+              "enum": [
+                "harm",
+                "age"
+              ]
+            },
+            "suitableFor": {
+              "type": "string",
+              "enum": [
+                "teen",
+                "adult"
+              ]
+            },
+            "category": {
+              "type": "string",
+              "enum": [
+                "medical",
+                "chemical-exposure",
+                "weapons",
+                "self-harm",
+                "dangerous-biology"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 600
+            },
+            "help": {
+              "maxItems": 4,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "policyVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            }
+          },
+          "required": [
+            "reason",
+            "message",
+            "help",
+            "policyVersion"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [

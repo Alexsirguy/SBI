@@ -40,3 +40,5 @@ export const EVENT_SINK = Symbol("EVENT_SINK");
 export const EVENTS_LIMITER = Symbol("EVENTS_LIMITER");
 export const COVERAGE = Symbol("COVERAGE");
 export const LESSON_PRICES = Symbol("LESSON_PRICES");
+export const TUTOR_TURNS = Symbol("TUTOR_TURNS");
+export const TUTOR_LIMITER = Symbol("TUTOR_LIMITER");

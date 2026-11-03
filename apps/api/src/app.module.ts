@@ -12,6 +12,7 @@ import { MediaModule } from "./media/media.module";
 import { PurgeModule } from "./purge/purge.module";
 import { RecognitionModule } from "./recognition/recognition.module";
 import { TaxonomyModule } from "./taxonomy/taxonomy.module";
+import { TutorModule } from "./tutor/tutor.module";
 import { VisualsModule } from "./visuals/visuals.module";
 
 @Module({
@@ -25,6 +26,7 @@ import { VisualsModule } from "./visuals/visuals.module";
     PurgeModule,
     RecognitionModule,
     TaxonomyModule,
+    TutorModule,
     VisualsModule,
   ],
   controllers: [HealthController],

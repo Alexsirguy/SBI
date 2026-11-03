@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { IsoDateTime, Uuid } from "./common";
 import { ConsentVersion } from "./consent";
-import { SafetyCategory } from "./safety";
+import { PolicyResponse, SafetyCategory } from "./safety";
 
 /** The policy's categories, plus none and other, so every tutor turn records one. */
 export const TurnSafetyCategory = z.enum(["none", ...SafetyCategory.options, "other"]);
@@ -26,6 +26,8 @@ export const TutorTurn = z
       text: z.string().min(1),
       citedClaimIds: z.array(Uuid).default([]),
       visualAction: VisualAction.optional(),
+      /** Set when safety answered instead of the model, so a reload shows the same help. */
+      policy: PolicyResponse.optional(),
     }),
     safetyCategory: TurnSafetyCategory,
     modelVersion: z.string().min(1),

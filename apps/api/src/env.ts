@@ -37,6 +37,8 @@ const schema = z.object({
   CATALOG_GAP_TTL_DAYS: z.coerce.number().int().positive().default(365),
   FEEDBACK_MAX_PER_HOUR: z.coerce.number().int().positive().default(20),
   QUESTIONS_MAX_PER_HOUR: z.coerce.number().int().positive().default(60),
+  // Each tutor turn costs a classifier and an answer call, so a learner gets one every two minutes.
+  TUTOR_MAX_PER_HOUR: z.coerce.number().int().positive().default(30),
   FEATURE_FLAGS: z.string().optional(),
   // Accounts (ADR 0020): Google sign-in needs only the client id, since its button returns an ID token.
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),

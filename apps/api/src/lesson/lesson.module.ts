@@ -209,5 +209,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
       }),
     },
   ],
+  // The tutor answers about these same lessons with the same model and safety checks.
+  exports: [LESSONS, LESSON_LLM, RISK_CLASSIFIER],
 })
 export class LessonModule {}

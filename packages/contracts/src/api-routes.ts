@@ -37,6 +37,12 @@ import {
   QuestionSuggestions,
 } from "./lesson-api";
 import {
+  TutorConversation,
+  TutorConversationRequest,
+  TutorReply,
+  TutorTurnRequest,
+} from "./tutor-api";
+import {
   ConfirmedPhoto,
   ConfirmUploadRequest,
   DeletedPhoto,
@@ -154,6 +160,23 @@ export const API_ROUTES = {
     request: QuestionSuggestionRequest,
     response: QuestionSuggestions,
     errors: [400],
+  },
+  askTutor: {
+    method: "post",
+    path: "/tutor/turns",
+    summary:
+      "Ask the tutor about the current lesson; the reply cites the lesson claims it used, or carries a safety response.",
+    request: TutorTurnRequest,
+    response: TutorReply,
+    errors: [400, 404, 429, 503],
+  },
+  tutorConversation: {
+    method: "get",
+    path: "/tutor/conversation",
+    summary: "List the exchanges of one visit's conversation about a lesson, oldest first.",
+    request: TutorConversationRequest,
+    response: TutorConversation,
+    errors: [400, 503],
   },
   requestLesson: {
     method: "post",

@@ -13,7 +13,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@sbi/contracts": "workspace:*"
+    "@sbi/contracts": "workspace:*",
+    "@sbi/llm": "workspace:*",
+    "@sbi/safety": "workspace:*"
   },
   "devDependencies": {
     "@sbi/config": "workspace:*"
