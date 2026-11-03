@@ -27,7 +27,6 @@ import {
   LESSON_REVIEW_AUDIT,
   LESSONS,
   REPOSITORIES,
-  SAVED_LESSONS,
   RISK_CLASSIFIER,
   VISUAL_MAKER,
   VISUAL_MANIFESTS,
@@ -89,11 +88,6 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
   ],
   providers: [
     LessonService,
-    {
-      provide: SAVED_LESSONS,
-      inject: [REPOSITORIES],
-      useFactory: (repos: Repositories) => repos.savedLessons,
-    },
     {
       provide: LESSON_LLM,
       inject: [API_ENV],

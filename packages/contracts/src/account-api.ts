@@ -112,3 +112,33 @@ export const OpenedLesson = z.object({
   sources: LessonSources,
   visuals: LessonVisuals,
 });
+
+/** Kept photos linked to the account download one by one from here, signed in. */
+export const ACCOUNT_PHOTO_PATH = "/account/photos";
+
+/** Everything we hold that is tied to the account, in one file the learner keeps (#105). */
+export const AccountExport = z.object({
+  exportedAt: z.iso.datetime({ offset: true }),
+  account: z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string(),
+    emailVerified: z.boolean(),
+    ageAtSignup: z.number().int(),
+    createdAt: z.iso.datetime({ offset: true }),
+    signInMethods: z.array(z.enum(["password", "google"])),
+    linkedAt: z.iso.datetime({ offset: true }).nullable(),
+    consentVersion: z.string().nullable(),
+  }),
+  savedLessons: z.array(SavedLesson),
+  photos: z.array(
+    z.object({ key: PhotoKey, consentVersion: z.string().nullable(), download: z.string() }),
+  ),
+  notes: z.array(z.string()),
+});
+
+/** Typing the account's email confirms a deletion that cannot be undone. */
+export const DeleteAccountRequest = z.object({ email: Email });
+
+/** The photo keys deleted, so the device can drop them from its own list too. */
+export const DeletedAccount = z.object({ deletedPhotos: z.array(PhotoKey) });

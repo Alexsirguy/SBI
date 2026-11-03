@@ -681,6 +681,43 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect((await repos.accounts.get(mine.accountId))?.linkedAt).toBeNull();
     });
 
+    it("deletes an account with its sessions, links and saved lessons, leaving others", async () => {
+      const ada = await create("a@example.com");
+      const grace = await create("g@example.com");
+      for (const id of [ada.accountId, grace.accountId]) {
+        await repos.sessions.create(id.replace(/-/g, "").padEnd(64, "0"), id, now, later(1000));
+        await repos.accountTokens.issue(
+          id.replace(/-/g, "").padEnd(64, "1"),
+          id,
+          "verify-email",
+          later(1000),
+        );
+        await repos.savedLessons.save(id, {
+          lessonId: "0192f1a0-0000-7000-8000-0000000000c1",
+          savedAt: now,
+          title: "Kettles",
+          version: 1,
+        });
+      }
+      await repos.mediaRegistry.register(photo("photos/ada.jpg"));
+      await repos.mediaRegistry.keep("photos/ada.jpg", "consent-1");
+      await repos.accounts.link(ada.accountId, ["photos/ada.jpg"], "consent-1", now);
+      expect(await repos.accounts.ownedPhotos(ada.accountId)).toEqual([
+        { consentVersion: "consent-1", key: "photos/ada.jpg" },
+      ]);
+
+      await repos.accounts.delete(ada.accountId);
+
+      expect(await repos.accounts.get(ada.accountId)).toBeUndefined();
+      expect(await repos.savedLessons.list(ada.accountId)).toEqual([]);
+      expect(
+        await repos.sessions.find(ada.accountId.replace(/-/g, "").padEnd(64, "0"), now),
+      ).toBeUndefined();
+      expect(await repos.accounts.ownedPhotos(ada.accountId)).toEqual([]);
+      expect(await repos.accounts.get(grace.accountId)).toBeDefined();
+      expect(await repos.savedLessons.list(grace.accountId)).toHaveLength(1);
+    });
+
     it("finds live sessions only, and ends them one or all at a time", async () => {
       const ada = await create("a@example.com");
       await repos.sessions.create("a".repeat(64), ada.accountId, now, later(1000));

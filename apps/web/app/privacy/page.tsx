@@ -78,6 +78,10 @@ export default function PrivacyPage() {
         <li>
           Linking this device to your account is a separate choice, made on your account page.
         </li>
+        <li>
+          On your account page you can download everything tied to your account, or delete it all at
+          once. Deletion is immediate, and copies in our backups are gone within 30 days.
+        </li>
       </ul>
 
       <YourChoices />

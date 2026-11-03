@@ -14,6 +14,7 @@ import {
   subscribeToChoices,
 } from "../consent";
 import { ACCOUNT_KEY, useAccount, useSignOut } from "./use-account";
+import { YourData } from "./your-data";
 
 /** The signed-in account; linking this device's kept photos is a separate, explicit choice. */
 export function AccountPanel() {
@@ -110,6 +111,7 @@ export function AccountPanel() {
         {unlink.isSuccess && !linked ? <p>Unlinked.</p> : null}
       </div>
       {error ? <p role="alert">{error.message}</p> : null}
+      <YourData email={me.email} />
       <p>
         <Button variant="quiet" disabled={signOut.isPending} onClick={() => signOut.mutate()}>
           Sign out

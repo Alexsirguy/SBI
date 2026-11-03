@@ -1,6 +1,9 @@
 import type { z } from "zod";
 import {
   Account,
+  AccountExport,
+  DeleteAccountRequest,
+  DeletedAccount,
   Done,
   EmptyRequest,
   FinishGoogleSignUpRequest,
@@ -289,6 +292,24 @@ export const API_ROUTES = {
     request: SavedLessonRequest,
     response: Done,
     errors: [400, 401, 403],
+    auth: "account",
+  },
+  exportAccount: {
+    method: "get",
+    path: "/account/export",
+    summary: "Return everything held for the signed-in account as one bundle.",
+    request: EmptyRequest,
+    response: AccountExport,
+    errors: [401],
+    auth: "account",
+  },
+  deleteAccount: {
+    method: "post",
+    path: "/account/delete",
+    summary: "Delete the account and everything tied to it, after the learner types its email.",
+    request: DeleteAccountRequest,
+    response: DeletedAccount,
+    errors: [400, 401, 403, 502],
     auth: "account",
   },
   unlinkAccount: {

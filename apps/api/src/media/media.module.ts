@@ -56,6 +56,6 @@ import { MediaService } from "./media.service";
     { provide: RETENTION_POLICY, inject: [API_ENV], useFactory: (env: ApiEnv) => env.retention },
     { provide: UPLOAD_POLICY, useValue: DEFAULT_UPLOAD_POLICY },
   ],
-  exports: [OBJECT_STORAGE, MEDIA_REGISTRY, RETENTION_POLICY, UPLOAD_POLICY],
+  exports: [OBJECT_STORAGE, MEDIA_REGISTRY, DELETION_AUDIT, RETENTION_POLICY, UPLOAD_POLICY],
 })
 export class MediaModule {}

@@ -122,3 +122,25 @@ test("a reset link sets a new password", async ({ page }) => {
     "every device was signed out",
   );
 });
+
+test("an account can be downloaded or deleted from the account page", async ({ page }) => {
+  const verified = { ...ADA, emailVerified: true };
+  let deleted: unknown;
+  await mockApi(page, "/account", () => ({ json: verified }));
+  await mockApi(page, "/account/delete", (body) => {
+    deleted = body;
+    return { json: { deletedPhotos: [] } };
+  });
+  await page.goto("/account");
+  await expect(page.getByRole("button", { name: "Download your data" })).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  await page.getByText("Delete my account").first().click();
+  await page.getByLabel("Type ada@example.com to confirm").fill("ada@example.com");
+  await page.getByRole("button", { name: "Delete my account" }).click();
+
+  await expect(page).toHaveURL(/\/account\/deleted$/);
+  expect(deleted).toEqual({ email: "ada@example.com" });
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your account is deleted");
+  await expectNoAxeViolations(page);
+});

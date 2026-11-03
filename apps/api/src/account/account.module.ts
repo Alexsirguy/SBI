@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import type { Repositories } from "@sbi/db";
 import { createRateLimiter } from "../common/rate-limiter";
 import type { ApiEnv } from "../env";
+import { MediaModule } from "../media/media.module";
 import {
   ACCOUNT_TOKENS,
   ACCOUNTS,
@@ -11,6 +12,7 @@ import {
   MAILER,
   PASSWORD_PARAMS,
   REPOSITORIES,
+  SAVED_LESSONS,
   SESSIONS,
 } from "../tokens";
 import { AccountController } from "./account.controller";
@@ -24,6 +26,7 @@ import { DEFAULT_SCRYPT } from "./passwords";
 const MINUTE_MS = 60_000;
 
 @Module({
+  imports: [MediaModule],
   controllers: [AuthController, AccountController],
   providers: [
     AuthService,
@@ -31,6 +34,11 @@ const MINUTE_MS = 60_000;
     SessionGuard,
     { provide: ACCOUNTS, inject: [REPOSITORIES], useFactory: (r: Repositories) => r.accounts },
     { provide: SESSIONS, inject: [REPOSITORIES], useFactory: (r: Repositories) => r.sessions },
+    {
+      provide: SAVED_LESSONS,
+      inject: [REPOSITORIES],
+      useFactory: (r: Repositories) => r.savedLessons,
+    },
     {
       provide: ACCOUNT_TOKENS,
       inject: [REPOSITORIES],
@@ -61,6 +69,6 @@ const MINUTE_MS = 60_000;
     },
   ],
   // Other modules guard their account routes with the same session check.
-  exports: [AuthService, SameOriginGuard, SessionGuard],
+  exports: [AuthService, SameOriginGuard, SessionGuard, SAVED_LESSONS],
 })
 export class AccountModule {}

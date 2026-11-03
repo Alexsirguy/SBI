@@ -1,7 +1,7 @@
 import { newId } from "@sbi/contracts";
 import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import type { Database } from "../client";
-import { accountTokens, accounts, mediaObjects, sessions } from "../schema";
+import { accountTokens, accounts, mediaObjects, savedLessons, sessions } from "../schema";
 
 export type StoredAccount = typeof accounts.$inferSelect;
 
@@ -32,6 +32,10 @@ export interface AccountRepository {
   link(accountId: string, keys: string[], consentVersion: string, now: Date): Promise<number>;
   /** Withdraws the opt-in: photos stay kept but are no longer tied to the account. */
   unlink(accountId: string): Promise<number>;
+  /** Kept photos linked to the account, for export and deletion. */
+  ownedPhotos(accountId: string): Promise<{ key: string; consentVersion: string | null }[]>;
+  /** Removes the account and every row tied to it; photos must be deleted first, with their bytes. */
+  delete(accountId: string): Promise<void>;
 }
 
 export interface SessionRepository {
@@ -120,6 +124,28 @@ export function createAccountRepository(db: Database): AccountRepository {
           and(inArray(mediaObjects.objectKey, keys), eq(mediaObjects.ownerAccountId, accountId)),
         );
       return owned.length;
+    },
+
+    async ownedPhotos(accountId) {
+      const rows = await db
+        .select({ consentVersion: mediaObjects.consentVersion, key: mediaObjects.objectKey })
+        .from(mediaObjects)
+        .where(eq(mediaObjects.ownerAccountId, accountId));
+      return rows;
+    },
+
+    async delete(accountId) {
+      // One transaction, so a failure part-way never leaves a half-deleted account behind.
+      await db.transaction(async (tx) => {
+        await tx.delete(savedLessons).where(eq(savedLessons.accountId, accountId));
+        await tx.delete(accountTokens).where(eq(accountTokens.accountId, accountId));
+        await tx.delete(sessions).where(eq(sessions.accountId, accountId));
+        await tx
+          .update(mediaObjects)
+          .set({ ownerAccountId: null })
+          .where(eq(mediaObjects.ownerAccountId, accountId));
+        await tx.delete(accounts).where(eq(accounts.accountId, accountId));
+      });
     },
 
     async unlink(accountId) {

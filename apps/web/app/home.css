@@ -319,3 +319,18 @@ main.home {
   color: var(--sbi-ink-soft);
   font-size: var(--sbi-text-small);
 }
+
+.your-data__photos {
+  list-style: none;
+  padding-left: 0;
+}
+
+.your-data__delete {
+  display: grid;
+  gap: var(--sbi-space-3);
+  max-width: 28rem;
+}
+
+.your-data__delete .sbi-button {
+  justify-self: start;
+}

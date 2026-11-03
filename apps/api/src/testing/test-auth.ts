@@ -56,6 +56,17 @@ export function fakeAccountStore() {
       for (const key of keys) if (!owners.has(key)) owners.set(key, accountId);
       return keys.filter((key) => owners.get(key) === accountId).length;
     },
+    ownedPhotos: async (accountId) =>
+      [...owners]
+        .filter(([, owner]) => owner === accountId)
+        .map(([key]) => ({ consentVersion: "consent-1", key })),
+    delete: async (accountId) => {
+      for (const [key, owner] of owners) if (owner === accountId) owners.delete(key);
+      for (const [hash, session] of sessions)
+        if (session.accountId === accountId) sessions.delete(hash);
+      for (const [hash, token] of tokens) if (token.accountId === accountId) tokens.delete(hash);
+      accounts.delete(accountId);
+    },
     unlink: async (accountId) => {
       const mine = [...owners].filter(([, owner]) => owner === accountId);
       for (const [key] of mine) owners.delete(key);

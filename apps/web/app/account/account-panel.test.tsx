@@ -8,6 +8,7 @@ const api = vi.hoisted(() => vi.fn());
 const router = vi.hoisted(() => ({ replace: vi.fn() }));
 vi.mock("../api", () => ({ api }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
+vi.mock("../../env", () => ({ webEnv: { apiUrl: "http://api.test" } }));
 
 const { AccountPanel } = await import("./account-panel");
 const { hasConsent, rememberKeptPhoto, setConsent } = await import("../consent");
