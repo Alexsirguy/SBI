@@ -23,7 +23,7 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm format:check
 pnpm test:e2e   # first run: pnpm --filter @sbi/web exec playwright install chromium
 ```
 
-Feature flags are comma lists in `FEATURE_FLAGS` (api) and `NEXT_PUBLIC_FEATURE_FLAGS` (web), e.g. `tutor,!visualLab`. Defaults live in `@sbi/env`.
+Feature flags are comma lists in `FEATURE_FLAGS` (api) and `NEXT_PUBLIC_FEATURE_FLAGS` (web), e.g. `tutor,!photoRecognition`. Defaults live in `@sbi/env`.
 
 ## Layout
 
