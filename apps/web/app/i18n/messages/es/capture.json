@@ -7,6 +7,8 @@
   "privacyUse": "Usamos tu foto solo para reconocer el objeto de tu lección.",
   "privacyStorage": "Se guarda de forma privada en Cloudflare R2 y nunca se muestra a otras personas. Cuando el reconocimiento de fotos está activado, se envía a la API de modelos de Meta, o a la de OpenAI si Meta no está disponible; ninguna de las dos puede usarla para entrenar.",
   "privacyRetention": "Se borra en un plazo de {days} días, o antes una vez reconocida, salvo que decidas conservarla.",
+  "privacyShow": "Ver detalles",
+  "privacyHide": "Ocultar detalles",
   "describeHeading": "¿No tienes imagen? Descríbelo",
   "facesBlurredOne": "Hemos difuminado una cara en tu dispositivo para que nadie pueda ser reconocido.",
   "facesBlurredOther": "Hemos difuminado {count} caras en tu dispositivo para que nadie pueda ser reconocido.",

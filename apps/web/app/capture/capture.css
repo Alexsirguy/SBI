@@ -62,11 +62,47 @@
 
 .privacy-cue h2 {
   font-size: var(--sbi-text-body);
-  margin-bottom: var(--sbi-space-2);
+  margin: 0;
+}
+
+.privacy-cue__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-3);
 }
 
 .privacy-cue ul {
+  margin: var(--sbi-space-2) 0 0;
+}
+
+button.privacy-cue__toggle {
+  flex: none;
   margin: 0;
+  padding: 0 var(--sbi-space-3);
+  border: 1px solid var(--sbi-note);
+  border-radius: var(--sbi-radius-pill);
+  background: transparent;
+  color: var(--sbi-note);
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Wide screens have room beside the photo step, so the notes are never folded there. */
+@media (min-width: 960px) {
+  button.privacy-cue__toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 959px) {
+  .privacy-cue:not(.privacy-cue--open) ul {
+    display: none;
+  }
+}
+
+.privacy-cue ul {
   padding-left: 1.1rem;
   display: grid;
   gap: var(--sbi-space-1);
