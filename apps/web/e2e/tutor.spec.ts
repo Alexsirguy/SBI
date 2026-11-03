@@ -8,7 +8,7 @@ import {
 import { expectNoAxeViolations } from "./a11y";
 import { mockApi, mockLesson } from "./mock-api";
 
-// The e2e build switches the tutor on (ci.yml); the API's own flag is mocked here.
+// The API is mocked here, so these tests never reach a model.
 const LESSON_URL = "/lesson?taxonomyId=object.magnifying-glass&label=Magnifying+glass";
 const refraction = SAMPLE_LESSON.claims[0]?.claimId;
 

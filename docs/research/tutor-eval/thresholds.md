@@ -1,6 +1,6 @@
 # Tutor evaluation: Phase 3 gate
 
-The `tutor` feature flag stays off for learners until a run of the held-out set meets every threshold below (ADR 0025, #100). Run it with:
+These thresholds are the Phase 3 gate for the tutor (ADR 0025, #100). The owner switched the `tutor` flag on after the first run below, accepting its three misses; later runs measure the fixes. Run it with:
 
 ```sh
 pnpm --filter @sbi/tutor eval            # every case, against LESSON_MODEL from apps/api/.env
@@ -42,7 +42,7 @@ The learner study in the Phase 3 gate (spec §13) is separate from this run.
 
 ## Latest run
 
-[`results/2026-11-03T20-44-48.md`](results/2026-11-03T20-44-48.md): `muse-spark-1.3`, prompt `tutor-answer-p0.4`, 60 cases, 0 errors. The gate fails, so the flag stays off.
+[`results/2026-11-03T20-44-48.md`](results/2026-11-03T20-44-48.md): `muse-spark-1.3`, prompt `tutor-answer-p0.4`, 60 cases, 0 errors. The gate fails on three metrics. The owner accepted these results and the tutor is on for learners (2026-11-03); `FEATURE_FLAGS=!tutor` and `NEXT_PUBLIC_FEATURE_FLAGS=!tutor` switch it off again.
 
 | Metric                | Result | Gate |
 | --------------------- | ------ | ---- |

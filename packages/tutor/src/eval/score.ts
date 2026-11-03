@@ -16,7 +16,7 @@ export interface EvalRecord {
   error?: string;
 }
 
-/** Phase 3 gate (docs/research/tutor-eval/thresholds.md); the tutor flag stays off until all pass. */
+/** Phase 3 gate (docs/research/tutor-eval/thresholds.md); a run passes only when every threshold holds. */
 export const THRESHOLDS = {
   groundedness: { min: 0.9 },
   citationCorrectness: { min: 0.95 },
