@@ -1,8 +1,9 @@
 import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
-import type { TutorExchange, TutorTurn, TutorTurnRequest } from "@sbi/contracts";
+import type { Lesson, TutorExchange, TutorTurn, TutorTurnRequest } from "@sbi/contracts";
 import type { LlmProvider } from "@sbi/llm";
 import type { LessonRepository } from "@sbi/orchestrator";
 import type { RiskClassifier } from "@sbi/safety";
+import type { VisualManifestRepository } from "@sbi/visuals";
 import {
   cooldownRemaining,
   runTutorTurn,
@@ -21,6 +22,7 @@ import {
   TUTOR_LIMITER,
   TUTOR_STRIKES,
   TUTOR_TURNS,
+  VISUAL_MANIFESTS,
 } from "../tokens";
 import { tutorText } from "./tutor-text";
 
@@ -41,6 +43,7 @@ export function toExchange(turn: TutorTurn, locale?: string): TutorExchange {
     kind,
     ...(kind === "beyond-lesson" ? { note: tutorText(locale).beyondLesson } : {}),
     ...(turn.response.policy ? { policy: turn.response.policy } : {}),
+    ...(turn.response.visualAction ? { visualAction: turn.response.visualAction } : {}),
     createdAt: turn.createdAt,
   };
 }
@@ -55,7 +58,14 @@ export class TutorService {
     @Inject(TUTOR_TURNS) private readonly turns: TutorTurnRepository,
     @Inject(TUTOR_LIMITER) private readonly limiter: RateLimiter,
     @Inject(TUTOR_STRIKES) private readonly strikes: StrikeCounter,
+    @Inject(VISUAL_MANIFESTS) private readonly manifests: Pick<VisualManifestRepository, "get">,
   ) {}
+
+  // The same visual the lesson page drives: a stage diagram has no sliders to move.
+  private async experimentVisual(lesson: Lesson) {
+    const ref = lesson.visuals.find((visual) => visual.kind !== "process");
+    return ref ? this.manifests.get(ref.visualId).catch(() => undefined) : undefined;
+  }
 
   private available(locale?: string): LlmProvider {
     if (!this.env.features.tutor || !this.provider) {
@@ -82,7 +92,7 @@ export class TutorService {
     try {
       turn = await runTutorTurn(
         { provider, classify: this.classify, signal: AbortSignal.timeout(TURN_TIMEOUT_MS) },
-        { lesson, question: request, history },
+        { lesson, question: request, history, manifest: await this.experimentVisual(lesson) },
       );
     } catch (error) {
       // The failure's name only; the learner's words never reach the logs.

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { IsoDateTime, Uuid } from "./common";
 import { ConsentVersion } from "./consent";
+import { ControlSetting } from "./lesson";
 import { PolicyResponse, SafetyCategory } from "./safety";
 
 /** The policy's categories, plus none and other, so every tutor turn records one. */
@@ -19,10 +20,23 @@ export const TutorReplyKind = z.enum([
 ]);
 export type TutorReplyKind = z.infer<typeof TutorReplyKind>;
 
-export const VisualAction = z.object({
-  visualId: Uuid,
-  state: z.string().min(1),
-});
+/** What "watch this" does to the lesson's existing visual; checked against its manifest (#96). */
+export const VisualAction = z
+  .object({
+    visualId: Uuid,
+    settings: z.array(ControlSetting).max(4).default([]),
+    /** Index into the lesson's demonstration steps; its settings are copied into `settings`. */
+    step: z.int().nonnegative().optional(),
+    /** A label id from the manifest's parts key. */
+    highlight: z
+      .string()
+      .regex(/^[a-z][a-zA-Z0-9]{0,39}$/)
+      .optional(),
+  })
+  .refine((action) => action.settings.length > 0 || action.highlight !== undefined, {
+    message: "An action moves a slider or highlights a part",
+  });
+export type VisualAction = z.infer<typeof VisualAction>;
 
 export const TutorTurn = z
   .object({

@@ -3,13 +3,14 @@ import type { Repositories } from "@sbi/db";
 import { createRateLimiter } from "../common/rate-limiter";
 import type { ApiEnv } from "../env";
 import { LessonModule } from "../lesson/lesson.module";
+import { VisualsModule } from "../visuals/visuals.module";
 import { API_ENV, REPOSITORIES, TUTOR_LIMITER, TUTOR_STRIKES, TUTOR_TURNS } from "../tokens";
 import { createStrikeCounter } from "@sbi/tutor";
 import { TutorController } from "./tutor.controller";
 import { TutorService } from "./tutor.service";
 
 @Module({
-  imports: [LessonModule],
+  imports: [LessonModule, VisualsModule],
   controllers: [TutorController],
   providers: [
     TutorService,

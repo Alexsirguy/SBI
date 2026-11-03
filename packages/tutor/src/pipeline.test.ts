@@ -6,6 +6,7 @@ import { runTutorTurn } from "./pipeline";
 import {
   classifierSaying,
   LESSON,
+  MANIFEST,
   PRESSURE,
   QUESTION,
   reply,
@@ -185,5 +186,32 @@ describe("runTutorTurn", () => {
     });
     expect(userPrompt(requests[0])).toContain(SAFE_ACTIVITY_RULE);
     expect(userPrompt(requests[1])).not.toContain(SAFE_ACTIVITY_RULE);
+  });
+
+  it("attaches a checked visual action, and never one to a clarifying question", async () => {
+    const show = { settings: [{ control: "altitude", value: 3000 }], step: null, highlight: "x" };
+    const { provider, requests } = scriptedProvider([
+      reply("Higher up, water boils cooler.", ["f1"], "lesson", show),
+      reply("Which kettle do you mean?", [], "clarify", show),
+    ]);
+    const deps = { provider, classify: classifierSaying(), ...fixed };
+    const answered = await runTutorTurn(deps, {
+      lesson: LESSON,
+      question: QUESTION,
+      history: [],
+      manifest: MANIFEST,
+    });
+    expect(userPrompt(requests[0])).toContain("Lesson visual:\nSliders: altitude");
+    expect(TutorTurn.parse(answered).response.visualAction).toEqual({
+      visualId: MANIFEST.visualId,
+      settings: [{ controlId: "altitude", value: 3000 }],
+    });
+    const asked = await runTutorTurn(deps, {
+      lesson: LESSON,
+      question: { ...QUESTION, text: "Why?" },
+      history: [],
+      manifest: MANIFEST,
+    });
+    expect(asked.response.visualAction).toBeUndefined();
   });
 });

@@ -33,7 +33,7 @@ export type Validated =
 
 /** Checks a draft before the learner sees it; any failure means a retry, never a partial reply. */
 export function validateAnswer(
-  draft: DraftAnswer,
+  draft: Pick<DraftAnswer, "kind" | "text" | "cited">,
   retrieved: readonly Claim[],
   options: { justClarified?: boolean; audience?: AudienceBand } = {},
 ): Validated {

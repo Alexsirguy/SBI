@@ -91,4 +91,32 @@ describe("goals", () => {
       goalHint({ readoutId: "pitch", op: "near", value: 147, tolerance: 5 }, 189.2, pitch),
     ).toBe("Pitch is 189.2 Hz; you need about 147 Hz, within 5 Hz.");
   });
+
+  it("marks one part of the visual's key for the tutor's watch, and clears it", () => {
+    const manifest = {
+      ...SAMPLE_MERRILL_MANIFEST,
+      labels: [
+        { id: "string", text: "String", claimId: "0192f1a0-0000-7000-8000-000000000001" },
+        { id: "peg", text: "Peg", claimId: "0192f1a0-0000-7000-8000-000000000001" },
+      ],
+    };
+    const figure = drawSlider().closest("figure");
+    const key = figure?.appendChild(document.createElement("ol"));
+    for (const id of ["string", "peg"]) {
+      const part = key?.appendChild(document.createElement("li"));
+      if (part) part.dataset.label = id;
+    }
+    const controller = createExperimentController(manifest);
+    const marked = () =>
+      [...document.querySelectorAll<HTMLElement>("[data-highlighted]")].map(
+        (part) => part.dataset.label,
+      );
+    expect(controller.highlight("peg")).toBe(true);
+    expect(marked()).toEqual(["peg"]);
+    expect(controller.highlight("lid")).toBe(false);
+    expect(marked()).toEqual([]);
+    controller.highlight("string");
+    expect(controller.highlight(undefined)).toBe(true);
+    expect(marked()).toEqual([]);
+  });
 });

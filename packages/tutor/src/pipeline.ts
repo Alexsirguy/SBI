@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
-import type { Lesson, TutorTurn } from "@sbi/contracts";
+import type { TutorTurn, VisualManifest } from "@sbi/contracts";
 import type { LlmProvider } from "@sbi/llm";
 import { isSpanish, SAFETY_POLICY_VERSION, type RiskClassifier } from "@sbi/safety";
 import { answerTurn, TUTOR_ANSWER_PROMPT_VERSION } from "./answer";
 import { assessTurn } from "./assess";
-import { policyContext, type TutorQuestion } from "./context";
+import { policyContext, type TutorLesson, type TutorQuestion } from "./context";
 import { retrieveClaims } from "./retrieve";
+import { validateVisualAction } from "./show";
 import { validateAnswer } from "./validate";
 
 /** One retry covers malformed output, a stray citation, an overlong reply or a repeat question. */
@@ -28,13 +29,15 @@ export interface TutorDeps {
 export async function runTutorTurn(
   deps: TutorDeps,
   input: {
-    lesson: Pick<Lesson, "lessonId" | "version" | "title" | "summary" | "claims">;
+    lesson: TutorLesson;
     question: TutorQuestion;
     history: readonly TutorTurn[];
+    /** The lesson's experiment visual, so "watch this" can only move what it really offers. */
+    manifest?: VisualManifest;
   },
 ): Promise<TutorTurn> {
   const { lesson, question } = input;
-  const context = policyContext(lesson, question, input.history);
+  const context = policyContext(lesson, question, input.history, input.manifest);
   const base = {
     sessionId: question.sessionId,
     turnId: (deps.newId ?? randomUUID)(),
@@ -83,11 +86,18 @@ export async function runTutorTurn(
     const checked = draft
       ? validateAnswer(draft, retrieved, { justClarified, audience: question.audience })
       : undefined;
-    if (!checked?.ok) continue;
+    if (!draft || !checked?.ok) continue;
+    const visualAction =
+      checked.kind === "clarifying" ? undefined : validateVisualAction(draft.show, context.show);
     return {
       ...base,
       retrievedClaimIds,
-      response: { text: checked.text, citedClaimIds: checked.citedClaimIds, kind: checked.kind },
+      response: {
+        text: checked.text,
+        citedClaimIds: checked.citedClaimIds,
+        kind: checked.kind,
+        ...(visualAction ? { visualAction } : {}),
+      },
       safetyCategory: assessment.category,
       modelVersion,
       promptVersion: TUTOR_ANSWER_PROMPT_VERSION,

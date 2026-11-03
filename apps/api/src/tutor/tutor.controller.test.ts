@@ -1,5 +1,11 @@
 import { join } from "node:path";
-import { Lesson, TutorReply, TutorConversation, type TutorTurn } from "@sbi/contracts";
+import {
+  Lesson,
+  TutorReply,
+  TutorConversation,
+  type TutorTurn,
+  type VisualManifest,
+} from "@sbi/contracts";
 import type { LlmProvider } from "@sbi/llm";
 import type { RiskClassifier } from "@sbi/safety";
 import { loadFixtures } from "@sbi/testing";
@@ -21,6 +27,7 @@ import {
   RISK_CLASSIFIER,
   TUTOR_LIMITER,
   TUTOR_TURNS,
+  VISUAL_MANIFESTS,
 } from "../tokens";
 
 const kettle = Lesson.parse(
@@ -28,6 +35,28 @@ const kettle = Lesson.parse(
     join(import.meta.dirname, "../../../../packages/contracts/src/fixtures/lesson"),
   ).valid.find((item) => item.name === "kettle-full.json")?.data,
 );
+
+const PLAYGROUND: VisualManifest = {
+  visualId: "0192f1a0-0000-7000-8000-00000000e001",
+  kind: "playground",
+  alt: "A kettle you can heat.",
+  fallback: { text: "A kettle heating water." },
+  assetIds: [],
+  assumptions: [],
+  params: {},
+  labels: [{ id: "element", text: "Element", claimId: kettle.claims[0]?.claimId ?? "" }],
+  controls: [{ id: "power", label: "Power", unit: "W", min: 0, max: 3000, step: 100, value: 0 }],
+  readouts: [],
+};
+
+// The fixture's only visual is a stage diagram, so the playground is added beside it.
+const withPlayground = Lesson.parse({
+  ...kettle,
+  visuals: [
+    ...kettle.visuals,
+    { visualId: PLAYGROUND.visualId, kind: "playground", manifestUri: "/v", alt: "Kettle" },
+  ],
+});
 
 const SESSION = "0192f1a0-0000-7000-8000-00000000b001";
 
@@ -85,7 +114,11 @@ async function start(
       .overrideProvider(LESSONS)
       .useValue({
         get: async (id: string, version: number) =>
-          id === kettle.lessonId && version === kettle.version ? kettle : undefined,
+          id === kettle.lessonId && version === kettle.version ? withPlayground : undefined,
+      })
+      .overrideProvider(VISUAL_MANIFESTS)
+      .useValue({
+        get: async (id: string) => (id === PLAYGROUND.visualId ? PLAYGROUND : undefined),
       })
       .overrideProvider(LESSON_LLM)
       .useValue(options.provider ?? answering)
@@ -130,7 +163,7 @@ describe("tutor endpoints", () => {
       expect.objectContaining({
         turnId: exchange.turnId,
         modelVersion: "scripted-1@2026",
-        promptVersion: "tutor-answer-p0.3",
+        promptVersion: "tutor-answer-p0.4",
         retentionClass: "session",
       }),
     ]);
@@ -223,5 +256,29 @@ describe("tutor endpoints", () => {
     );
     expect(freshVisit.status).toBe(429);
     expect(classified).toBe(3);
+  });
+
+  it("moves only the lesson's own visual, dropping what its manifest doesn't offer", async () => {
+    ({ test } = await start({
+      provider: answeringWith({
+        kind: "lesson",
+        text: "More power heats it faster.",
+        cited: ["f1"],
+        show: {
+          settings: [
+            { control: "power", value: 2000 },
+            { control: "volume", value: 1 },
+          ],
+          step: null,
+          highlight: "lid",
+        },
+      }),
+    }));
+    const response = await test.post("/tutor/turns", question());
+    const { exchange } = TutorReply.parse(await response.json());
+    expect(exchange.visualAction).toEqual({
+      visualId: PLAYGROUND.visualId,
+      settings: [{ controlId: "power", value: 2000 }],
+    });
   });
 });

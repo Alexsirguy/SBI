@@ -1,4 +1,4 @@
-import type { Claim } from "@sbi/contracts";
+import type { Claim, LessonSection, VisualManifest } from "@sbi/contracts";
 import type { LlmProvider } from "@sbi/llm";
 import type { RiskAssessment, RiskClassifier } from "@sbi/safety";
 
@@ -22,12 +22,42 @@ export const CLAIMS = [ELEMENT, BOILING, PRESSURE, SWITCH];
 export const userPrompt = (request: { messages: { content: unknown }[] } | undefined) =>
   String(request?.messages.at(1)?.content);
 
+const DEMONSTRATE: LessonSection = {
+  sectionId: "demo",
+  module: "demonstrate",
+  text: "Watch the boiling point fall as you climb.",
+  claimIds: [],
+  steps: [
+    { text: "Start at sea level.", settings: [{ controlId: "altitude", value: 0 }] },
+    { text: "Climb a high mountain.", settings: [{ controlId: "altitude", value: 5000 }] },
+  ],
+};
+
 export const LESSON = {
   lessonId: "0192f1a0-0000-7000-8000-00000000a001",
   version: 2,
   title: "How a kettle boils water",
   summary: "An element heats water until it boils, then a switch turns it off.",
   claims: CLAIMS,
+  sections: [DEMONSTRATE],
+};
+
+export const MANIFEST: VisualManifest = {
+  visualId: "0192f1a0-0000-7000-8000-00000000e001",
+  kind: "playground",
+  alt: "A kettle on a hill whose height you can change.",
+  fallback: { text: "A kettle boiling at different heights." },
+  assetIds: [],
+  assumptions: [],
+  params: {},
+  labels: [
+    { id: "element", text: "Heating element", claimId: ELEMENT.claimId },
+    { id: "strip", text: "Bimetallic strip", claimId: SWITCH.claimId },
+  ],
+  controls: [
+    { id: "altitude", label: "Height", unit: "m", min: 0, max: 8000, step: 100, value: 0 },
+  ],
+  readouts: [],
 };
 
 export const QUESTION = {
@@ -65,7 +95,8 @@ export const reply = (
   text: string,
   cited: string[],
   kind = cited.length > 0 ? "lesson" : "beyond",
-) => JSON.stringify({ kind, text, cited });
+  show: Record<string, unknown> = { settings: [], step: null, highlight: null },
+) => JSON.stringify({ kind, text, cited, show });
 
 export function classifierSaying(overrides: Partial<RiskAssessment> = {}): RiskClassifier {
   return async () => ({
