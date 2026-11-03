@@ -575,3 +575,8 @@ main.lesson {
   color: var(--sbi-ink-soft);
   font-size: var(--sbi-text-small);
 }
+
+.share-lesson {
+  margin-block: var(--sbi-space-6);
+  max-width: var(--sbi-measure);
+}

@@ -15,6 +15,7 @@ import { LessonNotice } from "../lesson-reader";
 import { LessonRail } from "../lesson-rail";
 import { PracticeProvider } from "../practice";
 import { VisualFrame } from "../visual-frame";
+import { ShareLesson } from "./share-lesson";
 
 const DATE = new Intl.DateTimeFormat(undefined, { dateStyle: "long" });
 
@@ -93,6 +94,7 @@ export function SavedLesson() {
           />
         </PracticeProvider>
         <SourceList sources={sources} lesson={lesson} />
+        <ShareLesson lessonId={lesson.lessonId} />
         <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} />
       </div>
     </main>

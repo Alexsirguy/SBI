@@ -29,7 +29,9 @@ Everything in the database and object storage is deleted by the **retention pass
 | Evidence sources and claims                             | No: public sources                                                               | Kept, re-checked for changes every `EVIDENCE_RECHECK_INTERVAL_MINUTES`                                                    | —                                                                            | Changed sources are invalidated                         |
 | Rights register (visual assets and manifests)           | No                                                                               | Kept while an asset can be shown                                                                                          | —                                                                            | Not deleted                                             |
 
-Lessons, review events, sources and the rights register hold no learner data, so they are kept for as long as they are useful as content and evidence. A lesson is shared only when its question was general enough (`cacheScope: shared`). A private lesson holds no personal data either, because the learner's question is stored only as a hash.
+A lesson a learner shares (ADR 0021) is an anonymous copy: no assumptions, contact details redacted, nothing tied to the account. So it stays after the account is deleted, like any other lesson.
+
+Lessons, review events, sources and the rights register hold no learner data, so they are kept for as long as they are useful as content and evidence. A lesson is shared (`cacheScope: shared`) only when a learner shares it and a reviewer approves it (ADR 0021). A private lesson holds no personal data either, because the learner's question is stored only as a hash.
 
 ## Outside the database
 

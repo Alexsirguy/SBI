@@ -40,3 +40,14 @@ export function useRemoveSavedLesson() {
       ),
   });
 }
+
+export function useShareLesson() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (lessonId: string) => api("shareSavedLesson", { lessonId }),
+    onSuccess: ({ sharedAt }, lessonId) =>
+      client.setQueryData(SAVED_KEY, (list: ApiResponse<"savedLessons">["lessons"] = []) =>
+        list.map((item) => (item.lessonId === lessonId ? { ...item, sharedAt } : item)),
+      ),
+  });
+}

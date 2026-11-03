@@ -17,6 +17,7 @@ import {
   SavedLessonRequest,
   SavedLessons,
   SaveLessonRequest,
+  SharedLesson,
   ResetPasswordRequest,
   SignInRequest,
   SignUpRequest,
@@ -283,6 +284,16 @@ export const API_ROUTES = {
     request: SavedLessonRequest,
     response: OpenedLesson,
     errors: [400, 401, 404],
+    auth: "account",
+  },
+  shareSavedLesson: {
+    method: "post",
+    path: "/account/lessons/share",
+    summary:
+      "Share an anonymous copy of a saved lesson; a reviewer approves it before others see it.",
+    request: SavedLessonRequest,
+    response: SharedLesson,
+    errors: [400, 401, 403, 404, 409],
     auth: "account",
   },
   removeSavedLesson: {

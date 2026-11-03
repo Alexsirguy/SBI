@@ -17,12 +17,17 @@ import {
   type ApiResponse,
 } from "@sbi/contracts";
 import type { SavedLessonRepository, StoredAccount, StoredSavedLesson } from "@sbi/db";
-import type { LessonRepository } from "@sbi/orchestrator";
+import {
+  NotShareableError,
+  shareLesson,
+  type LessonRepository,
+  type ReviewAuditLog,
+} from "@sbi/orchestrator";
 import type { z } from "zod";
 import { SameOriginGuard, SessionGuard, SignedInAccount } from "../account/account.guard";
 import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
-import { LESSON_EVIDENCE, LESSONS, SAVED_LESSONS } from "../tokens";
+import { LESSON_EVIDENCE, LESSON_REVIEW_AUDIT, LESSONS, SAVED_LESSONS } from "../tokens";
 import type { EvidenceRepositories } from "@sbi/evidence";
 import { lessonSources } from "./sources";
 
@@ -32,6 +37,7 @@ function toSaved(saved: StoredSavedLesson): ApiResponse<"saveLesson"> {
   return {
     lessonId: saved.lessonId,
     savedAt: saved.savedAt.toISOString(),
+    sharedAt: saved.sharedAt?.toISOString() ?? null,
     title: saved.title,
     version: saved.version,
   };
@@ -43,7 +49,8 @@ function toSaved(saved: StoredSavedLesson): ApiResponse<"saveLesson"> {
 export class SavedLessonsController {
   constructor(
     @Inject(SAVED_LESSONS) private readonly saved: SavedLessonRepository,
-    @Inject(LESSONS) private readonly lessons: Pick<LessonRepository, "get">,
+    @Inject(LESSONS) private readonly lessons: Pick<LessonRepository, "get" | "save">,
+    @Inject(LESSON_REVIEW_AUDIT) private readonly reviewAudit: Pick<ReviewAuditLog, "record">,
     @Inject(LESSON_EVIDENCE) private readonly evidence: Pick<EvidenceRepositories, "sources">,
   ) {}
 
@@ -89,6 +96,34 @@ export class SavedLessonsController {
       ),
       visuals: LessonVisuals.parse({ lessonId, visuals: lesson.visuals }),
     };
+  }
+
+  @Post(API_ROUTES.shareSavedLesson.path)
+  @HttpCode(200)
+  async share(
+    @SignedInAccount() account: StoredAccount,
+    @Body(new ZodPipe(SavedLessonRequest, "Say which saved lesson to share."))
+    { lessonId }: z.output<typeof SavedLessonRequest>,
+  ): Promise<ApiResponse<"shareSavedLesson">> {
+    const saved = await this.saved.get(account.accountId, lessonId);
+    const lesson = saved && (await this.lessons.get(lessonId, saved.version));
+    if (!saved || !lesson) throw new UserFacingException(NOT_SAVED, HttpStatus.NOT_FOUND);
+    if (saved.sharedAt) {
+      throw new UserFacingException("You already shared this lesson.", HttpStatus.CONFLICT);
+    }
+    const now = new Date();
+    let copy;
+    try {
+      copy = await shareLesson(lesson, { now });
+    } catch (error) {
+      if (!(error instanceof NotShareableError)) throw error;
+      throw new UserFacingException(error.message, HttpStatus.CONFLICT);
+    }
+    // The audit goes first, so a stored copy always has the trail saying where it came from.
+    await this.reviewAudit.record(copy.audit);
+    await this.lessons.save(copy.lesson);
+    await this.saved.markShared(account.accountId, lessonId, copy.lesson.lessonId, now);
+    return { reviewStatus: "needs-review", sharedAt: now.toISOString() };
   }
 
   @Post(API_ROUTES.removeSavedLesson.path)

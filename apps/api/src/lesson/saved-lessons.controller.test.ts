@@ -11,13 +11,15 @@ import {
   type TestApp,
 } from "../testing/test-app";
 import { fakeSavedLessons, sessionFrom } from "../testing/test-auth";
-import { LESSON_EVIDENCE, LESSONS, SAVED_LESSONS } from "../tokens";
+import { LESSON_EVIDENCE, LESSON_REVIEW_AUDIT, LESSONS, SAVED_LESSONS } from "../tokens";
 
-const kettle = Lesson.parse(
+const fixture = Lesson.parse(
   loadFixtures(
     join(import.meta.dirname, "../../../../packages/contracts/src/fixtures/lesson"),
   ).valid.find((item) => item.name === "kettle-full.json")?.data,
 );
+// A learner's own lesson is private until they share it.
+const kettle: LessonRecord = { ...fixture, reuse: { ...fixture.reuse, cacheScope: "private" } };
 const ADA = {
   age: 14,
   email: "ada@example.com",
@@ -33,13 +35,18 @@ async function start() {
   ]);
   const saved = fakeSavedLessons();
   const media = fakeMedia();
+  const stored: LessonRecord[] = [];
+  const audits: unknown[] = [];
   const test = await startTestApp(media, fakeRecognition(), fakeGaps(), (builder) =>
     builder
       .overrideProvider(LESSONS)
       .useValue({
         get: async (id: string, version: number) =>
           id === kettle.lessonId ? versions.get(version) : undefined,
+        save: async (lesson: LessonRecord) => void stored.push(lesson),
       })
+      .overrideProvider(LESSON_REVIEW_AUDIT)
+      .useValue({ record: async (audit: unknown) => void audits.push(audit) })
       .overrideProvider(LESSON_EVIDENCE)
       .useValue({ claims: { getMany: async () => [] }, sources: { getMany: async () => [] } })
       .overrideProvider(SAVED_LESSONS)
@@ -47,7 +54,7 @@ async function start() {
   );
   const cookie = sessionFrom(await test.post("/auth/sign-up", ADA, { origin: WEB_ORIGIN }));
   const headers = { cookie, origin: WEB_ORIGIN };
-  return { headers, media, saved, test, versions };
+  return { audits, headers, media, saved, stored, test, versions };
 }
 
 describe("saved lessons", () => {
@@ -150,5 +157,52 @@ describe("saved lessons", () => {
     });
 
     expect(response.status).toBe(404);
+  });
+
+  it("shares an anonymous copy into review, once, keeping the saved lesson private", async () => {
+    const s = await start();
+    test = s.test;
+    await test.post("/account/lessons/save", { lessonId: kettle.lessonId, version: 1 }, s.headers);
+
+    const shared = await test.post(
+      "/account/lessons/share",
+      { lessonId: kettle.lessonId },
+      s.headers,
+    );
+
+    expect(await shared.json()).toMatchObject({ reviewStatus: "needs-review" });
+    expect(s.stored).toHaveLength(1);
+    const copy = s.stored[0];
+    expect(copy?.lessonId).not.toBe(kettle.lessonId);
+    expect(copy?.reviewStatus).toBe("needs-review");
+    expect(copy?.reuse.cacheScope).toBe("shared");
+    expect(copy?.reuse.evidenceSnapshotId).toBe(kettle.reuse.evidenceSnapshotId);
+    expect(s.audits).toEqual([
+      expect.objectContaining({ by: "learner-share", to: "needs-review" }),
+    ]);
+    const listed = SavedLessons.parse(await (await test.get("/account/lessons", s.headers)).json());
+    expect(listed.lessons[0]?.sharedAt).not.toBeNull();
+
+    const again = await test.post(
+      "/account/lessons/share",
+      { lessonId: kettle.lessonId },
+      s.headers,
+    );
+    expect(again.status).toBe(409);
+    expect(s.stored).toHaveLength(1);
+  });
+
+  it("shares only lessons the learner saved", async () => {
+    const s = await start();
+    test = s.test;
+
+    const response = await test.post(
+      "/account/lessons/share",
+      { lessonId: kettle.lessonId },
+      s.headers,
+    );
+
+    expect(response.status).toBe(404);
+    expect(s.stored).toHaveLength(0);
   });
 });

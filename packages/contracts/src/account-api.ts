@@ -98,6 +98,14 @@ export const SavedLesson = z.object({
   version: z.number().int().positive(),
   title: z.string(),
   savedAt: z.iso.datetime({ offset: true }),
+  /** Set once the learner shared an anonymous copy for review (#104). */
+  sharedAt: z.iso.datetime({ offset: true }).nullable().default(null),
+});
+
+/** Sharing is asked per lesson, at the moment it would happen, never as a standing setting. */
+export const SharedLesson = z.object({
+  sharedAt: z.iso.datetime({ offset: true }),
+  reviewStatus: z.literal("needs-review"),
 });
 
 export const SavedLessons = z.object({ lessons: z.array(SavedLesson) });

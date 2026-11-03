@@ -785,8 +785,24 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         version: 2,
       });
       expect(await repos.savedLessons.list(account)).toEqual([
-        { lessonId, savedAt: at("2026-11-03T10:00:00Z"), title: "Kettles, revised", version: 2 },
+        {
+          lessonId,
+          savedAt: at("2026-11-03T10:00:00Z"),
+          sharedAt: null,
+          title: "Kettles, revised",
+          version: 2,
+        },
       ]);
+      await repos.savedLessons.markShared(
+        account,
+        lessonId,
+        "0192f1a0-0000-7000-8000-0000000000d1",
+        at("2026-11-03T11:00:00Z"),
+      );
+      expect((await repos.savedLessons.get(account, lessonId))?.sharedAt).toEqual(
+        at("2026-11-03T11:00:00Z"),
+      );
+      expect((await repos.savedLessons.get(other, lessonId))?.sharedAt).toBeNull();
       expect((await repos.savedLessons.get(other, lessonId))?.version).toBe(1);
 
       await repos.savedLessons.remove(account, lessonId);

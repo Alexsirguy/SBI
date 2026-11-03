@@ -75,3 +75,4 @@ export {
   suggestQuestions,
   type QuestionSuggestionInput,
 } from "./questions";
+export { NotShareableError, redactContact, shareLesson } from "./share";

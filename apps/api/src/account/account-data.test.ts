@@ -88,7 +88,13 @@ describe("account export and deletion", () => {
       signInMethods: ["password"],
     });
     expect(bundle.savedLessons).toEqual([
-      { lessonId: LESSON, savedAt: "2026-11-03T09:00:00.000Z", title: "Kettles", version: 2 },
+      {
+        lessonId: LESSON,
+        savedAt: "2026-11-03T09:00:00.000Z",
+        sharedAt: null,
+        title: "Kettles",
+        version: 2,
+      },
     ]);
     expect(bundle.photos).toEqual([
       { consentVersion: "consent-1", download: `/account/photos/${FILE}`, key: KEY },

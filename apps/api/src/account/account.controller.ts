@@ -158,6 +158,7 @@ export class AccountController {
       savedLessons: saved.map((item) => ({
         lessonId: item.lessonId,
         savedAt: item.savedAt.toISOString(),
+        sharedAt: item.sharedAt?.toISOString() ?? null,
         title: item.title,
         version: item.version,
       })),

@@ -74,7 +74,9 @@ test("saving pins the version on screen and lists it with the saved lessons", as
   await expectNoAxeViolations(page);
 });
 
-test("a saved lesson opens as saved, without writing a new one", async ({ page }) => {
+test("a saved lesson opens as saved, without writing a new one, and can be shared for review", async ({
+  page,
+}) => {
   let generated = false;
   await page.route("**/lessons", (route) => {
     generated = true;
@@ -89,10 +91,22 @@ test("a saved lesson opens as saved, without writing a new one", async ({ page }
       visuals: { lessonId: SAMPLE_LESSON.lessonId, visuals: [] },
     },
   }));
+  let shared: unknown;
+  await mockApi(page, "/account/lessons", () => ({
+    json: { lessons: [{ ...SAVED, sharedAt: shared ? "2026-11-03T10:00:00.000Z" : null }] },
+  }));
+  await mockApi(page, "/account/lessons/share", (body) => {
+    shared = body;
+    return { json: { reviewStatus: "needs-review", sharedAt: "2026-11-03T10:00:00.000Z" } };
+  });
   await page.goto(`/lesson/saved?id=${SAMPLE_LESSON.lessonId}`);
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(SAMPLE_LESSON.title);
   await expect(page.getByText("You saved this version on")).toBeVisible();
   expect(generated).toBe(false);
   await expectNoAxeViolations(page);
+
+  await page.getByRole("button", { name: "Share this lesson" }).click();
+  await expect(page.getByText("Shared. A reviewer checks it")).toBeVisible();
+  expect(shared).toEqual({ lessonId: SAMPLE_LESSON.lessonId });
 });

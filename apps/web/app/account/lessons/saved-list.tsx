@@ -35,7 +35,10 @@ export function SavedList() {
         {saved.data.map((item) => (
           <li key={item.lessonId}>
             <Link href={`/lesson/saved?id=${item.lessonId}`}>{item.title}</Link>
-            <span className="saved-list__date">Saved {DATE.format(new Date(item.savedAt))}</span>
+            <span className="saved-list__date">
+              Saved {DATE.format(new Date(item.savedAt))}
+              {item.sharedAt ? ", shared for review" : ""}
+            </span>
             <Button
               variant="quiet"
               size="small"

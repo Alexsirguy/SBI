@@ -164,6 +164,10 @@ export function fakeSavedLessons() {
         .sort((a, b) => b.savedAt.getTime() - a.savedAt.getTime()),
     get: async (accountId, lessonId) => rows.get(key(accountId, lessonId)),
     remove: async (accountId, lessonId) => void rows.delete(key(accountId, lessonId)),
+    markShared: async (accountId, lessonId, _sharedId, at) => {
+      const row = rows.get(key(accountId, lessonId));
+      if (row) row.sharedAt = at;
+    },
   };
   return { repository, rows };
 }

@@ -258,6 +258,9 @@ export const savedLessons = mysqlTable(
     lessonVersion: int("lesson_version").notNull(),
     title: varchar("title", { length: 200 }).notNull(),
     savedAt: timestamp("saved_at").notNull(),
+    // The anonymous copy made when the learner shared it (#104); it holds nothing about them.
+    sharedLessonId: uuid("shared_lesson_id"),
+    sharedAt: timestamp("shared_at"),
   },
   (table) => [
     primaryKey({ columns: [table.accountId, table.lessonId] }),
