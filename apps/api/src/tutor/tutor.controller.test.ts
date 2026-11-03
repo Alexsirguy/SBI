@@ -42,16 +42,22 @@ function memoryTurns() {
   return { saved, repository };
 }
 
-const answering: LlmProvider = {
+const answeringWith = (reply: Record<string, unknown>): LlmProvider => ({
   id: "scripted",
   model: "scripted-1",
   complete: async () => ({
-    text: JSON.stringify({ text: "The element heats the water.", cited: ["f1"] }),
+    text: JSON.stringify(reply),
     model: "scripted-1@2026",
     usage: { inputTokens: 1, cachedInputTokens: 0, outputTokens: 1 },
     latencyMs: 1,
   }),
-};
+});
+
+const answering = answeringWith({
+  kind: "lesson",
+  text: "The element heats the water.",
+  cited: ["f1"],
+});
 
 const everyday: RiskClassifier = async () => ({
   safetyClass: "low",
@@ -110,15 +116,33 @@ describe("tutor endpoints", () => {
     const { exchange } = TutorReply.parse(await response.json());
     expect(exchange.text).toBe("The element heats the water.");
     expect(exchange.citedClaimIds).toHaveLength(1);
+    expect(exchange).toMatchObject({ kind: "lesson" });
+    expect(exchange.note).toBeUndefined();
     expect(kettle.claims.map((claim) => claim.claimId)).toContain(exchange.citedClaimIds[0]);
     expect(started.turns.saved).toEqual([
       expect.objectContaining({
         turnId: exchange.turnId,
         modelVersion: "scripted-1@2026",
-        promptVersion: "tutor-answer-p0.1",
+        promptVersion: "tutor-answer-p0.2",
         retentionClass: "session",
       }),
     ]);
+  });
+
+  it("marks an uncited answer as beyond the lesson, with the note in the lesson's language", async () => {
+    const started = await start({
+      provider: answeringWith({ kind: "beyond", text: "Sí, en la Luna también.", cited: [] }),
+    });
+    test = started.test;
+    const response = await test.post("/tutor/turns", question({ locale: "es" }));
+    const { exchange } = TutorReply.parse(await response.json());
+    expect(exchange).toMatchObject({ kind: "beyond-lesson", citedClaimIds: [] });
+    expect(exchange.note).toContain("más allá de las fuentes");
+    const reloaded = await test.get(
+      `/tutor/conversation?sessionId=${SESSION}&lessonId=${kettle.lessonId}&locale=es`,
+    );
+    const { exchanges } = TutorConversation.parse(await reloaded.json());
+    expect(exchanges[0]?.note).toBe(exchange.note);
   });
 
   it("lists this visit's exchanges about the lesson", async () => {

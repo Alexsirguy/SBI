@@ -23,12 +23,17 @@ const logger = new Logger("Tutor");
 // The learner is waiting in a chat, so a stalled model gives way to "try again".
 const TURN_TIMEOUT_MS = 30_000;
 
-export function toExchange(turn: TutorTurn): TutorExchange {
+/** Turns saved before replies had a kind read as lesson or beyond by their citations. */
+export function toExchange(turn: TutorTurn, locale?: string): TutorExchange {
+  const cited = turn.response.citedClaimIds;
+  const kind = turn.response.kind ?? (cited.length > 0 ? "lesson" : "beyond-lesson");
   return {
     turnId: turn.turnId,
     userText: turn.userText,
     text: turn.response.text,
-    citedClaimIds: turn.response.citedClaimIds,
+    citedClaimIds: cited,
+    kind,
+    ...(kind === "beyond-lesson" ? { note: tutorText(locale).beyondLesson } : {}),
     ...(turn.response.policy ? { policy: turn.response.policy } : {}),
     createdAt: turn.createdAt,
   };
@@ -73,12 +78,18 @@ export class TutorService {
       throw new UserFacingException(text.unavailable, HttpStatus.SERVICE_UNAVAILABLE);
     }
     await this.turns.save(turn);
-    return toExchange(turn);
+    return toExchange(turn, request.locale);
   }
 
-  async conversation(sessionId: string, lessonId: string): Promise<TutorExchange[]> {
-    this.available();
+  async conversation(
+    sessionId: string,
+    lessonId: string,
+    locale?: string,
+  ): Promise<TutorExchange[]> {
+    this.available(locale);
     const turns = await this.turns.listBySession(sessionId);
-    return turns.filter((turn) => turn.lessonId === lessonId).map(toExchange);
+    return turns
+      .filter((turn) => turn.lessonId === lessonId)
+      .map((turn) => toExchange(turn, locale));
   }
 }

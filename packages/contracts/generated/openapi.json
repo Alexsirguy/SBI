@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.31.0"
+    "version": "0.32.0"
   },
   "paths": {
     "/uploads": {
@@ -1590,6 +1590,20 @@
                             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                           }
                         },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "lesson",
+                            "beyond-lesson",
+                            "clarifying",
+                            "policy",
+                            "fallback"
+                          ]
+                        },
+                        "note": {
+                          "type": "string",
+                          "minLength": 1
+                        },
                         "policy": {
                           "type": "object",
                           "properties": {
@@ -1657,6 +1671,7 @@
                         "userText",
                         "text",
                         "citedClaimIds",
+                        "kind",
                         "createdAt"
                       ],
                       "additionalProperties": false
@@ -1777,6 +1792,16 @@
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": "en",
+              "type": "string",
+              "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$"
+            }
           }
         ],
         "responses": {
@@ -1812,6 +1837,20 @@
                               "format": "uuid",
                               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                             }
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "lesson",
+                              "beyond-lesson",
+                              "clarifying",
+                              "policy",
+                              "fallback"
+                            ]
+                          },
+                          "note": {
+                            "type": "string",
+                            "minLength": 1
                           },
                           "policy": {
                             "type": "object",
@@ -1880,6 +1919,7 @@
                           "userText",
                           "text",
                           "citedClaimIds",
+                          "kind",
                           "createdAt"
                         ],
                         "additionalProperties": false
@@ -8149,6 +8189,16 @@
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                 }
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "lesson",
+                  "beyond-lesson",
+                  "clarifying",
+                  "policy",
+                  "fallback"
+                ]
               },
               "visualAction": {
                 "type": "object",

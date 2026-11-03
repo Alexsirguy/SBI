@@ -61,7 +61,11 @@ export function scriptedProvider(replies: string[]) {
   return { provider, requests };
 }
 
-export const reply = (text: string, cited: string[]) => JSON.stringify({ text, cited });
+export const reply = (
+  text: string,
+  cited: string[],
+  kind = cited.length > 0 ? "lesson" : "beyond",
+) => JSON.stringify({ kind, text, cited });
 
 export function classifierSaying(overrides: Partial<RiskAssessment> = {}): RiskClassifier {
   return async () => ({

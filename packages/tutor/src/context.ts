@@ -22,7 +22,7 @@ export interface TutorContext {
   audience: AudienceBand;
   readingLevel: Lesson["readingLevel"];
   locale: string;
-  history: { userText: string; text: string }[];
+  history: { userText: string; text: string; clarifying: boolean }[];
 }
 
 /** Everything the model may draw on: this lesson and this conversation, nothing else. */
@@ -43,8 +43,10 @@ export function policyContext(
     audience: question.audience,
     readingLevel: question.readingLevel,
     locale: question.locale,
-    history: sameLesson
-      .slice(-HISTORY_TURNS)
-      .map((turn) => ({ userText: turn.userText, text: turn.response.text })),
+    history: sameLesson.slice(-HISTORY_TURNS).map((turn) => ({
+      userText: turn.userText,
+      text: turn.response.text,
+      clarifying: turn.response.kind === "clarifying",
+    })),
   };
 }

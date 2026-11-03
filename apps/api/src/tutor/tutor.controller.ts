@@ -26,8 +26,8 @@ export class TutorController {
   @Get(API_ROUTES.tutorConversation.path)
   async conversation(
     @Query(new ZodPipe(TutorConversationRequest, "Name the visit and the lesson."))
-    { sessionId, lessonId }: z.output<typeof TutorConversationRequest>,
+    { sessionId, lessonId, locale }: z.output<typeof TutorConversationRequest>,
   ): Promise<ApiResponse<"tutorConversation">> {
-    return { exchanges: await this.tutor.conversation(sessionId, lessonId) };
+    return { exchanges: await this.tutor.conversation(sessionId, lessonId, locale) };
   }
 }

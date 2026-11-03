@@ -54,7 +54,11 @@ describe("runTutorTurn", () => {
       { provider, classify: classifierSaying(), ...fixed },
       { lesson: LESSON, question: { ...QUESTION, locale: "es" }, history: [] },
     );
-    expect(turn.response).toEqual({ text: expect.stringContaining("Prueba"), citedClaimIds: [] });
+    expect(turn.response).toEqual({
+      text: expect.stringContaining("Prueba"),
+      citedClaimIds: [],
+      kind: "fallback",
+    });
   });
 
   it("never calls the model when safety answers instead", async () => {
@@ -119,5 +123,53 @@ describe("runTutorTurn", () => {
       { lesson: LESSON, question: { ...QUESTION, locale: "es" }, history: [] },
     );
     expect(userPrompt(requests[0])).toContain("Reply in Spanish");
+  });
+
+  it("answers beyond the lesson, uncited, when its facts don't cover the question", async () => {
+    const { provider } = scriptedProvider([reply("Yes, mountains are colder at the top.", [])]);
+    const turn = await runTutorTurn(
+      { provider, classify: classifierSaying(), ...fixed },
+      {
+        lesson: LESSON,
+        question: { ...QUESTION, text: "Is it colder up a mountain?" },
+        history: [],
+      },
+    );
+    expect(turn.response).toMatchObject({ kind: "beyond-lesson", citedClaimIds: [] });
+  });
+
+  it("asks one clarifying question, then answers the follow-up instead of asking again", async () => {
+    const first = scriptedProvider([reply("Do you mean the kettle or the water?", [], "clarify")]);
+    const asked = await runTutorTurn(
+      { provider: first.provider, classify: classifierSaying(), ...fixed },
+      { lesson: LESSON, question: { ...QUESTION, text: "Why does it do that?" }, history: [] },
+    );
+    expect(asked.response.kind).toBe("clarifying");
+
+    const second = scriptedProvider([
+      reply("Which part of the water?", [], "clarify"),
+      reply("The element heats it.", ["f1"]),
+    ]);
+    const answered = await runTutorTurn(
+      { provider: second.provider, classify: classifierSaying(), ...fixed },
+      { lesson: LESSON, question: { ...QUESTION, text: "The water" }, history: [asked] },
+    );
+    expect(userPrompt(second.requests[0])).toContain("answer now with your best reading");
+    expect(answered.response.kind).toBe("lesson");
+  });
+
+  it("gives the model no photo, only the lesson, and tells it not to describe the object", async () => {
+    const { provider, requests } = scriptedProvider([
+      reply("I can see it is red.", []),
+      reply("The lesson doesn't say what colour it is.", []),
+    ]);
+    const turn = await runTutorTurn(
+      { provider, classify: classifierSaying(), ...fixed },
+      { lesson: LESSON, question: { ...QUESTION, text: "What colour is my kettle?" }, history: [] },
+    );
+    const request = requests[0];
+    expect(request?.messages.every((message) => typeof message.content === "string")).toBe(true);
+    expect(String(request?.messages[0]?.content)).toContain("You cannot see the learner's photo");
+    expect(turn.response.text).toBe("The lesson doesn't say what colour it is.");
   });
 });

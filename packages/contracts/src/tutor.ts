@@ -9,6 +9,16 @@ export const TurnSafetyCategory = z.enum(["none", ...SafetyCategory.options, "ot
 export const RetentionClass = z.enum(["session", "quality-review", "research-consented"]);
 export type RetentionClass = z.infer<typeof RetentionClass>;
 
+/** Lesson replies cite claims; beyond-lesson ones carry the note instead (ADR 0025). */
+export const TutorReplyKind = z.enum([
+  "lesson",
+  "beyond-lesson",
+  "clarifying",
+  "policy",
+  "fallback",
+]);
+export type TutorReplyKind = z.infer<typeof TutorReplyKind>;
+
 export const VisualAction = z.object({
   visualId: Uuid,
   state: z.string().min(1),
@@ -25,6 +35,7 @@ export const TutorTurn = z
     response: z.object({
       text: z.string().min(1),
       citedClaimIds: z.array(Uuid).default([]),
+      kind: TutorReplyKind.optional(),
       visualAction: VisualAction.optional(),
       /** Set when safety answered instead of the model, so a reload shows the same help. */
       policy: PolicyResponse.optional(),

@@ -8,7 +8,7 @@ import { policyContext, type TutorQuestion } from "./context";
 import { retrieveClaims } from "./retrieve";
 import { validateAnswer } from "./validate";
 
-/** One retry covers malformed output, a stray citation or an overlong reply; outages throw. */
+/** One retry covers malformed output, a stray citation, an overlong reply or a repeat question. */
 const ATTEMPTS = 2;
 
 const FALLBACK = {
@@ -55,7 +55,12 @@ export async function runTutorTurn(
     return {
       ...base,
       retrievedClaimIds: [],
-      response: { text: assessment.policy.message, citedClaimIds: [], policy: assessment.policy },
+      response: {
+        text: assessment.policy.message,
+        citedClaimIds: [],
+        kind: "policy",
+        policy: assessment.policy,
+      },
       safetyCategory: assessment.category,
       modelVersion: "safety-policy",
       promptVersion: SAFETY_POLICY_VERSION,
@@ -64,6 +69,7 @@ export async function runTutorTurn(
 
   const retrieved = retrieveClaims(context.claims, question.text, context.history);
   const retrievedClaimIds = retrieved.map((claim) => claim.claimId);
+  const justClarified = context.history.at(-1)?.clarifying === true;
   let modelVersion = deps.provider.model;
   for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
     const { draft, completion } = await answerTurn(
@@ -74,12 +80,12 @@ export async function runTutorTurn(
       deps.signal,
     );
     modelVersion = completion.model;
-    const checked = draft ? validateAnswer(draft, retrieved) : undefined;
+    const checked = draft ? validateAnswer(draft, retrieved, { justClarified }) : undefined;
     if (!checked?.ok) continue;
     return {
       ...base,
       retrievedClaimIds,
-      response: { text: checked.text, citedClaimIds: checked.citedClaimIds },
+      response: { text: checked.text, citedClaimIds: checked.citedClaimIds, kind: checked.kind },
       safetyCategory: assessment.category,
       modelVersion,
       promptVersion: TUTOR_ANSWER_PROMPT_VERSION,
@@ -88,7 +94,11 @@ export async function runTutorTurn(
   return {
     ...base,
     retrievedClaimIds,
-    response: { text: isSpanish(question.locale) ? FALLBACK.es : FALLBACK.en, citedClaimIds: [] },
+    response: {
+      text: isSpanish(question.locale) ? FALLBACK.es : FALLBACK.en,
+      citedClaimIds: [],
+      kind: "fallback",
+    },
     safetyCategory: assessment.category,
     modelVersion,
     promptVersion: TUTOR_ANSWER_PROMPT_VERSION,

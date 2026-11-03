@@ -2,6 +2,7 @@ import { z } from "zod";
 import { IsoDateTime, Locale, Uuid } from "./common";
 import { AudienceBand, ReadingLevel } from "./lesson";
 import { PolicyResponse } from "./safety";
+import { TutorReplyKind } from "./tutor";
 
 /** Matches `userText`, with room left so a pasted paragraph is refused before it costs a call. */
 export const TUTOR_MESSAGE_MAX = 500;
@@ -23,6 +24,9 @@ export const TutorExchange = z.object({
   userText: z.string().min(1),
   text: z.string().min(1),
   citedClaimIds: z.array(Uuid),
+  kind: TutorReplyKind,
+  /** The beyond-the-lesson note, in the lesson's language; set whenever nothing is cited. */
+  note: z.string().min(1).optional(),
   policy: PolicyResponse.optional(),
   createdAt: IsoDateTime,
 });
@@ -33,6 +37,7 @@ export const TutorReply = z.object({ exchange: TutorExchange });
 export const TutorConversationRequest = z.object({
   sessionId: Uuid,
   lessonId: Uuid,
+  locale: Locale.default("en"),
 });
 
 export const TutorConversation = z.object({ exchanges: z.array(TutorExchange) });
