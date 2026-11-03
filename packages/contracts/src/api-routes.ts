@@ -70,8 +70,8 @@ import {
 } from "./taxonomy-api";
 import { ServedVisual, VisualRequest } from "./visual";
 
-// GET routes take their request as query parameters, so their request schemas hold strings only.
-// `auth: "account"` routes need a session cookie; `"session"` routes may set or clear one.
+// GET requests travel as query strings. `auth`: "account" needs a session, "session" may set one,
+// "optional" works signed out but sends the cookie so a signed-in learner keeps more.
 /** HTTP routes served by `apps/api`; the web client and OpenAPI document both read this table. */
 export const API_ROUTES = {
   requestUpload: {
@@ -170,6 +170,7 @@ export const API_ROUTES = {
       "Ask the tutor about the current lesson; the reply cites the lesson claims it used, or carries a safety response.",
     request: TutorTurnRequest,
     response: TutorReply,
+    auth: "optional",
     errors: [400, 404, 429, 503],
   },
   tutorConversation: {
@@ -179,6 +180,7 @@ export const API_ROUTES = {
       "List a lesson's conversation, oldest first: the account's when signed in, else this visit's.",
     request: TutorConversationRequest,
     response: TutorConversation,
+    auth: "optional",
     errors: [400, 503],
   },
   resetTutorConversation: {
@@ -187,6 +189,7 @@ export const API_ROUTES = {
     summary: "Delete a lesson's tutor conversation now, for this visit and the signed-in account.",
     request: TutorResetRequest,
     response: TutorReset,
+    auth: "optional",
     errors: [400, 403],
   },
   requestLesson: {

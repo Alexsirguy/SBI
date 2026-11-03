@@ -1,0 +1,183 @@
+/* Tutor (#97): a column beside the lesson when there is room, otherwise a bottom sheet. */
+.lesson-body--tutor .tutor-dock {
+  display: grid;
+  gap: var(--sbi-space-3);
+  align-content: start;
+}
+
+@media (min-width: 1180px) {
+  main.lesson:has(.lesson-body--tutor) {
+    --lesson-column: calc(44rem + 22rem + var(--sbi-space-6));
+  }
+
+  .lesson-body--tutor {
+    grid-template-columns: minmax(0, 44rem) 22rem;
+    column-gap: var(--sbi-space-6);
+  }
+
+  .lesson-body--tutor > * {
+    grid-column: 1;
+  }
+
+  /* Its bottom stays well above the privacy tab, so the question box is never covered. */
+  .lesson-body--tutor > .tutor-dock {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    position: sticky;
+    top: 5.5rem;
+    align-self: start;
+    max-height: calc(100dvh - 5.5rem - 6rem);
+    overflow-y: auto;
+    padding: var(--sbi-space-5);
+    border: 1px solid var(--sbi-rule);
+    border-radius: var(--sbi-radius-m);
+    background: var(--sbi-paper);
+  }
+}
+
+/* Room below the lesson's end, so the floating button never hides its last line. */
+@media (max-width: 1179px) {
+  .lesson-body--tutor {
+    padding-bottom: 7rem;
+  }
+}
+
+/* Bottom-left, clear of the privacy tab on the right edge. */
+.tutor-launch {
+  position: fixed;
+  left: max(var(--sbi-space-4), env(safe-area-inset-left, 0px));
+  bottom: max(var(--sbi-space-4), env(safe-area-inset-bottom, 0px));
+  z-index: 14;
+  box-shadow: var(--sbi-lift);
+}
+
+/* Too narrow for both on one line, so the button rides just above the privacy tab. */
+@media (max-width: 479px) {
+  .tutor-launch {
+    bottom: calc(
+      max(var(--sbi-space-4), env(safe-area-inset-bottom, 0px)) + var(--sbi-touch) +
+        var(--sbi-space-2)
+    );
+  }
+}
+
+.tutor-sheet {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 40rem;
+  max-height: 85dvh;
+  margin: auto auto 0;
+  padding: var(--sbi-space-5) var(--sbi-space-4)
+    max(var(--sbi-space-5), env(safe-area-inset-bottom, 0px));
+  border: 1px solid var(--sbi-rule);
+  border-bottom: 0;
+  border-radius: var(--sbi-radius-m) var(--sbi-radius-m) 0 0;
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  overflow-y: auto;
+}
+
+.tutor-sheet[open] {
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.tutor-sheet::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.tutor-sheet__close {
+  justify-self: end;
+}
+
+.tutor-dock h2,
+.tutor-sheet h2 {
+  margin: 0;
+  font-size: 1.375rem;
+}
+
+.tutor__intro,
+.tutor__kept,
+.tutor__note {
+  margin: 0;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-ink-soft);
+}
+
+.tutor__log ol {
+  display: grid;
+  gap: var(--sbi-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tutor__empty {
+  color: var(--sbi-ink-soft);
+  font-style: italic;
+}
+
+.tutor__exchange {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+.tutor__exchange p {
+  margin: 0;
+}
+
+.tutor__who {
+  display: block;
+  font-family: var(--sbi-font-mono);
+  font-size: var(--sbi-text-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sbi-ink-soft);
+}
+
+.tutor__you {
+  justify-self: end;
+  max-width: 90%;
+  padding: var(--sbi-space-2) var(--sbi-space-3);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+}
+
+.tutor__reply {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding-left: var(--sbi-space-3);
+  border-left: 3px solid var(--sbi-rule);
+}
+
+.tutor__help {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.tutor__sources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-1);
+  font-size: var(--sbi-text-small);
+}
+
+.tutor__sources .citation-marker {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--sbi-touch-min);
+  min-height: var(--sbi-touch-min);
+  font-weight: 700;
+}
+
+.tutor__watch {
+  justify-self: start;
+}
+
+.tutor__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sbi-space-2);
+}

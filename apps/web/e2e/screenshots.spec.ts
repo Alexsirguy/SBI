@@ -5,7 +5,7 @@ import {
   SAMPLE_SOURCES,
   sseFrames,
 } from "../app/lesson/sample-lesson";
-import { mockLesson, mockRecognition, mockUploads, pressDone } from "./mock-api";
+import { mockApi, mockLesson, mockRecognition, mockUploads, pressDone } from "./mock-api";
 
 // Baselines are Linux renders (the CI runner); macOS draws text differently, so it skips.
 // Regenerate with `pnpm --filter @sbi/web test:screenshots:update` (runs in Playwright's image).
@@ -19,11 +19,45 @@ const FULL = sseFrames([
   { type: "visuals", data: { lessonId: SAMPLE_LESSON.lessonId, visuals: [] } },
 ]);
 
+// A reply from the lesson's sources and one from beyond them, so both kinds are seen.
+const TUTOR_EXCHANGES = [
+  {
+    turnId: "0192f1a0-0000-7000-8000-00000000d001",
+    userText: "Why does it bend?",
+    text: "Light slows down in glass, so it bends at the curved surface.",
+    citedClaimIds: [SAMPLE_LESSON.claims[0]?.claimId],
+    kind: "lesson",
+    createdAt: "2026-11-03T10:00:00.000Z",
+  },
+  {
+    turnId: "0192f1a0-0000-7000-8000-00000000d002",
+    userText: "Do glasses work the same way?",
+    text: "Yes: glasses are lenses too, shaped to move the image onto your retina.",
+    citedClaimIds: [],
+    kind: "beyond-lesson",
+    note: "This goes beyond the lesson's sources, so it isn't checked against them.",
+    createdAt: "2026-11-03T10:01:00.000Z",
+  },
+];
+
 const VIEWPORTS = [
   { name: "phone", width: 390, height: 844 },
   { name: "desktop", width: 1280, height: 860 },
 ] as const;
 const THEMES = ["light", "dark"] as const;
+
+// The tutor loads after the lesson, so each lesson state waits for it to be drawn.
+async function tutorDrawn(page: Page, exchanges: unknown[] = []) {
+  await mockApi(page, "/tutor/conversation?", () => ({ json: { exchanges } }));
+  return async () => {
+    const wide = (page.viewportSize()?.width ?? 0) >= 1180;
+    await expect(
+      wide
+        ? page.getByRole("complementary", { name: "Ask the tutor" })
+        : page.getByRole("button", { name: "Ask the tutor" }),
+    ).toBeVisible();
+  };
+}
 
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
@@ -121,15 +155,34 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
     name: "lesson",
     open: async (page) => {
       await mockLesson(page, FULL);
+      const drawn = await tutorDrawn(page);
       await page.goto(LESSON_URL);
       await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+      await drawn();
+    },
+  },
+  {
+    name: "tutor",
+    open: async (page) => {
+      await mockLesson(page, FULL);
+      const drawn = await tutorDrawn(page, TUTOR_EXCHANGES);
+      await page.goto(LESSON_URL);
+      await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+      await drawn();
+      // Narrower than the docked layout (tutor.css), it opens from its button as a sheet.
+      if ((page.viewportSize()?.width ?? 0) < 1180) {
+        await page.getByRole("button", { name: "Ask the tutor" }).click();
+      }
+      await expect(page.getByRole("log")).toContainText("Light slows down in glass");
     },
   },
   {
     name: "lesson-sources",
     open: async (page) => {
       await mockLesson(page, FULL);
+      const drawn = await tutorDrawn(page);
       await page.goto(`${LESSON_URL}#source-1`);
+      await drawn();
       await expect(page.getByRole("region", { name: "Sources" })).toBeVisible();
       await page.getByRole("region", { name: "Sources" }).scrollIntoViewIfNeeded();
     },

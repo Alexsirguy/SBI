@@ -10,6 +10,7 @@ docker run --rm \
   -v "$out:/out" \
   -e CI=1 \
   -e NEXT_PUBLIC_API_URL=http://localhost:4000 \
+  -e NEXT_PUBLIC_FEATURE_FLAGS=tutor \
   "$image" bash -euo pipefail -c '
     mkdir /work
     tar -C /src --exclude=node_modules --exclude=.next --exclude=.turbo --exclude=.git -cf - . | tar -C /work -xf -

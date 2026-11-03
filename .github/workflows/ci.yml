@@ -68,6 +68,8 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_PUBLIC_API_URL: http://localhost:4000
+      # The tutor stays off for learners until #100 passes; its UI is still tested here.
+      NEXT_PUBLIC_FEATURE_FLAGS: tutor
     steps:
       - uses: actions/checkout@v7
 
