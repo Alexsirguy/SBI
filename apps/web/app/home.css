@@ -91,86 +91,6 @@ main.home {
   color: var(--sbi-ink-soft);
 }
 
-/* The example is a slice of a real lesson, laid on the bench like a worksheet. */
-.home__example {
-  margin: 0;
-  display: grid;
-  gap: var(--sbi-space-4);
-  padding: var(--sbi-space-5);
-  background: var(--sbi-paper);
-  border: 1px solid var(--sbi-rule);
-  border-radius: var(--sbi-radius-l);
-  box-shadow: var(--sbi-lift);
-}
-
-.home__object {
-  display: flex;
-  align-items: center;
-  gap: var(--sbi-space-3);
-  color: var(--sbi-action);
-}
-
-.home__object p {
-  margin: 0;
-  color: var(--sbi-ink);
-}
-
-.home__answer {
-  padding: var(--sbi-space-4);
-  border-radius: var(--sbi-radius-m);
-  background: var(--sbi-paper-sunk);
-}
-
-.home__answer p:last-child {
-  margin: var(--sbi-space-1) 0 0;
-  font-family: var(--sbi-font-display);
-  font-weight: 600;
-  font-size: var(--sbi-text-heading);
-  line-height: 1.35;
-}
-
-/* The example's steps use the lesson rail's numbered markers, so the preview matches the real thing. */
-.home__reasons {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: reason;
-  display: grid;
-  gap: var(--sbi-space-3);
-}
-
-.home__reasons li {
-  counter-increment: reason;
-  position: relative;
-  min-height: 28px;
-  padding-left: 40px;
-}
-
-.home__reasons li::before {
-  content: counter(reason) / "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--sbi-action);
-  color: var(--sbi-action-ink);
-  font-family: var(--sbi-font-display);
-  font-weight: 800;
-  font-size: var(--sbi-text-small);
-}
-
-.home__sources {
-  margin: 0;
-  padding-top: var(--sbi-space-3);
-  border-top: 1px solid var(--sbi-rule);
-  font-size: var(--sbi-text-small);
-  color: var(--sbi-ink-soft);
-}
-
 .home__band {
   display: grid;
   gap: var(--sbi-space-4);
@@ -198,12 +118,38 @@ main.home {
   counter-reset: step;
 }
 
+/* Each step is a card: its picture on top, then the number and words, joined by arrows on wide screens. */
 .home__steps li {
   counter-increment: step;
+  position: relative;
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr);
   gap: var(--sbi-space-3);
   align-items: start;
+  align-content: start;
+  padding: var(--sbi-space-3) var(--sbi-space-3) var(--sbi-space-4);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+}
+
+.home__steps li::before {
+  grid-row: 2;
+}
+
+.home__steps li > span {
+  grid-row: 2;
+}
+
+.home__step-art {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  max-height: 11rem;
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
 }
 
 .home__steps li::before,
@@ -320,6 +266,21 @@ main.home {
 
   .home__steps {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--sbi-space-6);
+  }
+
+  .home__steps li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: calc(var(--sbi-space-3) + 5.5rem - 7px);
+    right: calc(-1 * var(--sbi-space-6) + 6px);
+    width: calc(var(--sbi-space-6) - 12px);
+    height: 14px;
+    background:
+      linear-gradient(var(--sbi-action), var(--sbi-action)) left center / calc(100% - 6px) 2px
+        no-repeat,
+      conic-gradient(from 225deg at 100% 50%, var(--sbi-action) 0 90deg, transparent 0) right
+        center / 8px 14px no-repeat;
   }
 }
 

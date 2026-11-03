@@ -1,0 +1,675 @@
+/* Home artwork and the hero reel. One 16s clock: each scene owns a quarter, and negative delays
+   put every element in its own quarter from the first frame. */
+.art-ink-stroke {
+  fill: none;
+  stroke: var(--sbi-ink);
+  stroke-linecap: round;
+}
+
+.art-lens-glass {
+  fill: color-mix(in srgb, var(--sbi-note) 14%, var(--sbi-paper));
+}
+
+.art-glint {
+  fill: none;
+  stroke: var(--sbi-paper);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.art-brackets path {
+  fill: none;
+  stroke: var(--sbi-action);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.art-scanline {
+  fill: var(--sbi-marker);
+  opacity: 0;
+}
+
+.art-axis {
+  stroke: var(--sbi-rule);
+  stroke-width: 2;
+  stroke-dasharray: 6 6;
+}
+
+.art-focus {
+  fill: var(--sbi-ink-soft);
+}
+
+.art-lens {
+  fill: color-mix(in srgb, var(--sbi-action) 18%, transparent);
+  stroke: var(--sbi-action);
+  stroke-width: 3;
+}
+
+.art-ray,
+.art-ray-back {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.art-ray {
+  stroke: var(--sbi-marker);
+  stroke-dasharray: 1;
+}
+
+.art-ray-back {
+  stroke: var(--sbi-ink-soft);
+  stroke-width: 2;
+  stroke-dasharray: 0.02 0.02;
+}
+
+.art-virtual {
+  fill: none;
+  stroke: var(--sbi-action);
+  stroke-width: 4;
+  stroke-dasharray: 8 6;
+  stroke-linecap: round;
+}
+
+.art-object-arrow {
+  fill: none;
+  stroke: var(--sbi-ink);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.art-paper {
+  fill: var(--sbi-paper);
+  stroke: var(--sbi-rule);
+  stroke-width: 2;
+}
+
+.art-lines {
+  fill: none;
+  stroke: var(--sbi-rule);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.art-marker {
+  fill: var(--sbi-marker);
+}
+
+.art-print-big {
+  fill: var(--sbi-ink);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: 44px;
+}
+
+.art-track {
+  stroke: var(--sbi-rule);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.art-track-fill {
+  stroke: var(--sbi-action);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.art-knob {
+  fill: var(--sbi-paper);
+  stroke: var(--sbi-action);
+  stroke-width: 5;
+}
+
+.art-chip {
+  fill: var(--sbi-paper);
+  stroke: var(--sbi-control-edge);
+  stroke-width: 2;
+}
+
+.art-chip--chosen {
+  fill: var(--sbi-ink);
+  stroke: var(--sbi-ink);
+}
+
+.art-tick {
+  fill: none;
+  stroke: var(--sbi-paper);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The reel */
+.reel {
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-4);
+  padding: var(--sbi-space-5);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  box-shadow: var(--sbi-lift);
+}
+
+.reel__caption {
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+  color: var(--sbi-action);
+}
+
+.reel__stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+}
+
+/* Without motion the stage rests on the ray diagram, the scene that explains the most. */
+.reel__scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+  justify-items: center;
+  gap: var(--sbi-space-2);
+  padding: var(--sbi-space-4);
+  opacity: 0;
+}
+
+.reel__scene--watch {
+  opacity: 1;
+}
+
+.reel__art {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.reel__chip {
+  position: absolute;
+  bottom: var(--sbi-space-4);
+  margin: 0;
+  padding: 3px 12px 4px;
+  border-radius: var(--sbi-radius-pill);
+  background: var(--sbi-marker);
+  color: var(--sbi-marker-ink);
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+}
+
+.reel__note {
+  margin: 0;
+  max-width: 30ch;
+  text-align: center;
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+}
+
+.reel__scene--guess {
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: var(--sbi-space-4);
+}
+
+.reel__problem {
+  margin: 0;
+  padding: var(--sbi-space-4);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper);
+  box-shadow: var(--sbi-lift);
+  font-family: var(--sbi-font-display);
+  font-weight: 600;
+  font-size: clamp(1rem, 0.85rem + 0.6vw, var(--sbi-text-heading));
+  line-height: 1.35;
+}
+
+.reel__answers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sbi-space-2);
+}
+
+.reel__answer {
+  padding: 8px 16px;
+  border: 2px solid var(--sbi-control-edge);
+  border-radius: var(--sbi-radius-pill);
+  background: var(--sbi-paper);
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+}
+
+.reel__answer--chosen {
+  border-color: var(--sbi-ink);
+  background: var(--sbi-ink);
+  color: var(--sbi-paper);
+}
+
+/* The steps say in words what the stage shows; the current one is filled and its bar runs. */
+.reel__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sbi-space-2);
+  counter-reset: reel;
+}
+
+.reel__steps li {
+  counter-increment: reel;
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding-bottom: 8px;
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+  line-height: 1.25;
+}
+
+.reel__steps li::before {
+  content: counter(reel) / "";
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--sbi-action);
+  border-radius: 50%;
+  background: var(--sbi-action);
+  color: var(--sbi-action-ink);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: var(--sbi-text-label);
+}
+
+.reel__steps li::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--sbi-rule);
+}
+
+.reel__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-3);
+  padding-top: var(--sbi-space-3);
+  border-top: 1px solid var(--sbi-rule);
+}
+
+.reel__sources {
+  margin: 0;
+  font-size: var(--sbi-text-label);
+  color: var(--sbi-ink-soft);
+}
+
+button.reel__pause {
+  flex: none;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--sbi-rule);
+  border-radius: 50%;
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  cursor: pointer;
+}
+
+.reel__pause svg {
+  fill: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.reel__pause {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reel {
+    --reel: 16s;
+  }
+
+  .reel__scene,
+  .reel__scene *,
+  .reel__steps li,
+  .reel__steps li::before,
+  .reel__steps li::after {
+    animation-duration: var(--reel);
+    animation-iteration-count: infinite;
+    animation-timing-function: var(--sbi-ease);
+  }
+
+  .reel--paused *,
+  .reel--paused *::before,
+  .reel--paused *::after {
+    animation-play-state: paused;
+  }
+
+  .reel__scene * {
+    animation-timing-function: ease-in-out;
+  }
+
+  .reel__scene {
+    animation-name: reel-scene;
+  }
+
+  .reel__scene--guess,
+  .reel__scene--guess *,
+  .reel__steps li:nth-child(2),
+  .reel__steps li:nth-child(2)::before,
+  .reel__steps li:nth-child(2)::after {
+    animation-delay: calc(var(--reel) * -0.75);
+  }
+
+  .reel__scene--watch,
+  .reel__scene--watch *,
+  .reel__steps li:nth-child(3),
+  .reel__steps li:nth-child(3)::before,
+  .reel__steps li:nth-child(3)::after {
+    animation-delay: calc(var(--reel) * -0.5);
+  }
+
+  .reel__scene--try,
+  .reel__scene--try *,
+  .reel__steps li:nth-child(4),
+  .reel__steps li:nth-child(4)::before,
+  .reel__steps li:nth-child(4)::after {
+    animation-delay: calc(var(--reel) * -0.25);
+  }
+
+  .reel__steps li {
+    animation-name: reel-step;
+  }
+
+  .reel__steps li::before {
+    animation-name: reel-marker;
+  }
+
+  .reel__steps li::after {
+    background: linear-gradient(var(--sbi-action), var(--sbi-action)) left / 0% 100% no-repeat
+      var(--sbi-rule);
+    animation-name: reel-progress;
+    animation-timing-function: linear;
+  }
+
+  .reel__scene--show .art-scanline {
+    animation-name: reel-scan;
+    animation-timing-function: linear;
+  }
+
+  .reel__scene--show .art-brackets {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: reel-lock;
+  }
+
+  .reel__chip {
+    animation-name: reel-pop;
+  }
+
+  .reel__answer--chosen {
+    animation-name: reel-choose;
+  }
+
+  .reel__scene--watch .art-ray {
+    animation-name: reel-draw;
+  }
+
+  .reel__scene--watch .art-ray--second {
+    animation-name: reel-draw-late;
+  }
+
+  .reel__scene--watch .art-ray-back {
+    animation-name: reel-appear;
+  }
+
+  .reel__scene--watch .art-image {
+    transform-box: fill-box;
+    transform-origin: bottom;
+    animation-name: reel-grow;
+  }
+
+  .reel__scene--try .art-knob {
+    animation-name: reel-slide;
+  }
+
+  .reel__scene--try .art-track-fill {
+    transform-box: fill-box;
+    transform-origin: left;
+    animation-name: reel-fill;
+  }
+
+  .reel__scene--try .art-loupe {
+    animation-name: reel-follow;
+  }
+
+  .reel__scene--try .art-print-big {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: reel-magnify;
+  }
+}
+
+@keyframes reel-scene {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  2.5%,
+  23% {
+    opacity: 1;
+    transform: none;
+  }
+  25%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+@keyframes reel-step {
+  0%,
+  24.9% {
+    color: var(--sbi-ink);
+  }
+  25%,
+  100% {
+    color: var(--sbi-ink-soft);
+  }
+}
+
+@keyframes reel-marker {
+  0%,
+  24.9% {
+    background: var(--sbi-action);
+    color: var(--sbi-action-ink);
+    border-color: var(--sbi-action);
+  }
+  25%,
+  100% {
+    background: var(--sbi-paper);
+    color: var(--sbi-ink-soft);
+    border-color: var(--sbi-rule);
+  }
+}
+
+@keyframes reel-progress {
+  0% {
+    background-size: 0% 100%;
+  }
+  25% {
+    background-size: 100% 100%;
+  }
+  25.01%,
+  100% {
+    background-size: 0% 100%;
+  }
+}
+
+@keyframes reel-scan {
+  0%,
+  3% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  4% {
+    opacity: 1;
+  }
+  11% {
+    opacity: 1;
+    transform: translateY(196px);
+  }
+  12%,
+  100% {
+    opacity: 0;
+    transform: translateY(196px);
+  }
+}
+
+@keyframes reel-lock {
+  0%,
+  11% {
+    transform: scale(1.18);
+    opacity: 0.5;
+  }
+  14%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes reel-pop {
+  0%,
+  14% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  16%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reel-choose {
+  0%,
+  10% {
+    background: var(--sbi-paper);
+    color: var(--sbi-ink);
+    border-color: var(--sbi-control-edge);
+  }
+  12%,
+  100% {
+    background: var(--sbi-ink);
+    color: var(--sbi-paper);
+    border-color: var(--sbi-ink);
+  }
+}
+
+@keyframes reel-draw {
+  0%,
+  3% {
+    stroke-dashoffset: 1;
+  }
+  10%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes reel-draw-late {
+  0%,
+  6% {
+    stroke-dashoffset: 1;
+  }
+  13%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes reel-appear {
+  0%,
+  13% {
+    opacity: 0;
+  }
+  16%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes reel-grow {
+  0%,
+  13% {
+    opacity: 0;
+    transform: scaleY(0.38);
+  }
+  14% {
+    opacity: 1;
+  }
+  19%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reel-slide {
+  0%,
+  4% {
+    transform: translateX(-100px);
+  }
+  17%,
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes reel-fill {
+  0%,
+  4% {
+    transform: scaleX(0.1);
+  }
+  17%,
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes reel-follow {
+  0%,
+  4% {
+    transform: translateX(-60px);
+  }
+  17%,
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes reel-magnify {
+  0%,
+  4% {
+    transform: scale(0.5);
+  }
+  17%,
+  100% {
+    transform: none;
+  }
+}
