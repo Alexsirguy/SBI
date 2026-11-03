@@ -18,6 +18,7 @@ import { fakeAccountStore, fakeMailer, fakeSavedLessons, TEST_SCRYPT } from "./t
 import {
   ACCOUNT_TOKENS,
   ACCOUNTS,
+  COVERAGE,
   API_ENV,
   GOOGLE_VERIFIER,
   MAILER,
@@ -186,7 +187,15 @@ export async function startTestApp(
     .overrideProvider(PASSWORD_PARAMS)
     .useValue(TEST_SCRYPT)
     .overrideProvider(SAVED_LESSONS)
-    .useValue(fakeSavedLessons().repository);
+    .useValue(fakeSavedLessons().repository)
+    .overrideProvider(COVERAGE)
+    .useValue({
+      taughtBySubject: async () => [
+        { lessons: 4, taxonomyId: "object.bicycle" },
+        { lessons: 2, taxonomyId: "subject.hovercraft" },
+        { lessons: 1, taxonomyId: "subject.rainbow" },
+      ],
+    });
   const moduleRef = await configure(base).compile();
   const app = configureApp(
     moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {

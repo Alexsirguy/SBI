@@ -5,6 +5,7 @@ import {
   createSessionRepository,
 } from "./accounts";
 import { createCatalogGapRepository } from "./catalog-gaps";
+import { createCoverageRepository } from "./coverage";
 import { createClaimRepository, createEvidenceSourceRepository } from "./evidence";
 import { createEvidencePackRepository } from "./evidence-packs";
 import { createLessonFeedbackRepository } from "./lesson-feedback";
@@ -23,6 +24,7 @@ export function createRepositories(db: Database) {
     accountTokens: createAccountTokenRepository(db),
     sessions: createSessionRepository(db),
     catalogGaps: createCatalogGapRepository(db),
+    coverage: createCoverageRepository(db),
     deletionAudit: createDeletionAuditLog(db),
     lessons: createLessonRepository(db),
     lessonFeedback: createLessonFeedbackRepository(db),

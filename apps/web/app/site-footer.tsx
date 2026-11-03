@@ -24,6 +24,7 @@ const FOOTER_GROUPS = [
     heading: "footerAbout",
     links: [
       { href: "/about", label: "footerAboutSbi" },
+      { href: "/support", label: "footerWhatWeCover" },
       { href: "/about#report", label: "footerReportMistake" },
     ],
   },

@@ -126,5 +126,20 @@
   "choicesLinkingOn": "On. This device's kept photos are tied to your account.",
   "choicesLinkingOff": "Off. Accounts are optional, and linking is a separate choice.",
   "choicesLinkingChange": "Change this on your account page",
-  "choicesDeleted": "Deleted."
+  "choicesDeleted": "Deleted.",
+  "footerWhatWeCover": "What we cover",
+  "supportMetaTitle": "What we cover · Science Behind It",
+  "supportTitle": "What we cover",
+  "supportLead": "You can ask about anything around you. Here is what that means in practice.",
+  "supportAnyHeading": "Anything, on demand",
+  "supportAny": "Name or photograph any everyday object or idea and we write a lesson about it, checked against trusted sources where we can find them.",
+  "supportOnDemand": "{count} subjects outside our catalogue have been taught this way so far.",
+  "supportCatalogueHeading": "Our curated catalogue",
+  "supportCatalogue": "These {count} objects have extra care: names we recognise from photos, and for some, facts we have already checked or a safety notice shown first.",
+  "supportCuratedMark": "checked facts",
+  "supportSafetyMark": "safety notice",
+  "supportNextHeading": "What we add next",
+  "supportNext": "We add the things people ask about most that the catalogue does not know yet. We look only at counts, never at who asked.",
+  "supportLoading": "Loading what we cover…",
+  "supportError": "We could not load this right now. Try again later."
 }

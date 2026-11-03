@@ -31,3 +31,6 @@ export {
   type CatalogGapRepository,
   type GapSource,
 } from "./gaps";
+export { prioritiseDemand, type DemandPriority } from "./demand";
+export { LABELS_ES } from "./labels-es";
+export { supportMap, type SupportCategory, type SupportObject } from "./support-map";

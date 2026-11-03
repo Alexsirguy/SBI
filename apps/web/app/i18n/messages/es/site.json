@@ -126,5 +126,20 @@
   "choicesLinkingOn": "Activado. Las fotos conservadas en este dispositivo están vinculadas a tu cuenta.",
   "choicesLinkingOff": "Desactivado. Las cuentas son opcionales, y vincular es una decisión aparte.",
   "choicesLinkingChange": "Cámbialo en la página de tu cuenta",
-  "choicesDeleted": "Foto borrada."
+  "choicesDeleted": "Foto borrada.",
+  "footerWhatWeCover": "Qué cubrimos",
+  "supportMetaTitle": "Qué cubrimos · Science Behind It",
+  "supportTitle": "Qué cubrimos",
+  "supportLead": "Puedes preguntar por cualquier cosa que te rodee. Esto es lo que significa en la práctica.",
+  "supportAnyHeading": "Cualquier cosa, cuando la pidas",
+  "supportAny": "Nombra o fotografía cualquier objeto o idea cotidiana y escribimos una lección sobre ello, comprobada con fuentes fiables cuando las encontramos.",
+  "supportOnDemand": "Hasta ahora se han enseñado así {count} temas que no están en nuestro catálogo.",
+  "supportCatalogueHeading": "Nuestro catálogo",
+  "supportCatalogue": "Estos {count} objetos tienen un cuidado especial: nombres que reconocemos en las fotos y, en algunos, datos ya comprobados o un aviso de seguridad que se muestra primero.",
+  "supportCuratedMark": "datos comprobados",
+  "supportSafetyMark": "aviso de seguridad",
+  "supportNextHeading": "Qué añadimos después",
+  "supportNext": "Añadimos lo que más pregunta la gente y que el catálogo aún no conoce. Solo miramos cuántas veces, nunca quién preguntó.",
+  "supportLoading": "Cargando lo que cubrimos…",
+  "supportError": "Ahora mismo no podemos cargar esto. Inténtalo más tarde."
 }

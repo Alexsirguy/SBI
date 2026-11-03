@@ -47,7 +47,17 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
   category("ceramics", "Ceramics", "arts", ["firing"]),
 
   object("bicycle", "Bicycle", "mechanisms", {
-    aliases: ["bike", "road bike", "mountain bike", "cycle", "cargo bike", "city bike"],
+    aliases: [
+      "bike",
+      "road bike",
+      "mountain bike",
+      "cycle",
+      "cargo bike",
+      "city bike",
+      "electric bicycle",
+      "e-bike",
+      "penny farthing",
+    ],
     keywords: ["pedal", "ride", "wheel"],
     parts: [
       { id: "object.bicycle:chain", label: "Chain" },
@@ -112,6 +122,7 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
     concepts: ["conduction", "boiling"],
   }),
   object("teapot", "Teapot", "heating", {
+    aliases: ["metal teapot", "tea pot"],
     keywords: ["brew", "pot", "tea"],
     concepts: ["insulation"],
   }),
@@ -155,7 +166,14 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
     concepts: ["focal length"],
   }),
   object("light-bulb", "Light bulb", "electricity", {
-    aliases: ["bulb", "lightbulb"],
+    aliases: [
+      "bulb",
+      "lightbulb",
+      "led light bulb",
+      "led bulb",
+      "incandescent light bulb",
+      "halogen light bulb",
+    ],
     keywords: ["lamp", "light"],
     concepts: ["resistance"],
   }),
@@ -300,7 +318,15 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
     aliases: ["water"],
   }),
   object("drinking-glass", "Drinking glass", "materials", {
-    aliases: ["glass", "tumbler", "whiskey glass", "whisky glass", "crystal tumbler"],
+    aliases: [
+      "glass",
+      "tumbler",
+      "whiskey glass",
+      "whisky glass",
+      "crystal tumbler",
+      "whiskey tumbler",
+      "plastic tumbler",
+    ],
     concepts: ["amorphous solids"],
   }),
   object("salt-crystals", "Salt crystals", "crystals", {
@@ -349,4 +375,35 @@ export const SEED_TAXONOMY: readonly TaxonomyEntryInput[] = [
     aliases: ["painting", "artwork", "canvas"],
   }),
   object("clay-pot", "Clay pot", "ceramics", { aliases: ["pottery", "ceramic pot", "vase"] }),
+  // Added from the demand list (#109): the things learners photographed that the catalogue lacked.
+  object("car-engine", "Car engine", "mechanisms", {
+    aliases: ["engine", "truck engine", "petrol engine", "diesel engine", "motor engine"],
+    keywords: ["piston", "fuel", "cylinder"],
+    concepts: ["combustion", "pressure", "energy transfer"],
+  }),
+  object("motorcycle", "Motorcycle", "mechanisms", {
+    aliases: ["motorbike", "scooter", "moped"],
+    keywords: ["ride", "wheel", "engine"],
+    concepts: ["combustion", "gear ratio", "friction"],
+  }),
+  object("laptop", "Laptop", "electricity", {
+    aliases: ["laptop computer", "notebook computer", "chromebook", "tablet computer", "tablet"],
+    keywords: ["computer", "screen", "battery"],
+    concepts: ["electric current", "batteries", "heat transfer"],
+  }),
+  object("electric-generator", "Electric generator", "magnetism", {
+    aliases: ["generator", "dynamo", "portable generator"],
+    keywords: ["power", "turbine"],
+    concepts: ["electromagnetic induction", "magnetic field", "energy transfer"],
+  }),
+  object("glass-bottle", "Glass bottle", "materials", {
+    aliases: ["bottle", "wine bottle", "olive oil bottle", "beer bottle"],
+    keywords: ["cork", "cap", "pour"],
+    concepts: ["amorphous solids", "pressure"],
+  }),
+  object("mug", "Mug", "heating", {
+    aliases: ["coffee mug", "tea cup", "teacup", "cup"],
+    keywords: ["coffee", "tea", "hot drink"],
+    concepts: ["conduction", "insulation"],
+  }),
 ];

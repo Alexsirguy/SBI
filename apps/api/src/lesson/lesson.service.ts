@@ -96,6 +96,11 @@ const SAFETY_NOTICES: Readonly<Record<string, string>> = {
     "Wild mushrooms: this lesson explains the biology only and cannot tell you whether a mushroom is safe. Never eat or taste a wild mushroom because of a photo or this lesson; some are deadly. If someone may have eaten one, call your local poison control centre or emergency number.",
 };
 
+/** Catalogue entries (or their category) with their own safety notice, for the support map. */
+export function hasSafetyNotice(entry: { id: string; parentId?: string }): boolean {
+  return entry.id in SAFETY_NOTICES || (entry.parentId ?? "") in SAFETY_NOTICES;
+}
+
 export function safetyNoticeFor(
   entry: { id: string; parentId?: string },
   risk?: Pick<RiskAssessment, "categories">,

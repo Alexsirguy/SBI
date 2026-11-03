@@ -109,7 +109,8 @@ describe("search", () => {
   it("matches names and keywords and ranks names first", () => {
     expect(labels("kettle")).toEqual(["Electric kettle", "Stovetop kettle"]);
     expect(labels("  boil   water ")).toEqual(["Electric kettle"]);
-    expect(labels("tea").slice(0, 2).sort()).toEqual(["Stovetop kettle", "Teapot"]);
+    // Names first ("tea cup", "tea kettle", "tea pot"), then the keyword match.
+    expect(labels("tea").slice(0, 3).sort()).toEqual(["Mug", "Stovetop kettle", "Teapot"]);
     expect(labels("tea")).toContain("Electric kettle");
   });
 

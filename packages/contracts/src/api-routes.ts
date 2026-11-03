@@ -55,6 +55,8 @@ import {
 import {
   ObservationMatches,
   ObservationRequest,
+  SupportMap,
+  SupportMapRequest,
   TaxonomySearchRequest,
   TaxonomySearchResults,
 } from "./taxonomy-api";
@@ -110,6 +112,14 @@ export const API_ROUTES = {
     summary: "Find objects by name or related word, best match first.",
     request: TaxonomySearchRequest,
     response: TaxonomySearchResults,
+    errors: [400],
+  },
+  supportMap: {
+    method: "get",
+    path: "/taxonomy/support-map",
+    summary: "List the curated catalogue by category and count subjects taught on demand.",
+    request: SupportMapRequest,
+    response: SupportMap,
     errors: [400],
   },
   keepPhoto: {

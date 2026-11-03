@@ -831,6 +831,25 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
     });
   });
 
+  describe("coverage", () => {
+    it("counts distinct lessons per subject, not versions", async () => {
+      const lesson = fixture(Lesson, "lesson", "kettle-full");
+      await repos.lessons.save(lesson);
+      await repos.lessons.save({ ...lesson, version: 2 });
+      await repos.lessons.save({
+        ...lesson,
+        lessonId: "0192f1a0-0000-7000-8000-0000000000e1",
+        taxonomyId: "subject.car-engine",
+      });
+
+      const taught = await repos.coverage.taughtBySubject();
+      expect(taught.sort((a, b) => a.taxonomyId.localeCompare(b.taxonomyId))).toEqual([
+        { lessons: 1, taxonomyId: lesson.taxonomyId },
+        { lessons: 1, taxonomyId: "subject.car-engine" },
+      ]);
+    });
+  });
+
   describe("withLock", () => {
     it("lets only one holder run at a time and releases afterwards", async () => {
       let release: (() => void) | undefined;

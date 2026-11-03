@@ -334,3 +334,54 @@ main.home {
 .your-data__delete .sbi-button {
   justify-self: start;
 }
+
+.support-page {
+  max-width: 72rem;
+}
+
+.support-page > p,
+.support-page > h2 {
+  max-width: var(--sbi-measure);
+}
+
+.support-map {
+  display: grid;
+  gap: var(--sbi-space-5);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  margin-block: var(--sbi-space-4);
+}
+
+.support-map h3 {
+  margin: 0 0 var(--sbi-space-2);
+  font-size: var(--sbi-text-body);
+}
+
+.support-map ul {
+  display: grid;
+  gap: var(--sbi-space-1);
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.support-map li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sbi-space-1) var(--sbi-space-2);
+}
+
+/* Marks are words with their own edge, never colour alone (ADR 0012). */
+.support-map__mark {
+  padding: 0 var(--sbi-space-2);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-pill);
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-label);
+}
+
+.support-map__mark--safety {
+  border-style: dashed;
+  border-color: var(--sbi-caution);
+  color: var(--sbi-ink);
+}
