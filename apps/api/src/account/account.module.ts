@@ -60,5 +60,7 @@ const MINUTE_MS = 60_000;
       }),
     },
   ],
+  // Other modules guard their account routes with the same session check.
+  exports: [AuthService, SameOriginGuard, SessionGuard],
 })
 export class AccountModule {}

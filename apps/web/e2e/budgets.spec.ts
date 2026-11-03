@@ -8,7 +8,8 @@ import {
 import { mockLesson } from "./mock-api";
 
 // Compressed bytes per page on the production build (E15-6, #259); raise only with a reason.
-const BUDGET = { js: 230 * 1024, css: 15 * 1024, font: 100 * 1024 };
+// JS 230 → 232 KB: the lesson page now checks sign-in to offer Save (#103).
+const BUDGET = { js: 232 * 1024, css: 15 * 1024, font: 100 * 1024 };
 
 const LESSON_URL = "/lesson?taxonomyId=object.magnifying-glass&label=Magnifying+glass";
 const PAGES = ["/", "/capture", "/privacy", "/about", LESSON_URL];

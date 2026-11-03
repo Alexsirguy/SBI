@@ -27,6 +27,7 @@ import {
   LESSON_REVIEW_AUDIT,
   LESSONS,
   REPOSITORIES,
+  SAVED_LESSONS,
   RISK_CLASSIFIER,
   VISUAL_MAKER,
   VISUAL_MANIFESTS,
@@ -35,6 +36,8 @@ import { createRateLimiter } from "../common/rate-limiter";
 import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
+import { AccountModule } from "../account/account.module";
+import { SavedLessonsController } from "./saved-lessons.controller";
 import { LessonService } from "./lesson.service";
 import { QuestionsController } from "./questions.controller";
 import { createVisualMaker } from "../visuals/visual-maker";
@@ -77,10 +80,20 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
 }
 
 @Module({
-  imports: [TaxonomyModule, VisualsModule],
-  controllers: [LessonController, LessonFeedbackController, QuestionsController],
+  imports: [AccountModule, TaxonomyModule, VisualsModule],
+  controllers: [
+    LessonController,
+    LessonFeedbackController,
+    QuestionsController,
+    SavedLessonsController,
+  ],
   providers: [
     LessonService,
+    {
+      provide: SAVED_LESSONS,
+      inject: [REPOSITORIES],
+      useFactory: (repos: Repositories) => repos.savedLessons,
+    },
     {
       provide: LESSON_LLM,
       inject: [API_ENV],

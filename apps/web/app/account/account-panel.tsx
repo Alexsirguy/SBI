@@ -2,6 +2,7 @@
 
 import { Button } from "@sbi/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { api } from "../api";
@@ -76,6 +77,10 @@ export function AccountPanel() {
           </Button>
         </div>
       )}
+      <h2>Saved lessons</h2>
+      <p>
+        <Link href="/account/lessons">See your saved lessons</Link>
+      </p>
       <h2>Link this device</h2>
       {linked ? (
         <>

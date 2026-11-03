@@ -16,7 +16,11 @@ export async function mockApi(
   path: string,
   reply: (body: unknown) => { status?: number; json: unknown },
 ) {
-  await page.route(`${API_URL}${path}`, async (route) => {
+  // GETs carry a query string, so a path that ends in "?" matches any query on it.
+  const target = path.endsWith("?")
+    ? new RegExp(`^${(API_URL + path).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`)
+    : `${API_URL}${path}`;
+  await page.route(target, async (route) => {
     // Account calls send cookies, which browsers allow only with the exact origin echoed back.
     const origin = await route.request().headerValue("origin");
     const headers = origin

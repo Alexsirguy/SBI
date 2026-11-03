@@ -47,6 +47,7 @@ const TABLES = [
   "accounts",
   "sessions",
   "account_tokens",
+  "saved_lessons",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -716,6 +717,64 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(
         await repos.accountTokens.consume("3".repeat(64), "reset-password", now),
       ).toBeUndefined();
+    });
+  });
+
+  describe("saved lessons", () => {
+    const account = "0192f1a0-0000-7000-8000-00000000000a";
+    const other = "0192f1a0-0000-7000-8000-00000000000b";
+    const lessonId = "0192f1a0-0000-7000-8000-0000000000c1";
+    const at = (iso: string) => new Date(iso);
+
+    it("pins the saved version, replaces it on a later save, and keeps accounts apart", async () => {
+      await repos.savedLessons.save(account, {
+        lessonId,
+        savedAt: at("2026-11-03T09:00:00Z"),
+        title: "Kettles",
+        version: 1,
+      });
+      await repos.savedLessons.save(other, {
+        lessonId,
+        savedAt: at("2026-11-03T09:00:00Z"),
+        title: "Kettles",
+        version: 1,
+      });
+      expect((await repos.savedLessons.get(account, lessonId))?.version).toBe(1);
+
+      await repos.savedLessons.save(account, {
+        lessonId,
+        savedAt: at("2026-11-03T10:00:00Z"),
+        title: "Kettles, revised",
+        version: 2,
+      });
+      expect(await repos.savedLessons.list(account)).toEqual([
+        { lessonId, savedAt: at("2026-11-03T10:00:00Z"), title: "Kettles, revised", version: 2 },
+      ]);
+      expect((await repos.savedLessons.get(other, lessonId))?.version).toBe(1);
+
+      await repos.savedLessons.remove(account, lessonId);
+      expect(await repos.savedLessons.list(account)).toEqual([]);
+      expect(await repos.savedLessons.list(other)).toHaveLength(1);
+    });
+
+    it("lists newest first", async () => {
+      const second = "0192f1a0-0000-7000-8000-0000000000c2";
+      await repos.savedLessons.save(account, {
+        lessonId,
+        savedAt: at("2026-11-01T00:00:00Z"),
+        title: "Older",
+        version: 1,
+      });
+      await repos.savedLessons.save(account, {
+        lessonId: second,
+        savedAt: at("2026-11-02T00:00:00Z"),
+        title: "Newer",
+        version: 3,
+      });
+      expect((await repos.savedLessons.list(account)).map((item) => item.title)).toEqual([
+        "Newer",
+        "Older",
+      ]);
     });
   });
 

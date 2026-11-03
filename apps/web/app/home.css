@@ -295,3 +295,27 @@ main.home {
   border-radius: var(--sbi-radius-m);
   background: var(--sbi-paper-sunk);
 }
+
+.saved-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.saved-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+  padding-block: var(--sbi-space-2);
+  border-bottom: 1px solid var(--sbi-rule);
+}
+
+.saved-list li a {
+  flex: 1 1 16rem;
+  font-weight: 700;
+}
+
+.saved-list__date {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}

@@ -249,6 +249,22 @@ export const accounts = mysqlTable(
   ],
 );
 
+// One row per saved lesson; the version is pinned so later edits never change what was saved.
+export const savedLessons = mysqlTable(
+  "saved_lessons",
+  {
+    accountId: uuid("account_id").notNull(),
+    lessonId: uuid("lesson_id").notNull(),
+    lessonVersion: int("lesson_version").notNull(),
+    title: varchar("title", { length: 200 }).notNull(),
+    savedAt: timestamp("saved_at").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.accountId, table.lessonId] }),
+    index("saved_lessons_saved_idx").on(table.accountId, table.savedAt),
+  ],
+);
+
 // Only a hash of each session token is stored, so a database copy cannot sign anyone in.
 export const sessions = mysqlTable(
   "sessions",

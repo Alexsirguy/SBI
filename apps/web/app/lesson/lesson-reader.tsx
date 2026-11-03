@@ -16,6 +16,7 @@ import { cautionText } from "./notice-text";
 import { LessonRail } from "./lesson-rail";
 import { useLessonExperiment } from "./lesson-experiment";
 import { PracticeProvider } from "./practice";
+import { SaveLesson } from "./save-lesson";
 import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
 import { VisualFrame } from "./visual-frame";
@@ -32,7 +33,7 @@ interface LessonReaderProps {
 }
 
 // One notice, whatever the lesson carries, with any safety text first (owner decision, #281).
-function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
+export function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
   const safety = items.find((item) => item.kind === "safety");
   const caution = cautionText(items);
   if (!safety && !caution) return null;
@@ -138,6 +139,13 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
         <p className="topic-chip">{label}</p>
         <h1>{lesson?.title ?? answer?.title ?? `Lesson: ${label}`}</h1>
         <DepthControls prefs={chosen} onChange={choose} />
+        {lesson && status === "ready" ? (
+          <SaveLesson
+            lessonId={lesson.lessonId}
+            version={lesson.version}
+            returnTo={lessonHref(subject, { question, prefs })}
+          />
+        ) : null}
       </header>
       <StatusLine>
         {policy

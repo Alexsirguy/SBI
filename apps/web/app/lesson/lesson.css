@@ -562,3 +562,16 @@ main.lesson {
   justify-items: start;
   margin-top: var(--sbi-space-2);
 }
+
+.save-lesson {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-2);
+  margin-top: var(--sbi-space-2);
+}
+
+.save-lesson__status {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}

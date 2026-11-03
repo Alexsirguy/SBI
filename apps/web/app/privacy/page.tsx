@@ -72,6 +72,10 @@ export default function PrivacyPage() {
           Signing in sets one cookie that keeps you signed in for 30 days, or until you sign out.
         </li>
         <li>
+          Saving a lesson keeps which lesson and version you saved, so only you can open it again.
+          It never keeps your photo; that is always its own choice.
+        </li>
+        <li>
           Linking this device to your account is a separate choice, made on your account page.
         </li>
       </ul>

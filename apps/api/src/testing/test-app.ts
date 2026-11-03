@@ -14,7 +14,7 @@ import type { FallbackRecogniser, RecognitionResultRepository } from "@sbi/recog
 import type { CatalogGapRepository } from "@sbi/taxonomy";
 import { AppModule, configureApp } from "../app.module";
 import { loadEnv } from "../env";
-import { fakeAccountStore, fakeMailer, TEST_SCRYPT } from "./test-auth";
+import { fakeAccountStore, fakeMailer, fakeSavedLessons, TEST_SCRYPT } from "./test-auth";
 import {
   ACCOUNT_TOKENS,
   ACCOUNTS,
@@ -22,6 +22,7 @@ import {
   GOOGLE_VERIFIER,
   MAILER,
   PASSWORD_PARAMS,
+  SAVED_LESSONS,
   SESSIONS,
   CATALOG_GAPS,
   DATABASE,
@@ -183,7 +184,9 @@ export async function startTestApp(
     .overrideProvider(GOOGLE_VERIFIER)
     .useValue(null)
     .overrideProvider(PASSWORD_PARAMS)
-    .useValue(TEST_SCRYPT);
+    .useValue(TEST_SCRYPT)
+    .overrideProvider(SAVED_LESSONS)
+    .useValue(fakeSavedLessons().repository);
   const moduleRef = await configure(base).compile();
   const app = configureApp(
     moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {

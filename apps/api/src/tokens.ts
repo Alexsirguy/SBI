@@ -35,3 +35,4 @@ export const MAILER = Symbol("MAILER");
 export const GOOGLE_VERIFIER = Symbol("GOOGLE_VERIFIER");
 export const PASSWORD_PARAMS = Symbol("PASSWORD_PARAMS");
 export const AUTH_LIMITERS = Symbol("AUTH_LIMITERS");
+export const SAVED_LESSONS = Symbol("SAVED_LESSONS");

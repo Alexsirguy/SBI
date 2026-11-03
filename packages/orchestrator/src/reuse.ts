@@ -75,7 +75,7 @@ export function createReuseMatcher(
         .filter((lesson) => lesson.reuse.policyVersion === query.policyVersion)
         .filter((lesson) => lesson.reuse.promptVersion === query.promptVersion)
         // Private lessons have no owner to match yet, so serving one could leak another learner's.
-        // TODO(#103) reuse private lessons for their owner once accounts exist.
+        // TODO(#101) reuse private lessons for the account that saved them (needs a signed-in stream).
         .filter((lesson) => lesson.reuse.cacheScope === "shared")
         .filter((lesson) => depthMatches(lesson, query.intent))
         .filter((lesson) => lesson.locale === query.intent.locale)

@@ -1,4 +1,6 @@
 import type {
+  SavedLessonRepository,
+  StoredSavedLesson,
   AccountRepository,
   AccountTokenRepository,
   SessionRepository,
@@ -136,4 +138,21 @@ export function sessionFrom(response: Response): string {
   const header = response.headers.get("set-cookie") ?? "";
   const value = /sbi_session=([^;]*)/.exec(header)?.[1] ?? "";
   return `sbi_session=${value}`;
+}
+
+export function fakeSavedLessons() {
+  const rows = new Map<string, StoredSavedLesson>();
+  const key = (accountId: string, lessonId: string) => `${accountId} ${lessonId}`;
+  const repository: SavedLessonRepository = {
+    save: async (accountId, lesson) =>
+      void rows.set(key(accountId, lesson.lessonId), { ...lesson }),
+    list: async (accountId) =>
+      [...rows]
+        .filter(([id]) => id.startsWith(`${accountId} `))
+        .map(([, lesson]) => lesson)
+        .sort((a, b) => b.savedAt.getTime() - a.savedAt.getTime()),
+    get: async (accountId, lessonId) => rows.get(key(accountId, lessonId)),
+    remove: async (accountId, lessonId) => void rows.delete(key(accountId, lessonId)),
+  };
+  return { repository, rows };
 }

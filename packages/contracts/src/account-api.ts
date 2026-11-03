@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { Uuid } from "./common";
 import { ConsentRecord } from "./consent";
+import { Lesson } from "./lesson";
+import { LessonSources, LessonVisuals } from "./lesson-api";
 import { PhotoKey } from "./media-api";
 
 /** Accounts are for 13 and over only; younger learners use everything without one (ADR 0020). */
@@ -84,3 +86,29 @@ export const LinkAccountRequest = z.object({
 export const LinkedAccount = z.object({ accountId: Uuid, linkedPhotos: z.number().int().min(0) });
 
 export const UnlinkedAccount = z.object({ unlinkedPhotos: z.number().int().min(0) });
+
+/** Saving pins the version on screen, so later edits never change what was saved (#103). */
+export const SaveLessonRequest = z.object({
+  lessonId: Uuid,
+  version: z.number().int().positive(),
+});
+
+export const SavedLesson = z.object({
+  lessonId: Uuid,
+  version: z.number().int().positive(),
+  title: z.string(),
+  savedAt: z.iso.datetime({ offset: true }),
+});
+
+export const SavedLessons = z.object({ lessons: z.array(SavedLesson) });
+
+// GET routes take query strings, so the id is the only field.
+export const SavedLessonRequest = z.object({ lessonId: Uuid });
+
+/** Exactly the saved version, with what the reader needs to show it; nothing is regenerated. */
+export const OpenedLesson = z.object({
+  savedAt: z.iso.datetime({ offset: true }),
+  lesson: Lesson,
+  sources: LessonSources,
+  visuals: LessonVisuals,
+});

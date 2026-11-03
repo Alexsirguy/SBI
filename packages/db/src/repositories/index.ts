@@ -12,6 +12,7 @@ import { createLessonRepository } from "./lessons";
 import { createDeletionAuditLog, createMediaRegistry } from "./media";
 import { createRecognitionResultRepository } from "./recognition-results";
 import { createReviewAuditLog } from "./review-audit";
+import { createSavedLessonRepository } from "./saved-lessons";
 import { createTutorTurnRepository } from "./tutor-turns";
 import { createVisualAssetRepository } from "./visual-assets";
 import { createVisualManifestRepository } from "./visual-manifests";
@@ -33,6 +34,7 @@ export function createRepositories(db: Database) {
     visualManifests: createVisualManifestRepository(db),
     recognitionResults: createRecognitionResultRepository(db),
     reviewAudit: createReviewAuditLog(db),
+    savedLessons: createSavedLessonRepository(db),
     tutorTurns: createTutorTurnRepository(db),
   };
 }

@@ -13,3 +13,4 @@ export type {
   StoredAccount,
   TokenPurpose,
 } from "./repositories/accounts";
+export type { SavedLessonRepository, StoredSavedLesson } from "./repositories/saved-lessons";
