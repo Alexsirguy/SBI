@@ -1,0 +1,18 @@
+{
+  "whoHeading": "¿Quién aprende?",
+  "whoExplain": "Elige para quién son estas lecciones. Nunca adivinamos la edad de nadie.",
+  "chooseSelf": "Aprendo para mí",
+  "chooseChild": "Aprende un niño o una niña",
+  "nowSelf": "Las lecciones están pensadas para ti. Tú eliges la profundidad y la franja de edad.",
+  "nowChild": "Las lecciones están pensadas para un niño o una niña. Un adulto puede cambiarlo.",
+  "gateTitle": "Pregunta a un adulto",
+  "gateQuestion": "¿Cuánto es {a} × {b}?",
+  "gateCheck": "Comprobar",
+  "gateCancel": "Cancelar",
+  "gateWrong": "No es correcto. Pide ayuda a un adulto.",
+  "gateLeaveChild": "Salir del modo infantil permite que las lecciones se escriban para personas mayores.",
+  "gateAgeBand": "Cambiar la franja de edad puede mostrar lecciones escritas para personas mayores.",
+  "gateKeepPhoto": "Guardar una foto la conserva hasta que alguien la borre.",
+  "childBandLocked": "Pensado para un niño o una niña.",
+  "changeWithGrownUp": "Cambiar (pregunta a un adulto)"
+}

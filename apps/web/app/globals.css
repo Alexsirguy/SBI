@@ -122,3 +122,47 @@ main {
     top: 94%;
   }
 }
+
+/* Who's learning (#108) and the grown-up check, shared by capture, lessons and choices. */
+.who-learning {
+  display: grid;
+  gap: var(--sbi-space-2);
+  margin-block: var(--sbi-space-4);
+  padding: var(--sbi-space-4);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
+}
+
+.who-learning h2 {
+  margin: 0;
+  font-size: var(--sbi-text-heading);
+}
+
+.who-learning p {
+  margin: 0;
+}
+
+.who-learning__choices,
+.grown-up-gate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+}
+
+.grown-up-gate {
+  display: grid;
+  gap: var(--sbi-space-2);
+  max-width: 28rem;
+  padding: var(--sbi-space-4);
+  border-left: 3px solid var(--sbi-note);
+  border-radius: var(--sbi-radius-s);
+  background: var(--sbi-note-wash);
+}
+
+.grown-up-gate p {
+  margin: 0;
+}
+
+.grown-up-gate__title {
+  font-weight: 700;
+}

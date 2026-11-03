@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getLocale } from "../i18n/load";
+import { pathwayAge } from "../pathway/pathway";
+import { getPathway } from "../pathway/server";
 import { getT } from "../i18n/server";
 import { LessonReader } from "./lesson-reader";
 import "./lesson.css";
@@ -19,7 +21,9 @@ export default async function LessonPage({
   const named = param(params.label)?.trim();
   const label = named || t("defaultLabel");
   const question = param(params.q)?.trim() || undefined;
-  const prefs = parsePrefs(param(params.depth), param(params.age));
+  const chosen = parsePrefs(param(params.depth), param(params.age));
+  // The child pathway is held on the server, so a typed or shared link cannot lift it.
+  const prefs = { ...chosen, age: pathwayAge(await getPathway(), chosen.age) };
   const request = lessonRequestFrom({
     taxonomyId: param(params.taxonomyId),
     label: named,

@@ -1,0 +1,18 @@
+{
+  "whoHeading": "Who's learning?",
+  "whoExplain": "Choose who these lessons are for. We never guess anyone's age.",
+  "chooseSelf": "I'm learning for myself",
+  "chooseChild": "A child is learning",
+  "nowSelf": "Lessons are set for you. You choose the depth and age band.",
+  "nowChild": "Lessons are set for a child. A grown-up can change this.",
+  "gateTitle": "Ask a grown-up",
+  "gateQuestion": "What is {a} × {b}?",
+  "gateCheck": "Check",
+  "gateCancel": "Cancel",
+  "gateWrong": "That isn't right. Ask a grown-up to help.",
+  "gateLeaveChild": "Leaving the child setting lets lessons be written for older learners.",
+  "gateAgeBand": "Changing the age band can show lessons written for older learners.",
+  "gateKeepPhoto": "Keeping a photo stores it until someone deletes it.",
+  "childBandLocked": "Set for a child.",
+  "changeWithGrownUp": "Change (ask a grown-up)"
+}

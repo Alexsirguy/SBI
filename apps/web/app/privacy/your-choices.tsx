@@ -3,6 +3,7 @@
 import { Button } from "@sbi/ui";
 import Link from "next/link";
 import { useMemo, useSyncExternalStore } from "react";
+import { WhoIsLearning } from "../pathway/who-is-learning";
 import { useDeletePhoto } from "../capture/use-photo-upload";
 import {
   choicesSnapshot,
@@ -54,6 +55,7 @@ export function YourChoices() {
     <section aria-labelledby="choices" className="your-choices">
       <h2 id="choices">{t("choicesHeading")}</h2>
       <p>{t("choicesIntro")}</p>
+      <WhoIsLearning compact />
       <h3>{t("choicesKeepingHeading")}</h3>
       {!state ? null : state.saving || state.kept.length > 0 ? (
         <>

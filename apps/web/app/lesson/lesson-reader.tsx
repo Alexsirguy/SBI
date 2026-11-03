@@ -18,6 +18,8 @@ import { cautionText } from "./notice-text";
 import { LessonRail } from "./lesson-rail";
 import { useErrorText } from "./lesson-t";
 import { useLessonExperiment } from "./lesson-experiment";
+import { GrownUpGate } from "../pathway/grown-up-gate";
+import { usePathway } from "../pathway/provider";
 import { PracticeProvider } from "./practice";
 import { SaveLesson } from "./save-lesson";
 import { type LessonPrefs, writePrefs } from "./prefs";
@@ -63,6 +65,9 @@ function PolicyHelp({
   onChangeAge: (age: "teen" | "adult") => void;
 }) {
   const t = useT("lesson");
+  const tp = useT("pathway");
+  const { pathway, choose } = usePathway();
+  const [gating, setGating] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const unlock = policy.reason === "age" ? policy.suitableFor : undefined;
   // The loader that held focus is gone, so the learner lands on the help.
@@ -87,8 +92,19 @@ function PolicyHelp({
           ))}
         </ul>
       </Notice>
-      {unlock ? (
-        <Button onClick={() => onChangeAge(unlock)}>
+      {/* In the child pathway the band only changes after a grown-up check. */}
+      {unlock && gating ? (
+        <GrownUpGate
+          reason={tp("gateAgeBand")}
+          onPass={() => {
+            setGating(false);
+            choose("self");
+            onChangeAge(unlock);
+          }}
+          onCancel={() => setGating(false)}
+        />
+      ) : unlock ? (
+        <Button onClick={() => (pathway === "child" ? setGating(true) : onChangeAge(unlock))}>
           {unlock === "adult" ? t("policyUnlockAdult") : t("policyUnlockTeen")}
         </Button>
       ) : null}
