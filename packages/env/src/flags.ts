@@ -1,7 +1,6 @@
 import { EnvError } from "./env-error";
 
 export const FEATURE_DEFAULTS = {
-  visualLab: false,
   tutor: false,
   // On by product decision (ADR 0006); `!photoRecognition` stops photos reaching any vendor.
   photoRecognition: true,
@@ -9,7 +8,7 @@ export const FEATURE_DEFAULTS = {
 
 export type FeatureFlags = Readonly<Record<keyof typeof FEATURE_DEFAULTS, boolean>>;
 
-/** Applies a comma list like `tutor,!visualLab` on top of the defaults. */
+/** Applies a comma list like `tutor,!photoRecognition` on top of the defaults. */
 export function parseFlags<T extends Record<string, boolean>>(
   defaults: T,
   raw: string | undefined,
