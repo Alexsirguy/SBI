@@ -1,4 +1,5 @@
 import type { FaceDetector } from "@mediapipe/tasks-vision";
+import { CaptureError } from "./messages";
 import type { ProcessedImage } from "./processing";
 
 export interface FaceBox {
@@ -83,7 +84,7 @@ function loadDetector(): Promise<FaceDetector> {
 function encode(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode the photo."))),
+      (blob) => (blob ? resolve(blob) : reject(new CaptureError("encodeFailed"))),
       "image/jpeg",
       QUALITY,
     );

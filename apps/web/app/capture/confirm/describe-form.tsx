@@ -4,6 +4,7 @@ import { Button, TextField } from "@sbi/ui";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { lessonHref } from "../../lesson/lesson-request";
+import { useT } from "../../i18n/provider";
 import { handOffPhoto } from "../../photo-handoff";
 import { readPrefs } from "../../lesson/prefs";
 
@@ -11,9 +12,9 @@ const MIN_LENGTH = 2;
 
 /** Starts a lesson on whatever the learner names; nothing has to be in our catalogue (ADR 0013). */
 export function DescribeForm({
-  label = "What is it?",
-  hint = "Anything you can see or name, like a kettle, a rainbow or a bike bell.",
-  submitLabel = "Start lesson",
+  label,
+  hint,
+  submitLabel,
   message = "",
   onStart,
   onName,
@@ -27,6 +28,7 @@ export function DescribeForm({
   /** Takes the name instead of opening a lesson, for a step that asks what to learn first. */
   onName?: (name: string) => void;
 }) {
+  const t = useT("capture");
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
@@ -45,7 +47,7 @@ export function DescribeForm({
           .replace(/\s+/g, " ")
           .replace(/^(a|an|the) /i, "");
         if (name.length < MIN_LENGTH) {
-          setError(`Type at least ${MIN_LENGTH} letters.`);
+          setError(t("minLetters", { count: MIN_LENGTH }));
           inputRef.current?.focus();
           return;
         }
@@ -64,20 +66,20 @@ export function DescribeForm({
     >
       <TextField
         ref={inputRef}
-        label={label}
+        label={label ?? t("describeLabel")}
         name="object-query"
         autoComplete="off"
         maxLength={80}
         value={text}
         error={error}
-        hint={hint}
+        hint={hint ?? t("describeHint")}
         onChange={(event) => setText(event.target.value)}
       />
       <Button type="submit" variant={onStart || onName ? "quiet" : "primary"}>
-        {submitLabel}
+        {submitLabel ?? t("startLesson")}
       </Button>
       <p role="status" className="sbi-status">
-        {started ? `Starting lesson: ${started}.` : message}
+        {started ? t("startingLesson", { name: started }) : message}
       </p>
     </form>
   );

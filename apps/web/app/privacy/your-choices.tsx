@@ -2,7 +2,7 @@
 
 import { Button } from "@sbi/ui";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useDeletePhoto } from "../capture/use-photo-upload";
 import {
   choicesSnapshot,
@@ -12,11 +12,17 @@ import {
   setConsent,
   subscribeToChoices,
 } from "../consent";
-
-const DATE = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+import { INTL_LOCALE } from "../i18n/locales";
+import { useLocale, useT } from "../i18n/provider";
 
 /** What this device has agreed to, the photos it kept, and a way to take either back. */
 export function YourChoices() {
+  const t = useT("site");
+  const locale = useLocale();
+  const date = useMemo(
+    () => new Intl.DateTimeFormat(INTL_LOCALE[locale], { dateStyle: "medium" }),
+    [locale],
+  );
   // Storage exists only in the browser, so the server renders nothing for this part.
   const snapshot = useSyncExternalStore(
     subscribeToChoices,
@@ -46,21 +52,21 @@ export function YourChoices() {
 
   return (
     <section aria-labelledby="choices" className="your-choices">
-      <h2 id="choices">Your choices</h2>
-      <p>
-        Each choice is separate and starts off. We only ask for one when there is something it would
-        do, and you can change your mind here at any time.
-      </p>
-      <h3>Keeping photos</h3>
+      <h2 id="choices">{t("choicesHeading")}</h2>
+      <p>{t("choicesIntro")}</p>
+      <h3>{t("choicesKeepingHeading")}</h3>
       {!state ? null : state.saving || state.kept.length > 0 ? (
         <>
-          <p>You chose to keep photos. They stay in private storage until you delete them.</p>
+          <p>{t("choicesKeepingOn")}</p>
           {state.kept.length > 0 ? (
             <ul className="kept-photos">
               {state.kept.map((photo) => (
                 <li key={photo.key}>
                   <span>
-                    {photo.label}, kept {DATE.format(new Date(photo.keptAt))}
+                    {t("choicesKeptPhoto", {
+                      date: date.format(new Date(photo.keptAt)),
+                      label: photo.label,
+                    })}
                   </span>
                   <Button
                     variant="quiet"
@@ -68,7 +74,7 @@ export function YourChoices() {
                     disabled={remove.isPending}
                     onClick={() => void deleteOne(photo.key)}
                   >
-                    Delete
+                    {t("choicesDelete")}
                     <span className="sbi-visually-hidden"> {photo.label}</span>
                   </Button>
                 </li>
@@ -76,25 +82,20 @@ export function YourChoices() {
             </ul>
           ) : null}
           <Button variant="quiet" disabled={remove.isPending} onClick={() => void stopKeeping()}>
-            Stop keeping photos and delete them
+            {t("choicesStopKeeping")}
           </Button>
         </>
       ) : (
-        <p>
-          Off. Photos are deleted about an hour after we recognise them. You can choose to keep one
-          after it is recognised.
-        </p>
+        <p>{t("choicesKeepingOff")}</p>
       )}
-      <h3>Linking to an account</h3>
+      <h3>{t("choicesLinkingHeading")}</h3>
       {state ? (
         <p>
-          {state.linked
-            ? "On. This device's kept photos are tied to your account."
-            : "Off. Accounts are optional, and linking is a separate choice."}{" "}
-          <Link href="/account">Change this on your account page</Link>.
+          {state.linked ? t("choicesLinkingOn") : t("choicesLinkingOff")}{" "}
+          <Link href="/account">{t("choicesLinkingChange")}</Link>.
         </p>
       ) : null}
-      <div role="status">{remove.isSuccess ? <p>Deleted.</p> : null}</div>
+      <div role="status">{remove.isSuccess ? <p>{t("choicesDeleted")}</p> : null}</div>
       {remove.error ? <p role="alert">{remove.error.message}</p> : null}
     </section>
   );

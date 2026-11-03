@@ -8,19 +8,23 @@ import { useEffect } from "react";
 import { useRemoveSavedLesson } from "../../account/use-saved-lessons";
 import { api } from "../../api";
 import { ApiRequestError } from "../../api-client";
+import { INTL_LOCALE } from "../../i18n/locales";
+import { useLocale, useT } from "../../i18n/provider";
 import { SourceList } from "../citations";
 import { LessonFeedback } from "../feedback";
 import { useLessonExperiment } from "../lesson-experiment";
 import { LessonNotice } from "../lesson-reader";
 import { LessonRail } from "../lesson-rail";
+import { useErrorText } from "../lesson-t";
 import { PracticeProvider } from "../practice";
 import { VisualFrame } from "../visual-frame";
 import { ShareLesson } from "./share-lesson";
 
-const DATE = new Intl.DateTimeFormat(undefined, { dateStyle: "long" });
-
 /** A saved lesson exactly as it was saved: nothing is regenerated, so it never changes (#103). */
 export function SavedLesson() {
+  const t = useT("lesson");
+  const locale = useLocale();
+  const errorText = useErrorText();
   const router = useRouter();
   const lessonId = useSearchParams().get("id") ?? "";
   const opened = useQuery({
@@ -42,17 +46,17 @@ export function SavedLesson() {
   if (opened.isPending || signedOut) {
     return (
       <main id="main" className="lesson">
-        <StatusLine>Opening your saved lesson…</StatusLine>
+        <StatusLine>{t("openingSaved")}</StatusLine>
       </main>
     );
   }
   if (!data) {
     return (
       <main id="main" className="lesson">
-        <h1>Saved lesson</h1>
-        <p role="alert">{opened.error?.message}</p>
+        <h1>{t("savedLesson")}</h1>
+        <p role="alert">{errorText(opened.error?.message)}</p>
         <p>
-          <Link href="/account/lessons">Back to saved lessons</Link>
+          <Link href="/account/lessons">{t("backToSaved")}</Link>
         </p>
       </main>
     );
@@ -62,13 +66,16 @@ export function SavedLesson() {
     <main id="main" className="lesson">
       <header className="lesson-head">
         <Link href="/account/lessons" className="lesson-head__change">
-          All saved lessons
+          {t("allSaved")}
         </Link>
-        <p className="topic-chip">Saved lesson</p>
+        <p className="topic-chip">{t("savedLesson")}</p>
         <h1>{lesson.title}</h1>
         <p className="provenance">
-          You saved this version on {DATE.format(new Date(savedAt))}. It stays as it was, even if
-          the lesson is updated later.{" "}
+          {t("savedProvenance", {
+            date: new Intl.DateTimeFormat(INTL_LOCALE[locale], { dateStyle: "long" }).format(
+              new Date(savedAt),
+            ),
+          })}{" "}
           <Button
             variant="quiet"
             size="small"
@@ -77,10 +84,10 @@ export function SavedLesson() {
               remove.mutate(lesson.lessonId, { onSuccess: () => router.push("/account/lessons") })
             }
           >
-            Remove from saved
+            {t("removeFromSaved")}
           </Button>
         </p>
-        {remove.error ? <p role="alert">{remove.error.message}</p> : null}
+        {remove.error ? <p role="alert">{errorText(remove.error.message)}</p> : null}
       </header>
       <LessonNotice items={lesson.disclaimers ?? []} />
       <div className="lesson-body">

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { api } from "../../api";
+import { useT } from "../../i18n/provider";
 import { AuthDivider } from "../auth-card";
 import { fieldErrors } from "../form-errors";
 import { GoogleButton } from "../google-button";
@@ -14,6 +15,7 @@ import { PasswordField } from "../password-field";
 import { ACCOUNT_KEY, safeNext } from "../use-account";
 
 export function SignInForm() {
+  const t = useT("account");
   const router = useRouter();
   const next = safeNext(useSearchParams().get("next"));
   const client = useQueryClient();
@@ -27,7 +29,14 @@ export function SignInForm() {
     event.preventDefault();
     setFailure(undefined);
     const parsed = SignInRequest.safeParse(values);
-    setErrors(parsed.success ? {} : fieldErrors(parsed.error));
+    setErrors(
+      parsed.success
+        ? {}
+        : fieldErrors(parsed.error, {
+            email: { invalid_format: t("errorEmail") },
+            password: { too_small: t("errorPasswordMissing") },
+          }),
+    );
     if (!parsed.success) return;
     setBusy(true);
     try {
@@ -45,7 +54,7 @@ export function SignInForm() {
       <AuthDivider />
       <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
         <TextField
-          label="Email"
+          label={t("email")}
           type="email"
           autoComplete="email"
           value={values.email}
@@ -53,11 +62,11 @@ export function SignInForm() {
           onChange={(event) => setValues({ ...values, email: event.target.value })}
         />
         <PasswordField
-          label="Password"
+          label={t("password")}
           autoComplete="current-password"
           value={values.password}
           error={errors.password}
-          aside={<Link href="/account/forgot">Forgot password?</Link>}
+          aside={<Link href="/account/forgot">{t("signInForgot")}</Link>}
           onChange={(event) => setValues({ ...values, password: event.target.value })}
         />
         {failure ? (
@@ -66,7 +75,7 @@ export function SignInForm() {
           </p>
         ) : null}
         <Button type="submit" block className="auth__submit" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? t("signInBusy") : t("signInButton")}
         </Button>
       </form>
     </>

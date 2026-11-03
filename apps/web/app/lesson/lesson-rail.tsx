@@ -1,6 +1,7 @@
 import { isMerrillLesson, type Lesson, type LessonVisuals } from "@sbi/contracts";
 import type { ReactNode } from "react";
-import { MODULE_LABELS, MODULES } from "./modules/labels";
+import { useT } from "../i18n/provider";
+import { MODULE_LABEL_KEYS, MODULES } from "./modules/labels";
 import { SectionView } from "./modules/section-view";
 
 // Reserved from the start so diagrams arrive without moving the text the learner is reading.
@@ -15,13 +16,14 @@ function VisualsSlot({
   /** A Merrill lesson's visual is the experiment its steps and challenges drive. */
   experiment?: boolean;
 }) {
+  const t = useT("lesson");
   if (visuals?.length === 0) return null;
   return (
     <section
       aria-labelledby="visuals-heading"
       className={`lesson-visuals${experiment ? " lesson-visuals--experiment" : ""}`}
     >
-      <h2 id="visuals-heading">{experiment ? "The experiment" : "See how it works"}</h2>
+      <h2 id="visuals-heading">{experiment ? t("theExperiment") : t("seeHowItWorks")}</h2>
       {visuals ? (
         visuals.map((visual) => (
           <div key={visual.visualId} data-visual-id={visual.visualId}>
@@ -30,7 +32,7 @@ function VisualsSlot({
         ))
       ) : (
         <p role="status" className="lesson-visuals__pending">
-          {experiment ? "Setting up the experiment…" : "Making a picture of how it works…"}
+          {experiment ? t("settingUpExperiment") : t("makingPicture")}
         </p>
       )}
     </section>
@@ -56,14 +58,15 @@ export function LessonRail({
   visuals: LessonVisuals["visuals"] | undefined;
   renderVisual?: RenderVisual;
 }) {
+  const t = useT("lesson");
   if (!lesson) {
     return (
       <div className="rail-pending">
-        <p className="rail-pending__note">Writing the rest of your lesson…</p>
+        <p className="rail-pending__note">{t("writingRest")}</p>
         <ol className="rail" aria-hidden="true">
           {MODULES.map((module) => (
             <li key={module} className="rail__step rail__step--ghost">
-              {MODULE_LABELS[module]}
+              {t(MODULE_LABEL_KEYS[module])}
             </li>
           ))}
         </ol>
@@ -73,7 +76,7 @@ export function LessonRail({
   const merrill = isMerrillLesson(lesson);
   const slot = <VisualsSlot visuals={visuals} renderVisual={renderVisual} experiment={merrill} />;
   return (
-    <ol className="rail" aria-label="Lesson steps">
+    <ol className="rail" aria-label={t("lessonSteps")}>
       {lesson.sections.map((section) => (
         <li
           key={section.sectionId}

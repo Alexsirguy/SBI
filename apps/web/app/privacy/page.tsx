@@ -1,99 +1,60 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PHOTO_RETENTION_DAYS } from "../capture/limits";
+import { getT } from "../i18n/server";
 import "../home.css";
 import { YourChoices } from "./your-choices";
 
-export const metadata: Metadata = { title: "Privacy · Science Behind It" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("site");
+  return { title: t("privacyMetaTitle") };
+}
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const t = await getT("site");
   return (
     <main id="main" className="prose-page">
-      <h1>Privacy</h1>
-      <p className="home__lead">
-        What happens to your photo, your question and your feedback, in plain words.
-      </p>
+      <h1>{t("privacyHeading")}</h1>
+      <p className="home__lead">{t("privacyLead")}</p>
 
-      <h2>Your photo</h2>
+      <h2>{t("privacyPhotoHeading")}</h2>
       <ul>
-        <li>We use it only to recognise the object for your lesson.</li>
-        <li>
-          Before upload, your device removes location and camera details from the photo, and we
-          remove them again when it arrives.
-        </li>
-        <li>
-          It is stored privately on Cloudflare R2 and never shown to other learners. When photo
-          recognition is on, it is sent to Meta&apos;s model API, or to OpenAI&apos;s if Meta is
-          unavailable; neither may train on it.
-        </li>
-        <li>
-          It is deleted within {PHOTO_RETENTION_DAYS} days, or sooner once recognised, unless you
-          choose to keep it. A kept photo stays until you delete it, below.
-        </li>
+        <li>{t("privacyPhotoUse")}</li>
+        <li>{t("privacyPhotoStrip")}</li>
+        <li>{t("privacyPhotoStorage")}</li>
+        <li>{t("privacyPhotoRetention", { days: PHOTO_RETENTION_DAYS })}</li>
       </ul>
 
-      <h2>Your question</h2>
+      <h2>{t("privacyQuestionHeading")}</h2>
       <ul>
-        <li>
-          Your question and what the lesson is about (the name we recognised or the words you typed)
-          are sent to the AI model that writes your lesson. The lesson is stored with its sources
-          and checks so a reviewer can look at it; your photo is never part of a lesson.
-        </li>
-        <li>
-          Your choice of depth and age band stays in this browser tab and is only used to ask for
-          the right version of a lesson. We never guess your age.
-        </li>
+        <li>{t("privacyQuestionSent")}</li>
+        <li>{t("privacyQuestionSettings")}</li>
       </ul>
 
-      <h2>Your feedback</h2>
+      <h2>{t("privacyFeedbackHeading")}</h2>
       <ul>
-        <li>
-          Ratings and problem reports are stored with the lesson they are about, not with you.
-        </li>
-        <li>
-          Anything you type in a report is deleted after 90 days. Please leave out your name and
-          other personal details.
-        </li>
+        <li>{t("privacyFeedbackStored")}</li>
+        <li>{t("privacyFeedbackRetention")}</li>
       </ul>
 
-      <h2>Your account</h2>
+      <h2>{t("privacyAccountHeading")}</h2>
       <ul>
-        <li>Accounts are optional and for people 13 and over. Every lesson works without one.</li>
-        <li>
-          We keep your name, email, the age you gave when signing up, and a scrambled form of your
-          password that cannot be turned back into it. If you sign in with Google, Google tells us
-          your name and email; we never see your Google password.
-        </li>
-        <li>
-          Emails to confirm your address or reset your password are sent through ZeptoMail. They
-          hold only the link.
-        </li>
-        <li>
-          Signing in sets one cookie that keeps you signed in for 30 days, or until you sign out.
-        </li>
-        <li>
-          Saving a lesson keeps which lesson and version you saved, so only you can open it again.
-          It never keeps your photo; that is always its own choice.
-        </li>
-        <li>
-          Linking this device to your account is a separate choice, made on your account page.
-        </li>
-        <li>
-          On your account page you can download everything tied to your account, or delete it all at
-          once. Deletion is immediate, and copies in our backups are gone within 30 days.
-        </li>
+        <li>{t("privacyAccountOptional")}</li>
+        <li>{t("privacyAccountKept")}</li>
+        <li>{t("privacyAccountEmails")}</li>
+        <li>{t("privacyAccountCookie")}</li>
+        <li>{t("privacyAccountSaving")}</li>
+        <li>{t("privacyAccountLinking")}</li>
+        <li>{t("privacyAccountExport")}</li>
       </ul>
 
       <YourChoices />
 
-      <h2>Fonts and other sites</h2>
-      <p>
-        Fonts are served by us, so reading a lesson does not contact a font company. Links to
-        sources open the source&apos;s own site, which has its own privacy rules.
-      </p>
+      <h2>{t("privacyFontsHeading")}</h2>
+      <p>{t("privacyFontsText")}</p>
 
       <p>
-        <Link href="/capture">Start a lesson</Link>
+        <Link href="/capture">{t("navStartLesson")}</Link>
       </p>
     </main>
   );

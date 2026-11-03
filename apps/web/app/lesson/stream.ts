@@ -28,7 +28,7 @@ const PARSERS = {
   visuals: LessonVisuals,
 } as const;
 
-const UNREADABLE = "The lesson arrived in a form we could not read. Try again.";
+export const UNREADABLE = "The lesson arrived in a form we could not read. Try again.";
 
 function toEvent(frame: string): LessonEvent | { type: "error"; error: string } | undefined {
   let type = "message";

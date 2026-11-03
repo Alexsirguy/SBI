@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { getT } from "../../i18n/server";
 import { AuthCard } from "../auth-card";
 import { SignInForm } from "./sign-in-form";
 
-export const metadata: Metadata = { title: "Sign in · Science Behind It" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("account");
+  return { title: t("signInMetaTitle") };
+}
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const t = await getT("account");
   return (
     <AuthCard
       tab="sign-in"
-      title="Welcome back"
-      intro="Sign in with Google or your email. Every lesson still works without an account."
+      title={t("signInTitle")}
+      intro={t("signInIntro")}
       footer={
         <p>
-          New here? <Link href="/account/sign-up">Create an account</Link>
+          {t("signInNewHere")} <Link href="/account/sign-up">{t("signInCreateLink")}</Link>
         </p>
       }
     >

@@ -5,25 +5,28 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { api } from "../api";
 import { putObject } from "../api-client";
+import { useT } from "../i18n/provider";
+import type { CaptureKey } from "./messages";
 import type { ProcessedImage } from "./processing";
 
 export function usePhotoUpload() {
-  const [stage, setStage] = useState<string | null>(null);
+  const t = useT("capture");
+  const [stage, setStage] = useState<CaptureKey | null>(null);
   const mutation = useMutation({
     mutationFn: async (image: ProcessedImage) => {
-      setStage("Requesting a private upload…");
+      setStage("stageRequesting");
       const ticket = await api("requestUpload", {
         declaredType: image.blob.type || "image/jpeg",
         sizeBytes: image.size,
       });
-      setStage("Uploading your photo…");
+      setStage("stageUploading");
       await putObject(ticket.uploadUrl, image.blob);
-      setStage("Checking privacy…");
+      setStage("stageChecking");
       return api("confirmUpload", { token: ticket.token });
     },
     onSettled: () => setStage(null),
   });
-  return { ...mutation, stage: mutation.isPending ? stage : null };
+  return { ...mutation, stage: mutation.isPending && stage ? t(stage) : null };
 }
 
 export function useKeepPhoto() {

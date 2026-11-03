@@ -6,9 +6,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { api } from "../../api";
+import { useT } from "../../i18n/provider";
+import { issueMessage } from "../form-errors";
 import { PasswordField } from "../password-field";
 
 export function ResetForm() {
+  const t = useT("account");
   const token = useSearchParams().get("token") ?? "";
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
@@ -19,7 +22,13 @@ export function ResetForm() {
     event.preventDefault();
     const parsed = NewPassword.safeParse(password);
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message);
+      const issue = parsed.error.issues[0];
+      setError(
+        issue &&
+          issueMessage(issue, {
+            "": { too_big: t("errorPasswordLong"), too_small: t("errorPasswordShort") },
+          }),
+      );
       return;
     }
     setBusy(true);
@@ -36,23 +45,22 @@ export function ResetForm() {
   if (done) {
     return (
       <p role="status" className="auth__done">
-        Your password is changed, and every device was signed out.{" "}
-        <Link href="/account/sign-in">Sign in</Link>
+        {t("resetDone")} <Link href="/account/sign-in">{t("resetSignInLink")}</Link>
       </p>
     );
   }
   return (
     <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
       <PasswordField
-        label="New password"
+        label={t("resetNewPassword")}
         autoComplete="new-password"
-        hint="At least 10 characters."
+        hint={t("resetPasswordHint")}
         value={password}
         error={error}
         onChange={(event) => setPassword(event.target.value)}
       />
       <Button type="submit" block className="auth__submit" disabled={busy}>
-        Change password
+        {t("resetButton")}
       </Button>
     </form>
   );

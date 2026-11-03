@@ -8,6 +8,7 @@ import { useState } from "react";
 import { webEnv } from "../../env";
 import { api } from "../api";
 import { forgetKeptPhoto, setConsent } from "../consent";
+import { useT } from "../i18n/provider";
 
 // A file the learner keeps; the browser saves it without another round trip.
 function saveFile(name: string, data: unknown) {
@@ -21,6 +22,7 @@ function saveFile(name: string, data: unknown) {
 
 /** Download everything held for the account, or delete it all (#105). */
 export function YourData({ email }: { email: string }) {
+  const t = useT("account");
   const router = useRouter();
   const client = useQueryClient();
   const [typed, setTyped] = useState("");
@@ -46,7 +48,7 @@ export function YourData({ email }: { email: string }) {
     event.preventDefault();
     const parsed = DeleteAccountRequest.safeParse({ email: typed });
     if (!parsed.success || parsed.data.email !== email.toLowerCase()) {
-      setError("Type the email of this account exactly, to confirm.");
+      setError(t("dataConfirmMismatch"));
       return;
     }
     setError(undefined);
@@ -56,21 +58,18 @@ export function YourData({ email }: { email: string }) {
   const photos = exported.data?.photos ?? [];
   return (
     <section aria-labelledby="your-data">
-      <h2 id="your-data">Your data</h2>
-      <p>
-        Download a copy of everything tied to your account: your details, saved lessons and the
-        photos linked to it.
-      </p>
+      <h2 id="your-data">{t("dataHeading")}</h2>
+      <p>{t("dataIntro")}</p>
       <Button variant="quiet" disabled={exported.isPending} onClick={() => void download()}>
-        {exported.isPending ? "Preparing…" : "Download your data"}
+        {exported.isPending ? t("dataPreparing") : t("dataDownload")}
       </Button>
-      <div role="status">{exported.isSuccess ? <p>Your data was saved as a file.</p> : null}</div>
+      <div role="status">{exported.isSuccess ? <p>{t("dataSaved")}</p> : null}</div>
       {photos.length > 0 ? (
         <ul className="your-data__photos">
           {photos.map((photo, index) => (
             <li key={photo.key}>
               <a href={`${webEnv.apiUrl.replace(/\/+$/, "")}${photo.download}`}>
-                Download photo {index + 1}
+                {t("dataDownloadPhoto", { number: index + 1 })}
               </a>
             </li>
           ))}
@@ -78,14 +77,11 @@ export function YourData({ email }: { email: string }) {
       ) : null}
       {exported.error ? <p role="alert">{exported.error.message}</p> : null}
 
-      <Disclosure summary="Delete my account">
+      <Disclosure summary={t("dataDeleteAccount")}>
         <form className="your-data__delete" onSubmit={confirmDelete} noValidate>
-          <p>
-            This deletes your account, your saved lessons, and the photos linked to it, straight
-            away. It cannot be undone. Copies in our backups are gone within 30 days.
-          </p>
+          <p>{t("dataDeleteWarning")}</p>
           <TextField
-            label={`Type ${email} to confirm`}
+            label={t("dataConfirmLabel", { email })}
             type="email"
             autoComplete="off"
             value={typed}
@@ -94,7 +90,7 @@ export function YourData({ email }: { email: string }) {
           />
           {remove.error ? <p role="alert">{remove.error.message}</p> : null}
           <Button type="submit" disabled={remove.isPending}>
-            {remove.isPending ? "Deleting…" : "Delete my account"}
+            {remove.isPending ? t("dataDeleting") : t("dataDeleteAccount")}
           </Button>
         </form>
       </Disclosure>

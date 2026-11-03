@@ -1,3 +1,5 @@
+import { englishCapture, type CaptureT } from "./messages";
+
 export const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -35,17 +37,18 @@ export interface SelectableFile {
 export function validateSelection(
   file: SelectableFile,
   maxBytes = MAX_UPLOAD_BYTES,
+  t: CaptureT = englishCapture,
 ): string | null {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   const knownType = (ACCEPTED_IMAGE_TYPES as readonly string[]).includes(file.type);
   if (!knownType && !(KNOWN_EXTENSIONS as readonly string[]).includes(extension)) {
-    return `“${file.name}” is not a photo. Choose a ${ACCEPTED_FORMATS_LABEL} file.`;
+    return t("notAPhoto", { name: file.name, formats: ACCEPTED_FORMATS_LABEL });
   }
   if (file.size === 0) {
-    return `“${file.name}” is empty. Choose another photo.`;
+    return t("emptyFile", { name: file.name });
   }
   if (file.size > maxBytes) {
-    return `“${file.name}” is too large. Photos can be up to ${uploadLimitLabel(maxBytes)}.`;
+    return t("tooLarge", { name: file.name, size: uploadLimitLabel(maxBytes) });
   }
   return null;
 }

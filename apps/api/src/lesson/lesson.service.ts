@@ -48,7 +48,8 @@ import {
 } from "@sbi/orchestrator";
 import {
   ageHold,
-  CATEGORY_NOTICES,
+  categoryNotice,
+  isSpanish,
   createRiskClassifier,
   policyResponse,
   SAFETY_POLICY_VERSION,
@@ -70,17 +71,12 @@ import {
 import { createEventQueue } from "./event-queue";
 import { resolveSubject } from "./subject";
 import type { VisualMaker } from "../visuals/visual-maker";
+import { lessonText, SAFETY_NOTICES_ES, type LessonText } from "./lesson-text";
 import { lessonSources } from "./sources";
 import { UserFacingException } from "../common/user-facing.exception";
 
-const UNAVAILABLE = "Lesson generation is unavailable right now. Try again later.";
-const UNKNOWN_CATEGORY = "Unknown category.";
-const NO_COVERAGE = "No lesson coverage for this category yet.";
-const NO_EVIDENCE =
-  "We could not find trusted sources for this question yet. Try asking it another way.";
 // Enough to teach from first principles without an unbounded draft prompt.
 const MAX_LESSON_CLAIMS = 30;
-const HELD = "A reviewer needs to check this lesson before we can show it. Try again later.";
 
 // Lessons written under an older safety policy are not reused.
 export const LESSON_POLICY_VERSION = SAFETY_POLICY_VERSION;
@@ -103,12 +99,14 @@ const SAFETY_NOTICES: Readonly<Record<string, string>> = {
 export function safetyNoticeFor(
   entry: { id: string; parentId?: string },
   risk?: Pick<RiskAssessment, "categories">,
+  locale?: string,
 ): string | undefined {
   const category = risk?.categories[0];
+  const notices = isSpanish(locale) ? SAFETY_NOTICES_ES : SAFETY_NOTICES;
   return (
-    SAFETY_NOTICES[entry.id] ??
-    SAFETY_NOTICES[entry.parentId ?? ""] ??
-    (category ? CATEGORY_NOTICES[category] : undefined)
+    notices[entry.id] ??
+    notices[entry.parentId ?? ""] ??
+    (category ? categoryNotice(category, locale) : undefined)
   );
 }
 
@@ -191,25 +189,28 @@ function lessonClaims(facts: Claim[], gathered: Claim[], fromModel: Claim[] = []
   return [...[...byId.values()].slice(0, MAX_LESSON_CLAIMS - model.length), ...model];
 }
 
-function progressOf(event: GatherEvent): LessonProgress {
+function progressOf(event: GatherEvent, text: LessonText): LessonProgress {
   if (event.type === "planned") {
     return LessonProgress.parse({
       stage: "researching",
-      message: `Researching ${event.questions.length} questions: ${event.questions
-        .map((question) => question.question)
-        .join(" ")}`.slice(0, 300),
+      message: text
+        .researching(
+          event.questions.length,
+          event.questions.map((question) => question.question).join(" "),
+        )
+        .slice(0, 300),
     });
   }
   if (event.type === "reused") {
     return LessonProgress.parse({
       stage: "verified",
-      message: "Using evidence checked for an earlier question.",
+      message: text.reusedEvidence,
       claims: event.claims.length,
     });
   }
   return LessonProgress.parse({
     stage: "verified",
-    message: `Checked ${event.claims.length} claims from trusted sources.`,
+    message: text.checkedClaims(event.claims.length),
     claims: event.claims.length,
   });
 }
@@ -249,13 +250,14 @@ export class LessonService {
     viewer: { ownLessonIds?: ReadonlySet<string> } = {},
   ): AsyncGenerator<LessonStreamEvent> {
     const provider = this.provider;
-    if (!provider) throw new UserFacingException(UNAVAILABLE, HttpStatus.SERVICE_UNAVAILABLE);
+    const text = lessonText(request.locale);
+    if (!provider) throw new UserFacingException(text.unavailable, HttpStatus.SERVICE_UNAVAILABLE);
     // Milliseconds from the request to each stage, logged once so cold-lesson latency is visible.
     const started = performance.now();
     const timings: Record<string, number> = {};
     const mark = (stage: string) => (timings[stage] = Math.round(performance.now() - started));
     const entry = resolveSubject(request, this.taxonomy);
-    if (!entry) throw new UserFacingException(UNKNOWN_CATEGORY, HttpStatus.NOT_FOUND);
+    if (!entry) throw new UserFacingException(text.unknownCategory, HttpStatus.NOT_FOUND);
     const taxonomyId = entry.id;
     const taken = new Set<string>();
     const concepts = (this.taxonomy.get(taxonomyId) ? this.taxonomy.concepts(taxonomyId) : []).map(
@@ -268,11 +270,11 @@ export class LessonService {
     const risk = await this.classify({ subject: entry.label, question: request.question });
     // A question that seeks harm gets help and safe alternatives, never a lesson (spec §12).
     if (risk.intent === "harm") {
-      yield { type: "policy", data: policyResponse(risk.categories[0]) };
+      yield { type: "policy", data: policyResponse(risk.categories[0], request.locale) };
       return;
     }
     // A question for an older age band than the one chosen says how to change it instead.
-    const ageNote = ageHold(request.audience, risk);
+    const ageNote = ageHold(request.audience, risk, request.locale);
     if (ageNote) {
       yield { type: "policy", data: ageNote };
       return;
@@ -329,7 +331,7 @@ export class LessonService {
           safetyClass,
         },
         {
-          onEvent: (event) => events.push({ type: "progress", data: progressOf(event) }),
+          onEvent: (event) => events.push({ type: "progress", data: progressOf(event, text) }),
         },
       )
         .catch((error: unknown): GatheredEvidence | undefined => {
@@ -352,6 +354,7 @@ export class LessonService {
           audience: request.audience,
           readingLevel: request.readingLevel,
           safetyClass,
+          locale: request.locale,
         },
         { provider },
       ).catch((error: unknown) => {
@@ -362,7 +365,7 @@ export class LessonService {
       const claims = lessonClaims(usable, gathered?.claims ?? [], fromModel);
       if (claims.length === 0) {
         throw new UserFacingException(
-          usable.length === 0 ? NO_EVIDENCE : NO_COVERAGE,
+          usable.length === 0 ? text.noEvidence : text.noCoverage,
           HttpStatus.NOT_FOUND,
         );
       }
@@ -373,8 +376,8 @@ export class LessonService {
           stage: "drafting",
           message:
             checkedClaims.length === claims.length
-              ? `Writing the lesson from ${claims.length} checked claims.`
-              : `Writing the lesson from ${checkedClaims.length} checked claims and ${claims.length - checkedClaims.length} from general knowledge.`,
+              ? text.writingChecked(claims.length)
+              : text.writingMixed(checkedClaims.length, claims.length - checkedClaims.length),
           claims: claims.length,
         }),
       };
@@ -463,7 +466,7 @@ export class LessonService {
           const routed = await createPublisher({ rights: this.rights, onAudit: record }).route(
             checked,
             report,
-            { safetyNotice: safetyNoticeFor(entry, risk) },
+            { safetyNotice: safetyNoticeFor(entry, risk, request.locale) },
           );
           await this.lessons.save(routed.lesson);
           if (routed.decision.action === "approve") return { lesson: routed.lesson, report };
@@ -489,7 +492,7 @@ export class LessonService {
           type: "progress",
           data: LessonProgress.parse({
             stage: "checking",
-            message: "Checking every section against its sources.",
+            message: text.checking,
           }),
         };
       }
@@ -512,7 +515,10 @@ export class LessonService {
         );
       }
       if (outcome.kind === "retry") {
-        throw new UserFacingException(held ? HELD : outcome.reason, HttpStatus.SERVICE_UNAVAILABLE);
+        throw new UserFacingException(
+          held ? text.held : outcome.reason,
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
       }
       lesson = outcome.lesson;
       kind = outcome.kind;
@@ -532,10 +538,7 @@ export class LessonService {
         claimIds: [],
         reviewStatus: validated.reviewStatus,
         disclaimers: validated.disclaimers,
-        note:
-          kind === "fallback"
-            ? "Fresh generation failed; showing a related cached lesson."
-            : undefined,
+        note: kind === "fallback" ? text.fallback : undefined,
       }),
     };
     yield { type: "lesson", data: validated };

@@ -1,3 +1,5 @@
+import { CaptureError, englishCapture, type CaptureT } from "./messages";
+
 export type QualityCheckId = "resolution" | "sharpness" | "exposure" | "subject";
 
 export interface QualityCheck {
@@ -47,6 +49,7 @@ export function assessQuality(
   image: PixelData,
   thresholds: QualityThresholds = {},
   source: { width: number; height: number } = image,
+  t: CaptureT = englishCapture,
 ): QualityReport {
   const { height, width } = image;
   const lum = new Float64Array(width * height);
@@ -106,36 +109,22 @@ export function assessQuality(
 
   const checks: QualityCheck[] = [
     {
-      guidance:
-        shortSide < shortSideMinimum
-          ? "The photo is too small to recognise the object. Retake it closer or use a larger photo."
-          : null,
+      guidance: shortSide < shortSideMinimum ? t("tooSmall") : null,
       id: "resolution",
       passed: shortSide >= shortSideMinimum,
     },
     {
-      guidance:
-        variance < blurMinimum
-          ? "The photo looks blurry or very plain. Hold the camera still and retake it."
-          : null,
+      guidance: variance < blurMinimum ? t("blurry") : null,
       id: "sharpness",
       passed: variance >= blurMinimum,
     },
     {
-      guidance:
-        mean < low
-          ? "The photo is too dark. Move into better light and retake it."
-          : mean > high
-            ? "The photo is too bright. Avoid direct glare and retake it."
-            : null,
+      guidance: mean < low ? t("tooDark") : mean > high ? t("tooBright") : null,
       id: "exposure",
       passed: mean >= low && mean <= high,
     },
     {
-      guidance:
-        subjectFraction < subjectMinimum
-          ? "The object looks small or missing. Move closer so it fills the frame."
-          : null,
+      guidance: subjectFraction < subjectMinimum ? t("subjectSmall") : null,
       id: "subject",
       passed: subjectFraction >= subjectMinimum,
     },
@@ -150,7 +139,7 @@ export function readImageData(source: ImageBitmap, maxDimension = SAMPLE_DIMENSI
   canvas.height = Math.max(1, Math.round(source.height * scale));
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context) {
-    throw new Error("Photo checks are unavailable in this browser.");
+    throw new CaptureError("checksUnavailable");
   }
   context.drawImage(source, 0, 0, canvas.width, canvas.height);
   return context.getImageData(0, 0, canvas.width, canvas.height);

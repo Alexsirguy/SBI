@@ -4,9 +4,11 @@ import { ForgotPasswordRequest } from "@sbi/contracts";
 import { Button, TextField } from "@sbi/ui";
 import { useState } from "react";
 import { api } from "../../api";
+import { useT } from "../../i18n/provider";
 import { fieldErrors } from "../form-errors";
 
 export function ForgotForm() {
+  const t = useT("account");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string>();
   const [sent, setSent] = useState(false);
@@ -16,7 +18,7 @@ export function ForgotForm() {
     event.preventDefault();
     const parsed = ForgotPasswordRequest.safeParse({ email });
     if (!parsed.success) {
-      setError(fieldErrors(parsed.error).email);
+      setError(fieldErrors(parsed.error, { email: { invalid_format: t("errorEmail") } }).email);
       return;
     }
     setBusy(true);
@@ -33,15 +35,14 @@ export function ForgotForm() {
   if (sent) {
     return (
       <p role="status" className="auth__done">
-        If that email has an account, we have sent it a link to choose a new password. The link
-        works for 1 hour.
+        {t("forgotSent")}
       </p>
     );
   }
   return (
     <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
       <TextField
-        label="Email"
+        label={t("email")}
         type="email"
         autoComplete="email"
         value={email}
@@ -49,7 +50,7 @@ export function ForgotForm() {
         onChange={(event) => setEmail(event.target.value)}
       />
       <Button type="submit" block className="auth__submit" disabled={busy}>
-        Send me a link
+        {t("forgotButton")}
       </Button>
     </form>
   );

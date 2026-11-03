@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useT } from "../i18n/provider";
 import "./account.css";
 
 /** The one paper card every sign-in step sits on; the switch appears only where both apply. */
@@ -16,16 +19,17 @@ export function AuthCard({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const t = useT("account");
   return (
     <main id="main" className="auth">
       <div className="auth__card">
         {tab ? (
-          <nav aria-label="Account" className="auth__switch">
+          <nav aria-label={t("navLabel")} className="auth__switch">
             <Link href="/account/sign-in" aria-current={tab === "sign-in" ? "page" : undefined}>
-              Sign in
+              {t("tabSignIn")}
             </Link>
             <Link href="/account/sign-up" aria-current={tab === "sign-up" ? "page" : undefined}>
-              Create account
+              {t("tabCreateAccount")}
             </Link>
           </nav>
         ) : null}
@@ -40,9 +44,10 @@ export function AuthCard({
 
 /** Separates the Google button from the email form; says what the second way is. */
 export function AuthDivider() {
+  const t = useT("account");
   return (
     <p className="auth__divider">
-      <span>or use your email</span>
+      <span>{t("orUseEmail")}</span>
     </p>
   );
 }

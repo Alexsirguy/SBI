@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { useT } from "../i18n/provider";
 import { clampCrop, moveCrop, type CropRect } from "./processing";
 
 type Corner = "nw" | "ne" | "sw" | "se";
@@ -66,6 +67,7 @@ export function CropOverlay({
   rect: CropRect;
   onChange: (rect: CropRect) => void;
 }) {
+  const t = useT("capture");
   const frameRef = useRef<HTMLDivElement>(null);
   const drag = useRef<DragState | null>(null);
   // A fiftieth of the photo per key press keeps keyboard cropping usable at any resolution.
@@ -120,11 +122,18 @@ export function CropOverlay({
     <div ref={frameRef} className="crop-overlay">
       {/* A local object URL of the learner's photo, which next/image cannot optimise. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="Your photo" draggable={false} />
+      <img src={src} alt={t("yourPhoto")} draggable={false} />
       <button
         type="button"
         className="crop-overlay__area"
-        aria-label={`Crop area, ${whole ? "the whole photo" : `${Math.round((rect.width / imageWidth) * 100)}% wide and ${Math.round((rect.height / imageHeight) * 100)}% tall`}. Arrow keys move it; Shift and arrow keys resize it.`}
+        aria-label={
+          whole
+            ? t("cropAreaWhole")
+            : t("cropAreaPart", {
+                width: Math.round((rect.width / imageWidth) * 100),
+                height: Math.round((rect.height / imageHeight) * 100),
+              })
+        }
         onKeyDown={onKeyDown}
         onPointerDown={(event) => startDrag(event, null)}
         onPointerMove={onPointerMove}

@@ -64,3 +64,18 @@ describe("readingLevelCheck", () => {
     expect((await readingLevelCheck.run(hardSteps)).passed).toBe(false);
   });
 });
+
+describe("readingEase in Spanish", () => {
+  const FACIL = "El agua hierve. La tapa sube. Sale vapor. El hervidor se apaga solo.";
+  const DIFICIL =
+    "La termodinámica del cambio de fase determina que la ebullición acontece cuando la presión de vapor iguala la presión atmosférica circundante, independientemente de consideraciones adicionales.";
+
+  it("rates short plain Spanish as easier than long technical Spanish", () => {
+    expect(readingEase(FACIL, "es")).toBeGreaterThan(readingEase(DIFICIL, "es") + 40);
+    expect(readingEase(FACIL, "es")).toBeGreaterThan(55);
+  });
+
+  it("does not judge Spanish by the English formula", () => {
+    expect(readingEase(FACIL, "es")).not.toBe(readingEase(FACIL));
+  });
+});

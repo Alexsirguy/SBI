@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LessonFeedbackRequest } from "./lesson-api";
+import { fixedQuestions, LessonFeedbackRequest } from "./lesson-api";
 
 const LESSON = { lessonId: "0192f1a0-0000-7000-8000-00000000a001", version: 2 };
 
@@ -34,5 +34,17 @@ describe("LessonFeedbackRequest", () => {
         report: { category: "other", details: "x".repeat(1001) },
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("fixedQuestions in Spanish", () => {
+  it("asks the same five questions in Spanish, keeping the learner's article", () => {
+    const questions = fixedQuestions("El hervidor", "es");
+    expect(questions).toHaveLength(5);
+    expect(questions[0]).toBe("¿Cuál es la ciencia detrás del hervidor?");
+    expect(fixedQuestions("una bicicleta", "es")[0]).toBe(
+      "¿Cuál es la ciencia detrás de una bicicleta?",
+    );
+    expect(fixedQuestions("a kettle", "en")[0]).toBe("What is the science behind the kettle?");
   });
 });

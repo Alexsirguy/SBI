@@ -1,5 +1,7 @@
 import type { Lesson, LessonDisclaimer } from "@sbi/contracts";
+import { isSpanish } from "@sbi/safety";
 import type { CheckReport } from "./checks";
+import { GENERIC_SAFETY_NOTICE_ES, NOTICES_ES } from "./notices-es";
 
 export type ReviewStatus = Lesson["reviewStatus"];
 
@@ -116,6 +118,15 @@ const DISCLOSABLE_CHECKS = new Set([
 export const GENERIC_SAFETY_NOTICE =
   "Safety first: this lesson explains the science only. It is not advice on using, handling or testing anything. Do not try this yourself; ask a responsible adult or a professional, and in an emergency call your local emergency number.";
 
+// Notices follow the lesson's own locale, so a Spanish lesson never carries English notes.
+function noticeText(
+  lesson: Lesson,
+  kind: Exclude<LessonDisclaimer["kind"], "safety">,
+  english: string,
+) {
+  return isSpanish(lesson.locale) ? NOTICES_ES[kind] : english;
+}
+
 export interface RouteOptions {
   /** Topic-specific safety wording for high-risk lessons; a generic notice is used otherwise. */
   safetyNotice?: string;
@@ -150,10 +161,22 @@ function disclaimersFor(
   // The safety notice leads, so it is the first thing shown with a risky topic.
   const notes: LessonDisclaimer[] =
     lesson.safetyClass === "high"
-      ? [{ kind: "safety", message: options.safetyNotice ?? GENERIC_SAFETY_NOTICE, sectionIds: [] }]
+      ? [
+          {
+            kind: "safety",
+            message:
+              options.safetyNotice ??
+              (isSpanish(lesson.locale) ? GENERIC_SAFETY_NOTICE_ES : GENERIC_SAFETY_NOTICE),
+            sectionIds: [],
+          },
+        ]
       : [];
   const fromModel = lesson.claims.some((claim) => claim.origin === "model");
-  notes.push(fromModel ? MODEL_KNOWLEDGE_DISCLAIMER : AWAITING_REVIEW);
+  const lead = fromModel ? MODEL_KNOWLEDGE_DISCLAIMER : AWAITING_REVIEW;
+  notes.push({
+    ...lead,
+    message: noticeText(lesson, lead.kind as "model-knowledge", lead.message),
+  });
   const failed = new Map(
     (report?.results ?? []).filter((item) => !item.passed).map((item) => [item.name, item]),
   );
@@ -161,15 +184,22 @@ function disclaimersFor(
   if (failed.has("entailment")) {
     notes.push({
       kind: "unverified-sections",
-      message:
+      message: noticeText(
+        lesson,
+        "unverified-sections",
         "Parts of this lesson say more than their sources show and have not been checked yet.",
+      ),
       sectionIds: unverified,
     });
   }
   if (failed.has("contradictions")) {
     notes.push({
       kind: "sources-disagree",
-      message: "Some of the sources behind this lesson disagree with each other.",
+      message: noticeText(
+        lesson,
+        "sources-disagree",
+        "Some of the sources behind this lesson disagree with each other.",
+      ),
       sectionIds: [],
     });
   }
@@ -182,7 +212,11 @@ function disclaimersFor(
   if (unsettled.size > 0 || failed.has("misconceptions")) {
     notes.push({
       kind: "open-questions",
-      message: "Some statements here are still debated or not yet confirmed by a trusted source.",
+      message: noticeText(
+        lesson,
+        "open-questions",
+        "Some statements here are still debated or not yet confirmed by a trusted source.",
+      ),
       sectionIds: sectionsCiting(lesson, unsettled),
     });
   }
@@ -192,14 +226,18 @@ function disclaimersFor(
   if (weak.size > 0) {
     notes.push({
       kind: "limited-evidence",
-      message: "Some statements rest on limited evidence.",
+      message: noticeText(lesson, "limited-evidence", "Some statements rest on limited evidence."),
       sectionIds: sectionsCiting(lesson, weak),
     });
   }
   if (failed.has("reading-level")) {
     notes.push({
       kind: "reading-level",
-      message: "This lesson may be harder to read than the level you chose.",
+      message: noticeText(
+        lesson,
+        "reading-level",
+        "This lesson may be harder to read than the level you chose.",
+      ),
       sectionIds: [],
     });
   }

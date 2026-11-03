@@ -32,7 +32,10 @@ export class QuestionsController {
     @Ip() ip: string,
   ): Promise<ApiResponse<"suggestQuestions">> {
     const request = QuestionSuggestionRequest.parse(body);
-    const fixed = { questions: fixedQuestions(request.subject), source: "fixed" as const };
+    const fixed = {
+      questions: fixedQuestions(request.subject, request.locale),
+      source: "fixed" as const,
+    };
     // Each request costs a model call; past the limit the learner still gets questions to pick.
     if (!this.limiter.allow(ip)) return fixed;
     try {

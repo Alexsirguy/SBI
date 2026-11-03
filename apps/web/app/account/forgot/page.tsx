@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getT } from "../../i18n/server";
 import { AuthCard } from "../auth-card";
 import { ForgotForm } from "./forgot-form";
 
-export const metadata: Metadata = { title: "Forgot your password · Science Behind It" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("account");
+  return { title: t("forgotMetaTitle") };
+}
 
-export default function ForgotPage() {
+export default async function ForgotPage() {
+  const t = await getT("account");
   return (
     <AuthCard
-      title="Forgot your password?"
-      intro="Enter your email and we will send you a link to choose a new one."
+      title={t("forgotTitle")}
+      intro={t("forgotIntro")}
       footer={
         <p>
-          Remembered it? <Link href="/account/sign-in">Sign in</Link>
+          {t("forgotRemembered")} <Link href="/account/sign-in">{t("forgotSignInLink")}</Link>
         </p>
       }
     >

@@ -1,3 +1,4 @@
+import { languageRule } from "./language";
 import { randomBytes } from "node:crypto";
 import { type Claim, Lesson, lessonContentHash } from "@sbi/contracts";
 import { completeStructured, LlmError, type LlmProvider } from "@sbi/llm";
@@ -108,7 +109,10 @@ async function reviseChallenges(
           `<challenges-${tag}>\n${tasks.map(render).join("\n\n")}\n</challenges-${tag}>`,
           `<reason-${tag}>\n${reason}\n</reason-${tag}>`,
           `<claims-${tag}>\n${cited.map((claim) => `- ${claim.text}`).join("\n")}\n</claims-${tag}>`,
-        ].join("\n"),
+          languageRule(lesson.locale),
+        ]
+          .filter(Boolean)
+          .join("\n"),
       },
     ],
     jsonSchema: { name: "RevisedChallenges", schema: CHALLENGES_SCHEMA },
@@ -183,7 +187,10 @@ export async function reviseSections(
               `<section-${tag}>\n${section.text}\n</section-${tag}>`,
               `<reason-${tag}>\n${finding.reason}\n</reason-${tag}>`,
               `<claims-${tag}>\n${cited.map((claim) => `- ${claim.text}`).join("\n")}\n</claims-${tag}>`,
-            ].join("\n"),
+              languageRule(lesson.locale),
+            ]
+              .filter(Boolean)
+              .join("\n"),
           },
         ],
         jsonSchema: { name: "RevisedSection", schema: SCHEMA },

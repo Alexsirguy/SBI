@@ -1,4 +1,4 @@
-import { Id, LessonRequest } from "@sbi/contracts";
+import { deEs, Id, LessonRequest } from "@sbi/contracts";
 import type { Locale } from "../i18n/locales";
 import { DEFAULT_PREFS, DEPTHS, type LessonPrefs, parsePrefs } from "./prefs";
 
@@ -37,10 +37,8 @@ export function lessonHref(
 
 export function defaultQuestion(label: string, locale: Locale = "en"): string {
   // Learners often type "a rainbow"; the question already supplies its own article.
-  if (locale === "es") {
-    const name = label.toLowerCase().replace(/^(un|una|el|la|los|las)\s+/, "");
-    return `¿Cuál es la ciencia detrás de ${name}?`;
-  }
+  // Spanish articles carry gender we cannot guess, so the learner's own wording is kept.
+  if (locale === "es") return `¿Cuál es la ciencia detrás ${deEs(label.toLowerCase())}?`;
   const name = label.toLowerCase().replace(/^(a|an|the)\s+/, "");
   return `What is the science behind the ${name}?`;
 }

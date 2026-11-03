@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { api } from "../../api";
+import { useT } from "../../i18n/provider";
 import { AgeSelect, readAge } from "../age-select";
 import { AuthDivider } from "../auth-card";
 import { fieldErrors } from "../form-errors";
@@ -17,6 +18,7 @@ import { ACCOUNT_KEY } from "../use-account";
 const EMPTY = { age: "", email: "", firstName: "", lastName: "", password: "" };
 
 export function SignUpForm() {
+  const t = useT("account");
   const router = useRouter();
   const client = useQueryClient();
   const [values, setValues] = useState(EMPTY);
@@ -34,12 +36,19 @@ export function SignUpForm() {
     // Under-13s are stopped here, before anything about them leaves the device.
     if ("underAge" in age && age.underAge) {
       setErrors({});
-      setFailure(age.problem);
+      setFailure(t(age.problem));
       return;
     }
     const parsed = SignUpRequest.safeParse({ ...values, age: "age" in age ? age.age : undefined });
-    const found: Record<string, string> = parsed.success ? {} : fieldErrors(parsed.error);
-    if ("problem" in age) found.age = age.problem;
+    const found: Record<string, string> = parsed.success
+      ? {}
+      : fieldErrors(parsed.error, {
+          email: { invalid_format: t("errorEmail") },
+          firstName: { too_small: t("errorName") },
+          lastName: { too_small: t("errorName") },
+          password: { too_big: t("errorPasswordLong"), too_small: t("errorPasswordShort") },
+        });
+    if ("problem" in age) found.age = t(age.problem);
     setErrors(found);
     if (!parsed.success) return;
     setBusy(true);
@@ -59,14 +68,14 @@ export function SignUpForm() {
       <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
         <div className="auth__row">
           <TextField
-            label="First name"
+            label={t("firstName")}
             autoComplete="given-name"
             value={values.firstName}
             error={errors.firstName}
             onChange={set("firstName")}
           />
           <TextField
-            label="Last name"
+            label={t("lastName")}
             autoComplete="family-name"
             value={values.lastName}
             error={errors.lastName}
@@ -79,7 +88,7 @@ export function SignUpForm() {
           onChange={(age) => setValues({ ...values, age })}
         />
         <TextField
-          label="Email"
+          label={t("email")}
           type="email"
           autoComplete="email"
           value={values.email}
@@ -87,9 +96,9 @@ export function SignUpForm() {
           onChange={set("email")}
         />
         <PasswordField
-          label="Password"
+          label={t("password")}
           autoComplete="new-password"
-          hint="At least 10 characters. A short phrase is easy to remember."
+          hint={t("signUpPasswordHint")}
           value={values.password}
           error={errors.password}
           onChange={set("password")}
@@ -100,12 +109,11 @@ export function SignUpForm() {
           </p>
         ) : null}
         <Button type="submit" block className="auth__submit" disabled={busy}>
-          {busy ? "Creating account…" : "Create Account"}
+          {busy ? t("signUpBusy") : t("signUpButton")}
         </Button>
       </form>
       <p className="auth__fineprint">
-        We keep your name, email and age to run your account, and nothing else.{" "}
-        <Link href="/privacy">How we handle your data</Link>
+        {t("signUpFineprint")} <Link href="/privacy">{t("signUpFineprintLink")}</Link>
       </p>
     </>
   );

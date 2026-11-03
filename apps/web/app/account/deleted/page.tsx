@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getT } from "../../i18n/server";
 import { AuthCard } from "../auth-card";
 
-export const metadata: Metadata = { title: "Account deleted · Science Behind It" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("account");
+  return { title: t("deletedMetaTitle") };
+}
 
-export default function DeletedPage() {
+export default async function DeletedPage() {
+  const t = await getT("account");
   return (
-    <AuthCard
-      title="Your account is deleted"
-      intro="Your details, saved lessons and linked photos are gone. Copies in our backups are gone within 30 days."
-    >
+    <AuthCard title={t("deletedTitle")} intro={t("deletedIntro")}>
       <p className="auth__done">
-        Every lesson still works without an account. <Link href="/capture">Start a lesson</Link>
+        {t("deletedText")} <Link href="/capture">{t("startLesson")}</Link>
       </p>
     </AuthCard>
   );

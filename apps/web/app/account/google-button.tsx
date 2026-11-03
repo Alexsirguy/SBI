@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { webEnv } from "../../env";
 import { api } from "../api";
+import { useLocale, useT } from "../i18n/provider";
 import { AgeSelect, readAge } from "./age-select";
 import { ACCOUNT_KEY } from "./use-account";
 
@@ -26,6 +27,7 @@ interface GoogleIdentity {
           size: "large";
           shape: "rectangular";
           logo_alignment: "center";
+          locale: string;
         },
       ): void;
     };
@@ -73,6 +75,8 @@ export function GoogleButton({
   mode: "signin" | "signup";
   onSignedIn: () => void;
 }) {
+  const t = useT("account");
+  const locale = useLocale();
   const target = useRef<HTMLDivElement>(null);
   const client = useQueryClient();
   const [error, setError] = useState<string>();
@@ -113,6 +117,7 @@ export function GoogleButton({
         });
         // Google draws the button at a fixed width, so it is sized to fill the card once.
         google.accounts.id.renderButton(target.current, {
+          locale,
           logo_alignment: "center",
           shape: "rectangular",
           size: "large",
@@ -121,12 +126,12 @@ export function GoogleButton({
           width: Math.min(400, Math.max(200, target.current.clientWidth)),
         });
       },
-      (failure: Error) => !cancelled && setError(failure.message),
+      () => !cancelled && setError(t("googleLoadFailed")),
     );
     return () => {
       cancelled = true;
     };
-  }, [client, clientId, mode, onSignedIn]);
+  }, [client, clientId, locale, mode, onSignedIn, t]);
 
   if (!clientId) return null;
   if (details) {
@@ -164,6 +169,7 @@ function GoogleDetails({
   lastName: string;
   onDone: () => Promise<void>;
 }) {
+  const t = useT("account");
   const [values, setValues] = useState({ age: "", firstName, lastName });
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -171,12 +177,12 @@ function GoogleDetails({
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!values.firstName.trim() || !values.lastName.trim()) {
-      setError("Fill in your name.");
+      setError(t("googleNameMissing"));
       return;
     }
     const age = readAge(values.age);
     if ("problem" in age) {
-      setError(age.problem);
+      setError(t(age.problem));
       return;
     }
     setBusy(true);
@@ -192,17 +198,17 @@ function GoogleDetails({
 
   return (
     <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
-      <h2 className="auth__step">One more step</h2>
-      <p className="auth__intro">Check your name and add your age to finish.</p>
+      <h2 className="auth__step">{t("googleStepTitle")}</h2>
+      <p className="auth__intro">{t("googleStepIntro")}</p>
       <div className="auth__row">
         <TextField
-          label="First name"
+          label={t("firstName")}
           autoComplete="given-name"
           value={values.firstName}
           onChange={(event) => setValues({ ...values, firstName: event.target.value })}
         />
         <TextField
-          label="Last name"
+          label={t("lastName")}
           autoComplete="family-name"
           value={values.lastName}
           onChange={(event) => setValues({ ...values, lastName: event.target.value })}
@@ -215,7 +221,7 @@ function GoogleDetails({
         </p>
       ) : null}
       <Button type="submit" block className="auth__submit" disabled={busy}>
-        Finish
+        {t("googleFinish")}
       </Button>
     </form>
   );

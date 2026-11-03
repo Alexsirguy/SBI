@@ -3,13 +3,19 @@
 import { Button } from "@sbi/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { INTL_LOCALE } from "../../i18n/locales";
+import { useLocale, useT } from "../../i18n/provider";
 import { useAccount } from "../use-account";
 import { useRemoveSavedLesson, useSavedLessons } from "../use-saved-lessons";
 
-const DATE = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
-
 export function SavedList() {
+  const t = useT("account");
+  const locale = useLocale();
+  const date = useMemo(
+    () => new Intl.DateTimeFormat(INTL_LOCALE[locale], { dateStyle: "medium" }),
+    [locale],
+  );
   const router = useRouter();
   const account = useAccount();
   const saved = useSavedLessons(!!account.data);
@@ -19,13 +25,13 @@ export function SavedList() {
     if (account.data === null) router.replace("/account/sign-in?next=%2Faccount%2Flessons");
   }, [account.data, router]);
 
-  if (!account.data || saved.isPending) return <p role="status">Loading your saved lessons…</p>;
+  if (!account.data || saved.isPending) return <p role="status">{t("savedLoading")}</p>;
   if (saved.error) return <p role="alert">{saved.error.message}</p>;
   if (saved.data.length === 0) {
     return (
       <p>
-        Nothing saved yet. Open any lesson and press <strong>Save lesson</strong> to keep it here.{" "}
-        <Link href="/capture">Start a lesson</Link>
+        {t("savedEmptyStart")} <strong>{t("savedEmptyButtonName")}</strong> {t("savedEmptyEnd")}{" "}
+        <Link href="/capture">{t("startLesson")}</Link>
       </p>
     );
   }
@@ -36,8 +42,9 @@ export function SavedList() {
           <li key={item.lessonId}>
             <Link href={`/lesson/saved?id=${item.lessonId}`}>{item.title}</Link>
             <span className="saved-list__date">
-              Saved {DATE.format(new Date(item.savedAt))}
-              {item.sharedAt ? ", shared for review" : ""}
+              {t(item.sharedAt ? "savedOnShared" : "savedOn", {
+                date: date.format(new Date(item.savedAt)),
+              })}
             </span>
             <Button
               variant="quiet"
@@ -45,12 +52,13 @@ export function SavedList() {
               disabled={remove.isPending}
               onClick={() => remove.mutate(item.lessonId)}
             >
-              Remove<span className="sbi-visually-hidden"> {item.title}</span>
+              {t("savedRemove")}
+              <span className="sbi-visually-hidden"> {item.title}</span>
             </Button>
           </li>
         ))}
       </ul>
-      <div role="status">{remove.isSuccess ? <p>Removed.</p> : null}</div>
+      <div role="status">{remove.isSuccess ? <p>{t("savedRemoved")}</p> : null}</div>
       {remove.error ? <p role="alert">{remove.error.message}</p> : null}
     </>
   );

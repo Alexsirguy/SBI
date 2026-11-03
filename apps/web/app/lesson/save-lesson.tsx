@@ -3,6 +3,8 @@
 import { Button } from "@sbi/ui";
 import Link from "next/link";
 import { useAccount } from "../account/use-account";
+import { useT } from "../i18n/provider";
+import { useErrorText } from "./lesson-t";
 import { useRemoveSavedLesson, useSaveLesson, useSavedLessons } from "../account/use-saved-lessons";
 
 /** Saves the version on screen; signed-out learners are offered sign-in and brought back here. */
@@ -16,6 +18,8 @@ export function SaveLesson({
   /** This lesson's own address, so sign-in can bring the learner back to it. */
   returnTo: string;
 }) {
+  const t = useT("lesson");
+  const errorText = useErrorText();
   const account = useAccount();
   const signedIn = !!account.data;
   const saved = useSavedLessons(signedIn);
@@ -26,7 +30,7 @@ export function SaveLesson({
   if (!signedIn) {
     return (
       <Link href={`/account/sign-in?next=${encodeURIComponent(returnTo)}`} className="save-lesson">
-        Sign in to save this lesson
+        {t("signInToSave")}
       </Link>
     );
   }
@@ -43,8 +47,8 @@ export function SaveLesson({
           disabled={busy}
           onClick={() => remove.mutate(lessonId)}
         >
-          Saved
-          <span className="sbi-visually-hidden">, press to remove from saved lessons</span>
+          {t("saved")}
+          <span className="sbi-visually-hidden">{t("savedRemoveHint")}</span>
         </Button>
       ) : (
         <Button
@@ -54,15 +58,15 @@ export function SaveLesson({
           disabled={busy}
           onClick={() => save.mutate({ lessonId, version })}
         >
-          {entry ? "Save this version" : "Save lesson"}
+          {entry ? t("saveThisVersion") : t("saveLesson")}
         </Button>
       )}
       <span role="status" className="save-lesson__status">
-        {save.isSuccess && thisVersion ? "Saved to your account." : null}
-        {remove.isSuccess && !entry ? "Removed from saved lessons." : null}
+        {save.isSuccess && thisVersion ? t("savedStatus") : null}
+        {remove.isSuccess && !entry ? t("removedStatus") : null}
       </span>
       {save.error || remove.error ? (
-        <span role="alert">{(save.error ?? remove.error)?.message}</span>
+        <span role="alert">{errorText((save.error ?? remove.error)?.message)}</span>
       ) : null}
     </div>
   );

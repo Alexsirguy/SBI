@@ -1,4 +1,5 @@
 import type { Lesson } from "@sbi/contracts";
+import { isSpanish } from "@sbi/safety";
 import type { LessonCheck } from "./checks";
 
 function syllables(word: string): number {
@@ -8,8 +9,30 @@ function syllables(word: string): number {
   return Math.max(1, groups?.length ?? 1);
 }
 
-/** Flesch reading ease over section text; higher is easier to read. */
-export function readingEase(text: string): number {
+// Vowel groups, split where two strong vowels meet (hiato: "le-er"); accents mark strong too.
+function syllablesEs(word: string): number {
+  const cleaned = word.toLowerCase().replace(/[^a-záéíóúüñ]/g, "");
+  const groups = cleaned.match(/[aeiouáéíóúü]+/g) ?? [];
+  const strong = /[aeoáéíóú]/;
+  let count = 0;
+  for (const group of groups) {
+    count += 1;
+    for (let index = 1; index < group.length; index += 1) {
+      if (strong.test(group[index - 1] ?? "") && strong.test(group[index] ?? "")) count += 1;
+    }
+  }
+  return Math.max(1, count);
+}
+
+/** Reading ease over section text, higher is easier: Flesch, or Fernández-Huerta for Spanish. */
+export function readingEase(text: string, locale?: string): number {
+  if (isSpanish(locale)) {
+    const sentences = text.split(/[.!?¡¿]+/).filter((part) => part.trim().length > 0);
+    const words = text.split(/\s+/).filter((part) => /[\p{L}\d]/u.test(part));
+    if (sentences.length === 0 || words.length === 0) return 100;
+    const per100 = (100 * words.reduce((sum, word) => sum + syllablesEs(word), 0)) / words.length;
+    return 206.84 - 0.6 * per100 - 1.02 * (words.length / sentences.length);
+  }
   const sentences = text.split(/[.!?]+/).filter((part) => part.trim().length > 0);
   const words = text.split(/\s+/).filter((part) => part.length > 0);
   if (sentences.length === 0 || words.length === 0) return 100;
@@ -35,7 +58,7 @@ function lessonProse(lesson: Lesson): string {
 export const readingLevelCheck: LessonCheck = {
   name: "reading-level",
   async run(lesson) {
-    const ease = readingEase(lessonProse(lesson));
+    const ease = readingEase(lessonProse(lesson), lesson.locale);
     if (ease >= FLOOR[lesson.readingLevel]) {
       return { name: readingLevelCheck.name, passed: true, details: [] };
     }

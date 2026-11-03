@@ -13,11 +13,13 @@ import {
   setConsent,
   subscribeToChoices,
 } from "../consent";
+import { useT } from "../i18n/provider";
 import { ACCOUNT_KEY, useAccount, useSignOut } from "./use-account";
 import { YourData } from "./your-data";
 
 /** The signed-in account; linking this device's kept photos is a separate, explicit choice. */
 export function AccountPanel() {
+  const t = useT("account");
   const router = useRouter();
   const client = useQueryClient();
   const account = useAccount();
@@ -52,7 +54,7 @@ export function AccountPanel() {
   }, [account.data, router]);
 
   if (account.error) return <p role="alert">{account.error.message}</p>;
-  if (!account.data || snapshot === null) return <p role="status">Checking sign-in…</p>;
+  if (!account.data || snapshot === null) return <p role="status">{t("accountChecking")}</p>;
 
   const me = account.data;
   const kept = readKeptPhotos().length;
@@ -63,58 +65,61 @@ export function AccountPanel() {
   return (
     <>
       <p>
-        Signed in as {me.firstName} {me.lastName} ({me.email}).
+        {t("accountSignedInAs", {
+          email: me.email,
+          firstName: me.firstName,
+          lastName: me.lastName,
+        })}
       </p>
       {me.emailVerified ? null : (
         <div className="account-notice">
-          <p>Please confirm your email. We sent a link to {me.email}.</p>
+          <p>{t("accountConfirmEmail", { email: me.email })}</p>
           <Button
             variant="quiet"
             size="small"
             disabled={resend.isPending || resend.isSuccess}
             onClick={() => resend.mutate()}
           >
-            {resend.isSuccess ? "Link sent" : "Send the link again"}
+            {resend.isSuccess ? t("accountLinkSent") : t("accountSendLinkAgain")}
           </Button>
         </div>
       )}
-      <h2>Saved lessons</h2>
+      <h2>{t("accountSavedHeading")}</h2>
       <p>
-        <Link href="/account/lessons">See your saved lessons</Link>
+        <Link href="/account/lessons">{t("accountSeeSaved")}</Link>
       </p>
-      <h2>Link this device</h2>
+      <h2>{t("accountLinkHeading")}</h2>
       {linked ? (
         <>
-          <p>
-            This device is linked. The photos you kept here are tied to your account, not just to
-            this browser.
-          </p>
+          <p>{t("accountLinkedText")}</p>
           <Button variant="quiet" disabled={busy} onClick={() => unlink.mutate()}>
-            Unlink this device
+            {t("accountUnlinkButton")}
           </Button>
         </>
       ) : (
         <>
           <p>
-            Off. Linking ties the {kept === 1 ? "photo" : "photos"} you kept on this device
-            {kept > 0 ? ` (${kept})` : ""} to your account, so clearing this browser does not leave
-            {kept === 1 ? " it" : " them"} behind. You can unlink at any time.
+            {kept === 0
+              ? t("accountLinkOffNone")
+              : kept === 1
+                ? t("accountLinkOffOne")
+                : t("accountLinkOffOther", { count: kept })}
           </p>
-          {me.emailVerified ? null : <p>Confirm your email first.</p>}
+          {me.emailVerified ? null : <p>{t("accountConfirmFirst")}</p>}
           <Button disabled={busy || !me.emailVerified} onClick={() => link.mutate()}>
-            Link this device
+            {t("accountLinkButton")}
           </Button>
         </>
       )}
       <div role="status">
-        {link.isSuccess && linked ? <p>Linked.</p> : null}
-        {unlink.isSuccess && !linked ? <p>Unlinked.</p> : null}
+        {link.isSuccess && linked ? <p>{t("accountLinked")}</p> : null}
+        {unlink.isSuccess && !linked ? <p>{t("accountUnlinked")}</p> : null}
       </div>
       {error ? <p role="alert">{error.message}</p> : null}
       <YourData email={me.email} />
       <p>
         <Button variant="quiet" disabled={signOut.isPending} onClick={() => signOut.mutate()}>
-          Sign out
+          {t("accountSignOut")}
         </Button>
       </p>
     </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type ComponentProps, type ReactNode } from "react";
+import { useT } from "../i18n/provider";
 
 /** A password input with Show/Hide, so long phrases can be checked before sending. */
 export function PasswordField({
@@ -16,6 +17,7 @@ export function PasswordField({
   /** Sits on the label row, e.g. a "Forgot password?" link. */
   aside?: ReactNode;
 } & Omit<ComponentProps<"input">, "type">) {
+  const t = useT("account");
   const id = useId();
   const [shown, setShown] = useState(false);
   const describedBy = [hint ? `${id}-hint` : "", error ? `${id}-error` : ""].filter(Boolean);
@@ -43,8 +45,8 @@ export function PasswordField({
           aria-controls={id}
           onClick={() => setShown((value) => !value)}
         >
-          {shown ? "Hide" : "Show"}
-          <span className="sbi-visually-hidden"> password</span>
+          {shown ? t("passwordHide") : t("passwordShow")}
+          <span className="sbi-visually-hidden">{t("passwordRevealSuffix")}</span>
         </button>
       </div>
       {hint ? (

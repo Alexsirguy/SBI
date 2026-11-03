@@ -1,4 +1,11 @@
 import type { AudienceBand, PolicyResponse, SafetyCategory, SuitableFor } from "@sbi/contracts";
+import {
+  AGE_HOLDS_ES,
+  ANY_HARM_ES,
+  CATEGORY_NOTICES_ES,
+  isSpanish,
+  REDIRECTS_ES,
+} from "./policy-es";
 
 /** Recorded on every lesson, so a policy change stops older lessons being reused. */
 export const SAFETY_POLICY_VERSION = "safety-2";
@@ -66,11 +73,19 @@ const ANY_HARM: Redirect = {
   help: ["Ask how it works or why it behaves as it does instead.", EMERGENCY],
 };
 
+/** The safety notice for a risky topic, in the learner's language. */
+export function categoryNotice(category: SafetyCategory, locale?: string): string {
+  return (isSpanish(locale) ? CATEGORY_NOTICES_ES : CATEGORY_NOTICES)[category];
+}
+
 /** The response sent instead of a lesson when a question seeks harm, in its category if known. */
-export function policyResponse(category?: SafetyCategory): PolicyResponse {
+export function policyResponse(category?: SafetyCategory, locale?: string): PolicyResponse {
+  const english = category ? REDIRECTS[category] : ANY_HARM;
+  const spanish = category ? REDIRECTS_ES[category] : ANY_HARM_ES;
   return {
     reason: "harm",
-    ...(category ? REDIRECTS[category] : ANY_HARM),
+    ...english,
+    ...(isSpanish(locale) ? { help: [...spanish.help], message: spanish.message } : {}),
     policyVersion: SAFETY_POLICY_VERSION,
   };
 }
@@ -111,11 +126,18 @@ const AGE_HOLDS: Readonly<Record<"teen" | "adult", Omit<PolicyResponse, "policyV
 export function ageHold(
   audience: AudienceBand,
   risk: { suitableFor: SuitableFor; categories: readonly SafetyCategory[] },
+  locale?: string,
 ): PolicyResponse | undefined {
   if (risk.suitableFor === "everyone" || AGE_RANK[audience] >= NEEDED_RANK[risk.suitableFor]) {
     return undefined;
   }
   // Someone young asking about self-harm may be struggling, so they get help, not a settings tip.
-  if (risk.categories.includes("self-harm")) return policyResponse("self-harm");
-  return { ...AGE_HOLDS[risk.suitableFor], policyVersion: SAFETY_POLICY_VERSION };
+  if (risk.categories.includes("self-harm")) return policyResponse("self-harm", locale);
+  const hold = AGE_HOLDS[risk.suitableFor];
+  const spanish = isSpanish(locale) ? AGE_HOLDS_ES[risk.suitableFor] : undefined;
+  return {
+    ...hold,
+    ...(spanish ? { help: [...spanish.help], message: spanish.message } : {}),
+    policyVersion: SAFETY_POLICY_VERSION,
+  };
 }

@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getT } from "../../i18n/server";
 import "../lesson.css";
 import { SavedLesson } from "./saved-lesson";
 
-export const metadata: Metadata = { title: "Saved lesson · Science Behind It" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("lesson");
+  return { title: t("savedLessonTitle") };
+}
 
 export default function SavedLessonPage() {
   return (

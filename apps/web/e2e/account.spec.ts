@@ -52,7 +52,7 @@ test("under-13s are told to ask a grown-up, and nothing is sent", async ({ page 
 
   await page.getByLabel("First name").fill("Sam");
   await page.getByLabel("Last name").fill("Small");
-  await page.getByLabel("Age").selectOption("Under 13");
+  await page.getByLabel("Age", { exact: true }).selectOption("Under 13");
   await page.getByLabel("Email").fill("sam@example.com");
   await page.getByLabel("Password").fill("a very long phrase");
   await page.getByRole("button", { name: "Create Account" }).click();
@@ -77,7 +77,7 @@ test("signing up lands on the account page, which asks to confirm the email", as
 
   await page.getByLabel("First name").fill("Ada");
   await page.getByLabel("Last name").fill("Lovelace");
-  await page.getByLabel("Age").selectOption("14");
+  await page.getByLabel("Age", { exact: true }).selectOption("14");
   await page.getByLabel("Email").fill("ada@example.com");
   await page.getByLabel("Password").fill("analytical engine notes");
   await page.getByRole("button", { name: "Create Account" }).click();

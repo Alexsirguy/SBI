@@ -4,6 +4,7 @@ import type { AssetCredit, VisualManifest } from "@sbi/contracts";
 import { AssetCredits } from "@sbi/ui";
 import type { VisualRegistry } from "@sbi/visuals";
 import { useEffect, useId, useRef } from "react";
+import { useT } from "../i18n/provider";
 import { webRegistry } from "./registry";
 import "./visuals.css";
 
@@ -16,6 +17,7 @@ export function VisualMount({
   manifest: VisualManifest & { credits?: AssetCredit[] };
   registry?: VisualRegistry;
 }) {
+  const t = useT("lesson");
   const mountRef = useRef<HTMLDivElement>(null);
   const descriptionId = useId();
 
@@ -45,8 +47,9 @@ export function VisualMount({
       </p>
       {/* Every visual is generated for its lesson (ADR 0014), so it says so, with its simplifications. */}
       <p className="visual__assumptions">
-        Made by AI for this lesson and simplified
-        {manifest.assumptions.length > 0 ? `: ${manifest.assumptions.join(", ")}.` : "."}
+        {manifest.assumptions.length > 0
+          ? t("visualMadeByAiWith", { assumptions: manifest.assumptions.join(", ") })
+          : t("visualMadeByAi")}
       </p>
       <AssetCredits credits={manifest.credits ?? []} />
     </figure>

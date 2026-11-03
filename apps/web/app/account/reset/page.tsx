@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getT } from "../../i18n/server";
 import { AuthCard } from "../auth-card";
 import { ResetForm } from "./reset-form";
 
-export const metadata: Metadata = { title: "Choose a new password · Science Behind It" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("account");
+  return { title: t("resetMetaTitle") };
+}
 
-export default function ResetPage() {
+export default async function ResetPage() {
+  const t = await getT("account");
   return (
-    <AuthCard title="Choose a new password" intro="This signs you out on every other device.">
+    <AuthCard title={t("resetTitle")} intro={t("resetIntro")}>
       <Suspense>
         <ResetForm />
       </Suspense>

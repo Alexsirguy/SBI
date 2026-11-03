@@ -3,18 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
+import { useT } from "./i18n/provider";
 import { Logo } from "./logo";
 
 // Account leads to sign-in when signed out (ADR 0020).
 const MAIN_LINKS = [
-  { href: "/#how", label: "How it works" },
-  { href: "/about", label: "About" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/account", label: "Account" },
+  { href: "/#how", label: "navHowItWorks" },
+  { href: "/about", label: "navAbout" },
+  { href: "/privacy", label: "navPrivacy" },
+  { href: "/account", label: "navAccount" },
 ] as const;
 
 // Every page's <main> carries id="main", so keyboard users can skip straight past the header.
 export function SiteHeader() {
+  const t = useT("site");
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -37,7 +39,7 @@ export function SiteHeader() {
   return (
     <header className="site-header" data-open={open}>
       <a href="#main" className="skip-link">
-        Skip to content
+        {t("skipToContent")}
       </a>
       <div className="site-header__inner">
         <Link href="/" className="site-brand">
@@ -68,9 +70,9 @@ export function SiteHeader() {
               />
             )}
           </svg>
-          <span className="menu-button__label">{open ? "Close menu" : "Menu"}</span>
+          <span className="menu-button__label">{open ? t("menuClose") : t("menuOpen")}</span>
         </button>
-        <nav aria-label="Main" id={menuId} className="site-menu">
+        <nav aria-label={t("navMainLabel")} id={menuId} className="site-menu">
           <ul className="site-nav">
             {MAIN_LINKS.map((link) => (
               <li key={link.href}>
@@ -79,7 +81,7 @@ export function SiteHeader() {
                   aria-current={pathname === link.href ? "page" : undefined}
                   onClick={close}
                 >
-                  {link.label}
+                  {t(link.label)}
                 </Link>
               </li>
             ))}
@@ -89,7 +91,7 @@ export function SiteHeader() {
                 className="sbi-button sbi-button--primary sbi-button--small"
                 onClick={close}
               >
-                Start a lesson
+                {t("navStartLesson")}
               </Link>
             </li>
           </ul>
