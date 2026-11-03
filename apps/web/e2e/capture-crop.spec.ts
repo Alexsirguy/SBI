@@ -3,23 +3,23 @@ import { expectNoAxeViolations } from "./a11y";
 import { pressDone } from "./mock-api";
 
 // Draws a photo in the page: a dark square on a plain backdrop, or noise that fills the frame.
-async function drawPhoto(page: Page, kind: "object" | "busy") {
+async function drawPhoto(page: Page, kind: "object" | "busy", size = { width: 800, height: 600 }) {
   await page.evaluate(
-    (busy) =>
+    ({ busy, width, height }) =>
       new Promise<void>((resolve) => {
         const canvas = document.createElement("canvas");
-        canvas.width = 800;
-        canvas.height = 600;
+        canvas.width = width;
+        canvas.height = height;
         const context = canvas.getContext("2d");
         if (context && busy) {
-          const pixels = context.createImageData(800, 600);
+          const pixels = context.createImageData(width, height);
           for (let i = 0; i < pixels.data.length; i += 1) {
             pixels.data[i] = i % 4 === 3 ? 255 : Math.floor(Math.random() * 256);
           }
           context.putImageData(pixels, 0, 0);
         } else if (context) {
           context.fillStyle = "#eeeeee";
-          context.fillRect(0, 0, 800, 600);
+          context.fillRect(0, 0, width, height);
           context.fillStyle = "#223344";
           context.fillRect(300, 200, 200, 200);
         }
@@ -32,7 +32,7 @@ async function drawPhoto(page: Page, kind: "object" | "busy") {
           resolve();
         }, "image/png");
       }),
-    kind === "busy",
+    { busy: kind === "busy", ...size },
   );
 }
 
@@ -57,6 +57,30 @@ test("a chosen photo opens a crop that already frames the object", async ({ page
   expect(width).toBeLessThan(300);
   await expect(page.getByRole("button", { name: "Upload photo" })).toBeEnabled();
 });
+
+for (const viewport of [
+  { name: "phone", width: 390, height: 844 },
+  { name: "desktop", width: 1280, height: 800 },
+]) {
+  test(`a tall photo's crop step fits one ${viewport.name} screen, actions included`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/capture");
+    await drawPhoto(page, "object", { width: 600, height: 1200 });
+    const heading = page.getByRole("heading", { name: "Crop your photo" });
+    await expect(heading).toBeVisible({ timeout: 15000 });
+
+    const top = (await heading.boundingBox())?.y ?? 0;
+    const done = await page.getByRole("button", { name: "Done" }).boundingBox();
+    // Below the sticky header, the heading, photo and Done all fit in one screen.
+    expect((done?.y ?? Infinity) + (done?.height ?? 0) - top).toBeLessThan(viewport.height - 80);
+    const frame = await page.locator(".crop-overlay").boundingBox();
+    const photo = await page.getByAltText("Your photo").boundingBox();
+    expect(Math.abs((frame?.width ?? 0) / (frame?.height ?? 1) - 0.5)).toBeLessThan(0.01);
+    expect(photo?.width).toBeCloseTo(frame?.width ?? 0, 0);
+  });
+}
 
 test("a photo the object fills keeps the whole photo", async ({ page }) => {
   await page.goto("/capture");

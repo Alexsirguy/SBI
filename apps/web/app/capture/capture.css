@@ -309,11 +309,16 @@
   margin: 0;
 }
 
-/* The photo fills the frame; the crop is drawn over it in percentages, so any width works. */
+/* The frame keeps the photo's shape but never grows taller than the screen leaves room for, so
+   the actions stay in view; the crop is drawn in percentages, so any size works. */
 .crop-overlay {
+  --crop-max-height: max(16rem, 100svh - 20rem);
   position: relative;
+  justify-self: center;
+  width: min(100%, var(--crop-max-height) * var(--crop-ratio, 1));
   overflow: hidden;
   border-radius: var(--sbi-radius-l);
+  background: var(--sbi-paper-sunk);
   touch-action: none;
   user-select: none;
 }
@@ -321,7 +326,7 @@
 .crop-overlay img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .crop-overlay__area {
