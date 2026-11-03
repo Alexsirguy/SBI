@@ -1,3 +1,4 @@
+import { languageRule } from "./language";
 import { randomBytes } from "node:crypto";
 import { Claim, MODEL_KNOWLEDGE_NOTE, newId } from "@sbi/contracts";
 import { completeStructured, type LlmProvider } from "@sbi/llm";
@@ -38,6 +39,8 @@ export interface ModelKnowledgeInput {
   audience: string;
   readingLevel: string;
   safetyClass: "low" | "medium" | "high";
+  /** The lesson's locale; claims are written in its language. */
+  locale?: string;
 }
 
 interface Proposal {
@@ -75,7 +78,10 @@ export async function generateModelClaims(
     // A lone question is the whole lesson, so it may use every claim a lesson can carry.
     `Write up to ${input.gaps.length === 1 ? 12 : 4} claims per research question.`,
     ...input.gaps.map((gap, index) => `<gap-${tag} id="${index + 1}">${fence(gap)}</gap-${tag}>`),
-  ].join("\n");
+    languageRule(input.locale),
+  ]
+    .filter(Boolean)
+    .join("\n");
   const { value } = await completeStructured(deps.provider, {
     messages: [
       {

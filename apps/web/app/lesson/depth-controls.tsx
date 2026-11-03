@@ -1,7 +1,25 @@
 "use client";
 
-import { Disclosure, RadioGroup, SelectField } from "@sbi/ui";
+import { Button, Disclosure, RadioGroup, SelectField } from "@sbi/ui";
+import { useState } from "react";
+import { useT } from "../i18n/provider";
+import { GrownUpGate } from "../pathway/grown-up-gate";
+import { usePathway } from "../pathway/provider";
+import type { LessonKey } from "./lesson-t";
 import { AGES, type AgeChoice, type Depth, DEPTHS, type LessonPrefs } from "./prefs";
+
+const DEPTH_TEXT: Record<Depth, { label: LessonKey; hint: LessonKey }> = {
+  quick: { label: "depthQuick", hint: "depthQuickHint" },
+  explore: { label: "depthExplore", hint: "depthExploreHint" },
+  deeper: { label: "depthDeeper", hint: "depthDeeperHint" },
+};
+
+const AGE_TEXT: Record<AgeChoice, LessonKey> = {
+  none: "ageNone",
+  child: "ageChild",
+  teen: "ageTeen",
+  adult: "ageAdult",
+};
 
 /** Depth and an optional age band, set only by the learner; changing either requests that version. */
 export function DepthControls({
@@ -11,37 +29,61 @@ export function DepthControls({
   prefs: LessonPrefs;
   onChange: (prefs: LessonPrefs) => void;
 }) {
+  const t = useT("lesson");
+  const tp = useT("pathway");
+  const { pathway, choose } = usePathway();
+  const [gating, setGating] = useState(false);
+  const locked = pathway === "child";
   return (
     <form
       className="depth-controls"
-      aria-label="Lesson settings"
+      aria-label={t("settingsForm")}
       onSubmit={(event) => event.preventDefault()}
     >
       <RadioGroup
-        legend="Explain it"
+        legend={t("explainIt")}
         name="depth"
         look="segmented"
         value={prefs.depth}
         onChange={(depth: Depth) => onChange({ ...prefs, depth })}
         options={(Object.keys(DEPTHS) as Depth[]).map((depth) => ({
           value: depth,
-          label: DEPTHS[depth].label,
+          label: t(DEPTH_TEXT[depth].label),
         }))}
       />
       {/* The pills have room for names only, so the chosen depth is explained here. */}
-      <p className="sbi-field__hint">{DEPTHS[prefs.depth].hint}</p>
-      <Disclosure summary="Age band" open={prefs.age !== "none" || undefined}>
-        <SelectField
-          label="Age band (optional)"
-          value={prefs.age}
-          onChange={(event) => onChange({ ...prefs, age: event.target.value as AgeChoice })}
-        >
-          {(Object.keys(AGES) as AgeChoice[]).map((age) => (
-            <option key={age} value={age}>
-              {AGES[age]}
-            </option>
-          ))}
-        </SelectField>
+      <p className="sbi-field__hint">{t(DEPTH_TEXT[prefs.depth].hint)}</p>
+      <Disclosure summary={t("ageBand")} open={prefs.age !== "none" || locked || undefined}>
+        {/* A child's band changes only after a grown-up check, which also leaves the pathway. */}
+        {locked && gating ? (
+          <GrownUpGate
+            reason={tp("gateAgeBand")}
+            onPass={() => {
+              setGating(false);
+              choose("self");
+            }}
+            onCancel={() => setGating(false)}
+          />
+        ) : locked ? (
+          <p className="depth-controls__locked">
+            {tp("childBandLocked")}{" "}
+            <Button variant="quiet" size="small" onClick={() => setGating(true)}>
+              {tp("changeWithGrownUp")}
+            </Button>
+          </p>
+        ) : (
+          <SelectField
+            label={t("ageBandOptional")}
+            value={prefs.age}
+            onChange={(event) => onChange({ ...prefs, age: event.target.value as AgeChoice })}
+          >
+            {AGES.map((age) => (
+              <option key={age} value={age}>
+                {t(AGE_TEXT[age])}
+              </option>
+            ))}
+          </SelectField>
+        )}
       </Disclosure>
     </form>
   );

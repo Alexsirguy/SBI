@@ -1,3 +1,5 @@
+import { createLogSink } from "@sbi/analytics";
+import { scopedProvider } from "@sbi/llm";
 import { Logger, Module } from "@nestjs/common";
 import type { DatabaseHandle, Repositories } from "@sbi/db";
 import {
@@ -26,6 +28,9 @@ import {
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
+  EVENT_SINK,
+  EVENTS_LIMITER,
+  LESSON_PRICES,
   REPOSITORIES,
   RISK_CLASSIFIER,
   VISUAL_MAKER,
@@ -35,6 +40,9 @@ import { createRateLimiter } from "../common/rate-limiter";
 import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
+import { AccountModule } from "../account/account.module";
+import { SavedLessonsController } from "./saved-lessons.controller";
+import { RelatedController } from "./related.controller";
 import { LessonService } from "./lesson.service";
 import { QuestionsController } from "./questions.controller";
 import { createVisualMaker } from "../visuals/visual-maker";
@@ -77,14 +85,40 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
 }
 
 @Module({
-  imports: [TaxonomyModule, VisualsModule],
-  controllers: [LessonController, LessonFeedbackController, QuestionsController],
+  imports: [AccountModule, TaxonomyModule, VisualsModule],
+  controllers: [
+    LessonController,
+    LessonFeedbackController,
+    QuestionsController,
+    RelatedController,
+    SavedLessonsController,
+  ],
   providers: [
     LessonService,
     {
+      provide: EVENT_SINK,
+      useFactory: () => {
+        const logger = new Logger("Events");
+        return createLogSink((line) => logger.log(line));
+      },
+    },
+    {
+      provide: LESSON_PRICES,
+      inject: [API_ENV],
+      useFactory: (env: ApiEnv) => env.lessonPrices,
+    },
+    {
+      provide: EVENTS_LIMITER,
+      useFactory: () => createRateLimiter({ limit: 120, windowMs: 3_600_000 }),
+    },
+    {
       provide: LESSON_LLM,
       inject: [API_ENV],
-      useFactory: lessonProviderFor,
+      // One shared, scoped provider, so every consumer's calls count towards their lesson (#110).
+      useFactory: (env: ApiEnv) => {
+        const provider = lessonProviderFor(env);
+        return provider ? scopedProvider(provider) : null;
+      },
     },
     {
       provide: RISK_CLASSIFIER,

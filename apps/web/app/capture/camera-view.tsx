@@ -2,19 +2,21 @@
 
 import { Button } from "@sbi/ui";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useT } from "../i18n/provider";
+import { englishCapture, type CaptureT } from "./messages";
 
 type Facing = "environment" | "user";
 
 /** Turns a refused or missing camera into words a learner can act on. */
-export function cameraProblem(error: unknown): string {
+export function cameraProblem(error: unknown, t: CaptureT = englishCapture): string {
   const name = error instanceof DOMException ? error.name : "";
   if (name === "NotAllowedError" || name === "SecurityError") {
-    return "Camera access was not allowed, so we can't show a live view here.";
+    return t("cameraNotAllowed");
   }
   if (name === "NotFoundError" || name === "OverconstrainedError") {
-    return "We couldn't find a camera on this device.";
+    return t("cameraNotFound");
   }
-  return "We couldn't start the camera here.";
+  return t("cameraFailed");
 }
 
 /** A live in-page camera; frames stay on the device and only a snapped photo is passed on. */
@@ -27,12 +29,13 @@ export function CameraView({
   onCancel: () => void;
   onUnavailable: (problem: string) => void;
 }) {
+  const t = useT("capture");
   const videoRef = useRef<HTMLVideoElement>(null);
   const snapRef = useRef<HTMLButtonElement>(null);
   const [facing, setFacing] = useState<Facing>("environment");
   const [ready, setReady] = useState(false);
   const [canSwitch, setCanSwitch] = useState(false);
-  const unavailable = useEffectEvent(onUnavailable);
+  const unavailable = useEffectEvent((error: unknown) => onUnavailable(cameraProblem(error, t)));
   const cancel = useEffectEvent(onCancel);
 
   useEffect(() => {
@@ -53,7 +56,7 @@ export function CameraView({
         setCanSwitch(devices.filter((device) => device.kind === "videoinput").length > 1);
       })
       .catch((error: unknown) => {
-        if (!stopped) unavailable(cameraProblem(error));
+        if (!stopped) unavailable(error);
       });
     return () => {
       stopped = true;
@@ -87,26 +90,23 @@ export function CameraView({
   }
 
   return (
-    <section aria-label="Camera" className="camera-view">
+    <section aria-label={t("cameraLabel")} className="camera-view">
       <video
         ref={videoRef}
         className="camera-view__feed"
-        aria-label="Live camera view"
+        aria-label={t("liveViewLabel")}
         autoPlay
         muted
         playsInline
         onPlaying={() => setReady(true)}
       />
       <p role="status" className="sbi-status">
-        {ready ? "Camera ready. Frame the object, then snap." : "Starting the camera…"}
+        {ready ? t("cameraReady") : t("cameraStarting")}
       </p>
-      <p className="sbi-field__hint">
-        The live view stays on your device. Only the photo you snap is uploaded, and only when you
-        choose Upload photo.
-      </p>
+      <p className="sbi-field__hint">{t("cameraPrivacyHint")}</p>
       <div className="camera-view__actions">
         <Button ref={snapRef} type="button" onClick={snap}>
-          Snap
+          {t("snap")}
         </Button>
         {canSwitch ? (
           <Button
@@ -117,11 +117,11 @@ export function CameraView({
               setFacing((current) => (current === "environment" ? "user" : "environment"));
             }}
           >
-            Switch camera
+            {t("switchCamera")}
           </Button>
         ) : null}
         <Button variant="quiet" type="button" onClick={onCancel}>
-          Cancel
+          {t("cancel")}
         </Button>
       </div>
     </section>

@@ -44,6 +44,9 @@ importers:
       '@nestjs/platform-fastify':
         specifier: 12.1.3
         version: 12.1.3(@nestjs/common@12.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.3(@nestjs/common@12.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
+      '@sbi/analytics':
+        specifier: workspace:*
+        version: link:../../packages/analytics
       '@sbi/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -80,6 +83,9 @@ importers:
       '@sbi/visuals':
         specifier: workspace:*
         version: link:../../packages/visuals
+      jose:
+        specifier: 6.2.12
+        version: 6.2.12
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -138,6 +144,9 @@ importers:
       react-dom:
         specifier: 19.3.1
         version: 19.3.1(react@19.3.1)
+      server-only:
+        specifier: 0.0.1
+        version: 0.0.1
       zod:
         specifier: 4.6.7
         version: 4.6.7
@@ -3079,6 +3088,9 @@ packages:
   javascript-natural-sort@0.7.1:
     resolution: {integrity: sha512-nO6jcEfZWQXDhOiBtG2KvKyEptz7RVbpGP4vTD2hLBdmNQSsCiicO2Ioinv6UI4y9ukqnBpy+XZ9H6uLNgJTlw==}
 
+  jose@6.2.12:
+    resolution: {integrity: sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw==}
+
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
@@ -3578,6 +3590,9 @@ packages:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
     hasBin: true
+
+  server-only@0.0.1:
+    resolution: {integrity: sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==}
 
   set-cookie-parser@2.7.3:
     resolution: {integrity: sha512-irZHtTqurLna57KQG/s+fzOwv/J6XSH4cs8M/vsrY3uCaQ3S6+QJguAH0WdN47SXlk82voMZ4naWMQf8fdEoIg==}
@@ -6365,6 +6380,8 @@ snapshots:
 
   javascript-natural-sort@0.7.1: {}
 
+  jose@6.2.12: {}
+
   joycon@3.1.1: {}
 
   jpeg-js@0.4.4: {}
@@ -6855,6 +6872,8 @@ snapshots:
   semver@6.3.1: {}
 
   semver@7.8.5: {}
+
+  server-only@0.0.1: {}
 
   set-cookie-parser@2.7.3: {}
 

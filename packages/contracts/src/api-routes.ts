@@ -1,10 +1,39 @@
 import type { z } from "zod";
+import {
+  Account,
+  AccountExport,
+  DeleteAccountRequest,
+  DeletedAccount,
+  Done,
+  EmptyRequest,
+  FinishGoogleSignUpRequest,
+  GoogleSignInRequest,
+  GoogleSignInResult,
+  ForgotPasswordRequest,
+  LinkAccountRequest,
+  LinkedAccount,
+  OpenedLesson,
+  SavedLesson,
+  SavedLessonRequest,
+  SavedLessons,
+  SaveLessonRequest,
+  SharedLesson,
+  ResetPasswordRequest,
+  SignInRequest,
+  SignUpRequest,
+  UnlinkedAccount,
+  VerifyEmailRequest,
+} from "./account-api";
 import { Lesson } from "./lesson";
 import {
   LessonFeedbackReceipt,
   LessonFeedbackRequest,
   LessonRequest,
+  NextConceptEventRequest,
   QuestionSuggestionRequest,
+  RecordedEvent,
+  RelatedLessons,
+  RelatedLessonsRequest,
   QuestionSuggestions,
 } from "./lesson-api";
 import {
@@ -26,12 +55,15 @@ import {
 import {
   ObservationMatches,
   ObservationRequest,
+  SupportMap,
+  SupportMapRequest,
   TaxonomySearchRequest,
   TaxonomySearchResults,
 } from "./taxonomy-api";
 import { ServedVisual, VisualRequest } from "./visual";
 
 // GET routes take their request as query parameters, so their request schemas hold strings only.
+// `auth: "account"` routes need a session cookie; `"session"` routes may set or clear one.
 /** HTTP routes served by `apps/api`; the web client and OpenAPI document both read this table. */
 export const API_ROUTES = {
   requestUpload: {
@@ -82,6 +114,14 @@ export const API_ROUTES = {
     response: TaxonomySearchResults,
     errors: [400],
   },
+  supportMap: {
+    method: "get",
+    path: "/taxonomy/support-map",
+    summary: "List the curated catalogue by category and count subjects taught on demand.",
+    request: SupportMapRequest,
+    response: SupportMap,
+    errors: [400],
+  },
   keepPhoto: {
     method: "post",
     path: "/photos/keep",
@@ -124,6 +164,22 @@ export const API_ROUTES = {
     response: Lesson,
     errors: [400, 404, 503],
   },
+  relatedLessons: {
+    method: "get",
+    path: "/lessons/related",
+    summary: "Suggest next concepts for a lesson from the concept graph.",
+    request: RelatedLessonsRequest,
+    response: RelatedLessons,
+    errors: [400, 404],
+  },
+  recordNextConcept: {
+    method: "post",
+    path: "/events/next-concept",
+    summary: "Record that a next-concept suggestion was followed, with ids and rank only.",
+    request: NextConceptEventRequest,
+    response: RecordedEvent,
+    errors: [400, 429],
+  },
   getVisual: {
     method: "get",
     path: "/visuals",
@@ -132,7 +188,191 @@ export const API_ROUTES = {
     response: ServedVisual,
     errors: [400, 404],
   },
+  signUp: {
+    method: "post",
+    path: "/auth/sign-up",
+    summary:
+      "Create an account for someone 13 or over, sign them in and send a verification email.",
+    request: SignUpRequest,
+    response: Account,
+    errors: [400, 403, 409, 429],
+    auth: "session",
+  },
+  signIn: {
+    method: "post",
+    path: "/auth/sign-in",
+    summary: "Sign in with email and password, setting the session cookie.",
+    request: SignInRequest,
+    response: Account,
+    errors: [400, 401, 403, 429],
+    auth: "session",
+  },
+  signOut: {
+    method: "post",
+    path: "/auth/sign-out",
+    summary: "End this session and clear its cookie.",
+    request: EmptyRequest,
+    response: Done,
+    errors: [403],
+    auth: "session",
+  },
+  googleSignIn: {
+    method: "post",
+    path: "/auth/google",
+    summary: "Sign in with a Google ID token, or say which details a new account still needs.",
+    request: GoogleSignInRequest,
+    response: GoogleSignInResult,
+    errors: [400, 401, 403, 503],
+    auth: "session",
+  },
+  finishGoogleSignUp: {
+    method: "post",
+    path: "/auth/google/finish",
+    summary: "Complete a Google sign-up with name and age, after the 13+ check.",
+    request: FinishGoogleSignUpRequest,
+    response: Account,
+    errors: [400, 401, 403, 409, 503],
+    auth: "session",
+  },
+  verifyEmail: {
+    method: "post",
+    path: "/auth/verify",
+    summary: "Confirm an email address with the one-time link sent to it.",
+    request: VerifyEmailRequest,
+    response: Done,
+    errors: [400, 403],
+    auth: "session",
+  },
+  requestPasswordReset: {
+    method: "post",
+    path: "/auth/forgot",
+    summary: "Email a one-time password reset link if the address has an account.",
+    request: ForgotPasswordRequest,
+    response: Done,
+    errors: [400, 403, 429],
+    auth: "session",
+  },
+  resetPassword: {
+    method: "post",
+    path: "/auth/reset",
+    summary: "Set a new password with a reset link, ending every other session.",
+    request: ResetPasswordRequest,
+    response: Done,
+    errors: [400, 403],
+    auth: "session",
+  },
+  getAccount: {
+    method: "get",
+    path: "/account",
+    summary: "Return the signed-in account.",
+    request: EmptyRequest,
+    response: Account,
+    errors: [401],
+    auth: "account",
+  },
+  resendVerification: {
+    method: "post",
+    path: "/account/resend-verification",
+    summary: "Send the email verification link again.",
+    request: EmptyRequest,
+    response: Done,
+    errors: [401, 403, 429],
+    auth: "account",
+  },
+  linkAccount: {
+    method: "post",
+    path: "/account/link",
+    summary:
+      "Link this device's kept photos to the signed-in, verified account, with the account opt-in.",
+    request: LinkAccountRequest,
+    response: LinkedAccount,
+    errors: [400, 401, 403],
+    auth: "account",
+  },
+  saveLesson: {
+    method: "post",
+    path: "/account/lessons/save",
+    summary: "Save the version of a lesson on screen to the signed-in account, pinning it.",
+    request: SaveLessonRequest,
+    response: SavedLesson,
+    errors: [400, 401, 403, 404],
+    auth: "account",
+  },
+  savedLessons: {
+    method: "get",
+    path: "/account/lessons",
+    summary: "List the signed-in account's saved lessons, newest first.",
+    request: EmptyRequest,
+    response: SavedLessons,
+    errors: [401],
+    auth: "account",
+  },
+  openSavedLesson: {
+    method: "get",
+    path: "/account/lessons/open",
+    summary: "Return exactly the saved version of a lesson, with its sources and visuals.",
+    request: SavedLessonRequest,
+    response: OpenedLesson,
+    errors: [400, 401, 404],
+    auth: "account",
+  },
+  shareSavedLesson: {
+    method: "post",
+    path: "/account/lessons/share",
+    summary:
+      "Share an anonymous copy of a saved lesson; a reviewer approves it before others see it.",
+    request: SavedLessonRequest,
+    response: SharedLesson,
+    errors: [400, 401, 403, 404, 409],
+    auth: "account",
+  },
+  removeSavedLesson: {
+    method: "post",
+    path: "/account/lessons/remove",
+    summary: "Remove a lesson from the signed-in account's saved list.",
+    request: SavedLessonRequest,
+    response: Done,
+    errors: [400, 401, 403],
+    auth: "account",
+  },
+  exportAccount: {
+    method: "get",
+    path: "/account/export",
+    summary: "Return everything held for the signed-in account as one bundle.",
+    request: EmptyRequest,
+    response: AccountExport,
+    errors: [401],
+    auth: "account",
+  },
+  deleteAccount: {
+    method: "post",
+    path: "/account/delete",
+    summary: "Delete the account and everything tied to it, after the learner types its email.",
+    request: DeleteAccountRequest,
+    response: DeletedAccount,
+    errors: [400, 401, 403, 502],
+    auth: "account",
+  },
+  unlinkAccount: {
+    method: "post",
+    path: "/account/unlink",
+    summary: "Withdraw the account opt-in: kept photos go back to being found on the device only.",
+    request: EmptyRequest,
+    response: UnlinkedAccount,
+    errors: [401, 403],
+    auth: "account",
+  },
 } as const;
+
+/** True for routes that need a signed-in account. */
+export function needsAccount(name: ApiRouteName): boolean {
+  return (API_ROUTES[name] as { auth?: string }).auth === "account";
+}
+
+/** True for routes that read or set the session cookie, so the browser must send credentials. */
+export function usesSession(name: ApiRouteName): boolean {
+  return (API_ROUTES[name] as { auth?: string }).auth !== undefined;
+}
 
 export type ApiRouteName = keyof typeof API_ROUTES;
 export type ApiRequest<N extends ApiRouteName> = z.input<(typeof API_ROUTES)[N]["request"]>;

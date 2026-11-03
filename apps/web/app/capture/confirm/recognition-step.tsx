@@ -2,17 +2,16 @@
 
 import type { ApiResponse, Certainty } from "@sbi/contracts";
 import { useEffect, useRef, useState } from "react";
+import { useT } from "../../i18n/provider";
+import type { CaptureKey } from "../messages";
 import { DescribeForm } from "./describe-form";
 import { QuestionStep } from "./question-step";
 
-const CERTAINTY_WORDS: Record<Certainty, string> = {
-  likely: "likely",
-  possible: "possible",
-  unsure: "less likely",
+const CERTAINTY_WORDS: Record<Certainty, CaptureKey> = {
+  likely: "certaintyLikely",
+  possible: "certaintyPossible",
+  unsure: "certaintyUnsure",
 };
-
-const NOTHING_SEEN =
-  "We couldn't tell what this is. Tell us what it is, or try a photo of an everyday object, close up and in good light.";
 
 /** The prototype's choice step: what it could be, in the model's words, or the learner's own. */
 export function RecognitionStep({
@@ -27,6 +26,7 @@ export function RecognitionStep({
   onStart: (label: string) => void;
   onRetake: () => void;
 }) {
+  const t = useT("capture");
   const [chosen, setChosen] = useState<string>();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const options = reply?.options ?? [];
@@ -44,17 +44,17 @@ export function RecognitionStep({
   return (
     <section aria-labelledby="choices-heading" className="photo-choices">
       <h2 id="choices-heading" ref={headingRef} tabIndex={-1}>
-        {options.length > 0 ? "Which one is it?" : "What is in your photo?"}
+        {options.length > 0 ? t("whichOne") : t("whatInPhoto")}
       </h2>
       {options.length > 0 ? (
         <>
-          <p>We can see a few possibilities. Pick the one that matches.</p>
+          <p>{t("possibilities")}</p>
           <ul className="choice-list">
             {options.map((option) => (
               <li key={option.label}>
                 <button type="button" className="choice" onClick={() => setChosen(option.label)}>
                   <span>{option.label}</span>
-                  <small>{CERTAINTY_WORDS[option.certainty]}</small>
+                  <small>{t(CERTAINTY_WORDS[option.certainty])}</small>
                 </button>
               </li>
             ))}
@@ -62,17 +62,17 @@ export function RecognitionStep({
         </>
       ) : (
         <p role="status" className="photo-choices__message">
-          {error ?? NOTHING_SEEN}
+          {error ?? t("nothingSeen")}
         </p>
       )}
       <DescribeForm
-        label="Something else? Tell us what it is"
+        label={t("somethingElse")}
         hint=""
-        submitLabel="Use this"
+        submitLabel={t("useThis")}
         onName={setChosen}
       />
       <button type="button" className="back-link" onClick={onRetake}>
-        Try a different photo
+        {t("tryDifferentPhoto")}
       </button>
     </section>
   );

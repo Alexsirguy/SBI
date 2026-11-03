@@ -1,9 +1,15 @@
-import { Body, Controller, Inject, Logger, Post, Res } from "@nestjs/common";
+import { Body, Controller, Inject, Logger, Post, Req, Res } from "@nestjs/common";
 import type { ServerResponse } from "node:http";
 import { API_ROUTES, LessonRequest } from "@sbi/contracts";
+import { withUsageScope } from "@sbi/llm";
+import type { SavedLessonRepository } from "@sbi/db";
+import { sessionToken, type SessionRequest } from "../account/account.guard";
+import { AuthService } from "../account/auth.service";
 import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
+import { SAVED_LESSONS } from "../tokens";
 import { LessonService, type LessonStreamEvent } from "./lesson.service";
+import { lessonText } from "./lesson-text";
 
 const logger = new Logger("LessonController");
 
@@ -33,15 +39,34 @@ function frame(event: LessonStreamEvent | { type: "error"; data: { error: string
 
 @Controller()
 export class LessonController {
-  constructor(@Inject(LessonService) private readonly lessons: LessonService) {}
+  constructor(
+    @Inject(LessonService) private readonly lessons: LessonService,
+    @Inject(AuthService) private readonly auth: Pick<AuthService, "current">,
+    @Inject(SAVED_LESSONS) private readonly saved: Pick<SavedLessonRepository, "list">,
+  ) {}
+
+  // Lessons work signed out; a session only adds the asker's own saved lessons to reuse (#342).
+  private async ownLessonIds(request: SessionRequest): Promise<Set<string> | undefined> {
+    const account = await this.auth.current(sessionToken(request)).catch(() => undefined);
+    if (!account) return undefined;
+    return new Set((await this.saved.list(account.accountId)).map((item) => item.lessonId));
+  }
 
   @Post(API_ROUTES.requestLesson.path)
   async stream(
     @Body(new ZodPipe(LessonRequest, "Ask a question of at least 3 characters."))
     body: LessonRequest,
+    @Req() request: SessionRequest,
     @Res() res: RawResponse,
   ): Promise<void> {
-    const events = this.lessons.streamLesson(body);
+    // The whole stream runs in one usage scope, so the lesson's cost covers every model call.
+    return withUsageScope(() => this.respond(body, request, res));
+  }
+
+  private async respond(body: LessonRequest, request: SessionRequest, res: RawResponse) {
+    const events = this.lessons.streamLesson(body, {
+      ownLessonIds: await this.ownLessonIds(request),
+    });
     const first = await events.next();
     // Headers wait for the first event, so pre-stream failures still map to HTTP errors.
     res.raw.writeHead(200, streamHeaders(res));
@@ -54,7 +79,9 @@ export class LessonController {
         logger.error(`Lesson stream failed: ${(error as Error)?.stack ?? String(error)}`);
       }
       const message =
-        error instanceof UserFacingException ? error.message : "Something went wrong.";
+        error instanceof UserFacingException
+          ? error.message
+          : lessonText(body.locale).somethingWentWrong;
       res.raw.write(frame({ type: "error", data: { error: message } }));
     } finally {
       res.raw.end();

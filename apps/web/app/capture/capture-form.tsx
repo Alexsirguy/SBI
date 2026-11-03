@@ -3,6 +3,7 @@
 import { Button } from "@sbi/ui";
 import { useEffect, useId, useRef, useState } from "react";
 import { webEnv } from "../../env";
+import { useT } from "../i18n/provider";
 import { handedOffPhoto, handOffPhoto } from "../photo-handoff";
 import { Scanner } from "../scanner";
 import { CameraView } from "./camera-view";
@@ -16,6 +17,7 @@ import {
 } from "./limits";
 import { CropOverlay } from "./crop-overlay";
 import { blurFaces, type BlurResult } from "./face-blur";
+import { CaptureError, type CaptureKey, type CaptureT } from "./messages";
 import {
   cropImage,
   normaliseImage,
@@ -60,18 +62,28 @@ function UploadIcon() {
 // The prototype's flow: choose a photo, see only what would stop it working, then upload and pick.
 /** Says when faces were hidden, or when the check could not run, so the learner can decide. */
 function FaceNote({ check }: { check: Pick<BlurResult, "faces" | "checked"> | null }) {
+  const t = useT("capture");
   if (!check || (check.checked && check.faces === 0)) return null;
   const { faces } = check;
   return (
     <p className="face-note">
       {check.checked
-        ? `We blurred ${faces === 1 ? "a face" : `${faces} faces`} on your device, so no one can be recognised.`
-        : "We couldn't check this photo for faces. If anyone is in it, choose another photo."}
+        ? faces === 1
+          ? t("facesBlurredOne")
+          : t("facesBlurredOther", { count: faces })
+        : t("facesUnchecked")}
     </p>
   );
 }
 
+// A failure we raised ourselves is shown in the learner's language; anything else as it came.
+function problemText(error: unknown, t: CaptureT, fallback: CaptureKey) {
+  if (error instanceof CaptureError) return t(error.key);
+  return error instanceof Error ? error.message : t(fallback);
+}
+
 export function CaptureForm() {
+  const t = useT("capture");
   const limits = webEnv.capture;
   const uploadId = useId();
   const problemId = useId();
@@ -120,7 +132,7 @@ export function CaptureForm() {
     try {
       const bitmap = await createImageBitmap(image.blob);
       try {
-        const report = assessQuality(readImageData(bitmap), {}, image);
+        const report = assessQuality(readImageData(bitmap), {}, image, t);
         setIssues(report.checks.filter((check) => !check.passed));
       } finally {
         bitmap.close();
@@ -189,10 +201,7 @@ export function CaptureForm() {
       setCameraNote(null);
       setCameraOpen(true);
     } else {
-      setCameraNote({
-        text: "This browser can't show a live camera here, so your camera app opens instead.",
-        offerApp: false,
-      });
+      setCameraNote({ text: t("liveCameraUnsupported"), offerApp: false });
       cameraRef.current?.click();
     }
   }
@@ -206,7 +215,7 @@ export function CaptureForm() {
     if (!selected) return;
     clear();
     const run = runRef.current;
-    const issue = validateSelection(selected, limits.maxUploadBytes);
+    const issue = validateSelection(selected, limits.maxUploadBytes, t);
     if (issue) {
       setProblem(issue);
       return;
@@ -226,9 +235,7 @@ export function CaptureForm() {
       setCropping(true);
     } catch (error) {
       if (run === runRef.current) {
-        setProblem(
-          error instanceof Error ? error.message : "We couldn't read that photo. Try another one.",
-        );
+        setProblem(problemText(error, t, "readFailed"));
       }
     } finally {
       if (run === runRef.current) setBusy(false);
@@ -253,11 +260,7 @@ export function CaptureForm() {
       setCropping(false);
     } catch (error) {
       if (run === runRef.current) {
-        setProblem(
-          error instanceof Error
-            ? error.message
-            : "We couldn't crop that photo. Try again, or use the whole photo.",
-        );
+        setProblem(problemText(error, t, "cropFailed"));
       }
     } finally {
       if (run === runRef.current) setBusy(false);
@@ -284,22 +287,22 @@ export function CaptureForm() {
   const status = problem
     ? null
     : looking
-      ? (photoUpload.stage ?? "Looking closely…")
+      ? (photoUpload.stage ?? t("lookingClosely"))
       : processing
-        ? "Preparing your photo…"
+        ? t("preparing")
         : cropping
-          ? "We framed what looks like the object. Adjust it if you need to, then press Done."
+          ? t("cropStatus")
           : prepared && !answered
             ? issues.length > 0
-              ? "Photo ready to upload, though it may be hard to recognise."
-              : "Photo ready to upload."
+              ? t("readyWithIssues")
+              : t("ready")
             : null;
 
   return (
     <>
       <form
         ref={formRef}
-        aria-label="Photo capture"
+        aria-label={t("formLabel")}
         className="capture-path capture-form"
         aria-busy={processing || looking}
         onSubmit={(event) => {
@@ -310,17 +313,17 @@ export function CaptureForm() {
         {answered && previewUrl ? (
           <div className="photo-frame">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={previewUrl} alt="Your photo" />
+            <img src={previewUrl} alt={t("yourPhoto")} />
           </div>
         ) : looking ? (
           <div className="looking">
-            <h2>Looking closely…</h2>
+            <h2>{t("lookingClosely")}</h2>
             <Scanner src={previewUrl} />
-            <p className="sbi-field__hint">Checking shapes, parts and materials.</p>
+            <p className="sbi-field__hint">{t("lookingHint")}</p>
           </div>
         ) : cropping && original && originalUrl && crop ? (
           <div className="cropping">
-            <h2>Crop your photo</h2>
+            <h2>{t("cropHeading")}</h2>
             <FaceNote check={faceCheck} />
             <CropOverlay
               src={originalUrl}
@@ -331,7 +334,7 @@ export function CaptureForm() {
             />
             <div className="selected__actions">
               <Button type="button" onClick={() => void finishCrop()} disabled={processing}>
-                Done
+                {t("done")}
               </Button>
               {/* Offered only when it would change something; on a whole-photo crop it cannot. */}
               {crop.width < original.width || crop.height < original.height ? (
@@ -342,11 +345,11 @@ export function CaptureForm() {
                     setCrop({ x: 0, y: 0, width: original.width, height: original.height })
                   }
                 >
-                  Use the whole photo
+                  {t("useWholePhoto")}
                 </Button>
               ) : null}
               <Button variant="quiet" type="button" onClick={retake}>
-                Choose another photo
+                {t("chooseAnother")}
               </Button>
             </div>
           </div>
@@ -357,7 +360,7 @@ export function CaptureForm() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={previewUrl}
-                alt="Your photo"
+                alt={t("yourPhoto")}
                 data-width={prepared.width}
                 data-height={prepared.height}
                 data-type={prepared.type || "image/jpeg"}
@@ -367,29 +370,28 @@ export function CaptureForm() {
             {issues.length > 0 ? (
               <div className="photo-issues">
                 <p>
-                  <strong>This photo may be hard to recognise.</strong> Try another, or upload it
-                  anyway.
+                  <strong>{t("issuesLead")}</strong> {t("issuesAdvice")}
                 </p>
                 <ul>
                   {issues.map((check) => (
-                    <li key={check.id}>{check.guidance ?? "Retake the photo."}</li>
+                    <li key={check.id}>{check.guidance ?? t("retakeFallback")}</li>
                   ))}
                 </ul>
               </div>
             ) : null}
             <div className="selected__actions">
-              <Button type="submit">Upload photo</Button>
+              <Button type="submit">{t("uploadPhoto")}</Button>
               <Button variant="quiet" type="button" onClick={() => setCropping(true)}>
-                Crop again
+                {t("cropAgain")}
               </Button>
               <Button variant="quiet" type="button" onClick={retake}>
-                Choose another photo
+                {t("chooseAnother")}
               </Button>
             </div>
           </div>
         ) : (
           <fieldset className="photo-choice">
-            <legend>Add a photo</legend>
+            <legend>{t("addPhoto")}</legend>
             <div className="photo-choice__actions">
               <button
                 ref={takeRef}
@@ -399,7 +401,7 @@ export function CaptureForm() {
                 onClick={takePhoto}
               >
                 <CameraIcon />
-                Take a photo
+                {t("takePhoto")}
               </button>
               <span className="photo-choice__upload">
                 <input
@@ -415,7 +417,7 @@ export function CaptureForm() {
                 />
                 <label htmlFor={uploadId} className="sbi-button sbi-button--quiet">
                   <UploadIcon />
-                  Upload a photo
+                  {t("uploadAPhoto")}
                 </label>
               </span>
             </div>
@@ -429,7 +431,7 @@ export function CaptureForm() {
                 onUnavailable={(reason) => {
                   setCameraOpen(false);
                   setCameraNote({
-                    text: `${reason} You can use your camera app or upload a photo instead.`,
+                    text: t("cameraUnavailableNote", { reason }),
                     offerApp: true,
                   });
                 }}
@@ -444,14 +446,16 @@ export function CaptureForm() {
                     className="sbi-button sbi-button--quiet sbi-button--small"
                     onClick={() => cameraRef.current?.click()}
                   >
-                    Open camera app
+                    {t("openCameraApp")}
                   </button>
                 ) : null}
               </div>
             ) : null}
             <p className="sbi-field__hint">
-              Accepted formats: {ACCEPTED_FORMATS_LABEL}. Maximum size:{" "}
-              {uploadLimitLabel(limits.maxUploadBytes)}.
+              {t("formatsHint", {
+                formats: ACCEPTED_FORMATS_LABEL,
+                size: uploadLimitLabel(limits.maxUploadBytes),
+              })}
             </p>
           </fieldset>
         )}
@@ -485,7 +489,7 @@ export function CaptureForm() {
       {answered && photoUpload.data && recognition.isSuccess ? (
         <KeepPhoto
           photoKey={photoUpload.data.key}
-          label={recognition.data.options[0]?.label ?? "Photo"}
+          label={recognition.data.options[0]?.label ?? t("photoFallbackLabel")}
         />
       ) : null}
     </>

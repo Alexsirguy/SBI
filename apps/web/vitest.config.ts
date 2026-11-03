@@ -8,6 +8,7 @@ export default mergeConfig(
     oxc: { jsx: { runtime: "automatic" } },
     test: {
       include: ["app/**/*.test.{ts,tsx}"],
+      setupFiles: ["app/test-setup.ts"],
       coverage: { include: ["app/**"] },
     },
   }),

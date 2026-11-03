@@ -4,10 +4,14 @@ import {
   type ApiRequest,
   type ApiResponse,
   type ApiRouteName,
+  usesSession,
 } from "@sbi/contracts";
 
 export const UNREACHABLE =
   "The service is unavailable right now. Check your connection and try again.";
+
+export const BAD_REPLY = "The server sent a reply we could not read.";
+export const UPLOAD_FAILED = "The upload failed. Check your connection and try again.";
 
 export class ApiRequestError extends Error {
   constructor(
@@ -23,25 +27,31 @@ export type ApiCall = <N extends ApiRouteName>(
   body: ApiRequest<N>,
 ) => Promise<ApiResponse<N>>;
 
+function query(params: Record<string, string>): string {
+  const search = new URLSearchParams(params).toString();
+  return search ? `?${search}` : "";
+}
+
 // Requests and replies are checked against the shared contracts, so a drifted API fails loudly.
 export function createApiClient(baseUrl: string, fetcher: typeof fetch = fetch): ApiCall {
   const root = baseUrl.replace(/\/+$/, "");
   return async (name, body) => {
     const route = API_ROUTES[name];
     const request = route.request.parse(body);
+    // Only account and sign-in routes send the session cookie; lessons stay anonymous.
+    const credentials: RequestInit = usesSession(name) ? { credentials: "include" } : {};
     let response: Response;
     try {
-      // GETs carry no body or content type, so browsers send them without a CORS preflight.
+      // GETs carry no body or headers, so browsers send them without a CORS preflight.
       response =
         route.method === "get"
-          ? await fetcher(
-              `${root}${route.path}?${new URLSearchParams(request as Record<string, string>)}`,
-              {
-                method: "GET",
-              },
-            )
+          ? await fetcher(`${root}${route.path}${query(request as Record<string, string>)}`, {
+              ...credentials,
+              method: "GET",
+            })
           : await fetcher(`${root}${route.path}`, {
               body: JSON.stringify(request),
+              ...credentials,
               headers: { "content-type": "application/json" },
               method: "POST",
             });
@@ -55,7 +65,7 @@ export function createApiClient(baseUrl: string, fetcher: typeof fetch = fetch):
     }
     const parsed = route.response.safeParse(payload);
     if (!parsed.success) {
-      throw new ApiRequestError("The server sent a reply we could not read.", response.status);
+      throw new ApiRequestError(BAD_REPLY, response.status);
     }
     return parsed.data as ApiResponse<typeof name>;
   };
@@ -69,9 +79,6 @@ export async function putObject(url: string, blob: Blob, fetcher: typeof fetch =
     method: "PUT",
   }).catch(() => null);
   if (!response?.ok) {
-    throw new ApiRequestError(
-      "The upload failed. Check your connection and try again.",
-      response?.status ?? 0,
-    );
+    throw new ApiRequestError(UPLOAD_FAILED, response?.status ?? 0);
   }
 }

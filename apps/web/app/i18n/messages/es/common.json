@@ -1,0 +1,7 @@
+{
+  "language": "Idioma",
+  "languageHint": "Las lecciones y el sitio usarán este idioma.",
+  "errorUnreachable": "El servicio no está disponible ahora mismo. Comprueba tu conexión e inténtalo de nuevo.",
+  "errorBadReply": "El servidor envió una respuesta que no pudimos leer.",
+  "errorUploadFailed": "La subida falló. Comprueba tu conexión e inténtalo de nuevo."
+}

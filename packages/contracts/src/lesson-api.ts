@@ -27,6 +27,8 @@ export const QuestionSuggestionRequest = z.object({
   subject: z.string().trim().min(2).max(80),
   audience: AudienceBand.default("general"),
   readingLevel: ReadingLevel.default("plain"),
+  // Questions come back in this language (#107); older clients get English.
+  locale: Locale.default("en"),
 });
 
 export const SUGGESTED_QUESTION_COUNT = 5;
@@ -39,12 +41,28 @@ export const QuestionSuggestions = z.object({
 export type QuestionSuggestions = z.infer<typeof QuestionSuggestions>;
 
 /** Questions that fit any object, for when no model can suggest better ones. */
-export function fixedQuestions(subject: string): string[] {
+/** "de el" contracts to "del" in Spanish. */
+export function deEs(name: string): string {
+  return name.startsWith("el ") ? `del ${name.slice(3)}` : `de ${name}`;
+}
+
+export function fixedQuestions(subject: string, locale?: string): string[] {
+  // Worded so they read right for any object, one or many, made or living.
+  if (locale && /^es(-|$)/i.test(locale)) {
+    // Spanish articles carry gender we cannot guess, so the learner's own wording is kept.
+    const nombre = subject.trim().toLowerCase();
+    return [
+      `¿Cuál es la ciencia detrás ${deEs(nombre)}?`,
+      `¿De qué materiales está hecho ${nombre}, y por qué?`,
+      `¿Qué fuerzas o qué energía actúan sobre ${nombre}?`,
+      `¿Qué cambiaría si ${nombre} fuera más grande o más pequeño?`,
+      `¿Qué suele entender mal la gente sobre ${nombre}?`,
+    ];
+  }
   const name = subject
     .trim()
     .toLowerCase()
     .replace(/^(a|an|the)\s+/, "");
-  // Worded so they read right for any object, one or many, made or living.
   return [
     `What is the science behind the ${name}?`,
     `What materials are in the ${name}, and why?`,
@@ -160,3 +178,30 @@ export type SourceExcerpt = z.infer<typeof SourceExcerpt>;
 export type LessonSource = z.infer<typeof LessonSource>;
 export type LessonSources = z.infer<typeof LessonSources>;
 export type LessonProgress = z.infer<typeof LessonProgress>;
+
+/** GETs take query strings, so the version arrives as digits. */
+export const RelatedLessonsRequest = z.object({
+  lessonId: Uuid,
+  version: z.string().regex(/^[1-9]\d{0,5}$/),
+});
+
+/** Next things to learn, chosen from the concept graph, never from what others clicked (#106). */
+export const RelatedLessons = z.object({
+  related: z.array(
+    z.object({
+      taxonomyId: Id,
+      label: z.string(),
+      via: z.string(),
+      distance: z.union([z.literal(1), z.literal(2)]),
+    }),
+  ),
+});
+
+/** Which suggestion a learner followed; no learner id, so it measures the list, not people. */
+export const NextConceptEventRequest = z.object({
+  fromLessonId: Uuid,
+  toTaxonomyId: Id,
+  rank: z.number().int().min(0).max(20),
+});
+
+export const RecordedEvent = z.object({ ok: z.literal(true) });

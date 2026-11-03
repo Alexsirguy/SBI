@@ -1,6 +1,8 @@
 import type { LessonSection } from "@sbi/contracts";
 import type { ReactNode } from "react";
-import { MODULE_LABELS } from "./labels";
+import { useT } from "../../i18n/provider";
+import type { LessonKey } from "../lesson-t";
+import { MODULE_LABEL_KEYS } from "./labels";
 
 export const sectionAnchor = (section: Pick<LessonSection, "module">) =>
   `section-${section.module}`;
@@ -8,9 +10,9 @@ export const sectionAnchor = (section: Pick<LessonSection, "module">) =>
 /** Observation is what the learner can check by looking; inference is the explanation behind it. */
 export type Evidence = "observation" | "inference";
 
-const EVIDENCE_LABELS: Record<Evidence, string> = {
-  observation: "What you can observe",
-  inference: "Explanation",
+const EVIDENCE_LABELS: Record<Evidence, LessonKey> = {
+  observation: "evidenceObservation",
+  inference: "evidenceInference",
 };
 
 // Shared shell, so every module keeps one heading structure and anchor scheme.
@@ -23,7 +25,9 @@ export function SectionFrame({
   evidence?: Evidence;
   children: ReactNode;
 }) {
+  const t = useT("lesson");
   const headingId = `${sectionAnchor(section)}-heading`;
+  const moduleLabel = t(MODULE_LABEL_KEYS[section.module]);
   return (
     <section
       id={sectionAnchor(section)}
@@ -31,10 +35,10 @@ export function SectionFrame({
       className={`lesson-section${evidence ? ` evidence-${evidence}` : ""}`}
     >
       <p className="module-label">
-        {MODULE_LABELS[section.module]}
-        {evidence ? <span className="evidence-tag"> · {EVIDENCE_LABELS[evidence]}</span> : null}
+        {moduleLabel}
+        {evidence ? <span className="evidence-tag"> · {t(EVIDENCE_LABELS[evidence])}</span> : null}
       </p>
-      <h2 id={headingId}>{section.heading ?? MODULE_LABELS[section.module]}</h2>
+      <h2 id={headingId}>{section.heading ?? moduleLabel}</h2>
       {children}
     </section>
   );

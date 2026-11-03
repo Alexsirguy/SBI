@@ -1,33 +1,37 @@
 import Link from "next/link";
+import { LanguageSwitcher } from "./i18n/language-switcher";
+import { getT } from "./i18n/server";
 import { LogoMark } from "./logo";
 
 const FOOTER_GROUPS = [
   {
-    heading: "Learn",
+    heading: "footerLearn",
     links: [
-      { href: "/capture", label: "Start a lesson" },
-      { href: "/#how", label: "How it works" },
-      { href: "/#inside", label: "What's in a lesson" },
+      { href: "/capture", label: "navStartLesson" },
+      { href: "/#how", label: "navHowItWorks" },
+      { href: "/#inside", label: "footerWhatsInLesson" },
     ],
   },
   {
-    heading: "Trust and safety",
+    heading: "footerTrustAndSafety",
     links: [
-      { href: "/about#checks", label: "How lessons are checked" },
-      { href: "/about#safety", label: "Safety" },
-      { href: "/privacy", label: "Privacy" },
+      { href: "/about#checks", label: "footerHowChecked" },
+      { href: "/about#safety", label: "footerSafety" },
+      { href: "/privacy", label: "navPrivacy" },
     ],
   },
   {
-    heading: "About",
+    heading: "footerAbout",
     links: [
-      { href: "/about", label: "About Science Behind It" },
-      { href: "/about#report", label: "Report a mistake" },
+      { href: "/about", label: "footerAboutSbi" },
+      { href: "/support", label: "footerWhatWeCover" },
+      { href: "/about#report", label: "footerReportMistake" },
     ],
   },
 ] as const;
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const t = await getT("site");
   return (
     <footer className="site-footer">
       <div className="site-footer__inner">
@@ -36,18 +40,17 @@ export function SiteFooter() {
           <p>
             <strong>Science Behind It</strong>
             <br />
-            The science of everyday objects, from what you can see to why it works. Every lesson
-            says where it comes from.
+            {t("footerTagline")}
           </p>
         </div>
-        <nav aria-label="Footer" className="site-footer__groups">
+        <nav aria-label={t("footerLabel")} className="site-footer__groups">
           {FOOTER_GROUPS.map((group) => (
             <div key={group.heading}>
-              <p className="site-footer__heading">{group.heading}</p>
+              <p className="site-footer__heading">{t(group.heading)}</p>
               <ul>
                 {group.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href}>{link.label}</Link>
+                    <Link href={link.href}>{t(link.label)}</Link>
                   </li>
                 ))}
               </ul>
@@ -56,10 +59,8 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="site-footer__legal">
-        <p>
-          © {new Date().getFullYear()} Science Behind It. Lessons explain science; they are not
-          professional advice.
-        </p>
+        <p>{t("footerLegal", { year: new Date().getFullYear() })}</p>
+        <LanguageSwitcher />
       </div>
     </footer>
   );

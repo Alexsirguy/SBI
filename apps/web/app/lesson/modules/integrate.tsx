@@ -4,9 +4,10 @@ import type { LessonSection } from "@sbi/contracts";
 import { Button, TextArea } from "@sbi/ui";
 import Link from "next/link";
 import { type ReactNode, useState } from "react";
+import { useT } from "../../i18n/provider";
 import { SectionFrame } from "./frame";
 
-async function shareLesson(title: string): Promise<string> {
+async function shareLesson(title: string): Promise<"" | "linkCopied" | "linkCopyFailed"> {
   const url = window.location.href;
   if (typeof navigator.share === "function") {
     try {
@@ -19,9 +20,9 @@ async function shareLesson(title: string): Promise<string> {
   }
   try {
     await navigator.clipboard.writeText(url);
-    return "Link copied. Paste it to share this lesson.";
+    return "linkCopied";
   } catch {
-    return "Could not copy the link. Copy it from the address bar instead.";
+    return "linkCopyFailed";
   }
 }
 
@@ -35,30 +36,27 @@ export function IntegrateSection({
   title: string;
   askQuestion?: ReactNode;
 }) {
-  const [shared, setShared] = useState("");
+  const t = useT("lesson");
+  const [shared, setShared] = useState<"" | "linkCopied" | "linkCopyFailed">("");
   return (
     <SectionFrame section={section}>
       <p>{section.text}</p>
-      <TextArea
-        label="Where else could you use this? (optional, not saved)"
-        rows={3}
-        hint="Take your time. There is no score and no timer."
-      />
+      <TextArea label={t("whereElse")} rows={3} hint={t("noScoreHint")} />
       <div className="share">
         <Button variant="quiet" onClick={() => void shareLesson(title).then(setShared)}>
-          Share this lesson
+          {t("shareThisLesson")}
         </Button>
         <p role="status" className="share__status">
-          {shared}
+          {shared ? t(shared) : ""}
         </p>
       </div>
-      <h3>Next steps</h3>
+      <h3>{t("nextSteps")}</h3>
       <ul>
         <li>
-          <a href="#section-demonstrate">Go back over the demonstration</a>
+          <a href="#section-demonstrate">{t("backToDemonstration")}</a>
         </li>
         <li>
-          <Link href="/capture">Explore another object</Link>
+          <Link href="/capture">{t("exploreAnother")}</Link>
         </li>
       </ul>
       {askQuestion}

@@ -1,3 +1,4 @@
+import { languageRule } from "./language";
 import { randomBytes } from "node:crypto";
 import { withoutInlineIds } from "./inline-ids";
 import {
@@ -432,6 +433,7 @@ export async function generateDraft(input: DraftInput, deps: DraftDeps): Promise
     {
       question: fencedQuestion(input.question, prompt.version),
       safetyRule: [
+        languageRule(input.locale),
         input.safetyClass === "high" ? HIGH_RISK_DRAFT_RULE : "",
         safeActivityRulesApply(input.audience) ? SAFE_ACTIVITY_RULE : "",
       ]

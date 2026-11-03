@@ -14,8 +14,17 @@ import type { FallbackRecogniser, RecognitionResultRepository } from "@sbi/recog
 import type { CatalogGapRepository } from "@sbi/taxonomy";
 import { AppModule, configureApp } from "../app.module";
 import { loadEnv } from "../env";
+import { fakeAccountStore, fakeMailer, fakeSavedLessons, TEST_SCRYPT } from "./test-auth";
 import {
+  ACCOUNT_TOKENS,
+  ACCOUNTS,
+  COVERAGE,
   API_ENV,
+  GOOGLE_VERIFIER,
+  MAILER,
+  PASSWORD_PARAMS,
+  SAVED_LESSONS,
+  SESSIONS,
   CATALOG_GAPS,
   DATABASE,
   FRESHNESS_PASS,
@@ -128,6 +137,7 @@ export function fakeGaps() {
 
 export interface TestApp {
   app: NestFastifyApplication;
+  get(path: string, headers?: Record<string, string>): Promise<Response>;
   post(path: string, body: unknown, headers?: Record<string, string>): Promise<Response>;
   url: string;
 }
@@ -140,6 +150,7 @@ export async function startTestApp(
   /** Extra overrides for a test that needs one more provider replaced. */
   configure: (builder: TestingModuleBuilder) => TestingModuleBuilder = (builder) => builder,
 ): Promise<TestApp> {
+  const store = fakeAccountStore();
   const base = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(API_ENV)
     .useValue(testEnv)
@@ -162,7 +173,30 @@ export async function startTestApp(
     .overrideProvider(PURGE_PASS)
     .useValue(async () => ({ acquired: false }))
     .overrideProvider(FRESHNESS_PASS)
-    .useValue(async () => ({ acquired: false }));
+    .useValue(async () => ({ acquired: false }))
+    .overrideProvider(ACCOUNTS)
+    .useValue(store.accountRepo)
+    .overrideProvider(SESSIONS)
+    .useValue(store.sessionRepo)
+    .overrideProvider(ACCOUNT_TOKENS)
+    .useValue(store.tokenRepo)
+    .overrideProvider(MAILER)
+    .useValue(fakeMailer().send)
+    .overrideProvider(GOOGLE_VERIFIER)
+    .useValue(null)
+    .overrideProvider(PASSWORD_PARAMS)
+    .useValue(TEST_SCRYPT)
+    .overrideProvider(SAVED_LESSONS)
+    .useValue(fakeSavedLessons().repository)
+    .overrideProvider(COVERAGE)
+    .useValue({
+      taughtBySubject: async () => [
+        { lessons: 4, taxonomyId: "object.bicycle" },
+        { lessons: 2, taxonomyId: "subject.hovercraft" },
+        { lessons: 1, taxonomyId: "subject.rainbow" },
+      ],
+      reviewQueue: async () => [],
+    });
   const moduleRef = await configure(base).compile();
   const app = configureApp(
     moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
@@ -174,6 +208,7 @@ export async function startTestApp(
   const url = await app.getUrl();
   return {
     app,
+    get: (path, headers = {}) => fetch(`${url}${path}`, { headers }),
     post: (path, body, headers = {}) =>
       fetch(`${url}${path}`, {
         body: typeof body === "string" ? body : JSON.stringify(body),

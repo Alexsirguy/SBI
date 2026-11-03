@@ -18,6 +18,13 @@ describe("API_ROUTES", () => {
     }
   });
 
+  it("marks account routes as needing a session cookie, and only them", () => {
+    expect(paths[API_ROUTES.linkAccount.path]?.post).toMatchObject({
+      security: [{ session: [] }],
+    });
+    expect(paths[API_ROUTES.keepPhoto.path]?.post).not.toHaveProperty("security");
+  });
+
   it("documents GET routes with query parameters and no body", () => {
     const search = paths[API_ROUTES.searchTaxonomy.path]?.get;
     expect(search?.requestBody).toBeUndefined();

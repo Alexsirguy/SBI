@@ -1,39 +1,34 @@
 import { CaptureForm } from "./capture-form";
 import { PHOTO_RETENTION_DAYS } from "./limits";
+import { getT } from "../i18n/server";
+import { FirstTimePathwayPrompt } from "../pathway/who-is-learning";
 import { DescribeForm } from "./confirm/describe-form";
 import "./capture.css";
 
-export default function CapturePage() {
+export default async function CapturePage() {
+  const t = await getT("capture");
   return (
     <main id="main" className="capture">
       <header className="capture__intro">
-        <p className="eyebrow">Start a lesson</p>
-        <h1>Photograph an object</h1>
-        <p>Take a photo of an everyday object, or upload one from your device.</p>
+        <p className="eyebrow">{t("eyebrow")}</p>
+        <h1>{t("title")}</h1>
+        <p>{t("intro")}</p>
       </header>
+      {/* Asked once, before the first lesson; afterwards it lives in "Your choices". */}
+      <FirstTimePathwayPrompt />
       {/* Shown before any photo is taken, so learners decide knowing what happens to it. */}
       <section aria-labelledby="privacy-cue" className="privacy-cue">
-        <h2 id="privacy-cue">How your photo is handled</h2>
+        <h2 id="privacy-cue">{t("privacyHeading")}</h2>
         <ul>
-          <li>
-            Photograph the object, not people. Keep faces, documents, addresses and private rooms
-            out of the picture; any face we spot is blurred on your device before it is uploaded.
-          </li>
-          <li>We use your photo only to recognise the object for your lesson.</li>
-          <li>
-            It is stored privately on Cloudflare R2 and never shown to other learners. When photo
-            recognition is on, it is sent to Meta&apos;s model API, or to OpenAI&apos;s if Meta is
-            unavailable; neither may train on it.
-          </li>
-          <li>
-            It is deleted within {PHOTO_RETENTION_DAYS} days, or sooner once recognised, unless you
-            choose to keep it.
-          </li>
+          <li>{t("privacyPeople")}</li>
+          <li>{t("privacyUse")}</li>
+          <li>{t("privacyStorage")}</li>
+          <li>{t("privacyRetention", { days: PHOTO_RETENTION_DAYS })}</li>
         </ul>
       </section>
       <CaptureForm />
       <section aria-labelledby="text-entry" className="capture-path">
-        <h2 id="text-entry">No image? Describe it instead</h2>
+        <h2 id="text-entry">{t("describeHeading")}</h2>
         <DescribeForm />
       </section>
     </main>

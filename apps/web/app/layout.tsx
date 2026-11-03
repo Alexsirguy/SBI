@@ -6,6 +6,11 @@ import "../env";
 import "@sbi/ui/styles.css";
 import "./globals.css";
 import "./site-chrome.css";
+import { getLocale, getMessages } from "./i18n/load";
+import { I18nProvider } from "./i18n/provider";
+import { PathwayProvider } from "./pathway/provider";
+import { getPathway } from "./pathway/server";
+import { getT } from "./i18n/server";
 import { Providers } from "./providers";
 import { SiteHeader } from "./site-chrome";
 import { SiteFooter } from "./site-footer";
@@ -31,18 +36,28 @@ const monoFace = JetBrains_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Science Behind It",
-  description: "Explore the science behind everyday objects.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT("site");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages(locale);
+  const pathway = await getPathway();
   return (
-    <html lang="en" className={`${bodyFace.variable} ${displayFace.variable} ${monoFace.variable}`}>
+    <html
+      lang={locale}
+      className={`${bodyFace.variable} ${displayFace.variable} ${monoFace.variable}`}
+    >
       <body>
-        <SiteHeader />
-        <Providers>{children}</Providers>
-        <SiteFooter />
+        <I18nProvider locale={locale} messages={messages}>
+          <PathwayProvider initial={pathway}>
+            <SiteHeader />
+            <Providers>{children}</Providers>
+            <SiteFooter />
+          </PathwayProvider>
+        </I18nProvider>
       </body>
     </html>
   );

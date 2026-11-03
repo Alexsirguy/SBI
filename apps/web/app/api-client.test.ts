@@ -35,6 +35,27 @@ describe("createApiClient", () => {
     expect(init).toEqual({ method: "GET" });
   });
 
+  it("sends the session cookie on account and sign-in routes only", async () => {
+    const fetcher = replying(200, { ok: true });
+    const api = createApiClient("http://api.test", fetcher);
+
+    await api("signOut", {}).catch(() => undefined);
+    await api("searchTaxonomy", { q: "bike" }).catch(() => undefined);
+
+    expect(fetcher.mock.calls[0]?.[1]).toMatchObject({ credentials: "include", method: "POST" });
+    expect(fetcher.mock.calls[1]?.[1]).toEqual({ method: "GET" });
+  });
+
+  it("leaves off the query string when a GET has no parameters", async () => {
+    const fetcher = replying(401, { error: "Sign in to use your account." });
+    const api = createApiClient("http://api.test", fetcher);
+
+    await api("getAccount", {}).catch(() => undefined);
+
+    expect(fetcher.mock.calls[0]?.[0]).toBe("http://api.test/account");
+    expect(fetcher.mock.calls[0]?.[1]).toEqual({ credentials: "include", method: "GET" });
+  });
+
   it("surfaces the API's error message with its status", async () => {
     const api = createApiClient("http://api.test", replying(409, { error: "Already deleted." }));
 

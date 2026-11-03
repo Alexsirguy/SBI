@@ -30,6 +30,11 @@ function mockResponse(replyHeaders: Record<string, string> = {}) {
   return { chunks, res, state };
 }
 
+// Signed out unless a test says otherwise; the controller only reads saved lesson ids.
+const signedOut = { current: async () => undefined };
+const noSaved = { list: async () => [] };
+const anonymous = { headers: {}, method: "POST" };
+
 function stubService(behavior: unknown[] | Error): LessonService {
   return {
     async *streamLesson() {
@@ -52,10 +57,14 @@ function parseEvents(chunks: string[]): { type: string; data: unknown }[] {
 
 describe("LessonController", () => {
   it("frames the stream as SSE in arrival order", async () => {
-    const controller = new LessonController(stubService([ANSWER, FULL, VISUALS]));
+    const controller = new LessonController(
+      stubService([ANSWER, FULL, VISUALS]),
+      signedOut,
+      noSaved,
+    );
     const { chunks, res, state } = mockResponse();
 
-    await controller.stream({} as never, res);
+    await controller.stream({} as never, anonymous, res);
 
     expect(state.status).toBe(200);
     expect(state.headers["Content-Type"]).toBe("text/event-stream");
@@ -69,24 +78,28 @@ describe("LessonController", () => {
 
   it("lets pre-stream failures reach the HTTP error filter", async () => {
     const failure = new UserFacingException("Try again later.", 503);
-    const controller = new LessonController(stubService(failure));
+    const controller = new LessonController(stubService(failure), signedOut, noSaved);
     const { res, state } = mockResponse();
 
-    await expect(controller.stream({} as never, res)).rejects.toBe(failure);
+    await expect(controller.stream({} as never, anonymous, res)).rejects.toBe(failure);
     expect(state.status).toBe(0);
     expect(state.ended).toBe(false);
   });
 
   it("ends a broken stream with an error event", async () => {
-    const controller = new LessonController({
-      async *streamLesson() {
-        yield ANSWER;
-        throw new UserFacingException("Judge timed out.", 503);
-      },
-    } as unknown as LessonService);
+    const controller = new LessonController(
+      {
+        async *streamLesson() {
+          yield ANSWER;
+          throw new UserFacingException("Judge timed out.", 503);
+        },
+      } as unknown as LessonService,
+      signedOut,
+      noSaved,
+    );
     const { chunks, res, state } = mockResponse();
 
-    await controller.stream({} as never, res);
+    await controller.stream({} as never, anonymous, res);
 
     const events = parseEvents(chunks);
     expect(events.map((event) => event.type)).toEqual(["quick-answer", "error"]);
@@ -144,5 +157,42 @@ describe("lesson routes", () => {
     const bad = await test.post("/lessons", { question: "x" });
     expect(bad.status).toBe(400);
     expect(await bad.json()).toEqual({ error: "Ask a question of at least 3 characters." });
+  });
+
+  it("adds a signed-in learner's saved lessons to reuse, and nothing when signed out", async () => {
+    const seen: unknown[] = [];
+    const service = {
+      async *streamLesson(_body: unknown, viewer: unknown) {
+        seen.push(viewer);
+        yield* [ANSWER];
+      },
+    } as unknown as LessonService;
+    const account = { accountId: "0192f1a0-0000-7000-8000-000000000001" };
+    const controller = new LessonController(
+      service,
+      { current: async (token) => (token === "t" ? (account as never) : undefined) },
+      {
+        list: async () => [
+          {
+            lessonId: "0192f1a0-0000-7000-8000-0000000000c1",
+            savedAt: new Date(),
+            title: "K",
+            version: 1,
+          },
+        ],
+      },
+    );
+
+    await controller.stream(
+      {} as never,
+      { headers: { cookie: "sbi_session=t" }, method: "POST" },
+      mockResponse().res,
+    );
+    await controller.stream({} as never, anonymous, mockResponse().res);
+
+    expect(seen).toEqual([
+      { ownLessonIds: new Set(["0192f1a0-0000-7000-8000-0000000000c1"]) },
+      { ownLessonIds: undefined },
+    ]);
   });
 });

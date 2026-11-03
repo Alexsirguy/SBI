@@ -1,4 +1,4 @@
-import { TaxonomySearchResults } from "@sbi/contracts";
+import { SupportMap, TaxonomySearchResults } from "@sbi/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { startTestApp, WEB_ORIGIN, type TestApp } from "../testing/test-app";
 
@@ -39,5 +39,33 @@ describe("taxonomy routes", () => {
       expect(response.status).toBe(400);
       expect(await response.json()).toEqual({ error: "Type at least 2 letters to search." });
     }
+  });
+
+  it("publishes the curated catalogue and on-demand counts, never which subjects", async () => {
+    test = await startTestApp();
+
+    const map = SupportMap.parse(await (await fetch(`${test.url}/taxonomy/support-map`)).json());
+
+    expect(map.onDemandSubjects).toBe(2);
+    expect(map.catalogueObjects).toBe(map.categories.flatMap((item) => item.objects).length);
+    const objects = map.categories.flatMap((item) => item.objects);
+    expect(objects.find((item) => item.id === "object.mushroom")).toMatchObject({
+      safetyNotice: true,
+    });
+    expect(objects.find((item) => item.id === "object.bicycle")).toMatchObject({
+      curated: true,
+      safetyNotice: false,
+    });
+    expect(JSON.stringify(map)).not.toContain("hovercraft");
+  });
+
+  it("names the catalogue in Spanish when asked", async () => {
+    test = await startTestApp();
+    const map = SupportMap.parse(
+      await (await fetch(`${test.url}/taxonomy/support-map?locale=es`)).json(),
+    );
+    expect(map.categories.flatMap((item) => item.objects).map((item) => item.label)).toContain(
+      "Bicicleta",
+    );
   });
 });

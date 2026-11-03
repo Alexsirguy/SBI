@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
+import { AccountModule } from "./account/account.module";
 import { ApiErrorFilter } from "./common/api-error.filter";
 import { ConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
@@ -15,6 +16,7 @@ import { VisualsModule } from "./visuals/visuals.module";
 
 @Module({
   imports: [
+    AccountModule,
     ConfigModule,
     DatabaseModule,
     EvidenceModule,
@@ -32,6 +34,7 @@ export class AppModule {}
 
 // Shared by the server and tests so both run with the same HTTP behaviour.
 export function configureApp(app: NestFastifyApplication, webOrigins: string[]) {
-  app.enableCors({ methods: ["GET", "POST"], origin: webOrigins });
+  // Credentials let our web app send the session cookie; only listed origins may.
+  app.enableCors({ credentials: true, methods: ["GET", "POST"], origin: webOrigins });
   return app;
 }

@@ -33,12 +33,12 @@ describe("observation route", () => {
     test = await startTestApp(fakeMedia(), fakeRecognition(), gaps);
 
     const response = await test.post("/observations", {
-      guess: "My Penny-Farthing from 1885",
+      guess: "My Hover-Craft from 1985",
       material: "brass",
     });
 
     expect(await response.json()).toEqual({ results: [] });
-    expect(gaps.recorded).toEqual([{ source: "observation", term: "penny farthing" }]);
+    expect(gaps.recorded).toEqual([{ source: "observation", term: "hover craft" }]);
   });
 
   it("still answers when the gap cannot be stored", async () => {

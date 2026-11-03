@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { API_ROUTES } from "./api-routes";
+import { API_ROUTES, needsAccount, type ApiRouteName } from "./api-routes";
 import { ApiError } from "./media-api";
 import { CONTRACT_SCHEMAS, CONTRACTS_VERSION } from "./registry";
 
@@ -49,6 +49,7 @@ function apiPaths(): JsonObject {
       [route.method]: {
         operationId,
         summary: route.summary,
+        ...(needsAccount(operationId as ApiRouteName) ? { security: [{ session: [] }] } : {}),
         ...input,
         responses: {
           200: { description: "OK", ...json(inlineSchema(route.response, "output")) },
@@ -72,6 +73,9 @@ export function contractOpenApi(): JsonObject {
     openapi: "3.1.0",
     info: { title: "Science Behind It contracts", version: CONTRACTS_VERSION },
     paths: apiPaths(),
-    components: { schemas },
+    components: {
+      schemas,
+      securitySchemes: { session: { type: "apiKey", in: "cookie", name: "sbi_session" } },
+    },
   };
 }

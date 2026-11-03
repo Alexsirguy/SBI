@@ -5,6 +5,8 @@ import type { LessonDisclaimer, LessonRequest, PolicyResponse } from "@sbi/contr
 import { Button, Mark, Notice, StatusLine } from "@sbi/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { INTL_LOCALE } from "../i18n/locales";
+import { useLocale, useT } from "../i18n/provider";
 import { handedOffPhoto } from "../photo-handoff";
 import { Scanner } from "../scanner";
 import { AskQuestion } from "./ask-question";
@@ -14,8 +16,13 @@ import { LessonFeedback } from "./feedback";
 import { lessonHref } from "./lesson-request";
 import { cautionText } from "./notice-text";
 import { LessonRail } from "./lesson-rail";
+import { useErrorText } from "./lesson-t";
 import { useLessonExperiment } from "./lesson-experiment";
+import { GrownUpGate } from "../pathway/grown-up-gate";
+import { usePathway } from "../pathway/provider";
+import { NextConcepts } from "./next-concepts";
 import { PracticeProvider } from "./practice";
+import { SaveLesson } from "./save-lesson";
 import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
 import { VisualFrame } from "./visual-frame";
@@ -32,13 +39,17 @@ interface LessonReaderProps {
 }
 
 // One notice, whatever the lesson carries, with any safety text first (owner decision, #281).
-function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
+export function LessonNotice({ items }: { items: LessonDisclaimer[] }) {
+  const t = useT("lesson");
   const safety = items.find((item) => item.kind === "safety");
-  const caution = cautionText(items);
+  const caution = cautionText(items, t);
   if (!safety && !caution) return null;
   return (
-    <aside aria-label="Before you read" className="lesson-notices">
-      <Notice kind={safety ? "safety" : "note"}>
+    <aside aria-label={t("noticeAside")} className="lesson-notices">
+      <Notice
+        kind={safety ? "safety" : "note"}
+        label={safety ? t("noticeSafety") : t("noticeNote")}
+      >
         {safety ? <p>{safety.message}</p> : null}
         {caution ? <p>{caution}</p> : null}
       </Notice>
@@ -54,6 +65,10 @@ function PolicyHelp({
   policy: PolicyResponse;
   onChangeAge: (age: "teen" | "adult") => void;
 }) {
+  const t = useT("lesson");
+  const tp = useT("pathway");
+  const { pathway, choose } = usePathway();
+  const [gating, setGating] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const unlock = policy.reason === "age" ? policy.suitableFor : undefined;
   // The loader that held focus is gone, so the learner lands on the help.
@@ -62,12 +77,15 @@ function PolicyHelp({
     <section aria-labelledby="policy-heading" className="policy-help">
       <h2 id="policy-heading" tabIndex={-1} ref={heading}>
         {policy.reason === "age"
-          ? "This one is for older learners"
+          ? t("policyAgeHeading")
           : policy.category === "self-harm"
-            ? "You don't have to face this alone"
-            : "Let's try a safer question"}
+            ? t("policySelfHarmHeading")
+            : t("policySaferHeading")}
       </h2>
-      <Notice kind={policy.reason === "age" ? "note" : "safety"}>
+      <Notice
+        kind={policy.reason === "age" ? "note" : "safety"}
+        label={policy.reason === "age" ? t("noticeNote") : t("noticeSafety")}
+      >
         <p>{policy.message}</p>
         <ul>
           {policy.help.map((item) => (
@@ -75,15 +93,24 @@ function PolicyHelp({
           ))}
         </ul>
       </Notice>
-      {unlock ? (
-        <Button onClick={() => onChangeAge(unlock)}>
-          {unlock === "adult"
-            ? "I'm an adult: change age band"
-            : "I'm a teen or adult: change age band"}
+      {/* In the child pathway the band only changes after a grown-up check. */}
+      {unlock && gating ? (
+        <GrownUpGate
+          reason={tp("gateAgeBand")}
+          onPass={() => {
+            setGating(false);
+            choose("self");
+            onChangeAge(unlock);
+          }}
+          onCancel={() => setGating(false)}
+        />
+      ) : unlock ? (
+        <Button onClick={() => (pathway === "child" ? setGating(true) : onChangeAge(unlock))}>
+          {unlock === "adult" ? t("policyUnlockAdult") : t("policyUnlockTeen")}
         </Button>
       ) : null}
       <Link href="/capture" className="policy-help__next">
-        Learn about something else
+        {t("learnSomethingElse")}
       </Link>
     </section>
   );
@@ -102,6 +129,9 @@ function useHandedOffPhoto(label: string) {
 
 // The prototype's order: a loader until the quick answer, then the answer, then the steps.
 export function LessonReader({ request, label, prefs, question, fetcher }: LessonReaderProps) {
+  const t = useT("lesson");
+  const locale = useLocale();
+  const errorText = useErrorText();
   const router = useRouter();
   const subject = { label, taxonomyId: request.taxonomyId };
   const photo = useHandedOffPhoto(label);
@@ -123,6 +153,13 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   // The spec promises a fresh answer is always available, so a reused lesson can be replaced.
   const askFresh = () => router.push(lessonHref(subject, { question, prefs, fresh: true }));
   const written = lesson ? new Date(lesson.reuse.generatedAt) : undefined;
+  const day = (date: Date) =>
+    date.toLocaleDateString(INTL_LOCALE[locale], {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    });
   const loading = status === "loading";
   const disclaimers = lesson?.disclaimers ?? answer?.disclaimers ?? [];
   const writing = loading && !answer && !lesson && !policy;
@@ -133,33 +170,40 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
       <header className="lesson-head">
         {/* Recognition can be wrong, so a way back is always here, where the prototype puts it. */}
         <Link href="/capture#text-entry" className="lesson-head__change">
-          Not a {label.toLowerCase()}? Describe it instead
+          {t("notThisObject", { label: label.toLowerCase() })}
         </Link>
         <p className="topic-chip">{label}</p>
-        <h1>{lesson?.title ?? answer?.title ?? `Lesson: ${label}`}</h1>
+        <h1>{lesson?.title ?? answer?.title ?? t("lessonFallbackTitle", { label })}</h1>
         <DepthControls prefs={chosen} onChange={choose} />
+        {lesson && status === "ready" ? (
+          <SaveLesson
+            lessonId={lesson.lessonId}
+            version={lesson.version}
+            returnTo={lessonHref(subject, { question, prefs })}
+          />
+        ) : null}
       </header>
       <StatusLine>
         {policy
           ? ""
           : status === "ready"
-            ? "Lesson ready."
+            ? t("statusReady")
             : loading
-              ? (progress?.message ?? "Starting your lesson…")
+              ? (progress?.message ?? t("statusStarting"))
               : ""}
       </StatusLine>
       {error ? (
-        <Notice kind="error" live>
-          <p>{error}</p>
+        <Notice kind="error" label={t("noticeProblem")} live>
+          <p>{errorText(error)}</p>
           <Button size="small" onClick={retry}>
-            Try again
+            {t("tryAgain")}
           </Button>
         </Notice>
       ) : null}
       {writing ? (
         <div className="writing">
-          <h2>Writing your lesson…</h2>
-          <p className="writing__lede">Working out “{request.question}” from the beginning.</p>
+          <h2>{t("writingHeading")}</h2>
+          <p className="writing__lede">{t("writingLede", { question: request.question })}</p>
           <Scanner src={photo} label={label} />
         </div>
       ) : null}
@@ -167,7 +211,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
       {/* Never beside a lesson: a Merrill lesson opens on its problem, and the answer spoils the guess. */}
       {answer && !lesson ? (
         <section aria-labelledby="quick-answer-heading" className="quick-answer">
-          <h2 id="quick-answer-heading">Quick answer</h2>
+          <h2 id="quick-answer-heading">{t("quickAnswer")}</h2>
           <p className="short-answer">
             <Mark>{answer.shortAnswer}</Mark>
           </p>
@@ -179,13 +223,13 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
       (status === "ready" && !policy) ? (
         <p className="provenance">
           {answer?.kind === "cached" && written
-            ? `This lesson was written earlier for a similar question, on ${written.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}. `
+            ? `${t("provenanceCached", { date: day(written) })} `
             : answer?.kind === "fallback"
-              ? "This is a related lesson, shown because a new one could not be written. "
+              ? `${t("provenanceFallback")} `
               : null}
           {status === "ready" && !request.fresh ? (
             <Button variant="quiet" size="small" onClick={askFresh}>
-              Get a fresh answer
+              {t("freshAnswer")}
             </Button>
           ) : null}
         </p>
@@ -204,6 +248,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
               renderVisual={(visual) => <VisualFrame visual={visual} />}
             />
           </PracticeProvider>
+          {lesson && status === "ready" ? (
+            <NextConcepts lessonId={lesson.lessonId} version={lesson.version} prefs={prefs} />
+          ) : null}
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
           {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
         </div>

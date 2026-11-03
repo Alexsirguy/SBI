@@ -38,12 +38,64 @@ const schema = z.object({
   FEEDBACK_MAX_PER_HOUR: z.coerce.number().int().positive().default(20),
   QUESTIONS_MAX_PER_HOUR: z.coerce.number().int().positive().default(60),
   FEATURE_FLAGS: z.string().optional(),
+  // Accounts (ADR 0020): Google sign-in needs only the client id, since its button returns an ID token.
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  // Without a token, verification and reset links are logged instead of emailed (development).
+  ZEPTOMAIL_TOKEN: z.string().min(1).optional(),
+  ZEPTOMAIL_FROM: z.email().optional(),
+  ZEPTOMAIL_FROM_NAME: z.string().min(1).default("Science Behind It"),
+  ZEPTOMAIL_API_URL: z.url().default("https://api.zeptomail.com/v1.1/email"),
+  // US dollars per million tokens for the lesson model; set all three to price each lesson (#110).
+  LESSON_PRICE_INPUT_PER_MTOK: z.coerce.number().nonnegative().optional(),
+  LESSON_PRICE_CACHED_INPUT_PER_MTOK: z.coerce.number().nonnegative().optional(),
+  LESSON_PRICE_OUTPUT_PER_MTOK: z.coerce.number().nonnegative().optional(),
+  SESSION_TTL_DAYS: z.coerce.number().int().positive().max(90).default(30),
+  // Browsers drop Secure cookies over plain http, so local development turns it off.
+  SESSION_COOKIE_SECURE: z.stringbool().optional(),
 });
+
+function parsePrices(env: z.infer<typeof schema>) {
+  const input = env.LESSON_PRICE_INPUT_PER_MTOK;
+  const cachedInput = env.LESSON_PRICE_CACHED_INPUT_PER_MTOK;
+  const output = env.LESSON_PRICE_OUTPUT_PER_MTOK;
+  if (input === undefined && cachedInput === undefined && output === undefined) return null;
+  if (input === undefined || cachedInput === undefined || output === undefined) {
+    throw new Error("Set all three LESSON_PRICE_* values, or none to log tokens without a price.");
+  }
+  return { cachedInput, input, output };
+}
+
+function parseCookieSecure(env: z.infer<typeof schema>): boolean {
+  if (env.NODE_ENV === "production" && env.SESSION_COOKIE_SECURE === false) {
+    throw new Error("SESSION_COOKIE_SECURE cannot be false in production.");
+  }
+  return env.SESSION_COOKIE_SECURE ?? env.NODE_ENV === "production";
+}
+
+function parseMail(env: z.infer<typeof schema>) {
+  // Without a sender, links are logged for development; in production that would leak them.
+  if (!env.ZEPTOMAIL_TOKEN && env.NODE_ENV === "production") {
+    throw new Error("Set ZEPTOMAIL_TOKEN and ZEPTOMAIL_FROM in production; links must be emailed.");
+  }
+  if (!env.ZEPTOMAIL_TOKEN) return null;
+  if (!env.ZEPTOMAIL_FROM) {
+    throw new Error("Set ZEPTOMAIL_FROM, a sender address verified in ZeptoMail.");
+  }
+  return {
+    apiUrl: env.ZEPTOMAIL_API_URL,
+    from: env.ZEPTOMAIL_FROM,
+    fromName: env.ZEPTOMAIL_FROM_NAME,
+    token: env.ZEPTOMAIL_TOKEN,
+  };
+}
 
 export function loadEnv(source: EnvSource = process.env) {
   const env = createEnv(schema, source);
   return {
     ...env,
+    lessonPrices: parsePrices(env),
+    mail: parseMail(env),
+    sessionCookieSecure: parseCookieSecure(env),
     features: parseFlags(FEATURE_DEFAULTS, env.FEATURE_FLAGS),
     ranking: parseRankingConfig(source),
     // Provider keys stay in the source; RecognitionModule builds the chain only when one is set.

@@ -28,7 +28,7 @@ const PARSERS = {
   visuals: LessonVisuals,
 } as const;
 
-const UNREADABLE = "The lesson arrived in a form we could not read. Try again.";
+export const UNREADABLE = "The lesson arrived in a form we could not read. Try again.";
 
 function toEvent(frame: string): LessonEvent | { type: "error"; error: string } | undefined {
   let type = "message";
@@ -67,6 +67,8 @@ export async function streamLesson(
   try {
     response = await fetcher(`${baseUrl.replace(/\/+$/, "")}${API_ROUTES.requestLesson.path}`, {
       body: JSON.stringify(body),
+      // The session goes too, so a signed-in learner can get back their own saved lessons (#342).
+      credentials: "include",
       headers: { "content-type": "application/json", accept: "text/event-stream" },
       method: "POST",
       signal: options.signal,

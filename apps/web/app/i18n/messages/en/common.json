@@ -1,0 +1,7 @@
+{
+  "language": "Language",
+  "languageHint": "Lessons and the site will use this language.",
+  "errorUnreachable": "The service is unavailable right now. Check your connection and try again.",
+  "errorBadReply": "The server sent a reply we could not read.",
+  "errorUploadFailed": "The upload failed. Check your connection and try again."
+}

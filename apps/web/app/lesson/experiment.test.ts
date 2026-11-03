@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createExperimentController, visualSliderId } from "./experiment";
-import { goalHint, goalMet } from "./goal";
+import { format } from "../i18n/format";
+import en from "../i18n/messages/en";
+import { goalHint as hint, goalMet } from "./goal";
+import type { LessonT } from "./lesson-t";
 import { SAMPLE_MERRILL_MANIFEST } from "./sample-merrill-lesson";
 
 // The same slider the visual's common layer draws, so the controller is driven as in the app.
@@ -65,6 +68,9 @@ describe("createExperimentController", () => {
 });
 
 describe("goals", () => {
+  const t: LessonT = (key, values) => format(en.lesson[key], values);
+  const goalHint = (...args: [Parameters<typeof hint>[0], number, typeof pitch]) =>
+    hint(...args, t, "en");
   const pitch = { label: "Pitch", unit: "Hz" };
 
   it("checks at least, at most and near", () => {

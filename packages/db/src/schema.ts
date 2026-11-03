@@ -215,9 +215,87 @@ export const mediaObjects = mysqlTable(
     savedByUser: boolean("saved_by_user").notNull().default(false),
     // The save-photos opt-in a kept photo was kept under (#70).
     consentVersion: varchar("consent_version", { length: 40 }),
+    // Set only when the learner links this device to an account with the account opt-in (#102).
+    ownerAccountId: uuid("owner_account_id"),
     deletingAt: timestamp("deleting_at"),
   },
-  (table) => [index("media_objects_expires_idx").on(table.expiresAt)],
+  (table) => [
+    index("media_objects_expires_idx").on(table.expiresAt),
+    index("media_objects_owner_idx").on(table.ownerAccountId),
+  ],
+);
+
+// Accounts are for 13 and over (ADR 0020); email is stored lowercased so it is unique as typed.
+export const accounts = mysqlTable(
+  "accounts",
+  {
+    accountId: uuid("account_id").primaryKey(),
+    email: varchar("email", { length: 254 }).notNull(),
+    emailVerifiedAt: timestamp("email_verified_at"),
+    // scrypt with its parameters (`scrypt$N$r$p$salt$hash`); null for Google-only accounts.
+    passwordHash: varchar("password_hash", { length: 200 }),
+    googleSub: varchar("google_sub", { length: 255 }),
+    firstName: varchar("first_name", { length: 80 }).notNull(),
+    lastName: varchar("last_name", { length: 80 }).notNull(),
+    ageAtSignup: int("age_at_signup").notNull(),
+    createdAt: timestamp("created_at").notNull(),
+    linkedAt: timestamp("linked_at"),
+    // The account opt-in that linking happened under (ADR 0019).
+    consentVersion: varchar("consent_version", { length: 40 }),
+  },
+  (table) => [
+    uniqueIndex("accounts_email_idx").on(table.email),
+    uniqueIndex("accounts_google_sub_idx").on(table.googleSub),
+  ],
+);
+
+// One row per saved lesson; the version is pinned so later edits never change what was saved.
+export const savedLessons = mysqlTable(
+  "saved_lessons",
+  {
+    accountId: uuid("account_id").notNull(),
+    lessonId: uuid("lesson_id").notNull(),
+    lessonVersion: int("lesson_version").notNull(),
+    title: varchar("title", { length: 200 }).notNull(),
+    savedAt: timestamp("saved_at").notNull(),
+    // The anonymous copy made when the learner shared it (#104); it holds nothing about them.
+    sharedLessonId: uuid("shared_lesson_id"),
+    sharedAt: timestamp("shared_at"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.accountId, table.lessonId] }),
+    index("saved_lessons_saved_idx").on(table.accountId, table.savedAt),
+  ],
+);
+
+// Only a hash of each session token is stored, so a database copy cannot sign anyone in.
+export const sessions = mysqlTable(
+  "sessions",
+  {
+    sessionHash: char("session_hash", { length: 64 }).primaryKey(),
+    accountId: uuid("account_id").notNull(),
+    createdAt: timestamp("created_at").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (table) => [
+    index("sessions_account_idx").on(table.accountId),
+    index("sessions_expires_idx").on(table.expiresAt),
+  ],
+);
+
+// One-time email links (verify, reset); hashed like sessions and deleted once used.
+export const accountTokens = mysqlTable(
+  "account_tokens",
+  {
+    tokenHash: char("token_hash", { length: 64 }).primaryKey(),
+    accountId: uuid("account_id").notNull(),
+    purpose: varchar("purpose", { length: 16 }).notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (table) => [
+    index("account_tokens_account_idx").on(table.accountId, table.purpose),
+    index("account_tokens_expires_idx").on(table.expiresAt),
+  ],
 );
 
 export const deletionAuditLog = mysqlTable(

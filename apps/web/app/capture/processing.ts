@@ -1,4 +1,5 @@
 import { stripMetadata } from "@sbi/media/browser";
+import { CaptureError } from "./messages";
 
 export interface NormaliseOptions {
   maxDimension?: number;
@@ -75,14 +76,14 @@ async function readBitmap(source: Blob): Promise<ImageBitmap> {
     return await createImageBitmap(source, { imageOrientation: "from-image" });
   } catch {
     // Most often an HEIC file the browser cannot decode.
-    throw new Error("This photo format cannot be read in your browser. Try JPG or PNG.");
+    throw new CaptureError("formatUnreadable");
   }
 }
 
 function encode(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode the photo."))),
+      (blob) => (blob ? resolve(blob) : reject(new CaptureError("encodeFailed"))),
       "image/jpeg",
       quality,
     );
@@ -114,7 +115,7 @@ export async function normaliseImage(
     canvas.height = height;
     const context = canvas.getContext("2d");
     if (!context) {
-      throw new Error("Photo processing is unavailable in this browser.");
+      throw new CaptureError("processingUnavailable");
     }
     context.drawImage(bitmap, 0, 0, width, height);
     return await finish(canvas, quality);
@@ -129,10 +130,10 @@ export async function cropImage(
   opts: NormaliseOptions = {},
 ): Promise<ProcessedImage> {
   if (!Number.isFinite(rect.x + rect.y + rect.width + rect.height)) {
-    throw new Error("Crop values must be numbers.");
+    throw new CaptureError("cropNotNumbers");
   }
   if (rect.width <= 0 || rect.height <= 0) {
-    throw new Error("Choose a crop area with a positive width and height.");
+    throw new CaptureError("cropNotPositive");
   }
   const quality = opts.quality ?? DEFAULT_JPEG_QUALITY;
   const bitmap = await readBitmap(source);
@@ -143,7 +144,7 @@ export async function cropImage(
     canvas.height = height;
     const context = canvas.getContext("2d");
     if (!context) {
-      throw new Error("Photo processing is unavailable in this browser.");
+      throw new CaptureError("processingUnavailable");
     }
     context.drawImage(bitmap, x, y, width, height, 0, 0, width, height);
     return await finish(canvas, quality);

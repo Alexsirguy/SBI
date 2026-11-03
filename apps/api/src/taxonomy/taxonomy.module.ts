@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import type { Repositories } from "@sbi/db";
 import { createTaxonomy, SEED_TAXONOMY } from "@sbi/taxonomy";
-import { CATALOG_GAPS, REPOSITORIES, TAXONOMY } from "../tokens";
+import { CATALOG_GAPS, COVERAGE, REPOSITORIES, TAXONOMY } from "../tokens";
 import { ObservationsController } from "./observations.controller";
 import { ObservationsService } from "./observations.service";
 import { TaxonomyController } from "./taxonomy.controller";
@@ -15,6 +15,11 @@ import { TaxonomyController } from "./taxonomy.controller";
       provide: CATALOG_GAPS,
       inject: [REPOSITORIES],
       useFactory: (repos: Repositories) => repos.catalogGaps,
+    },
+    {
+      provide: COVERAGE,
+      inject: [REPOSITORIES],
+      useFactory: (repos: Repositories) => repos.coverage,
     },
   ],
   exports: [ObservationsService, TAXONOMY],

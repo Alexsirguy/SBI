@@ -44,6 +44,10 @@ const TABLES = [
   "lesson_review_events",
   "evidence_packs",
   "lesson_feedback",
+  "accounts",
+  "sessions",
+  "account_tokens",
+  "saved_lessons",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -614,6 +618,244 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       }
       expect(await repos.deletionAudit.purgeOlderThan(at(-500))).toBe(2);
       expect(await repos.deletionAudit.purgeOlderThan(at(-500))).toBe(0);
+    });
+  });
+
+  describe("accounts", () => {
+    const now = new Date("2026-11-02T10:00:00Z");
+    const later = (ms: number) => new Date(now.getTime() + ms);
+    const photo = (key: string) => ({
+      createdAt: now,
+      expiresAt: now,
+      key,
+      kind: "original" as const,
+    });
+    const person = (email: string, googleSub: string | null = null) => ({
+      ageAtSignup: 14,
+      createdAt: now,
+      email,
+      emailVerifiedAt: null,
+      firstName: "Ada",
+      googleSub,
+      lastName: "Lovelace",
+      passwordHash: "scrypt$hash",
+    });
+
+    const create = async (email: string, googleSub: string | null = null) => {
+      const account = await repos.accounts.create(person(email, googleSub));
+      if (!account) throw new Error(`could not create ${email}`);
+      return account;
+    };
+
+    it("creates an account once per email and Google account", async () => {
+      const ada = await create("ada@example.com", "g-1");
+      expect(ada).toMatchObject({ email: "ada@example.com", firstName: "Ada", linkedAt: null });
+      expect(await repos.accounts.create(person("ada@example.com"))).toBeUndefined();
+      expect(await repos.accounts.create(person("other@example.com", "g-1"))).toBeUndefined();
+      expect((await repos.accounts.findByGoogleSub("g-1"))?.accountId).toBe(ada.accountId);
+
+      await repos.accounts.update(ada.accountId, { emailVerifiedAt: now });
+      expect((await repos.accounts.findByEmail("ada@example.com"))?.emailVerifiedAt).toEqual(now);
+    });
+
+    it("links only kept photos nobody owns, and unlinks without unkeeping", async () => {
+      const mine = await create("a@example.com");
+      const theirs = await create("b@example.com");
+      for (const key of ["photos/kept.jpg", "photos/theirs.jpg", "photos/unkept.jpg"]) {
+        await repos.mediaRegistry.register(photo(key));
+      }
+      await repos.mediaRegistry.keep("photos/kept.jpg", "consent-1");
+      await repos.mediaRegistry.keep("photos/theirs.jpg", "consent-1");
+      await repos.accounts.link(theirs.accountId, ["photos/theirs.jpg"], "consent-1", now);
+
+      const keys = ["photos/kept.jpg", "photos/theirs.jpg", "photos/unkept.jpg"];
+      expect(await repos.accounts.link(mine.accountId, keys, "consent-1", now)).toBe(1);
+      expect((await repos.accounts.get(mine.accountId))?.linkedAt).toEqual(now);
+
+      expect(await repos.accounts.unlink(mine.accountId)).toBe(1);
+      const [row] = await handle.db
+        .select()
+        .from(mediaObjects)
+        .where(eq(mediaObjects.objectKey, "photos/kept.jpg"));
+      expect(row).toMatchObject({ ownerAccountId: null, savedByUser: true });
+      expect((await repos.accounts.get(mine.accountId))?.linkedAt).toBeNull();
+    });
+
+    it("deletes an account with its sessions, links and saved lessons, leaving others", async () => {
+      const ada = await create("a@example.com");
+      const grace = await create("g@example.com");
+      for (const id of [ada.accountId, grace.accountId]) {
+        await repos.sessions.create(id.replace(/-/g, "").padEnd(64, "0"), id, now, later(1000));
+        await repos.accountTokens.issue(
+          id.replace(/-/g, "").padEnd(64, "1"),
+          id,
+          "verify-email",
+          later(1000),
+        );
+        await repos.savedLessons.save(id, {
+          lessonId: "0192f1a0-0000-7000-8000-0000000000c1",
+          savedAt: now,
+          title: "Kettles",
+          version: 1,
+        });
+      }
+      await repos.mediaRegistry.register(photo("photos/ada.jpg"));
+      await repos.mediaRegistry.keep("photos/ada.jpg", "consent-1");
+      await repos.accounts.link(ada.accountId, ["photos/ada.jpg"], "consent-1", now);
+      expect(await repos.accounts.ownedPhotos(ada.accountId)).toEqual([
+        { consentVersion: "consent-1", key: "photos/ada.jpg" },
+      ]);
+
+      await repos.accounts.delete(ada.accountId);
+
+      expect(await repos.accounts.get(ada.accountId)).toBeUndefined();
+      expect(await repos.savedLessons.list(ada.accountId)).toEqual([]);
+      expect(
+        await repos.sessions.find(ada.accountId.replace(/-/g, "").padEnd(64, "0"), now),
+      ).toBeUndefined();
+      expect(await repos.accounts.ownedPhotos(ada.accountId)).toEqual([]);
+      expect(await repos.accounts.get(grace.accountId)).toBeDefined();
+      expect(await repos.savedLessons.list(grace.accountId)).toHaveLength(1);
+    });
+
+    it("finds live sessions only, and ends them one or all at a time", async () => {
+      const ada = await create("a@example.com");
+      await repos.sessions.create("a".repeat(64), ada.accountId, now, later(1000));
+      await repos.sessions.create("b".repeat(64), ada.accountId, now, later(1000));
+      await repos.sessions.create("c".repeat(64), ada.accountId, now, later(-1));
+
+      expect(await repos.sessions.find("a".repeat(64), now)).toBe(ada.accountId);
+      expect(await repos.sessions.find("c".repeat(64), now)).toBeUndefined();
+      expect(await repos.sessions.deleteExpired(now)).toBe(1);
+      await repos.sessions.delete("a".repeat(64));
+      expect(await repos.sessions.find("a".repeat(64), now)).toBeUndefined();
+      await repos.sessions.deleteForAccount(ada.accountId);
+      expect(await repos.sessions.find("b".repeat(64), now)).toBeUndefined();
+    });
+
+    it("uses a token once, before it expires, and only the latest of its purpose", async () => {
+      const ada = await create("a@example.com");
+      await repos.accountTokens.issue("1".repeat(64), ada.accountId, "verify-email", later(1000));
+      await repos.accountTokens.issue("2".repeat(64), ada.accountId, "verify-email", later(1000));
+      await repos.accountTokens.issue("3".repeat(64), ada.accountId, "reset-password", later(-1));
+
+      expect(await repos.accountTokens.peek("2".repeat(64), "verify-email", now)).toBe(
+        ada.accountId,
+      );
+      expect(await repos.accountTokens.peek("3".repeat(64), "reset-password", now)).toBeUndefined();
+      expect(
+        await repos.accountTokens.consume("1".repeat(64), "verify-email", now),
+      ).toBeUndefined();
+      expect(
+        await repos.accountTokens.consume("2".repeat(64), "reset-password", now),
+      ).toBeUndefined();
+      expect(await repos.accountTokens.consume("2".repeat(64), "verify-email", now)).toBe(
+        ada.accountId,
+      );
+      expect(
+        await repos.accountTokens.consume("2".repeat(64), "verify-email", now),
+      ).toBeUndefined();
+      expect(
+        await repos.accountTokens.consume("3".repeat(64), "reset-password", now),
+      ).toBeUndefined();
+    });
+  });
+
+  describe("saved lessons", () => {
+    const account = "0192f1a0-0000-7000-8000-00000000000a";
+    const other = "0192f1a0-0000-7000-8000-00000000000b";
+    const lessonId = "0192f1a0-0000-7000-8000-0000000000c1";
+    const at = (iso: string) => new Date(iso);
+
+    it("pins the saved version, replaces it on a later save, and keeps accounts apart", async () => {
+      await repos.savedLessons.save(account, {
+        lessonId,
+        savedAt: at("2026-11-03T09:00:00Z"),
+        title: "Kettles",
+        version: 1,
+      });
+      await repos.savedLessons.save(other, {
+        lessonId,
+        savedAt: at("2026-11-03T09:00:00Z"),
+        title: "Kettles",
+        version: 1,
+      });
+      expect((await repos.savedLessons.get(account, lessonId))?.version).toBe(1);
+
+      await repos.savedLessons.save(account, {
+        lessonId,
+        savedAt: at("2026-11-03T10:00:00Z"),
+        title: "Kettles, revised",
+        version: 2,
+      });
+      expect(await repos.savedLessons.list(account)).toEqual([
+        {
+          lessonId,
+          savedAt: at("2026-11-03T10:00:00Z"),
+          sharedAt: null,
+          title: "Kettles, revised",
+          version: 2,
+        },
+      ]);
+      const share = () =>
+        repos.savedLessons.markShared(
+          account,
+          lessonId,
+          "0192f1a0-0000-7000-8000-0000000000d1",
+          at("2026-11-03T11:00:00Z"),
+        );
+      // Two requests at once: exactly one claims the share.
+      expect((await Promise.all([share(), share()])).sort()).toEqual([false, true]);
+      expect((await repos.savedLessons.get(account, lessonId))?.sharedAt).toEqual(
+        at("2026-11-03T11:00:00Z"),
+      );
+      expect((await repos.savedLessons.get(other, lessonId))?.sharedAt).toBeNull();
+      expect((await repos.savedLessons.get(other, lessonId))?.version).toBe(1);
+
+      await repos.savedLessons.remove(account, lessonId);
+      expect(await repos.savedLessons.list(account)).toEqual([]);
+      expect(await repos.savedLessons.list(other)).toHaveLength(1);
+    });
+
+    it("lists newest first", async () => {
+      const second = "0192f1a0-0000-7000-8000-0000000000c2";
+      await repos.savedLessons.save(account, {
+        lessonId,
+        savedAt: at("2026-11-01T00:00:00Z"),
+        title: "Older",
+        version: 1,
+      });
+      await repos.savedLessons.save(account, {
+        lessonId: second,
+        savedAt: at("2026-11-02T00:00:00Z"),
+        title: "Newer",
+        version: 3,
+      });
+      expect((await repos.savedLessons.list(account)).map((item) => item.title)).toEqual([
+        "Newer",
+        "Older",
+      ]);
+    });
+  });
+
+  describe("coverage", () => {
+    it("counts distinct lessons per subject, not versions", async () => {
+      const lesson = fixture(Lesson, "lesson", "kettle-full");
+      await repos.lessons.save(lesson);
+      await repos.lessons.save({ ...lesson, version: 2 });
+      await repos.lessons.save({
+        ...lesson,
+        lessonId: "0192f1a0-0000-7000-8000-0000000000e1",
+        taxonomyId: "subject.car-engine",
+      });
+
+      const taught = await repos.coverage.taughtBySubject();
+      expect(taught.sort((a, b) => a.taxonomyId.localeCompare(b.taxonomyId))).toEqual([
+        { lessons: 1, taxonomyId: lesson.taxonomyId },
+        { lessons: 1, taxonomyId: "subject.car-engine" },
+      ]);
+      const queue = await repos.coverage.reviewQueue();
+      expect(queue).toEqual([{ status: lesson.reviewStatus, versions: 3 }]);
     });
   });
 

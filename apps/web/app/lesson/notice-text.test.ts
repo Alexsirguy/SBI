@@ -1,6 +1,12 @@
 import type { LessonDisclaimer } from "@sbi/contracts";
 import { describe, expect, it } from "vitest";
-import { cautionText } from "./notice-text";
+import { format } from "../i18n/format";
+import en from "../i18n/messages/en";
+import type { LessonT } from "./lesson-t";
+import { cautionText as caution } from "./notice-text";
+
+const t: LessonT = (key, values) => format(en.lesson[key], values);
+const cautionText = (items: LessonDisclaimer[]) => caution(items, t);
 
 const note = (kind: LessonDisclaimer["kind"]): LessonDisclaimer => ({
   kind,

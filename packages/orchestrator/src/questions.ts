@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { fixedQuestions, SUGGESTED_QUESTION_COUNT, type QuestionSuggestions } from "@sbi/contracts";
+import { languageRule } from "./language";
 import { completeStructured, type LlmProvider } from "@sbi/llm";
 
 export const QUESTION_SUGGEST_PROMPT_VERSION = "question-suggest-p0.2";
@@ -37,6 +38,7 @@ export interface QuestionSuggestionInput {
   subject: string;
   audience: string;
   readingLevel: string;
+  locale?: string;
 }
 
 /** Five questions about the object, in the model's words; fixed ones fill any it leaves out. */
@@ -44,7 +46,7 @@ export async function suggestQuestions(
   input: QuestionSuggestionInput,
   deps: { provider: LlmProvider | null; signal?: AbortSignal },
 ): Promise<QuestionSuggestions> {
-  const fixed = fixedQuestions(input.subject);
+  const fixed = fixedQuestions(input.subject, input.locale);
   if (!deps.provider) return { questions: fixed, source: "fixed" };
   const tag = randomBytes(6).toString("hex");
   const subject = input.subject.replaceAll(/<\/?data-[^>]*>/gi, " ");
@@ -56,7 +58,10 @@ export async function suggestQuestions(
         content: [
           `<data-${tag}>Object: ${subject}</data-${tag}>`,
           `Audience: ${input.audience} | Reading level: ${input.readingLevel}`,
-        ].join("\n"),
+          languageRule(input.locale),
+        ]
+          .filter(Boolean)
+          .join("\n"),
       },
     ],
     jsonSchema: { name: "QuestionSuggestions", schema: SCHEMA },

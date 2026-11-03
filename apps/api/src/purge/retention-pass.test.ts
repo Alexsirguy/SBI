@@ -9,12 +9,14 @@ const days = (n: number) => new Date(NOW.getTime() - n * 86_400_000);
 function deps() {
   const storage = { list: vi.fn(async () => []), remove: vi.fn() } as unknown as ObjectStorage;
   const repos = {
+    accountTokens: { deleteExpired: vi.fn(async () => 1) },
     catalogGaps: { deleteLastSeenBefore: vi.fn(async () => 1) },
     deletionAudit: { record: vi.fn(), purgeOlderThan: vi.fn(async () => 0) },
     evidencePacks: { deleteCreatedBefore: vi.fn(async () => 2) },
     lessonFeedback: { clearDetailsBefore: vi.fn(async () => 3) },
     mediaRegistry: { listExpired: vi.fn(async () => []) },
     recognitionResults: { deleteExpired: vi.fn(async () => 4) },
+    sessions: { deleteExpired: vi.fn(async () => 2) },
     tutorTurns: { deleteCreatedBefore: vi.fn(async () => 1) },
   };
   return { repos, deps: { repos, storage } as unknown as RetentionDeps };
@@ -48,12 +50,15 @@ describe("runRetentionPass", () => {
     expect(repos.evidencePacks.deleteCreatedBefore).toHaveBeenCalledWith(days(30));
     expect(repos.catalogGaps.deleteLastSeenBefore).toHaveBeenCalledWith(days(365));
     expect(repos.deletionAudit.purgeOlderThan).toHaveBeenCalledWith(days(365));
+    expect(repos.sessions.deleteExpired).toHaveBeenCalledWith(NOW);
+    expect(repos.accountTokens.deleteExpired).toHaveBeenCalledWith(NOW);
     expect(result).toMatchObject({
       recognitionPurged: 4,
       feedbackDetailsCleared: 3,
       tutorTurnsPurged: 3,
       evidencePacksPurged: 2,
       catalogGapsPurged: 1,
+      accountSecretsPurged: 3,
     });
   });
 

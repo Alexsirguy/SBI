@@ -12,6 +12,15 @@ const router = vi.hoisted(() => {
   return { push: vi.fn(), replace: vi.fn() };
 });
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
+// Signed out: the reader offers sign-in instead of saving.
+vi.mock("../api", async () => {
+  const { ApiRequestError } = await import("../api-client");
+  return {
+    api: async () => {
+      throw new ApiRequestError("Sign in to use your account.", 401);
+    },
+  };
+});
 
 const { LessonReader } = await import("./lesson-reader");
 
@@ -82,6 +91,23 @@ describe("LessonReader", () => {
     );
     expect(container.querySelectorAll(".rail h2")).toHaveLength(8);
     expect(container.querySelector(".guess-reveal")).toBeNull();
+  });
+
+  it("offers a signed-out learner sign-in to save, coming back to this lesson", async () => {
+    const { container } = await read(
+      [
+        { type: "quick-answer", data: SAMPLE_ANSWER },
+        { type: "lesson", data: SAMPLE_LESSON },
+        { type: "visuals", data: { lessonId: SAMPLE_LESSON.lessonId, visuals: [] } },
+      ],
+      "Magnifying glass",
+    );
+    await vi.waitFor(() => expect(container.querySelector(".save-lesson")).not.toBeNull());
+    const link = container.querySelector<HTMLAnchorElement>("a.save-lesson");
+    expect(link?.textContent).toBe("Sign in to save this lesson");
+    expect(link?.getAttribute("href")).toMatch(
+      /^\/account\/sign-in\?next=%2Flesson%3Flabel%3DMagnifying%2Bglass/,
+    );
   });
 
   it("shows help, and no lesson or error, when the question sought harm", async () => {

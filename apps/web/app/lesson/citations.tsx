@@ -2,6 +2,9 @@
 
 import { readableText, type Claim, type Lesson, type LessonSources } from "@sbi/contracts";
 import { type ReactNode, useEffect, useRef } from "react";
+import { INTL_LOCALE } from "../i18n/locales";
+import { useLocale, useT } from "../i18n/provider";
+import { rich } from "./lesson-t";
 
 interface CitationIndex {
   claims: Map<string, Claim>;
@@ -28,6 +31,8 @@ export const sourceAnchor = (number: number) => `source-${number}`;
 
 /** The numbered source list, with credits and only the quotes licences allow. */
 export function SourceList({ sources, lesson }: { sources: LessonSources; lesson: Lesson }) {
+  const t = useT("lesson");
+  const locale = useLocale();
   const { numbers } = citationIndex(lesson, sources);
   const listed = sources.sources
     .filter((source) => numbers.has(source.sourceId))
@@ -35,7 +40,7 @@ export function SourceList({ sources, lesson }: { sources: LessonSources; lesson
   const generated = new Date(lesson.reuse.generatedAt);
   const checked = lesson.reuse.validatedAt ? new Date(lesson.reuse.validatedAt) : undefined;
   const day = (date: Date) =>
-    date.toLocaleDateString("en-GB", {
+    date.toLocaleDateString(INTL_LOCALE[locale], {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -45,14 +50,12 @@ export function SourceList({ sources, lesson }: { sources: LessonSources; lesson
     <section aria-labelledby="sources-heading" className="lesson-sources">
       <SourcesFold count={listed.length}>
         <p>
-          Lesson written <time dateTime={lesson.reuse.generatedAt}>{day(generated)}</time>
-          {checked ? (
-            <>
-              {"; sources last checked "}
+          {rich(t(checked ? "sourcesWrittenChecked" : "sourcesWritten"), {
+            written: <time dateTime={lesson.reuse.generatedAt}>{day(generated)}</time>,
+            checked: checked ? (
               <time dateTime={lesson.reuse.validatedAt}>{day(checked)}</time>
-            </>
-          ) : null}
-          .
+            ) : null,
+          })}
         </p>
         {listed.length > 0 ? (
           <ol>
@@ -71,7 +74,7 @@ export function SourceList({ sources, lesson }: { sources: LessonSources; lesson
                     <>
                       {" "}
                       <a href={source.license.url} rel="noopener noreferrer" target="_blank">
-                        Licence
+                        {t("licence")}
                       </a>
                     </>
                   ) : null}
@@ -81,7 +84,7 @@ export function SourceList({ sources, lesson }: { sources: LessonSources; lesson
             ))}
           </ol>
         ) : (
-          <p>No outside source is cited; see the note at the top of the lesson.</p>
+          <p>{t("noSources")}</p>
         )}
       </SourcesFold>
     </section>
@@ -90,6 +93,7 @@ export function SourceList({ sources, lesson }: { sources: LessonSources; lesson
 
 /** Collapsed until asked for, or opened by a link straight to one of its sources. */
 function SourcesFold({ count, children }: { count: number; children: ReactNode }) {
+  const t = useT("lesson");
   const fold = useRef<HTMLDetailsElement>(null);
   // A shared link to a source would otherwise land on a closed list.
   useEffect(() => {
@@ -101,9 +105,9 @@ function SourcesFold({ count, children }: { count: number; children: ReactNode }
   return (
     <details ref={fold} className="lesson-fold">
       <summary>
-        <h2 id="sources-heading">Sources</h2>
+        <h2 id="sources-heading">{t("sourcesHeading")}</h2>
         <span className="lesson-fold__count">
-          {count} {count === 1 ? "source" : "sources"}
+          {t(count === 1 ? "sourceCountOne" : "sourceCountOther", { count })}
         </span>
       </summary>
       {children}
@@ -113,12 +117,13 @@ function SourcesFold({ count, children }: { count: number; children: ReactNode }
 
 /** The passages a source is quoted for, behind their own toggle so the list stays short. */
 function Quotes({ source }: { source: LessonSources["sources"][number] }) {
+  const t = useT("lesson");
   const quotes = source.excerpts.filter((excerpt) => excerpt.mode === "quote" && excerpt.text);
   if (quotes.length === 0) return null;
   return (
     <details className="source-quotes">
       <summary>
-        {quotes.length === 1 ? "Show the quoted passage" : `Show ${quotes.length} quoted passages`}
+        {quotes.length === 1 ? t("quotesOne") : t("quotesOther", { count: quotes.length })}
       </summary>
       {quotes.map((excerpt) => (
         <blockquote key={excerpt.excerptId} cite={source.url}>

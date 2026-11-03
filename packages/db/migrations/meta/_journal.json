@@ -113,6 +113,27 @@
       "when": 1793643717698,
       "tag": "0015_photo_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1793651574055,
+      "tag": "0016_accounts",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1793697192759,
+      "tag": "0017_saved_lessons",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1793701937869,
+      "tag": "0018_shared_lessons",
+      "breakpoints": true
     }
   ]
 }

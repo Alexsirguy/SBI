@@ -1,4 +1,5 @@
 import type { Lesson, LessonSection } from "@sbi/contracts";
+import { useT } from "../../i18n/provider";
 import { SectionFrame } from "./frame";
 import { conceptsInOrder } from "./order";
 
@@ -22,12 +23,13 @@ export function FirstPrinciplesSection({
 
 /** The key ideas in the order they build on each other, saying what each builds on. */
 export function KeyIdeas({ concepts }: { concepts: Concept[] }) {
+  const t = useT("lesson");
   const ordered = conceptsInOrder(concepts);
   const labels = new Map(concepts.map((concept) => [concept.conceptId, concept.label]));
   if (ordered.length === 0) return null;
   return (
     <>
-      <h3>Key ideas, in order</h3>
+      <h3>{t("keyIdeas")}</h3>
       <ol className="concepts">
         {ordered.map((concept) => {
           const builds = concept.prerequisites.flatMap((id) => labels.get(id) ?? []);
@@ -35,7 +37,7 @@ export function KeyIdeas({ concepts }: { concepts: Concept[] }) {
             <li key={concept.conceptId}>
               {concept.label}
               {builds.length > 0 ? (
-                <span className="builds-on"> (builds on {builds.join(", ")})</span>
+                <span className="builds-on"> {t("buildsOn", { ideas: builds.join(", ") })}</span>
               ) : null}
             </li>
           );

@@ -3,6 +3,8 @@
 import type { DemonstrationStep, Lesson, LessonSection, LessonTask } from "@sbi/contracts";
 import { Button, VisuallyHidden } from "@sbi/ui";
 import { type ReactNode, useState } from "react";
+import { useT } from "../../i18n/provider";
+import { rich } from "../lesson-t";
 import { useExperiment } from "../practice";
 import { GuessReveal } from "./activate";
 import { KeyIdeas } from "./first-principles";
@@ -17,6 +19,7 @@ function StepButton({
   number: number;
   onShown: (message: string) => void;
 }) {
+  const t = useT("lesson");
   const { controller } = useExperiment({
     controls: step.settings.map((setting) => setting.controlId),
   });
@@ -28,14 +31,12 @@ function StepButton({
       onClick={() => {
         const applied = controller.apply(step.settings);
         controller.reveal();
-        onShown(
-          applied
-            ? `Step ${number} is set in the experiment.`
-            : "The experiment is still loading. Try again in a moment.",
-        );
+        onShown(applied ? t("stepSet", { number }) : t("experimentLoading"));
       }}
     >
-      Show me<VisuallyHidden> step {number}</VisuallyHidden>
+      {rich(t("showMe"), {
+        step: <VisuallyHidden>{t("showMeStep", { number })}</VisuallyHidden>,
+      })}
     </Button>
   );
 }

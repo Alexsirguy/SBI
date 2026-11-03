@@ -1,4 +1,5 @@
 import type { LessonDisclaimer } from "@sbi/contracts";
+import type { LessonT } from "./lesson-t";
 
 // Every doubt about sourcing reads the same to a learner, so they share one clause.
 const NOT_BACKED = new Set<LessonDisclaimer["kind"]>([
@@ -9,20 +10,24 @@ const NOT_BACKED = new Set<LessonDisclaimer["kind"]>([
 ]);
 
 /** The one caution a lesson shows, written as a single paragraph however many doubts it has. */
-export function cautionText(items: LessonDisclaimer[]): string | undefined {
+export function cautionText(items: LessonDisclaimer[], t: LessonT): string | undefined {
   const kinds = new Set(items.map((item) => item.kind));
   kinds.delete("safety");
   if (kinds.size === 0) return undefined;
-  const parts = [
-    ...(kinds.has("model-knowledge") ? ["come from the AI's general knowledge"] : []),
-    ...([...kinds].some((kind) => NOT_BACKED.has(kind))
-      ? ["are not fully backed by their sources"]
-      : []),
-  ];
+  const model = kinds.has("model-knowledge");
+  const notBacked = [...kinds].some((kind) => NOT_BACKED.has(kind));
+  const parts =
+    model && notBacked
+      ? t("cautionBoth")
+      : model
+        ? t("cautionModelKnowledge")
+        : notBacked
+          ? t("cautionNotBacked")
+          : undefined;
   const sentences = [
-    ...(parts.length > 0 ? [`Some parts of this lesson ${parts.join(" and some ")}.`] : []),
-    ...(kinds.has("reading-level") ? ["It may be harder to read than the level you chose."] : []),
-    `A reviewer has not checked ${parts.length > 0 ? "it" : "this lesson"} yet, so report anything that looks wrong.`,
+    ...(parts ? [parts] : []),
+    ...(kinds.has("reading-level") ? [t("cautionReadingLevel")] : []),
+    parts ? t("cautionReviewIt") : t("cautionReviewLesson"),
   ];
   return sentences.join(" ");
 }

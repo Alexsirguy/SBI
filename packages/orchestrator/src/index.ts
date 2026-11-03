@@ -75,3 +75,5 @@ export {
   suggestQuestions,
   type QuestionSuggestionInput,
 } from "./questions";
+export { NotShareableError, redactContact, shareLesson } from "./share";
+export { relatedConcepts, type ConceptNode, type RelatedSuggestion } from "./related";

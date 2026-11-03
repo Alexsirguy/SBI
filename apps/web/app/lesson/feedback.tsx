@@ -6,23 +6,17 @@ import { Button, Notice, Scale, SelectField, TextArea } from "@sbi/ui";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { ApiRequestError, UNREACHABLE } from "../api-client";
+import { useT } from "../i18n/provider";
+import { type LessonKey, useErrorText } from "./lesson-t";
 
-export const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
-  "wrong-fact": "Something is wrong",
-  unclear: "Hard to understand",
-  unsafe: "Could be unsafe",
-  "missing-source": "Needs a source",
-  offensive: "Offensive or upsetting",
-  other: "Something else",
+export const CATEGORY_KEYS: Record<FeedbackCategory, LessonKey> = {
+  "wrong-fact": "categoryWrongFact",
+  unclear: "categoryUnclear",
+  unsafe: "categoryUnsafe",
+  "missing-source": "categoryMissingSource",
+  offensive: "categoryOffensive",
+  other: "categoryOther",
 };
-
-const SCALE_WORDS = {
-  1: "Not at all",
-  2: "A little",
-  3: "Somewhat",
-  4: "Mostly",
-  5: "Very",
-} as const;
 
 function useSubmitFeedback() {
   return useMutation({
@@ -36,6 +30,15 @@ const failure = (error: unknown) =>
 
 /** Rating and problem reports for this exact lesson version, so triage sees what the learner read. */
 export function LessonFeedback({ lessonId, version }: { lessonId: string; version: number }) {
+  const t = useT("lesson");
+  const errorText = useErrorText();
+  const scaleWords = {
+    1: t("scaleNotAtAll"),
+    2: t("scaleALittle"),
+    3: t("scaleSomewhat"),
+    4: t("scaleMostly"),
+    5: t("scaleVery"),
+  };
   const rating = useSubmitFeedback();
   const report = useSubmitFeedback();
   const [helpful, setHelpful] = useState<number>();
@@ -56,40 +59,40 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
 
   return (
     <section aria-labelledby="feedback-heading" className="lesson-feedback">
-      <h2 id="feedback-heading">Tell us what you think</h2>
+      <h2 id="feedback-heading">{t("feedbackHeading")}</h2>
 
       {rating.isSuccess ? (
         <p ref={ratedRef} tabIndex={-1} role="status">
-          Thanks for rating this lesson.
+          {t("ratingThanks")}
         </p>
       ) : (
         <form
-          aria-label="Rate this lesson"
+          aria-label={t("rateForm")}
           onSubmit={(event) => {
             event.preventDefault();
             if (helpful && clear) rating.mutate({ lessonId, version, rating: { helpful, clear } });
           }}
         >
           <Scale
-            legend="How helpful was it?"
+            legend={t("helpfulLegend")}
             name="helpful"
             value={helpful}
             onChange={setHelpful}
-            words={SCALE_WORDS}
+            words={scaleWords}
           />
           <Scale
-            legend="How clear was it?"
+            legend={t("clearLegend")}
             name="clear"
             value={clear}
             onChange={setClear}
-            words={SCALE_WORDS}
+            words={scaleWords}
           />
           <Button type="submit" disabled={!helpful || !clear || rating.isPending}>
-            Send rating
+            {t("sendRating")}
           </Button>
           {rating.isError ? (
-            <Notice kind="error" live>
-              {failure(rating.error)}
+            <Notice kind="error" label={t("noticeProblem")} live>
+              {errorText(failure(rating.error))}
             </Notice>
           ) : null}
         </form>
@@ -97,15 +100,15 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
 
       {report.isSuccess ? (
         <p ref={reportedRef} tabIndex={-1} role="status">
-          Thanks. A reviewer will look at this lesson.
+          {t("reportThanks")}
         </p>
       ) : (
         <form
-          aria-label="Report a problem"
+          aria-label={t("reportProblem")}
           onSubmit={(event) => {
             event.preventDefault();
             if (!category) {
-              setMissing("Choose what kind of problem it is.");
+              setMissing(t("reportMissingCategory"));
               categoryRef.current?.focus();
               return;
             }
@@ -117,35 +120,35 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
             });
           }}
         >
-          <h3>Report a problem</h3>
+          <h3>{t("reportProblem")}</h3>
           <SelectField
             ref={categoryRef}
-            label="What is wrong?"
+            label={t("reportWhatWrong")}
             value={category}
             error={missing}
             onChange={(event) => setCategory(event.target.value as FeedbackCategory | "")}
           >
-            <option value="">Choose one</option>
-            {(Object.keys(CATEGORY_LABELS) as FeedbackCategory[]).map((key) => (
+            <option value="">{t("chooseOne")}</option>
+            {(Object.keys(CATEGORY_KEYS) as FeedbackCategory[]).map((key) => (
               <option key={key} value={key}>
-                {CATEGORY_LABELS[key]}
+                {t(CATEGORY_KEYS[key])}
               </option>
             ))}
           </SelectField>
           <TextArea
-            label="Details (optional)"
+            label={t("detailsLabel")}
             rows={3}
             maxLength={1000}
             value={details}
-            hint="Please leave out your name or other personal details."
+            hint={t("detailsHint")}
             onChange={(event) => setDetails(event.target.value)}
           />
           <Button type="submit" disabled={report.isPending}>
-            Send report
+            {t("sendReport")}
           </Button>
           {report.isError ? (
-            <Notice kind="error" live>
-              {failure(report.error)}
+            <Notice kind="error" label={t("noticeProblem")} live>
+              {errorText(failure(report.error))}
             </Notice>
           ) : null}
         </form>

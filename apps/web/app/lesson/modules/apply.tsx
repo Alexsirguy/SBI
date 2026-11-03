@@ -4,7 +4,9 @@ import type { Experiment, LessonSection, LessonTask } from "@sbi/contracts";
 import { Button, RadioGroup } from "@sbi/ui";
 import { useState } from "react";
 import type { ExperimentController } from "../experiment";
+import { useLocale, useT } from "../../i18n/provider";
 import { formatReading, goalHint, goalMet } from "../goal";
+import { rich } from "../lesson-t";
 import { useExperiment, useReadout } from "../practice";
 import { SectionFrame } from "./frame";
 
@@ -23,13 +25,14 @@ function ChoiceChallenge({
   settingUp: boolean;
   onPick: () => void;
 }) {
+  const t = useT("lesson");
   const [picked, setPicked] = useState<number>();
   const solved = picked === task.answerIndex;
   return (
     <>
-      {settingUp ? <p className="challenge__note">Setting up the experiment…</p> : null}
+      {settingUp ? <p className="challenge__note">{t("settingUpExperiment")}</p> : null}
       <p className="challenge__prompt">{task.prompt}</p>
-      <ul className="challenge__options" aria-label="Choose an answer">
+      <ul className="challenge__options" aria-label={t("chooseAnswer")}>
         {task.options.map((option, index) => (
           <li key={option}>
             <Button
@@ -49,7 +52,7 @@ function ChoiceChallenge({
       <div role="status" className="challenge__result">
         {picked === undefined ? null : (
           <>
-            <p className="challenge__verdict">{solved ? "Solved." : "Not quite. Try another."}</p>
+            <p className="challenge__verdict">{solved ? t("solved") : t("notQuite")}</p>
             <p>{task.feedback[picked]}</p>
           </>
         )}
@@ -74,6 +77,8 @@ function ExperimentChallenge({
   controller: ExperimentController;
   readout: Readout;
 }) {
+  const t = useT("lesson");
+  const locale = useLocale();
   const [prediction, setPrediction] = useState<string>();
   const [setUp, setSetUp] = useState(false);
   const [checked, setChecked] = useState<Checked>();
@@ -83,7 +88,7 @@ function ExperimentChallenge({
   return (
     <>
       <RadioGroup
-        legend={`${task.prompt} First, predict:`}
+        legend={t("predictLegend", { prompt: task.prompt })}
         name={`predict-${task.taskId}`}
         options={task.options.map((option, index) => ({ value: String(index), label: option }))}
         value={prediction}
@@ -101,47 +106,52 @@ function ExperimentChallenge({
               setChecked(undefined);
             }}
           >
-            {setUp ? "Start again" : "Set up the experiment"}
+            {setUp ? t("startAgain") : t("setUpExperiment")}
           </Button>
           {setUp ? (
             <>
               <p className="challenge__reading">
-                {readout.label} now:{" "}
-                <span className="challenge__value">
-                  {value === undefined ? "—" : formatReading(value, readout.unit)}
-                </span>
+                {rich(t("readingNow"), {
+                  label: readout.label,
+                  value: (
+                    <span className="challenge__value">
+                      {value === undefined ? "—" : formatReading(value, readout.unit, locale)}
+                    </span>
+                  ),
+                })}
               </p>
               <Button
                 onClick={() => {
                   if (value === undefined) return;
                   const met = goalMet(goal, value);
-                  setChecked({ met, hint: met ? undefined : goalHint(goal, value, readout) });
+                  setChecked({
+                    met,
+                    hint: met ? undefined : goalHint(goal, value, readout, t, locale),
+                  });
                 }}
               >
-                Check
+                {t("check")}
               </Button>
             </>
           ) : null}
         </div>
       ) : null}
       <div role="status" className="challenge__result">
-        {loading ? <p>The experiment is still loading. Try again in a moment.</p> : null}
-        {setUp && !checked ? (
-          <p>Move the sliders in the experiment above, then press Check.</p>
-        ) : null}
+        {loading ? <p>{t("experimentLoading")}</p> : null}
+        {setUp && !checked ? <p>{t("moveSliders")}</p> : null}
         {checked?.met ? (
           <>
-            <p className="challenge__verdict">Solved.</p>
+            <p className="challenge__verdict">{t("solved")}</p>
             <p>{task.feedback[task.answerIndex]}</p>
           </>
         ) : null}
         {checked && !checked.met ? (
           <>
-            <p className="challenge__verdict">Not yet.</p>
+            <p className="challenge__verdict">{t("notYet")}</p>
             {predicted !== undefined && predicted !== task.answerIndex ? (
               <p>{task.feedback[predicted]}</p>
             ) : null}
-            <p>{checked.hint} Adjust the experiment and check again.</p>
+            <p>{t("adjustAndCheck", { hint: checked.hint ?? "" })}</p>
           </>
         ) : null}
       </div>
@@ -158,6 +168,7 @@ function ChallengeCard({
   number: number;
   readouts: Experiment["readouts"];
 }) {
+  const t = useT("lesson");
   const { goal } = task;
   const { controller, pending } = useExperiment({
     controls: task.setup.map((setting) => setting.controlId),
@@ -170,7 +181,7 @@ function ChallengeCard({
   const headingId = `challenge-${task.taskId}`;
   return (
     <article className="challenge sbi-card" aria-labelledby={headingId}>
-      <h3 id={headingId}>Challenge {number}</h3>
+      <h3 id={headingId}>{t("challengeNumber", { number })}</h3>
       {live && goal && readout ? (
         <ExperimentChallenge task={task} goal={goal} controller={live} readout={readout} />
       ) : (

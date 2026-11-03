@@ -56,4 +56,14 @@ describe("YourChoices", () => {
     expect(readKeptPhotos()).toEqual([]);
     expect(hasConsent("save-photos")).toBe(false);
   });
+
+  it("shows whether this device is linked to an account", async () => {
+    const off = await view();
+    expect(text(off.container)).toContain("Off. Accounts are optional");
+    document.body.replaceChildren();
+
+    setConsent("account", true);
+    const { container } = await view();
+    expect(text(container)).toContain("On. This device's kept photos are tied to your account.");
+  });
 });

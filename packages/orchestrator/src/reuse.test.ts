@@ -207,10 +207,18 @@ describe("createReuseMatcher", () => {
     expect(await createReuseMatcher(repo, undefined, blocked).match(query)).toBeNull();
   });
 
-  it("never serves a private lesson, which has no owner to match yet", async () => {
+  it("serves a private lesson only to the account that saved it", async () => {
     const privately = makeLesson({ reuse: { ...makeLesson().reuse, cacheScope: "private" } });
     const { repo } = memoryRepository([privately]);
-    expect(await createReuseMatcher(repo).match(query)).toBeNull();
+    const matcher = createReuseMatcher(repo);
+
+    expect(await matcher.match(query)).toBeNull();
+    expect(await matcher.match({ ...query, ownLessonIds: new Set(["someone-else"]) })).toBeNull();
+    const own = await matcher.match({ ...query, ownLessonIds: new Set([privately.lessonId]) });
+    expect(own?.lesson.lessonId).toBe(privately.lessonId);
+    expect(
+      await matcher.match({ ...query, fresh: true, ownLessonIds: new Set([privately.lessonId]) }),
+    ).toBeNull();
   });
 
   it.each(["generated", "needs-review"] as const)(

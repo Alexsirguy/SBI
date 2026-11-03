@@ -10,6 +10,7 @@ const RESULT: PurgePassResult = {
   tutorTurnsPurged: 5,
   evidencePacksPurged: 6,
   catalogGapsPurged: 7,
+  accountSecretsPurged: 8,
 };
 
 function logger() {
@@ -42,6 +43,7 @@ describe("startPurgeWorker", () => {
         tutorTurnsPurged: 5,
         evidencePacksPurged: 6,
         catalogGapsPurged: 7,
+        accountSecretsPurged: 8,
       },
       "media purge pass",
     );
