@@ -36,3 +36,5 @@ export const GOOGLE_VERIFIER = Symbol("GOOGLE_VERIFIER");
 export const PASSWORD_PARAMS = Symbol("PASSWORD_PARAMS");
 export const AUTH_LIMITERS = Symbol("AUTH_LIMITERS");
 export const SAVED_LESSONS = Symbol("SAVED_LESSONS");
+export const EVENT_SINK = Symbol("EVENT_SINK");
+export const EVENTS_LIMITER = Symbol("EVENTS_LIMITER");

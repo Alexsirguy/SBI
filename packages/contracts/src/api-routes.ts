@@ -29,7 +29,11 @@ import {
   LessonFeedbackReceipt,
   LessonFeedbackRequest,
   LessonRequest,
+  NextConceptEventRequest,
   QuestionSuggestionRequest,
+  RecordedEvent,
+  RelatedLessons,
+  RelatedLessonsRequest,
   QuestionSuggestions,
 } from "./lesson-api";
 import {
@@ -149,6 +153,22 @@ export const API_ROUTES = {
     request: LessonRequest,
     response: Lesson,
     errors: [400, 404, 503],
+  },
+  relatedLessons: {
+    method: "get",
+    path: "/lessons/related",
+    summary: "Suggest next concepts for a lesson from the concept graph.",
+    request: RelatedLessonsRequest,
+    response: RelatedLessons,
+    errors: [400, 404],
+  },
+  recordNextConcept: {
+    method: "post",
+    path: "/events/next-concept",
+    summary: "Record that a next-concept suggestion was followed, with ids and rank only.",
+    request: NextConceptEventRequest,
+    response: RecordedEvent,
+    errors: [400, 429],
   },
   getVisual: {
     method: "get",

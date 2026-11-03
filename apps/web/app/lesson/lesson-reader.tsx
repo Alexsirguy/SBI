@@ -20,6 +20,7 @@ import { useErrorText } from "./lesson-t";
 import { useLessonExperiment } from "./lesson-experiment";
 import { GrownUpGate } from "../pathway/grown-up-gate";
 import { usePathway } from "../pathway/provider";
+import { NextConcepts } from "./next-concepts";
 import { PracticeProvider } from "./practice";
 import { SaveLesson } from "./save-lesson";
 import { type LessonPrefs, writePrefs } from "./prefs";
@@ -247,6 +248,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
               renderVisual={(visual) => <VisualFrame visual={visual} />}
             />
           </PracticeProvider>
+          {lesson && status === "ready" ? (
+            <NextConcepts lessonId={lesson.lessonId} version={lesson.version} prefs={prefs} />
+          ) : null}
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
           {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
         </div>

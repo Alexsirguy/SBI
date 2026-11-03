@@ -1,3 +1,4 @@
+import { createLogSink } from "@sbi/analytics";
 import { Logger, Module } from "@nestjs/common";
 import type { DatabaseHandle, Repositories } from "@sbi/db";
 import {
@@ -26,6 +27,8 @@ import {
   LESSON_LLM,
   LESSON_REVIEW_AUDIT,
   LESSONS,
+  EVENT_SINK,
+  EVENTS_LIMITER,
   REPOSITORIES,
   RISK_CLASSIFIER,
   VISUAL_MAKER,
@@ -37,6 +40,7 @@ import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
 import { AccountModule } from "../account/account.module";
 import { SavedLessonsController } from "./saved-lessons.controller";
+import { RelatedController } from "./related.controller";
 import { LessonService } from "./lesson.service";
 import { QuestionsController } from "./questions.controller";
 import { createVisualMaker } from "../visuals/visual-maker";
@@ -84,10 +88,22 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
     LessonController,
     LessonFeedbackController,
     QuestionsController,
+    RelatedController,
     SavedLessonsController,
   ],
   providers: [
     LessonService,
+    {
+      provide: EVENT_SINK,
+      useFactory: () => {
+        const logger = new Logger("Events");
+        return createLogSink((line) => logger.log(line));
+      },
+    },
+    {
+      provide: EVENTS_LIMITER,
+      useFactory: () => createRateLimiter({ limit: 120, windowMs: 3_600_000 }),
+    },
     {
       provide: LESSON_LLM,
       inject: [API_ENV],

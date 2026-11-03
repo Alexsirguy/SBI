@@ -6,7 +6,6 @@
   "savedLessonTitle": "Saved lesson · Science Behind It",
   "visualKindsTitle": "Visual kinds · Science Behind It",
   "visualKinds": "Visual kinds",
-
   "noticeNote": "Note",
   "noticeSafety": "Safety",
   "noticeProblem": "Problem",
@@ -17,14 +16,12 @@
   "cautionReadingLevel": "It may be harder to read than the level you chose.",
   "cautionReviewIt": "A reviewer has not checked it yet, so report anything that looks wrong.",
   "cautionReviewLesson": "A reviewer has not checked this lesson yet, so report anything that looks wrong.",
-
   "policyAgeHeading": "This one is for older learners",
   "policySelfHarmHeading": "You don't have to face this alone",
   "policySaferHeading": "Let's try a safer question",
   "policyUnlockAdult": "I'm an adult: change age band",
   "policyUnlockTeen": "I'm a teen or adult: change age band",
   "learnSomethingElse": "Learn about something else",
-
   "notThisObject": "Not a {label}? Describe it instead",
   "lessonFallbackTitle": "Lesson: {label}",
   "statusReady": "Lesson ready.",
@@ -38,7 +35,6 @@
   "freshAnswer": "Get a fresh answer",
   "unreachable": "The service is unavailable right now. Check your connection and try again.",
   "unreadable": "The lesson arrived in a form we could not read. Try again.",
-
   "settingsForm": "Lesson settings",
   "explainIt": "Explain it",
   "depthQuick": "Quick",
@@ -53,7 +49,6 @@
   "ageChild": "Child",
   "ageTeen": "Teen",
   "ageAdult": "Adult",
-
   "signInToSave": "Sign in to save this lesson",
   "saved": "Saved",
   "savedRemoveHint": ", press to remove from saved lessons",
@@ -61,7 +56,6 @@
   "saveLesson": "Save lesson",
   "savedStatus": "Saved to your account.",
   "removedStatus": "Removed from saved lessons.",
-
   "openingSaved": "Opening your saved lesson…",
   "savedLesson": "Saved lesson",
   "backToSaved": "Back to saved lessons",
@@ -73,7 +67,6 @@
   "shareExplain": "Other learners asking something similar could get this lesson once a reviewer has checked it. We share a copy of the lesson only: never your name, your photo, or what you typed. Email addresses and phone numbers are removed from the text.",
   "sharing": "Sharing…",
   "shareThisLesson": "Share this lesson",
-
   "theExperiment": "The experiment",
   "seeHowItWorks": "See how it works",
   "settingUpExperiment": "Setting up the experiment…",
@@ -83,7 +76,6 @@
   "visualCouldNotLoad": "This picture could not load.",
   "visualMadeByAi": "Made by AI for this lesson and simplified.",
   "visualMadeByAiWith": "Made by AI for this lesson and simplified: {assumptions}.",
-
   "moduleWhatYoureSeeing": "What you're seeing",
   "moduleShortAnswer": "The short answer",
   "moduleFirstPrinciples": "From first principles",
@@ -99,7 +91,6 @@
   "moduleIntegrate": "Take it with you",
   "evidenceObservation": "What you can observe",
   "evidenceInference": "Explanation",
-
   "objectLabel": "Object:",
   "lessonAssumes": "This lesson assumes",
   "keyIdeas": "Key ideas, in order",
@@ -118,7 +109,6 @@
   "commonMixUp": "A common mix-up",
   "linkCopied": "Link copied. Paste it to share this lesson.",
   "linkCopyFailed": "Could not copy the link. Copy it from the address bar instead.",
-
   "lockGuess": "Lock in my guess",
   "guessLocked": "Your guess: {guess}. You will find out after the demonstration.",
   "backToGuess": "Back to your guess",
@@ -145,12 +135,10 @@
   "goalAtLeast": "{label} is {value}; you need at least {target}.",
   "goalAtMost": "{label} is {value}; you need at most {target}.",
   "goalNear": "{label} is {value}; you need about {target}, within {tolerance}.",
-
   "askForm": "Ask your own question",
   "askLabel": "Ask your own question about the {label}",
   "askTooShort": "Write a question of at least 3 characters.",
   "ask": "Ask",
-
   "sourcesHeading": "Sources",
   "sourceCountOne": "{count} source",
   "sourceCountOther": "{count} sources",
@@ -160,7 +148,6 @@
   "noSources": "No outside source is cited; see the note at the top of the lesson.",
   "quotesOne": "Show the quoted passage",
   "quotesOther": "Show {count} quoted passages",
-
   "feedbackHeading": "Tell us what you think",
   "ratingThanks": "Thanks for rating this lesson.",
   "rateForm": "Rate this lesson",
@@ -185,5 +172,8 @@
   "categoryOther": "Something else",
   "detailsLabel": "Details (optional)",
   "detailsHint": "Please leave out your name or other personal details.",
-  "sendReport": "Send report"
+  "sendReport": "Send report",
+  "nextConceptsHeading": "Next concepts",
+  "nextConceptsShared": "Also about {concept}",
+  "nextConceptsFamily": "From the same family"
 }

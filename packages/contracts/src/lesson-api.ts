@@ -178,3 +178,30 @@ export type SourceExcerpt = z.infer<typeof SourceExcerpt>;
 export type LessonSource = z.infer<typeof LessonSource>;
 export type LessonSources = z.infer<typeof LessonSources>;
 export type LessonProgress = z.infer<typeof LessonProgress>;
+
+/** GETs take query strings, so the version arrives as digits. */
+export const RelatedLessonsRequest = z.object({
+  lessonId: Uuid,
+  version: z.string().regex(/^[1-9]\d{0,5}$/),
+});
+
+/** Next things to learn, chosen from the concept graph, never from what others clicked (#106). */
+export const RelatedLessons = z.object({
+  related: z.array(
+    z.object({
+      taxonomyId: Id,
+      label: z.string(),
+      via: z.string(),
+      distance: z.union([z.literal(1), z.literal(2)]),
+    }),
+  ),
+});
+
+/** Which suggestion a learner followed; no learner id, so it measures the list, not people. */
+export const NextConceptEventRequest = z.object({
+  fromLessonId: Uuid,
+  toTaxonomyId: Id,
+  rank: z.number().int().min(0).max(20),
+});
+
+export const RecordedEvent = z.object({ ok: z.literal(true) });

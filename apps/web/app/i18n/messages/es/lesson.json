@@ -6,7 +6,6 @@
   "savedLessonTitle": "Lección guardada · Science Behind It",
   "visualKindsTitle": "Tipos de visual · Science Behind It",
   "visualKinds": "Tipos de visual",
-
   "noticeNote": "Nota",
   "noticeSafety": "Seguridad",
   "noticeProblem": "Problema",
@@ -17,14 +16,12 @@
   "cautionReadingLevel": "Puede que sea más difícil de leer que el nivel que elegiste.",
   "cautionReviewIt": "Nadie la ha revisado todavía, así que avísanos si algo parece incorrecto.",
   "cautionReviewLesson": "Nadie ha revisado esta lección todavía, así que avísanos si algo parece incorrecto.",
-
   "policyAgeHeading": "Esta es para personas mayores",
   "policySelfHarmHeading": "No tienes que enfrentarte a esto solo",
   "policySaferHeading": "Probemos con una pregunta más segura",
   "policyUnlockAdult": "Soy adulto: cambiar la franja de edad",
   "policyUnlockTeen": "Soy adolescente o adulto: cambiar la franja de edad",
   "learnSomethingElse": "Aprender sobre otra cosa",
-
   "notThisObject": "¿No es «{label}»? Descríbelo tú",
   "lessonFallbackTitle": "Lección: {label}",
   "statusReady": "Lección lista.",
@@ -38,7 +35,6 @@
   "freshAnswer": "Obtener una respuesta nueva",
   "unreachable": "El servicio no está disponible ahora mismo. Comprueba tu conexión e inténtalo de nuevo.",
   "unreadable": "La lección llegó en un formato que no pudimos leer. Inténtalo de nuevo.",
-
   "settingsForm": "Ajustes de la lección",
   "explainIt": "Explícalo",
   "depthQuick": "Rápido",
@@ -53,7 +49,6 @@
   "ageChild": "Niño",
   "ageTeen": "Adolescente",
   "ageAdult": "Adulto",
-
   "signInToSave": "Inicia sesión para guardar esta lección",
   "saved": "Guardada",
   "savedRemoveHint": ", pulsa para quitarla de las lecciones guardadas",
@@ -61,7 +56,6 @@
   "saveLesson": "Guardar lección",
   "savedStatus": "Guardada en tu cuenta.",
   "removedStatus": "Quitada de las lecciones guardadas.",
-
   "openingSaved": "Abriendo tu lección guardada…",
   "savedLesson": "Lección guardada",
   "backToSaved": "Volver a las lecciones guardadas",
@@ -73,7 +67,6 @@
   "shareExplain": "Otras personas que pregunten algo parecido podrían recibir esta lección cuando la haya comprobado una persona revisora. Solo compartimos una copia de la lección: nunca tu nombre, tu foto ni lo que escribiste. Los correos electrónicos y los números de teléfono se eliminan del texto.",
   "sharing": "Compartiendo…",
   "shareThisLesson": "Compartir esta lección",
-
   "theExperiment": "El experimento",
   "seeHowItWorks": "Mira cómo funciona",
   "settingUpExperiment": "Preparando el experimento…",
@@ -83,7 +76,6 @@
   "visualCouldNotLoad": "No se pudo cargar esta imagen.",
   "visualMadeByAi": "Creado por IA para esta lección y simplificado.",
   "visualMadeByAiWith": "Creado por IA para esta lección y simplificado: {assumptions}.",
-
   "moduleWhatYoureSeeing": "Lo que estás viendo",
   "moduleShortAnswer": "La respuesta corta",
   "moduleFirstPrinciples": "Desde los principios básicos",
@@ -99,7 +91,6 @@
   "moduleIntegrate": "Llévatelo contigo",
   "evidenceObservation": "Lo que puedes observar",
   "evidenceInference": "Explicación",
-
   "objectLabel": "Objeto:",
   "lessonAssumes": "Esta lección da por hecho",
   "keyIdeas": "Ideas clave, en orden",
@@ -118,7 +109,6 @@
   "commonMixUp": "Una confusión habitual",
   "linkCopied": "Enlace copiado. Pégalo para compartir esta lección.",
   "linkCopyFailed": "No se pudo copiar el enlace. Cópialo desde la barra de direcciones.",
-
   "lockGuess": "Fijar mi respuesta",
   "guessLocked": "Tu respuesta: {guess}. Lo sabrás después de la demostración.",
   "backToGuess": "Volvamos a tu respuesta",
@@ -145,12 +135,10 @@
   "goalAtLeast": "{label}: {value}; necesitas al menos {target}.",
   "goalAtMost": "{label}: {value}; necesitas como máximo {target}.",
   "goalNear": "{label}: {value}; necesitas unos {target}, con un margen de {tolerance}.",
-
   "askForm": "Haz tu propia pregunta",
   "askLabel": "Haz tu propia pregunta sobre «{label}»",
   "askTooShort": "Escribe una pregunta de al menos 3 caracteres.",
   "ask": "Preguntar",
-
   "sourcesHeading": "Fuentes",
   "sourceCountOne": "{count} fuente",
   "sourceCountOther": "{count} fuentes",
@@ -160,7 +148,6 @@
   "noSources": "No se cita ninguna fuente externa; consulta la nota al principio de la lección.",
   "quotesOne": "Mostrar el fragmento citado",
   "quotesOther": "Mostrar {count} fragmentos citados",
-
   "feedbackHeading": "Cuéntanos qué te parece",
   "ratingThanks": "Gracias por valorar esta lección.",
   "rateForm": "Valora esta lección",
@@ -185,5 +172,8 @@
   "categoryOther": "Otra cosa",
   "detailsLabel": "Detalles (opcional)",
   "detailsHint": "No incluyas tu nombre ni otros datos personales.",
-  "sendReport": "Enviar informe"
+  "sendReport": "Enviar informe",
+  "nextConceptsHeading": "Conceptos siguientes",
+  "nextConceptsShared": "También trata de {concept}",
+  "nextConceptsFamily": "De la misma familia"
 }
