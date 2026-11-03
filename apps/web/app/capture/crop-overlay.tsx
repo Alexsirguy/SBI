@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { useT } from "../i18n/provider";
 import { clampCrop, moveCrop, type CropRect } from "./processing";
 
@@ -119,7 +119,16 @@ export function CropOverlay({
   const whole = rect.width === imageWidth && rect.height === imageHeight;
 
   return (
-    <div ref={frameRef} className="crop-overlay">
+    <div
+      ref={frameRef}
+      className="crop-overlay"
+      style={
+        {
+          aspectRatio: `${imageWidth} / ${imageHeight}`,
+          "--crop-ratio": imageWidth / imageHeight,
+        } as CSSProperties
+      }
+    >
       {/* A local object URL of the learner's photo, which next/image cannot optimise. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={t("yourPhoto")} draggable={false} />

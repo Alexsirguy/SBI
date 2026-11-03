@@ -1,6 +1,6 @@
+import { expect, test } from "@playwright/test";
 import { expectNoAxeViolations } from "./a11y";
 import { mockApi, mockUploads, pressDone } from "./mock-api";
-import { expect, test } from "@playwright/test";
 
 // 1x1 transparent PNG; content is irrelevant, only name/size/type are validated.
 const tinyPng = Buffer.from(
@@ -33,6 +33,25 @@ test("capture page offers camera and upload entries with limits and privacy cue"
   );
   // Upload appears once there is a photo to upload, as in the prototype.
   await expect(page.getByRole("button", { name: "Upload photo" })).toHaveCount(0);
+});
+
+test("photo notes fold on a phone and stay open on a wide screen", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/capture");
+  const privacy = page.getByRole("region", { name: "How your photo is handled" });
+  await expect(privacy.getByText("neither may train on it")).toBeHidden();
+  await privacy.getByRole("button", { name: "Show details" }).click();
+  await expect(privacy.getByText("neither may train on it")).toBeVisible();
+  await expect(privacy.getByRole("button", { name: "Hide details" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await expectNoAxeViolations(page);
+
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await page.reload();
+  await expect(privacy.getByText("neither may train on it")).toBeVisible();
+  await expect(privacy.getByRole("button")).toHaveCount(0);
 });
 
 test("capture page validates the selected photo", async ({ page }) => {

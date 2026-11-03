@@ -12,6 +12,26 @@ main.home {
   margin: 0;
 }
 
+.home h1 {
+  font-size: clamp(2.5rem, 1.7rem + 2.6vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.home h2 {
+  letter-spacing: -0.02em;
+}
+
+/* Labels on this page name things in plain words, so they read as text rather than stamps. */
+.home .eyebrow {
+  font-family: var(--sbi-font-body);
+  font-weight: 700;
+  font-size: var(--sbi-text-small);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--sbi-action);
+}
+
 .home h2,
 .prose-page h2 {
   font-size: var(--sbi-text-title);
@@ -66,63 +86,7 @@ main.home {
 .home__tag {
   display: block;
   margin: 0;
-  font-family: var(--sbi-font-mono);
-  font-weight: 500;
-  font-size: var(--sbi-text-label);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--sbi-ink-soft);
-}
-
-/* The example is a slice of a real lesson, laid on the bench like a worksheet. */
-.home__example {
-  margin: 0;
-  display: grid;
-  gap: var(--sbi-space-4);
-  padding: var(--sbi-space-5);
-  background: var(--sbi-paper);
-  border: 1px solid var(--sbi-rule);
-  border-radius: var(--sbi-radius-l);
-  box-shadow: var(--sbi-lift);
-}
-
-.home__object {
-  display: flex;
-  align-items: center;
-  gap: var(--sbi-space-3);
-  color: var(--sbi-action);
-}
-
-.home__object p {
-  margin: 0;
-  color: var(--sbi-ink);
-}
-
-.home__answer {
-  padding: var(--sbi-space-4);
-  border-radius: var(--sbi-radius-m);
-  background: var(--sbi-paper-sunk);
-}
-
-.home__answer p:last-child {
-  margin: var(--sbi-space-1) 0 0;
-  font-family: var(--sbi-font-display);
-  font-weight: 600;
-  font-size: var(--sbi-text-heading);
-  line-height: 1.35;
-}
-
-.home__reasons {
-  margin: 0;
-  padding-left: 1.3rem;
-  display: grid;
-  gap: var(--sbi-space-2);
-}
-
-.home__sources {
-  margin: 0;
-  padding-top: var(--sbi-space-3);
-  border-top: 1px solid var(--sbi-rule);
+  font-weight: 700;
   font-size: var(--sbi-text-small);
   color: var(--sbi-ink-soft);
 }
@@ -154,12 +118,38 @@ main.home {
   counter-reset: step;
 }
 
+/* Each step is a card: its picture on top, then the number and words, joined by arrows on wide screens. */
 .home__steps li {
   counter-increment: step;
+  position: relative;
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr);
   gap: var(--sbi-space-3);
   align-items: start;
+  align-content: start;
+  padding: var(--sbi-space-3) var(--sbi-space-3) var(--sbi-space-4);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+}
+
+.home__steps li::before {
+  grid-row: 2;
+}
+
+.home__steps li > span {
+  grid-row: 2;
+}
+
+.home__step-art {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  max-height: 11rem;
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper-sunk);
 }
 
 .home__steps li::before,
@@ -170,15 +160,16 @@ main.home {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid var(--sbi-action);
-  color: var(--sbi-action);
-  font-family: var(--sbi-font-mono);
-  font-weight: 500;
+  background: var(--sbi-action);
+  color: var(--sbi-action-ink);
+  font-family: var(--sbi-font-display);
+  font-weight: 800;
+  font-size: var(--sbi-text-small);
 }
 
 .home__modules {
   counter-reset: step;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
   gap: var(--sbi-space-3);
 }
 
@@ -206,6 +197,10 @@ main.home {
 }
 
 .home__trust svg {
+  box-sizing: content-box;
+  padding: 10px;
+  border-radius: 50%;
+  background: var(--sbi-paper-sunk);
   color: var(--sbi-action);
 }
 
@@ -225,8 +220,20 @@ main.home {
 .home__depths li {
   display: grid;
   gap: var(--sbi-space-2);
+  align-content: start;
+  justify-items: start;
   padding-top: var(--sbi-space-3);
   border-top: 3px solid var(--sbi-action);
+}
+
+.home__depths .home__tag {
+  padding: 1px 10px 2px;
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-pill);
+}
+
+.home__depths h3 {
+  margin: 0;
 }
 
 .home__cta {
@@ -254,11 +261,26 @@ main.home {
 @media (min-width: 900px) {
   .home__hero {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    padding-block: var(--sbi-space-6);
+    padding-block: var(--sbi-space-7);
   }
 
   .home__steps {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--sbi-space-6);
+  }
+
+  .home__steps li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: calc(var(--sbi-space-3) + 5.5rem - 7px);
+    right: calc(-1 * var(--sbi-space-6) + 6px);
+    width: calc(var(--sbi-space-6) - 12px);
+    height: 14px;
+    background:
+      linear-gradient(var(--sbi-action), var(--sbi-action)) left center / calc(100% - 6px) 2px
+        no-repeat,
+      conic-gradient(from 225deg at 100% 50%, var(--sbi-action) 0 90deg, transparent 0) right
+        center / 8px 14px no-repeat;
   }
 }
 

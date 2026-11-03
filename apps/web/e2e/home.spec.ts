@@ -1,5 +1,5 @@
-import { expectNoAxeViolations } from "./a11y";
 import { expect, test } from "@playwright/test";
+import { expectNoAxeViolations } from "./a11y";
 
 test("home page says what the product does and starts either path in one tap", async ({ page }) => {
   await page.goto("/");
@@ -17,9 +17,15 @@ test("home page sells the idea with an example, the lesson shape, trust and a cl
   page,
 }) => {
   await page.goto("/");
-  const example = page.getByRole("figure", { name: "Example lesson, shortened" });
-  await expect(example).toContainText("A magnifying glass");
-  await expect(example).toContainText("Sources");
+  const example = page.getByRole("figure", {
+    name: "How a lesson goes, shown with a magnifying glass",
+  });
+  await expect(example.getByRole("listitem")).toHaveText([
+    "Show it",
+    "Guess first",
+    "Watch it work",
+    "Your turn",
+  ]);
   for (const name of [
     "How a lesson works",
     "What's in every lesson",
@@ -37,6 +43,34 @@ test("home page sells the idea with an example, the lesson shape, trust and a cl
   await expect(page).toHaveURL(/\/#inside$/);
   await page.getByRole("link", { name: "Start your first lesson" }).click();
   await expect(page).toHaveURL(/\/capture$/);
+});
+
+test("the hero walkthrough moves only for those who allow motion, and can be paused", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+  const reel = page.getByRole("figure", { name: /How a lesson goes/ });
+  const running = () =>
+    reel.evaluate(
+      (figure) =>
+        figure.getAnimations({ subtree: true }).filter((item) => item.playState === "running")
+          .length,
+    );
+  expect(await running()).toBeGreaterThan(0);
+  const pause = reel.getByRole("button", { name: "Pause animation" });
+  await pause.click();
+  await expect(reel.getByRole("button", { name: "Play animation" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(await running()).toBe(0);
+  await expectNoAxeViolations(page);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  expect(await running()).toBe(0);
+  await expect(reel.getByRole("button")).toBeHidden();
 });
 
 test("every page shares the header, skip link and footer", async ({ page }) => {

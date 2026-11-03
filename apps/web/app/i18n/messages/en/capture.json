@@ -7,6 +7,8 @@
   "privacyUse": "We use your photo only to recognise the object for your lesson.",
   "privacyStorage": "It is stored privately on Cloudflare R2 and never shown to other learners. When photo recognition is on, it is sent to Meta's model API, or to OpenAI's if Meta is unavailable; neither may train on it.",
   "privacyRetention": "It is deleted within {days} days, or sooner once recognised, unless you choose to keep it.",
+  "privacyShow": "Show details",
+  "privacyHide": "Hide details",
   "describeHeading": "No image? Describe it instead",
   "facesBlurredOne": "We blurred a face on your device, so no one can be recognised.",
   "facesBlurredOther": "We blurred {count} faces on your device, so no one can be recognised.",

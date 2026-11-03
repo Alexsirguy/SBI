@@ -1,10 +1,11 @@
-import { Mark } from "@sbi/ui";
 import Link from "next/link";
 import { PHOTO_RETENTION_DAYS } from "./capture/limits";
 import { MERRILL_MODULES } from "@sbi/contracts";
 import { MODULE_LABEL_KEYS } from "./lesson/modules/labels";
 import type { Messages } from "./i18n/messages";
 import { getT } from "./i18n/server";
+import { HomeReel } from "./home-reel";
+import { GuessArt, ScanArt, TryArt } from "./home-art";
 import "./home.css";
 
 type SiteKey = keyof Messages["site"];
@@ -64,56 +65,26 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <figure className="home__example" aria-labelledby="example-caption">
-          <figcaption id="example-caption" className="eyebrow">
-            {t("exampleCaption")}
-          </figcaption>
-          <div className="home__object">
-            <svg width="40" height="40" viewBox="0 0 48 48" aria-hidden="true">
-              <circle cx="20" cy="20" r="13" fill="none" stroke="currentColor" strokeWidth="4" />
-              <path d="M30 30 L42 42" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-            </svg>
-            <p>
-              <span className="home__tag">{t("exampleYouShowed")}</span>
-              <strong>{t("exampleObject")}</strong>
-            </p>
-          </div>
-          <div className="home__answer">
-            <p className="home__tag">{t("exampleProblemTag")}</p>
-            <p>
-              {t("exampleProblemStart")} <Mark>{t("exampleProblemMarked")}</Mark>{" "}
-              {t("exampleProblemEnd")}
-            </p>
-          </div>
-          <ol className="home__reasons">
-            <li>
-              <strong>{t("exampleGuessLead")}</strong> {t("exampleGuessText")}
-            </li>
-            <li>
-              <strong>{t("exampleTryLead")}</strong> {t("exampleTryText")}
-            </li>
-          </ol>
-          <p className="home__sources">
-            <span className="home__tag">{t("exampleSourcesTag")}</span> LibreTexts Physics, CC BY
-            4.0 · LibreTexts Physics, CC BY-SA 2.5
-          </p>
-        </figure>
+        <HomeReel />
       </section>
 
       <section id="how" aria-labelledby="how-heading" className="home__band">
         <h2 id="how-heading">{t("howHeading")}</h2>
         <ol className="home__steps" role="list">
           <li>
+            <ScanArt className="home__step-art" />
             <span>
               <strong>{t("howShowLead")}</strong> {t("howShowText")}
             </span>
           </li>
           <li>
+            <GuessArt className="home__step-art" />
             <span>
               <strong>{t("howProblemLead")}</strong> {t("howProblemText")}
             </span>
           </li>
           <li>
+            <TryArt className="home__step-art" />
             <span>
               <strong>{t("howWatchLead")}</strong> {t("howWatchText")}
             </span>
