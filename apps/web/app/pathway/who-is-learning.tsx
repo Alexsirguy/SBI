@@ -63,3 +63,10 @@ export function WhoIsLearning({ compact = false }: { compact?: boolean }) {
     </section>
   );
 }
+
+/** Asked once: shown when no one has chosen yet, and kept after choosing so the choice is confirmed. */
+export function FirstTimePathwayPrompt() {
+  const { pathway } = usePathway();
+  const [asking] = useState(pathway === undefined);
+  return asking ? <WhoIsLearning compact /> : null;
+}
