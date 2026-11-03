@@ -7,15 +7,18 @@ export function Notice({
   kind,
   children,
   live = false,
+  label,
 }: {
   kind: keyof typeof NOTICE_WORDS;
   children: ReactNode;
   /** Announce when it appears; for errors that follow an action. */
   live?: boolean;
+  /** The kind's word in the page's language; English when not given. */
+  label?: string;
 }) {
   return (
     <div className={`sbi-notice sbi-notice--${kind}`} role={live ? "alert" : undefined}>
-      <strong className="sbi-notice__kind">{NOTICE_WORDS[kind]}</strong>
+      <strong className="sbi-notice__kind">{label ?? NOTICE_WORDS[kind]}</strong>
       <div className="sbi-notice__body">{children}</div>
     </div>
   );
