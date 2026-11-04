@@ -2,6 +2,7 @@
 
 import type { ApiResponse, Certainty } from "@sbi/contracts";
 import { useEffect, useRef, useState } from "react";
+import { track } from "../../analytics/track";
 import { useT } from "../../i18n/provider";
 import type { CaptureKey } from "../messages";
 import { DescribeForm } from "./describe-form";
@@ -50,9 +51,16 @@ export function RecognitionStep({
         <>
           <p>{t("possibilities")}</p>
           <ul className="choice-list">
-            {options.map((option) => (
+            {options.map((option, rank) => (
               <li key={option.label}>
-                <button type="button" className="choice" onClick={() => setChosen(option.label)}>
+                <button
+                  type="button"
+                  className="choice"
+                  onClick={() => {
+                    track("recognition_confirmed", { rank, certainty: option.certainty });
+                    setChosen(option.label);
+                  }}
+                >
                   <span>{option.label}</span>
                   <small>{t(CERTAINTY_WORDS[option.certainty])}</small>
                 </button>
@@ -69,7 +77,10 @@ export function RecognitionStep({
         label={t("somethingElse")}
         hint=""
         submitLabel={t("useThis")}
-        onName={setChosen}
+        onName={(name) => {
+          track("recognition_corrected", { correctionClass: "described" });
+          setChosen(name);
+        }}
       />
       <button type="button" className="back-link" onClick={onRetake}>
         {t("tryDifferentPhoto")}

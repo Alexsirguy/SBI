@@ -99,7 +99,7 @@ describe("buckets", () => {
 
 describe("createMixpanelSink", () => {
   function fakeMixpanel() {
-    return { init: vi.fn(), identify: vi.fn(), track: vi.fn(), reset: vi.fn() };
+    return { init: vi.fn(), register: vi.fn(), identify: vi.fn(), track: vi.fn(), reset: vi.fn() };
   }
 
   it("loads Mixpanel on the first event, in the EU, without IP, URLs or persistence", async () => {
@@ -122,7 +122,8 @@ describe("createMixpanelSink", () => {
         property_blacklist: expect.arrayContaining(["$current_url", "$referrer"]),
       }),
     );
-    expect(mixpanel.identify).toHaveBeenCalledWith("visit-1");
+    expect(mixpanel.register).toHaveBeenCalledWith({ distinct_id: "visit-1" });
+    expect(mixpanel.identify).not.toHaveBeenCalled();
     expect(mixpanel.track).toHaveBeenCalledWith("capture_started", { source: "camera" });
   });
 

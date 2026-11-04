@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/** Mixpanel's EU-residency endpoint, the only place usage statistics are sent (ADR 0026). */
+export const MIXPANEL_EU_HOST = "https://api-eu.mixpanel.com";
+
 // Ids and slugs only: anything longer or with spaces could be a learner's own words.
 const Id = z.string().regex(/^[A-Za-z0-9._:-]{1,80}$/);
 const Version = z.number().int().min(0);
@@ -7,6 +10,7 @@ const Version = z.number().int().min(0);
 export const ElapsedBucket = z.enum(["<1s", "1-3s", "3-10s", "10-30s", "30-60s", ">60s"]);
 export const SizeBucket = z.enum(["<250KB", "250KB-1MB", "1-3MB", "3-10MB", ">10MB"]);
 export const ConfidenceBand = z.enum(["high", "medium", "low", "none"]);
+export const Certainty = z.enum(["likely", "possible", "unsure", "none"]);
 
 /** Added to every event by the tracker; never a learner, account, IP or URL (ADR 0026). */
 export const EventContext = z.strictObject({
@@ -29,18 +33,21 @@ export const BROWSER_EVENTS = {
     fileClass: z.enum(["jpeg", "png", "webp", "heic", "other"]),
     sizeBucket: SizeBucket,
   }),
+  // Options are the model's own words, so only their count and certainty are sent.
   recognition_shown: z.strictObject({
-    candidateIds: z.array(Id).max(5),
-    confidenceBand: ConfidenceBand,
-    providerVersion: Id,
+    optionCount: z.number().int().min(0).max(3),
+    topCertainty: Certainty,
     elapsed: ElapsedBucket,
   }),
-  recognition_confirmed: z.strictObject({ taxonomyId: Id, rank: z.number().int().min(0).max(4) }),
-  recognition_corrected: z.strictObject({
-    correctionClass: z.enum(["alternative", "described", "none-fit"]),
+  recognition_confirmed: z.strictObject({
+    rank: z.number().int().min(0).max(2),
+    certainty: Certainty,
   }),
+  recognition_corrected: z.strictObject({ correctionClass: z.enum(["described", "retake"]) }),
+  // A quick answer arrives before the lesson exists, so it has no lesson id yet.
   lesson_first_content: z.strictObject({
-    ...lesson,
+    lessonId: Id.optional(),
+    version: Version.optional(),
     kind: z.enum(["quick-answer", "lesson"]),
     elapsed: ElapsedBucket,
   }),

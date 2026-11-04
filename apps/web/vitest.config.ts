@@ -7,7 +7,7 @@ export default mergeConfig(
     // Next keeps JSX for its own compiler (tsconfig "preserve"); tests need it compiled.
     oxc: { jsx: { runtime: "automatic" } },
     test: {
-      include: ["app/**/*.test.{ts,tsx}"],
+      include: ["app/**/*.test.{ts,tsx}", "proxy.test.ts"],
       setupFiles: ["app/test-setup.ts"],
       coverage: { include: ["app/**"] },
     },

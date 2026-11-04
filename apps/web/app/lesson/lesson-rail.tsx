@@ -80,6 +80,7 @@ export function LessonRail({
       {lesson.sections.map((section) => (
         <li
           key={section.sectionId}
+          data-section-id={section.sectionId}
           className={`rail__step${section.module === "short-answer" ? " rail__step--answer" : ""}`}
         >
           <SectionView

@@ -1,7 +1,9 @@
 import type { Mixpanel } from "mixpanel-browser/dist/mixpanel-core.cjs.js";
 import type { BrowserSink } from "./tracker";
 
-export const MIXPANEL_EU_HOST = "https://api-eu.mixpanel.com";
+import { MIXPANEL_EU_HOST } from "./browser-events";
+
+export { MIXPANEL_EU_HOST };
 
 // The core build leaves out session replay, which we never use and which is most of the weight.
 const loadMixpanel = async (): Promise<Mixpanel> =>
@@ -34,9 +36,11 @@ export function createMixpanelSink(options: {
             "$referrer",
             "$initial_referrer",
             "$referring_domain",
+            "$initial_referring_domain",
           ],
         });
-        mixpanel.identify(options.visitId());
+        // Registered, not identified: identify() would also build a people profile.
+        mixpanel.register({ distinct_id: options.visitId() });
         return mixpanel;
       })
       .catch(() => undefined));

@@ -68,6 +68,8 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_PUBLIC_API_URL: http://localhost:4000
+      # A dummy token so the build sends usage events; tests intercept them before any network.
+      NEXT_PUBLIC_MIXPANEL_TOKEN: e2e-token
     steps:
       - uses: actions/checkout@v7
 

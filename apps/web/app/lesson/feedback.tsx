@@ -6,6 +6,7 @@ import { Button, Notice, Scale, SelectField, TextArea } from "@sbi/ui";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { ApiRequestError, UNREACHABLE } from "../api-client";
+import { track } from "../analytics/track";
 import { useT } from "../i18n/provider";
 import { type LessonKey, useErrorText } from "./lesson-t";
 
@@ -70,7 +71,12 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
           aria-label={t("rateForm")}
           onSubmit={(event) => {
             event.preventDefault();
-            if (helpful && clear) rating.mutate({ lessonId, version, rating: { helpful, clear } });
+            if (helpful && clear) {
+              rating.mutate(
+                { lessonId, version, rating: { helpful, clear } },
+                { onSuccess: () => track("lesson_rated", { lessonId, version, helpful, clear }) },
+              );
+            }
           }}
         >
           <Scale
@@ -113,11 +119,15 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
               return;
             }
             setMissing(undefined);
-            report.mutate({
-              lessonId,
-              version,
-              report: { category, ...(details.trim() ? { details: details.trim() } : {}) },
-            });
+            report.mutate(
+              {
+                lessonId,
+                version,
+                report: { category, ...(details.trim() ? { details: details.trim() } : {}) },
+              },
+              // The category only: whatever the learner typed stays out of usage statistics.
+              { onSuccess: () => track("issue_reported", { lessonId, version, category }) },
+            );
           }}
         >
           <h3>{t("reportProblem")}</h3>

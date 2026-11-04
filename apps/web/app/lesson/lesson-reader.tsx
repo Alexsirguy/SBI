@@ -1,5 +1,6 @@
 "use client";
 
+import { useLessonEvents } from "../analytics/use-lesson-events";
 import Link from "next/link";
 import type { LessonDisclaimer, LessonRequest, PolicyResponse } from "@sbi/contracts";
 import { Button, Mark, Notice, StatusLine } from "@sbi/ui";
@@ -170,6 +171,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const writing = loading && !answer && !lesson && !policy;
   const railVisuals = visuals?.visuals ?? (status === "loading" ? undefined : []);
   const experiment = useLessonExperiment(lesson, railVisuals);
+  useLessonEvents(answer, lesson);
   const tutoring = webEnv.features.tutor && !!lesson && status === "ready";
   return (
     <main id="main" className="lesson">

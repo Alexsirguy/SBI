@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { lessonHref } from "../../lesson/lesson-request";
 import { useT } from "../../i18n/provider";
+import { markFunnelStart } from "../../analytics/clock";
+import { track } from "../../analytics/track";
 import { handOffPhoto } from "../../photo-handoff";
 import { readPrefs } from "../../lesson/prefs";
 
@@ -58,6 +60,10 @@ export function DescribeForm({
           return;
         }
         setStarted(named);
+        if (!onStart) {
+          markFunnelStart();
+          track("capture_started", { source: "describe" });
+        }
         // Without a photo step this is a new object, so an earlier photo must not show on its lesson.
         if (onStart) onStart(named);
         else handOffPhoto(null);
