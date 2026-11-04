@@ -1,6 +1,6 @@
 name: Benchmarks (live models)
 
-# Real model calls cost money, so these run weekly and on demand, never on PRs (#78, epic #75).
+# Real model calls cost money, so these run weekly and on demand, never on PRs (#78, #79).
 on:
   schedule:
     - cron: "43 5 * * 1"
@@ -69,6 +69,50 @@ jobs:
         run: |
           title="Lesson benchmark: below threshold"
           body="The weekly lesson benchmark missed a threshold in docs/research/lesson-eval/thresholds.md: $RUN_URL. The report is in the run's artifacts."
+          number=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+          if [ -n "$number" ] && [ "$number" != "null" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
+
+  recognition:
+    name: Recognition evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run the recognition evaluation
+        id: recognition
+        run: pnpm --filter @sbi/recognition eval
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: recognition-evaluation
+          path: docs/research/recognition-eval/results/
+
+      - name: Open or update the tracking issue
+        if: failure() && steps.recognition.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Recognition evaluation: below threshold"
+          body="The weekly recognition evaluation missed a threshold in docs/research/recognition-eval/thresholds.md: $RUN_URL. The report is in the run's artifacts."
           number=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
           if [ -n "$number" ] && [ "$number" != "null" ]; then
             gh issue comment "$number" --body "$body"

@@ -1,0 +1,472 @@
+{
+  "meta": {
+    "runAt": "2026-11-04T13:22:09.629Z",
+    "seedSet": "v2",
+    "providers": "default"
+  },
+  "summary": {
+    "cases": 38,
+    "errors": 1,
+    "top1Accuracy": 0.9142857142857143,
+    "top3Accuracy": 0.9714285714285714,
+    "ece": 0.023142857142857343,
+    "bins": [
+      {
+        "from": 0,
+        "to": 0.2,
+        "count": 0,
+        "meanConfidence": 0,
+        "accuracy": 0
+      },
+      {
+        "from": 0.2,
+        "to": 0.4,
+        "count": 0,
+        "meanConfidence": 0,
+        "accuracy": 0
+      },
+      {
+        "from": 0.4,
+        "to": 0.6,
+        "count": 2,
+        "meanConfidence": 0.5,
+        "accuracy": 0.5
+      },
+      {
+        "from": 0.6,
+        "to": 0.8,
+        "count": 0,
+        "meanConfidence": 0,
+        "accuracy": 0
+      },
+      {
+        "from": 0.8,
+        "to": 1,
+        "count": 33,
+        "meanConfidence": 0.9639393939393942,
+        "accuracy": 0.9393939393939394
+      }
+    ],
+    "abstentionRecall": 0.6666666666666666,
+    "abstentionPrecision": 1,
+    "byCondition": {
+      "ambiguous-photo": {
+        "cases": 5,
+        "top3Accuracy": 1,
+        "abstained": 3
+      },
+      "clear-photo": {
+        "cases": 20,
+        "top3Accuracy": 1,
+        "abstained": 0
+      },
+      "high-risk": {
+        "cases": 4,
+        "top3Accuracy": 1,
+        "abstained": 2
+      },
+      "misconception": {
+        "cases": 7,
+        "top3Accuracy": 0.8571428571428571,
+        "abstained": 0
+      },
+      "paraphrase": {
+        "cases": 3,
+        "top3Accuracy": 0.6666666666666666,
+        "abstained": 0
+      },
+      "unsupported": {
+        "cases": 2,
+        "top3Accuracy": 1,
+        "abstained": 2
+      }
+    }
+  },
+  "topic": {
+    "pairs": 27,
+    "precision": 1,
+    "recall": 0.15384615384615385,
+    "falseReuseRate": 0,
+    "falseReuses": []
+  },
+  "scores": [
+    {
+      "caseId": "seed-001",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.98,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-002",
+      "expected": "confident",
+      "conditions": ["paraphrase"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.94,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-003",
+      "expected": "confident",
+      "conditions": ["misconception"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-004",
+      "expected": "confident",
+      "conditions": ["paraphrase"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.98,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-005",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-006",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.97,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-007",
+      "expected": "confident",
+      "conditions": [],
+      "top1": false,
+      "top3": false,
+      "abstained": false,
+      "error": "image hash mismatch for seed-007"
+    },
+    {
+      "caseId": "seed-008",
+      "expected": "confident",
+      "conditions": ["misconception"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.98,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-009",
+      "expected": "confident",
+      "conditions": ["high-risk"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.98,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-010",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.98,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-011",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.99,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-012",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.97,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-013",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.98,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-014",
+      "expected": "confident",
+      "conditions": ["misconception"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.98,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-015",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.99,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-016",
+      "expected": "confident",
+      "conditions": ["misconception"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.97,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-017",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.99,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-018",
+      "expected": "confident",
+      "conditions": ["misconception", "paraphrase"],
+      "status": "recognised",
+      "top1": false,
+      "top3": false,
+      "confidence": 0.93,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-019",
+      "expected": "ambiguous",
+      "conditions": ["high-risk", "ambiguous-photo"],
+      "status": "ambiguous",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.5,
+      "abstained": true
+    },
+    {
+      "caseId": "seed-020",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.97,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-021",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.88,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-022",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.94,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-024",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.94,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-025",
+      "expected": "confident",
+      "conditions": ["misconception"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-026",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.98,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-027",
+      "expected": "ambiguous",
+      "conditions": ["ambiguous-photo"],
+      "status": "recognised",
+      "top1": false,
+      "top3": true,
+      "confidence": 0.94,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-028",
+      "expected": "ambiguous",
+      "conditions": ["ambiguous-photo"],
+      "status": "ambiguous",
+      "top1": false,
+      "top3": true,
+      "confidence": 0.5,
+      "abstained": true
+    },
+    {
+      "caseId": "seed-029",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.99,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-030",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-031",
+      "expected": "confident",
+      "conditions": ["high-risk"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-032",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-033",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-034",
+      "expected": "confident",
+      "conditions": ["misconception"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.97,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-035",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-036",
+      "expected": "confident",
+      "conditions": ["clear-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.95,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-037",
+      "expected": "ambiguous",
+      "conditions": ["ambiguous-photo"],
+      "status": "recognised",
+      "top1": true,
+      "top3": true,
+      "confidence": 0.96,
+      "abstained": false
+    },
+    {
+      "caseId": "seed-038",
+      "expected": "unsupported",
+      "conditions": ["high-risk", "unsupported"],
+      "status": "unsupported",
+      "top1": false,
+      "top3": false,
+      "abstained": true
+    },
+    {
+      "caseId": "seed-039",
+      "expected": "unsupported",
+      "conditions": ["unsupported", "ambiguous-photo"],
+      "status": "ambiguous",
+      "top1": false,
+      "top3": false,
+      "confidence": 0.5,
+      "abstained": true
+    }
+  ]
+}

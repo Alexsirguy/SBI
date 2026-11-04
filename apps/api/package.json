@@ -16,7 +16,8 @@
     "load:evidence": "tsx --env-file-if-exists=.env scripts/load-evidence-snapshot.ts",
     "eval:visuals": "tsx scripts/visual-eval.ts",
     "catalog:priorities": "tsx --env-file-if-exists=.env scripts/catalog-priorities.ts",
-    "ops:review-queue": "tsx --env-file-if-exists=.env scripts/review-queue.ts"
+    "ops:review-queue": "tsx --env-file-if-exists=.env scripts/review-queue.ts",
+    "ops:recognition-corrections": "tsx --env-file-if-exists=.env scripts/recognition-corrections.ts"
   },
   "dependencies": {
     "@nestjs/common": "12.1.3",

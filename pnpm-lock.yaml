@@ -421,9 +421,18 @@ importers:
       '@sbi/config':
         specifier: workspace:*
         version: link:../config
+      '@sbi/orchestrator':
+        specifier: workspace:*
+        version: link:../orchestrator
       '@sbi/taxonomy':
         specifier: workspace:*
         version: link:../taxonomy
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
 
   packages/rights:
     dependencies:

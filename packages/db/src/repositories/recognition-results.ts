@@ -1,6 +1,6 @@
 import { RecognitionResult } from "@sbi/contracts";
 import type { RecognitionResultRepository } from "@sbi/recognition";
-import { and, desc, eq, gt, lte } from "drizzle-orm";
+import { and, desc, eq, gt, gte, lte } from "drizzle-orm";
 import type { Database } from "../client";
 import { recognitionResults } from "../schema";
 import { parseDocuments } from "./document";
@@ -38,6 +38,14 @@ export function createRecognitionResultRepository(db: Database): RecognitionResu
         .select({ document: recognitionResults.document })
         .from(recognitionResults)
         .where(eq(recognitionResults.sessionId, sessionId))
+        .orderBy(recognitionResults.createdAt);
+      return parseDocuments(RecognitionResult, rows);
+    },
+    async listSince(since) {
+      const rows = await db
+        .select({ document: recognitionResults.document })
+        .from(recognitionResults)
+        .where(gte(recognitionResults.createdAt, since))
         .orderBy(recognitionResults.createdAt);
       return parseDocuments(RecognitionResult, rows);
     },

@@ -407,6 +407,15 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.recognitionResults.listBySession(result.sessionId)).toEqual([result]);
     });
 
+    it("lists results created since a time, for the correction rate", async () => {
+      await repos.recognitionResults.save(result);
+      const created = new Date(result.createdAt);
+      expect(await repos.recognitionResults.listSince(created)).toEqual([result]);
+      expect(await repos.recognitionResults.listSince(new Date(created.getTime() + 1000))).toEqual(
+        [],
+      );
+    });
+
     it("reads and updates a result by id", async () => {
       await repos.recognitionResults.save(result);
       const corrected = {
