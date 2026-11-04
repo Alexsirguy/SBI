@@ -30,7 +30,16 @@ const failure = (error: unknown) =>
   error instanceof ApiRequestError ? error.message : UNREACHABLE;
 
 /** Rating and problem reports for this exact lesson version, so triage sees what the learner read. */
-export function LessonFeedback({ lessonId, version }: { lessonId: string; version: number }) {
+export function LessonFeedback({
+  lessonId,
+  version,
+  topic,
+}: {
+  lessonId: string;
+  version: number;
+  /** For reporting clarity per topic (#81); see `topicOf`. */
+  topic?: string;
+}) {
   const t = useT("lesson");
   const errorText = useErrorText();
   const scaleWords = {
@@ -74,7 +83,10 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
             if (helpful && clear) {
               rating.mutate(
                 { lessonId, version, rating: { helpful, clear } },
-                { onSuccess: () => track("lesson_rated", { lessonId, version, helpful, clear }) },
+                {
+                  onSuccess: () =>
+                    track("lesson_rated", { lessonId, version, topic, helpful, clear }),
+                },
               );
             }
           }}

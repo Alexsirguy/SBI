@@ -30,7 +30,7 @@ Every event carries `consentVersion`, `route`, `locale`, `ageBand` (`teen`, `adu
 | `issue_reported`        | A problem report is sent                                 | lesson id/version, `category`, never the typed details         |
 | `lesson_saved`          | A lesson is saved or removed                             | lesson id/version, `action`                                    |
 
-`answer_feedback` (tutor helpfulness), `concept_check_answered` (#81) and `timing_measured` (#82) are defined in `@sbi/analytics`. Until their features ship, nothing sends them.
+`answer_feedback` (tutor helpfulness) and `timing_measured` (#82) are defined in `@sbi/analytics`. Until their features ship, nothing sends them.
 
 ## 3. The board: "Learner funnel"
 
@@ -47,8 +47,9 @@ Create one board with these reports. Name them as below, so later issues can ref
 4. **Recognition corrections** (Insights): `recognition_corrected` ÷ `recognition_shown`, per week, broken down by `correctionClass` and `topCertainty`.
 5. **Lesson depth** (Insights): `section_opened` per `lesson_first_content`, broken down by `ageBand`.
 6. **Visual use** (Insights): `interaction_changed` per `visual_loaded`, broken down by `kind`.
-7. **Ratings** (Insights): average of `clear` and `helpful` on `lesson_rated`, per week, broken down by `ageBand`.
-8. **Reports by category** (Insights): `issue_reported` by `category`.
+7. **Ratings** (Insights): average of `clear` and `helpful` on `lesson_rated`, per week, broken down by `ageBand` and `topic`.
+8. **Concept check:** the reports in `docs/research/learning-signal/README.md`.
+9. **Reports by category** (Insights): `issue_reported` by `category`.
 
 ## 4. Reading it honestly
 

@@ -71,6 +71,8 @@ export const BROWSER_EVENTS = {
   answer_feedback: z.strictObject({ ...lesson, helpful: z.boolean() }),
   concept_check_answered: z.strictObject({
     ...lesson,
+    // A catalogue id, or "subject" for typed subjects, whose ids are made from the learner's words.
+    topic: Id,
     itemId: Id,
     instrument: Id,
     phase: z.enum(["pre", "post"]),
@@ -79,6 +81,7 @@ export const BROWSER_EVENTS = {
   }),
   lesson_rated: z.strictObject({
     ...lesson,
+    topic: Id.optional(),
     helpful: z.number().int().min(1).max(5).optional(),
     clear: z.number().int().min(1).max(5).optional(),
   }),
