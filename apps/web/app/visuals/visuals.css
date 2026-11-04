@@ -103,6 +103,15 @@
   display: none;
 }
 
+/* The tutor's "watch" points at a part; weight and a mark, not colour alone, show which. */
+.visual-layer__labels [data-highlighted] {
+  font-weight: 600;
+  background: var(--sbi-paper-sunk);
+  outline: 2px solid var(--sbi-ink);
+  outline-offset: 2px;
+  border-radius: var(--sbi-radius-s);
+}
+
 .visual-layer__waiting,
 .visual-layer__note {
   margin: 0;

@@ -30,6 +30,7 @@ import {
   type ObjectStorage,
   type UploadPolicy,
 } from "@sbi/media";
+import type { TutorTurnRepository } from "@sbi/tutor";
 import type { z } from "zod";
 import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
@@ -39,6 +40,7 @@ import {
   MEDIA_REGISTRY,
   OBJECT_STORAGE,
   SAVED_LESSONS,
+  TUTOR_TURNS,
   UPLOAD_POLICY,
 } from "../tokens";
 import {
@@ -62,7 +64,8 @@ interface Reply {
 const EXPORT_NOTES = [
   "Lessons themselves hold no personal data, so only your list of saved lessons is included.",
   "Photos kept on a device but never linked to this account are listed on that device's privacy page.",
-  "Recognition results, tutor turns and feedback are not tied to your account; they are deleted on the schedule in our retention policy.",
+  "Tutor conversations you had while signed in are included; each is deleted 30 days after you asked.",
+  "Recognition results, feedback and tutor conversations from when you were signed out are not tied to your account; they are deleted on the schedule in our retention policy.",
 ];
 
 @Controller()
@@ -79,6 +82,7 @@ export class AccountController {
     private readonly registry: Pick<MediaRegistry, "release" | "claimForDeletion" | "forget">,
     @Inject(DELETION_AUDIT) private readonly audit: DeletionAuditLog,
     @Inject(UPLOAD_POLICY) private readonly uploads: Pick<UploadPolicy, "maxBytes">,
+    @Inject(TUTOR_TURNS) private readonly tutorTurns: Pick<TutorTurnRepository, "listByAccount">,
   ) {}
 
   @Get(API_ROUTES.getAccount.path)
@@ -129,9 +133,10 @@ export class AccountController {
 
   @Get(API_ROUTES.exportAccount.path)
   async export(@SignedInAccount() account: StoredAccount): Promise<ApiResponse<"exportAccount">> {
-    const [saved, photos] = await Promise.all([
+    const [saved, photos, turns] = await Promise.all([
       this.saved.list(account.accountId),
       this.accounts.ownedPhotos(account.accountId),
+      this.tutorTurns.listByAccount(account.accountId),
     ]);
     return {
       account: {
@@ -161,6 +166,13 @@ export class AccountController {
         sharedAt: item.sharedAt?.toISOString() ?? null,
         title: item.title,
         version: item.version,
+      })),
+      tutorTurns: turns.map((turn) => ({
+        askedAt: turn.createdAt,
+        lessonId: turn.lessonId,
+        lessonVersion: turn.lessonVersion,
+        question: turn.userText,
+        reply: turn.response.text,
       })),
     };
   }

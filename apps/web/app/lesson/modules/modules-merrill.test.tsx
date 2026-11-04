@@ -45,6 +45,7 @@ function fakeExperiment(controls = ["tension"]) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    highlight: () => true,
     reveal: vi.fn(),
   };
   return {

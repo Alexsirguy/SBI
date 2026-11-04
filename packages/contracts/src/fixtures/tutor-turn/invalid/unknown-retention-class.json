@@ -13,7 +13,8 @@
     "citedClaimIds": ["0192f1a0-0000-7000-8000-000000000004"],
     "visualAction": {
       "visualId": "0192f1a0-0000-7000-8000-00000000000d",
-      "state": "highlight-switch"
+      "settings": [],
+      "highlight": "switch"
     }
   },
   "safetyCategory": "none",

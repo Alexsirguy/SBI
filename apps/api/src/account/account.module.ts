@@ -13,6 +13,7 @@ import {
   PASSWORD_PARAMS,
   REPOSITORIES,
   SAVED_LESSONS,
+  TUTOR_TURNS,
   SESSIONS,
 } from "../tokens";
 import { AccountController } from "./account.controller";
@@ -38,6 +39,11 @@ const MINUTE_MS = 60_000;
       provide: SAVED_LESSONS,
       inject: [REPOSITORIES],
       useFactory: (r: Repositories) => r.savedLessons,
+    },
+    {
+      provide: TUTOR_TURNS,
+      inject: [REPOSITORIES],
+      useFactory: (r: Repositories) => r.tutorTurns,
     },
     {
       provide: ACCOUNT_TOKENS,
@@ -69,6 +75,6 @@ const MINUTE_MS = 60_000;
     },
   ],
   // Other modules guard their account routes with the same session check.
-  exports: [AuthService, SameOriginGuard, SessionGuard, SAVED_LESSONS],
+  exports: [AuthService, SameOriginGuard, SessionGuard, SAVED_LESSONS, TUTOR_TURNS],
 })
 export class AccountModule {}

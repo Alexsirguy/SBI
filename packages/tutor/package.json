@@ -5,17 +5,25 @@
   "description": "Lesson-grounded tutor pipeline.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./eval": "./src/eval/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "tsx scripts/eval.ts"
   },
   "dependencies": {
-    "@sbi/contracts": "workspace:*"
+    "@sbi/contracts": "workspace:*",
+    "@sbi/llm": "workspace:*",
+    "@sbi/orchestrator": "workspace:*",
+    "@sbi/safety": "workspace:*",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@sbi/config": "workspace:*"
+    "@sbi/config": "workspace:*",
+    "@types/node": "22.20.5",
+    "tsx": "4.23.15"
   }
 }

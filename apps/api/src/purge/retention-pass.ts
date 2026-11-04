@@ -10,6 +10,7 @@ export type RetentionSettings = Pick<
   ApiEnv,
   | "FEEDBACK_DETAILS_RETENTION_DAYS"
   | "TUTOR_TTL_SESSION_HOURS"
+  | "TUTOR_TTL_ACCOUNT_DAYS"
   | "TUTOR_TTL_QUALITY_DAYS"
   | "TUTOR_TTL_RESEARCH_DAYS"
   | "EVIDENCE_PACK_TTL_DAYS"
@@ -53,6 +54,10 @@ export async function runRetentionPass(
     (await repos.tutorTurns.deleteCreatedBefore(
       "session",
       ago(settings.TUTOR_TTL_SESSION_HOURS * HOUR_MS),
+    )) +
+    (await repos.tutorTurns.deleteCreatedBefore(
+      "account",
+      ago(settings.TUTOR_TTL_ACCOUNT_DAYS * DAY_MS),
     )) +
     (await repos.tutorTurns.deleteCreatedBefore(
       "quality-review",

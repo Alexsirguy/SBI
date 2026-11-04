@@ -14,5 +14,6 @@ export * from "./registry";
 export * from "./safety";
 export * from "./taxonomy-api";
 export * from "./tutor";
+export * from "./tutor-api";
 export * from "./visual";
 export * from "./readable-text";

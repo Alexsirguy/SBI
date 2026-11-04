@@ -30,6 +30,8 @@ const schema = z.object({
   FEEDBACK_DETAILS_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
   // Tutor turns by retention class (docs/retention.md); research needs the learner's opt-in.
   TUTOR_TTL_SESSION_HOURS: z.coerce.number().int().positive().default(24),
+  // A signed-in learner is told 30 days (ADR 0025), so it can be shortened but not lengthened.
+  TUTOR_TTL_ACCOUNT_DAYS: z.coerce.number().int().positive().max(30).default(30),
   TUTOR_TTL_QUALITY_DAYS: z.coerce.number().int().positive().default(30),
   TUTOR_TTL_RESEARCH_DAYS: z.coerce.number().int().positive().max(365).default(365),
   // Packs older than the 30-day reuse window are never read again.
@@ -37,6 +39,8 @@ const schema = z.object({
   CATALOG_GAP_TTL_DAYS: z.coerce.number().int().positive().default(365),
   FEEDBACK_MAX_PER_HOUR: z.coerce.number().int().positive().default(20),
   QUESTIONS_MAX_PER_HOUR: z.coerce.number().int().positive().default(60),
+  // Each tutor turn costs a classifier and an answer call, so a learner gets one every two minutes.
+  TUTOR_MAX_PER_HOUR: z.coerce.number().int().positive().default(30),
   FEATURE_FLAGS: z.string().optional(),
   // Accounts (ADR 0020): Google sign-in needs only the client id, since its button returns an ID token.
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),

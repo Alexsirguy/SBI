@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { LessonDisclaimer, LessonRequest, PolicyResponse } from "@sbi/contracts";
 import { Button, Mark, Notice, StatusLine } from "@sbi/ui";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { INTL_LOCALE } from "../i18n/locales";
@@ -26,6 +27,10 @@ import { SaveLesson } from "./save-lesson";
 import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
 import { VisualFrame } from "./visual-frame";
+import { webEnv } from "../../env";
+
+// Fetched only when the tutor is switched on, so the lesson page keeps its JS budget.
+const Tutor = dynamic(() => import("./tutor/tutor-panel"), { ssr: false });
 
 interface LessonReaderProps {
   request: LessonRequest;
@@ -165,6 +170,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const writing = loading && !answer && !lesson && !policy;
   const railVisuals = visuals?.visuals ?? (status === "loading" ? undefined : []);
   const experiment = useLessonExperiment(lesson, railVisuals);
+  const tutoring = webEnv.features.tutor && !!lesson && status === "ready";
   return (
     <main id="main" className="lesson">
       <header className="lesson-head">
@@ -238,7 +244,10 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
         <PolicyHelp policy={policy} onChangeAge={(age) => choose({ ...prefs, age })} />
       ) : null}
       {writing || policy || (error && !lesson) ? null : (
-        <div aria-busy={!lesson} className="lesson-body">
+        <div
+          aria-busy={!lesson}
+          className={tutoring ? "lesson-body lesson-body--tutor" : "lesson-body"}
+        >
           <PracticeProvider experiment={experiment}>
             <LessonRail
               lesson={lesson}
@@ -247,6 +256,7 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
               visuals={railVisuals}
               renderVisual={(visual) => <VisualFrame visual={visual} />}
             />
+            {tutoring && lesson ? <Tutor lesson={lesson} sources={sources} prefs={prefs} /> : null}
           </PracticeProvider>
           {lesson && status === "ready" ? (
             <NextConcepts lessonId={lesson.lessonId} version={lesson.version} prefs={prefs} />

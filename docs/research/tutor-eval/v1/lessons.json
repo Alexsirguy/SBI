@@ -1,0 +1,360 @@
+{
+  "kettle": {
+    "lesson": {
+      "lessonId": "0192f1a0-0000-7000-8000-0000000e0001",
+      "version": 1,
+      "title": "Why your kettle takes a while to boil",
+      "summary": "The element heats the water from below; how much water and how much power decide how long it takes.",
+      "claims": [
+        {
+          "claimId": "0192f1a0-0000-7000-8101-000000000001",
+          "text": "A kettle's heating element turns electrical energy into heat.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8101-000000000002",
+          "text": "More water needs more energy to heat, so a fuller kettle takes longer to boil.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8101-000000000003",
+          "text": "A higher-power element delivers more energy each second, so the water heats faster.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8101-000000000004",
+          "text": "Warm water rises and cool water sinks, forming convection currents that spread heat.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8101-000000000005",
+          "text": "A bimetallic strip bends when steam heats it and switches the kettle off.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8101-000000000006",
+          "text": "Limescale on the element insulates it and slows heating.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        }
+      ],
+      "sections": [
+        {
+          "sectionId": "problem",
+          "module": "problem",
+          "text": "Why does a full kettle take so long?",
+          "claimIds": ["0192f1a0-0000-7000-8101-000000000002"]
+        },
+        {
+          "sectionId": "demo",
+          "module": "demonstrate",
+          "text": "Watch how water volume and power change the time to boil.",
+          "claimIds": [
+            "0192f1a0-0000-7000-8101-000000000002",
+            "0192f1a0-0000-7000-8101-000000000003"
+          ],
+          "steps": [
+            {
+              "text": "Start with a small amount of water.",
+              "settings": [
+                {
+                  "controlId": "waterVolume",
+                  "value": 0.5
+                }
+              ]
+            },
+            {
+              "text": "Fill it to the top and see the time grow.",
+              "settings": [
+                {
+                  "controlId": "waterVolume",
+                  "value": 1.7
+                }
+              ]
+            },
+            {
+              "text": "Now turn up the power.",
+              "settings": [
+                {
+                  "controlId": "heatingPower",
+                  "value": 2200
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "manifest": {
+      "visualId": "0192f1a0-0000-7000-8000-0000000f0001",
+      "kind": "playground",
+      "alt": "A kettle with sliders for water and power.",
+      "fallback": {
+        "text": "A kettle heating water."
+      },
+      "assetIds": [],
+      "assumptions": [],
+      "params": {},
+      "labels": [
+        {
+          "id": "element",
+          "text": "Heating element",
+          "claimId": "0192f1a0-0000-7000-8101-000000000001"
+        },
+        {
+          "id": "strip",
+          "text": "Bimetallic strip",
+          "claimId": "0192f1a0-0000-7000-8101-000000000005"
+        }
+      ],
+      "controls": [
+        {
+          "id": "waterVolume",
+          "label": "Water volume",
+          "unit": "L",
+          "min": 0.5,
+          "max": 1.7,
+          "step": 0.1,
+          "value": 1
+        },
+        {
+          "id": "heatingPower",
+          "label": "Heating power",
+          "unit": "W",
+          "min": 800,
+          "max": 2200,
+          "step": 100,
+          "value": 1500
+        }
+      ],
+      "readouts": [
+        {
+          "id": "minutes",
+          "label": "Time to boil",
+          "unit": "min",
+          "formula": "waterVolume * 4.2 * 85 / heatingPower * 1000 / 60"
+        }
+      ]
+    }
+  },
+  "lens": {
+    "lesson": {
+      "lessonId": "0192f1a0-0000-7000-8000-0000000e0002",
+      "version": 1,
+      "title": "Why a magnifying glass makes things look bigger",
+      "summary": "A convex lens bends light so the eye sees a larger image than the object.",
+      "claims": [
+        {
+          "claimId": "0192f1a0-0000-7000-8102-000000000001",
+          "text": "A magnifying glass is a convex lens, thicker in the middle than at the edges.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8102-000000000002",
+          "text": "Light bends (refracts) when it passes from air into glass and back out.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8102-000000000003",
+          "text": "Held close to an object, a convex lens makes an enlarged, upright virtual image.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8102-000000000004",
+          "text": "Held farther away than its focal length, the lens shows an upside-down image.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8102-000000000005",
+          "text": "A convex lens can focus sunlight to a small, very hot spot.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        }
+      ],
+      "sections": [
+        {
+          "sectionId": "seeing",
+          "module": "what-youre-seeing",
+          "text": "Small print looks larger through the lens.",
+          "claimIds": ["0192f1a0-0000-7000-8102-000000000003"]
+        },
+        {
+          "sectionId": "why",
+          "module": "first-principles",
+          "text": "Light bends in the curved glass.",
+          "claimIds": [
+            "0192f1a0-0000-7000-8102-000000000001",
+            "0192f1a0-0000-7000-8102-000000000002"
+          ]
+        }
+      ]
+    }
+  },
+  "guitar": {
+    "lesson": {
+      "lessonId": "0192f1a0-0000-7000-8000-0000000e0003",
+      "version": 1,
+      "title": "How a guitar string makes its note",
+      "summary": "A vibrating string makes sound; its tension, length and thickness set the pitch.",
+      "claims": [
+        {
+          "claimId": "0192f1a0-0000-7000-8103-000000000001",
+          "text": "A plucked string vibrates back and forth and pushes on the air, making sound waves.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8103-000000000002",
+          "text": "Tightening a string raises its pitch because it vibrates faster.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8103-000000000003",
+          "text": "A shorter vibrating length, as when you press a fret, gives a higher pitch.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8103-000000000004",
+          "text": "Thicker, heavier strings vibrate more slowly and sound lower.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        },
+        {
+          "claimId": "0192f1a0-0000-7000-8103-000000000005",
+          "text": "The hollow body of an acoustic guitar makes the sound louder by vibrating with the strings.",
+          "status": "supported",
+          "sourceIds": ["0192f1a0-0000-7000-8000-00000000500a"],
+          "scope": "general",
+          "confidence": "high",
+          "dependsOn": []
+        }
+      ],
+      "sections": [
+        {
+          "sectionId": "demo",
+          "module": "demonstrate",
+          "text": "Tighten the string and listen.",
+          "claimIds": ["0192f1a0-0000-7000-8103-000000000002"],
+          "steps": [
+            {
+              "text": "Loosen the string.",
+              "settings": [
+                {
+                  "controlId": "tension",
+                  "value": 60
+                }
+              ]
+            },
+            {
+              "text": "Tighten it.",
+              "settings": [
+                {
+                  "controlId": "tension",
+                  "value": 180
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "manifest": {
+      "visualId": "0192f1a0-0000-7000-8000-0000000f0003",
+      "kind": "playground",
+      "alt": "A guitar string with a tension slider.",
+      "fallback": {
+        "text": "A vibrating string."
+      },
+      "assetIds": [],
+      "assumptions": [],
+      "params": {},
+      "labels": [
+        {
+          "id": "string",
+          "text": "String",
+          "claimId": "0192f1a0-0000-7000-8103-000000000001"
+        },
+        {
+          "id": "peg",
+          "text": "Tuning peg",
+          "claimId": "0192f1a0-0000-7000-8103-000000000002"
+        }
+      ],
+      "controls": [
+        {
+          "id": "tension",
+          "label": "String tension",
+          "unit": "N",
+          "min": 40,
+          "max": 200,
+          "step": 5,
+          "value": 110
+        }
+      ],
+      "readouts": [
+        {
+          "id": "pitch",
+          "label": "Pitch",
+          "unit": "Hz",
+          "formula": "sqrt(tension / 0.003) / 1.3"
+        }
+      ]
+    }
+  }
+}

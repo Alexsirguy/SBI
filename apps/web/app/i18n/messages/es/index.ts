@@ -5,8 +5,9 @@ import common from "./common.json";
 import lesson from "./lesson.json";
 import pathway from "./pathway.json";
 import site from "./site.json";
+import tutor from "./tutor.json";
 
 // Typed against English, so a missing or extra key fails the build.
-const es: Messages = { account, capture, common, lesson, pathway, site };
+const es: Messages = { account, capture, common, lesson, pathway, site, tutor };
 
 export default es;

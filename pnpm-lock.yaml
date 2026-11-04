@@ -80,6 +80,9 @@ importers:
       '@sbi/taxonomy':
         specifier: workspace:*
         version: link:../../packages/taxonomy
+      '@sbi/tutor':
+        specifier: workspace:*
+        version: link:../../packages/tutor
       '@sbi/visuals':
         specifier: workspace:*
         version: link:../../packages/visuals
@@ -453,10 +456,28 @@ importers:
       '@sbi/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@sbi/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@sbi/orchestrator':
+        specifier: workspace:*
+        version: link:../orchestrator
+      '@sbi/safety':
+        specifier: workspace:*
+        version: link:../safety
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@sbi/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
 
   packages/ui:
     devDependencies:

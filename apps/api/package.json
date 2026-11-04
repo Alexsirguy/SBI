@@ -34,6 +34,7 @@
     "@sbi/rights": "workspace:*",
     "@sbi/safety": "workspace:*",
     "@sbi/taxonomy": "workspace:*",
+    "@sbi/tutor": "workspace:*",
     "@sbi/visuals": "workspace:*",
     "jose": "6.2.12",
     "reflect-metadata": "0.2.2",

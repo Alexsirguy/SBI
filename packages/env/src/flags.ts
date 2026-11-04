@@ -1,7 +1,8 @@
 import { EnvError } from "./env-error";
 
 export const FEATURE_DEFAULTS = {
-  tutor: false,
+  // On by owner decision after the first eval run (docs/research/tutor-eval/thresholds.md).
+  tutor: true,
   // On by product decision (ADR 0006); `!photoRecognition` stops photos reaching any vendor.
   photoRecognition: true,
 };

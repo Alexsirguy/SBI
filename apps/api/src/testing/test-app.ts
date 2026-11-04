@@ -15,6 +15,7 @@ import type { CatalogGapRepository } from "@sbi/taxonomy";
 import { AppModule, configureApp } from "../app.module";
 import { loadEnv } from "../env";
 import { fakeAccountStore, fakeMailer, fakeSavedLessons, TEST_SCRYPT } from "./test-auth";
+import { fakeTutorTurns } from "./test-tutor";
 import {
   ACCOUNT_TOKENS,
   ACCOUNTS,
@@ -24,6 +25,7 @@ import {
   MAILER,
   PASSWORD_PARAMS,
   SAVED_LESSONS,
+  TUTOR_TURNS,
   SESSIONS,
   CATALOG_GAPS,
   DATABASE,
@@ -188,6 +190,8 @@ export async function startTestApp(
     .useValue(TEST_SCRYPT)
     .overrideProvider(SAVED_LESSONS)
     .useValue(fakeSavedLessons().repository)
+    .overrideProvider(TUTOR_TURNS)
+    .useValue(fakeTutorTurns().repository)
     .overrideProvider(COVERAGE)
     .useValue({
       taughtBySubject: async () => [

@@ -11,6 +11,8 @@ export interface ExperimentController {
   values(): Record<string, number>;
   readout(readoutId: string): number | undefined;
   subscribe(listener: () => void): () => void;
+  /** Marks one part in the visual's key, or clears the mark; false when the visual has no such part. */
+  highlight(labelId: string | undefined): boolean;
   /** Centres the visual, clear of the sticky header, without motion when the learner prefers less. */
   reveal(): void;
 }
@@ -53,6 +55,10 @@ export function createExperimentController(
     input.dispatchEvent(new Event("input", { bubbles: true }));
     return true;
   };
+  const container = () =>
+    doc.querySelector(`[data-visual-id="${manifest.visualId}"]`) ??
+    slider(manifest.controls[0]?.id ?? "")?.closest("figure");
+  const labels = new Set(manifest.labels.map((label) => label.id));
   return {
     visualId: manifest.visualId,
     has: ({ controls: wanted = [], readouts = [] }) =>
@@ -77,10 +83,19 @@ export function createExperimentController(
       doc.addEventListener("input", onInput);
       return () => doc.removeEventListener("input", onInput);
     },
+    highlight(labelId) {
+      const parts = container()?.querySelectorAll<HTMLElement>("[data-label]") ?? [];
+      let found = false;
+      for (const part of parts) {
+        const marked =
+          labelId !== undefined && labels.has(labelId) && part.dataset.label === labelId;
+        part.toggleAttribute("data-highlighted", marked);
+        found ||= marked;
+      }
+      return labelId === undefined || found;
+    },
     reveal() {
-      const target =
-        doc.querySelector(`[data-visual-id="${manifest.visualId}"]`) ??
-        slider(manifest.controls[0]?.id ?? "")?.closest("figure");
+      const target = container();
       const still = doc.defaultView?.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       target?.scrollIntoView?.({ behavior: still ? "auto" : "smooth", block: "center" });
     },

@@ -521,6 +521,28 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.tutorTurns.deleteBySession(turn.sessionId)).toBe(2);
     });
 
+    it("lists and resets one lesson's conversation for an account or a visit", async () => {
+      const turn = fixture(TutorTurn, "tutor-turn", "grounded-answer");
+      const accountId = "0192f1a0-0000-7000-8000-0000000acc01";
+      const mine = { ...turn, accountId, retentionClass: "account" as const };
+      const otherLesson = { ...mine, turnId: newId(), lessonId: newId() };
+      const otherVisit = { ...turn, turnId: newId(), sessionId: newId() };
+      for (const item of [mine, otherLesson, otherVisit]) await repos.tutorTurns.save(item);
+
+      const byAccount = await repos.tutorTurns.listConversation({ accountId }, turn.lessonId);
+      expect(byAccount.map((t) => t.turnId)).toEqual([mine.turnId]);
+      expect(await repos.tutorTurns.listByAccount(accountId)).toHaveLength(2);
+      const byVisit = await repos.tutorTurns.listConversation(
+        { sessionId: otherVisit.sessionId },
+        turn.lessonId,
+      );
+      expect(byVisit.map((t) => t.turnId)).toEqual([otherVisit.turnId]);
+
+      expect(await repos.tutorTurns.deleteConversation({ accountId }, turn.lessonId)).toBe(1);
+      expect(await repos.tutorTurns.listByAccount(accountId)).toHaveLength(1);
+      expect(await repos.tutorTurns.listBySession(otherVisit.sessionId)).toHaveLength(1);
+    });
+
     it("deletes old turns of one retention class only", async () => {
       const turn = fixture(TutorTurn, "tutor-turn", "grounded-answer");
       const old = {
@@ -698,6 +720,12 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
           title: "Kettles",
           version: 1,
         });
+        await repos.tutorTurns.save({
+          ...fixture(TutorTurn, "tutor-turn", "grounded-answer"),
+          turnId: newId(),
+          accountId: id,
+          retentionClass: "account",
+        });
       }
       await repos.mediaRegistry.register(photo("photos/ada.jpg"));
       await repos.mediaRegistry.keep("photos/ada.jpg", "consent-1");
@@ -716,6 +744,8 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.accounts.ownedPhotos(ada.accountId)).toEqual([]);
       expect(await repos.accounts.get(grace.accountId)).toBeDefined();
       expect(await repos.savedLessons.list(grace.accountId)).toHaveLength(1);
+      expect(await repos.tutorTurns.listByAccount(ada.accountId)).toEqual([]);
+      expect(await repos.tutorTurns.listByAccount(grace.accountId)).toHaveLength(1);
     });
 
     it("finds live sessions only, and ends them one or all at a time", async () => {
