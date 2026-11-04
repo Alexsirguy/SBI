@@ -31,7 +31,7 @@ describe("consent", () => {
     const storage = memory();
     const now = new Date("2026-11-02T10:00:00.000Z");
     expect(setConsent("save-photos", true, storage, now)).toEqual({
-      version: "consent-1",
+      version: "consent-2",
       choices: { "save-photos": true },
       decidedAt: now.toISOString(),
     });

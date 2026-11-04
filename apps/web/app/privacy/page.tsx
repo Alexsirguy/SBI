@@ -44,6 +44,14 @@ export default async function PrivacyPage() {
         <li>{t("privacyTutorReset")}</li>
       </ul>
 
+      <h2>{t("privacyStatsHeading")}</h2>
+      <ul>
+        <li>{t("privacyStatsConsent")}</li>
+        <li>{t("privacyStatsWhat")}</li>
+        <li>{t("privacyStatsVisit")}</li>
+        <li>{t("privacyStatsStop")}</li>
+      </ul>
+
       <h2>{t("privacyAccountHeading")}</h2>
       <ul>
         <li>{t("privacyAccountOptional")}</li>

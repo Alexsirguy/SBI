@@ -42,7 +42,7 @@ describe("PrivacyCorner", () => {
   it("stays folded and never asks for the account while folded", async () => {
     window.localStorage.setItem("sbi.privacy-corner", "collapsed");
     const { container } = await view();
-    expect(text(container)).toBe("Privacy 4 to answer");
+    expect(text(container)).toBe("Privacy 5 to answer");
     expect(api).not.toHaveBeenCalled();
   });
 
@@ -53,6 +53,7 @@ describe("PrivacyCorner", () => {
       account: false,
       "model-improvement": true,
       research: false,
+      "usage-statistics": false,
     });
     const { container } = await view();
     expect(text(container)).toBe("Privacy");
