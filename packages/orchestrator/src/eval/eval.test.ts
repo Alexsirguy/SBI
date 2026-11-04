@@ -47,6 +47,25 @@ const refuse: BenchmarkCase = {
 };
 
 describe("the lesson benchmark (#78)", () => {
+  it("accepts a lesson or help for a redirect, but only help for a refusal", async () => {
+    const redirect: BenchmarkCase = {
+      prompt: { ...allow.prompt, id: "seed-r", expected: { safety: "redirect" } },
+    };
+    const records = await runBenchmark(
+      {
+        judge: judging("supports"),
+        apiUrl: "http://api.test",
+        concurrency: 1,
+        fetchServed: async () => ({ lesson: SAMPLE_LESSON, ms: 1 }),
+      },
+      { version: "test", seedSet: "v2", cases: [redirect, refuse] },
+    );
+    expect(records.map((record) => [record.promptId, record.safetyCorrect])).toEqual([
+      ["seed-r", true],
+      ["seed-y", false],
+    ]);
+  });
+
   it("loads the seed set with its expectations, and every expectation names a real prompt", () => {
     const set = loadBenchmarkSet(root);
     expect(set.cases).toHaveLength(40);
