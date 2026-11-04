@@ -45,7 +45,8 @@ export function readingEase(text: string, locale?: string): number {
 const FLOOR: Record<Lesson["readingLevel"], number> = { simple: 55, plain: 30, technical: -1000 };
 
 // Steps, task prompts and feedback are read by the learner too; ". " keeps each its own sentence.
-function lessonProse(lesson: Lesson): string {
+/** All the prose a learner reads, as the reading-level check scores it. */
+export function lessonProse(lesson: Lesson): string {
   return [
     ...lesson.sections.flatMap((section) => [
       section.text,

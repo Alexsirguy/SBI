@@ -386,6 +386,9 @@ importers:
       '@sbi/safety':
         specifier: workspace:*
         version: link:../safety
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@sbi/config':
         specifier: workspace:*
@@ -393,6 +396,12 @@ importers:
       '@sbi/testing':
         specifier: workspace:*
         version: link:../testing
+      '@types/node':
+        specifier: 22.20.5
+        version: 22.20.5
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
 
   packages/recognition:
     dependencies:

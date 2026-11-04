@@ -1,0 +1,77 @@
+name: Benchmarks (live models)
+
+# Real model calls cost money, so these run weekly and on demand, never on PRs (#78, epic #75).
+on:
+  schedule:
+    - cron: "43 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  lessons:
+    name: Lesson quality benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      META_MODEL_API_KEY: ${{ secrets.META_MODEL_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LESSON_MODEL: ${{ vars.LESSON_MODEL }}
+      DATABASE_URL: mysql://sbi:sbi@127.0.0.1:3306/sbi
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Start the database and object storage
+        run: docker compose up -d --wait mariadb storage
+
+      - run: pnpm db:migrate
+
+      # The real API, so the benchmark measures the pipeline learners get.
+      - name: Start the API
+        run: |
+          cp apps/api/.env.example apps/api/.env
+          pnpm --filter @sbi/api build
+          cd apps/api
+          PORT=4100 UPLOAD_TOKEN_SECRET="$(openssl rand -hex 32)" \
+            node --env-file=.env dist/server.js > ../../api.log 2>&1 &
+          for _ in $(seq 1 60); do curl -fs http://localhost:4100/health && exit 0; sleep 1; done
+          cat ../../api.log
+          exit 1
+
+      - name: Run the lesson benchmark
+        id: lessons
+        run: pnpm --filter @sbi/orchestrator eval --api http://localhost:4100
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lesson-benchmark
+          path: |
+            docs/research/lesson-eval/results/
+            api.log
+
+      - name: Open or update the tracking issue
+        if: failure() && steps.lessons.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Lesson benchmark: below threshold"
+          body="The weekly lesson benchmark missed a threshold in docs/research/lesson-eval/thresholds.md: $RUN_URL. The report is in the run's artifacts."
+          number=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+          if [ -n "$number" ] && [ "$number" != "null" ]; then
+            gh issue comment "$number" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi

@@ -5,21 +5,26 @@
   "description": "Lesson pipeline: intent signature, reuse match, generation, checks and publish gate.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./eval": "./src/eval/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "tsx scripts/eval.ts"
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",
     "@sbi/evidence": "workspace:*",
     "@sbi/llm": "workspace:*",
-    "@sbi/safety": "workspace:*"
+    "@sbi/safety": "workspace:*",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@sbi/config": "workspace:*",
-    "@sbi/testing": "workspace:*"
+    "@sbi/testing": "workspace:*",
+    "tsx": "4.23.15",
+    "@types/node": "22.20.5"
   }
 }
