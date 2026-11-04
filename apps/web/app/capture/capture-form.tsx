@@ -29,7 +29,7 @@ import { assessQuality, readImageData, type QualityCheck } from "./quality";
 import { suggestCrop } from "./suggest-crop";
 import { usePhotoUpload } from "./use-photo-upload";
 import { elapsedBucket, sizeBucket } from "@sbi/analytics";
-import { markFunnelStart } from "../analytics/clock";
+import { markFunnelStart, markTiming } from "../analytics/clock";
 import { track } from "../analytics/track";
 import { useRecognisePhoto } from "./use-recognition";
 
@@ -302,11 +302,13 @@ export function CaptureForm() {
           {
             onSuccess: (reply) => {
               sessionRef.current = reply.sessionId;
+              const ms = performance.now() - sent;
               track("recognition_shown", {
                 optionCount: reply.options.length,
                 topCertainty: reply.options[0]?.certainty ?? "none",
-                elapsed: elapsedBucket(performance.now() - sent),
+                elapsed: elapsedBucket(ms),
               });
+              markTiming("time_to_label", ms);
             },
           },
         ),

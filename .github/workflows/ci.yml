@@ -83,6 +83,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @sbi/web exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      # Alone on one worker, so other tests can't slow the timings they check (#82).
+      - run: pnpm --filter @sbi/web exec playwright test e2e/performance.spec.ts --workers=1
+        env:
+          PERFORMANCE_BUDGETS: "1"
 
       - uses: actions/upload-artifact@v7
         if: failure()

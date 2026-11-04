@@ -30,7 +30,7 @@ Every event carries `consentVersion`, `route`, `locale`, `ageBand` (`teen`, `adu
 | `issue_reported`        | A problem report is sent                                 | lesson id/version, `category`, never the typed details         |
 | `lesson_saved`          | A lesson is saved or removed                             | lesson id/version, `action`                                    |
 
-`answer_feedback` (tutor helpfulness) and `timing_measured` (#82) are defined in `@sbi/analytics`. Until their features ship, nothing sends them.
+`timing_measured` (#82) carries `metric` and raw `ms` for time to label, first readable lesson and interactive-ready (docs/operations/performance-budgets.md). `answer_feedback` (tutor helpfulness) is defined in `@sbi/analytics`, but nothing sends it until tutor feedback ships.
 
 ## 3. The board: "Learner funnel"
 
@@ -43,7 +43,7 @@ Create one board with these reports. Name them as below, so later issues can ref
 2. **Funnel: typed subject to lesson:** `capture_started` where `source = describe` → `lesson_first_content` → `section_opened`.
 3. **Time to first lesson** (Insights):
    - Event `lesson_first_content`, broken down by `elapsed` bucket, as a stacked bar per day.
-   - The exact p50/p95 of time to first lesson comes from `timing_measured` (#82).
+   - Exact p50/p95: `timing_measured` filtered by `metric`, aggregated as the 50th and 95th percentile of `ms`, broken down by `deviceTier`.
 4. **Recognition corrections** (Insights): `recognition_corrected` ÷ `recognition_shown`, per week, broken down by `correctionClass` and `topCertainty`.
 5. **Lesson depth** (Insights): `section_opened` per `lesson_first_content`, broken down by `ageBand`.
 6. **Visual use** (Insights): `interaction_changed` per `visual_loaded`, broken down by `kind`.

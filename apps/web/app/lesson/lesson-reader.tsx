@@ -173,7 +173,11 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const writing = loading && !answer && !lesson && !policy;
   const railVisuals = visuals?.visuals ?? (status === "loading" ? undefined : []);
   const experiment = useLessonExperiment(lesson, railVisuals);
-  useLessonEvents(answer, lesson);
+  useLessonEvents(
+    answer,
+    lesson,
+    status === "ready" && !!lesson && experiment.status !== "pending",
+  );
   const tutoring = webEnv.features.tutor && !!lesson && status === "ready";
   return (
     <main id="main" className="lesson">
