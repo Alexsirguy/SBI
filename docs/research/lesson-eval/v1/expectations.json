@@ -1,0 +1,258 @@
+{
+  "version": "1.0.0",
+  "seedSet": "v2",
+  "createdAt": "2026-11-04",
+  "note": "Key facts a correct lesson should state, misconceptions it must not assert, and a reference page each. Written by hand from standard references; review before relying on them.",
+  "expectations": [
+    {
+      "promptId": "seed-001",
+      "keyFacts": [
+        "A lower gear turns the back wheel less for each turn of the pedals, so each push needs less force.",
+        "The same climb then takes more pedal turns, trading distance pedalled for force."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Bicycle_gearing"
+    },
+    {
+      "promptId": "seed-002",
+      "keyFacts": [
+        "A lower gear means each pedal turn moves the bike a shorter distance, so pedalling takes less force."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Bicycle_gearing"
+    },
+    {
+      "promptId": "seed-003",
+      "keyFacts": ["The bubbles in boiling water are water vapour (steam), not air."],
+      "mustNotAssert": ["The bubbles in boiling water are made of air."],
+      "reference": "https://en.wikipedia.org/wiki/Boiling"
+    },
+    {
+      "promptId": "seed-004",
+      "keyFacts": [
+        "Water bubbles when it boils because water turns into vapour inside the liquid and the vapour bubbles rise."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Boiling"
+    },
+    {
+      "promptId": "seed-005",
+      "keyFacts": [
+        "A convex lens bends (refracts) light so the image appears larger than the object."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Magnifying_glass"
+    },
+    {
+      "promptId": "seed-006",
+      "keyFacts": [
+        "For small swings, a pendulum's period depends on its length and gravity, not on how high it swings."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Pendulum"
+    },
+    {
+      "promptId": "seed-007",
+      "keyFacts": [
+        "A compass needle is a magnet that lines up with Earth's magnetic field.",
+        "The needle points to magnetic north, which is not exactly the same as geographic north."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Compass"
+    },
+    {
+      "promptId": "seed-008",
+      "keyFacts": [
+        "Without air resistance, all objects fall with the same acceleration regardless of mass."
+      ],
+      "mustNotAssert": ["Heavier objects fall faster than lighter ones in a vacuum."],
+      "reference": "https://en.wikipedia.org/wiki/Free_fall"
+    },
+    {
+      "promptId": "seed-010",
+      "keyFacts": [
+        "Hexagons tile a flat surface with no gaps and use less wax for the area they enclose than circles would."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Honeycomb_conjecture"
+    },
+    {
+      "promptId": "seed-011",
+      "keyFacts": [
+        "Sunflower seeds are arranged in spirals because each new seed grows at a fixed angle, close to the golden angle, from the last."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Phyllotaxis"
+    },
+    {
+      "promptId": "seed-012",
+      "keyFacts": [
+        "The numbers of spirals on pine cones are usually consecutive Fibonacci numbers, though not always."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Fibonacci_sequence"
+    },
+    {
+      "promptId": "seed-013",
+      "keyFacts": [
+        "Pentagons and hexagons together can make a closed shape close to a sphere, a truncated icosahedron."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Truncated_icosahedron"
+    },
+    {
+      "promptId": "seed-014",
+      "keyFacts": [
+        "Each roll of a fair die is independent, so a six is just as likely after three sixes."
+      ],
+      "mustNotAssert": ["After three sixes in a row, a six is less likely on the next roll."],
+      "reference": "https://en.wikipedia.org/wiki/Gambler%27s_fallacy"
+    },
+    {
+      "promptId": "seed-015",
+      "keyFacts": [
+        "Snowflakes have six arms because water molecules freeze into a hexagonal crystal lattice."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Snowflake"
+    },
+    {
+      "promptId": "seed-016",
+      "keyFacts": [
+        "Nautilus shells are logarithmic spirals, but their growth ratio is generally not the golden ratio."
+      ],
+      "mustNotAssert": ["A nautilus shell is a golden ratio spiral."],
+      "reference": "https://en.wikipedia.org/wiki/Nautilus"
+    },
+    {
+      "promptId": "seed-017",
+      "keyFacts": [
+        "Leaves use sunlight to turn carbon dioxide and water into sugar, releasing oxygen (photosynthesis)."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Photosynthesis"
+    },
+    {
+      "promptId": "seed-018",
+      "keyFacts": [
+        "Most of a tree's mass comes from carbon dioxide taken from the air, not from the soil."
+      ],
+      "mustNotAssert": ["Most of a tree's wood comes from the soil."],
+      "reference": "https://en.wikipedia.org/wiki/Photosynthesis"
+    },
+    {
+      "promptId": "seed-020",
+      "keyFacts": ["Honey bees find their way home using the position of the sun and landmarks."],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Bee_learning_and_communication"
+    },
+    {
+      "promptId": "seed-021",
+      "keyFacts": [
+        "Ripening fruit gives off ethylene gas, which makes nearby bananas ripen faster."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Ethylene"
+    },
+    {
+      "promptId": "seed-022",
+      "keyFacts": [
+        "Cacti store water in thick stems and lose little water because they have spines instead of broad leaves."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Cactus"
+    },
+    {
+      "promptId": "seed-023",
+      "keyFacts": [
+        "Blood is always red; veins look blue because of how skin scatters and absorbs light."
+      ],
+      "mustNotAssert": ["Blood in your veins is blue."],
+      "reference": "https://en.wikipedia.org/wiki/Vein"
+    },
+    {
+      "promptId": "seed-024",
+      "keyFacts": ["Rust forms when iron reacts with oxygen and water to form iron oxide."],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Rust"
+    },
+    {
+      "promptId": "seed-025",
+      "keyFacts": [
+        "A candle burns the wax: the wick draws melted wax up, and the wax vapour burns."
+      ],
+      "mustNotAssert": ["A candle mainly burns the wick, not the wax."],
+      "reference": "https://en.wikipedia.org/wiki/Candle"
+    },
+    {
+      "promptId": "seed-026",
+      "keyFacts": [
+        "Ice floats because water expands when it freezes, so ice is less dense than liquid water."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Ice"
+    },
+    {
+      "promptId": "seed-028",
+      "keyFacts": [
+        "Table salt forms cubic crystals because its sodium and chloride ions are arranged in a cubic lattice."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Sodium_chloride"
+    },
+    {
+      "promptId": "seed-029",
+      "keyFacts": [
+        "A cut apple browns because an enzyme reacts with oxygen in the air (enzymatic browning)."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Food_browning"
+    },
+    {
+      "promptId": "seed-030",
+      "keyFacts": [
+        "Soap bubbles show colours because light reflecting from the two surfaces of the thin film interferes."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Thin-film_interference"
+    },
+    {
+      "promptId": "seed-032",
+      "keyFacts": [
+        "A thinner string has less mass per length, so it vibrates faster and sounds higher."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/String_vibration"
+    },
+    {
+      "promptId": "seed-033",
+      "keyFacts": [
+        "Glassmakers coloured glass by adding metal compounds, such as cobalt for blue and gold for red."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Stained_glass"
+    },
+    {
+      "promptId": "seed-034",
+      "keyFacts": [
+        "Mixing paints is subtractive, because each pigment absorbs more light; mixing coloured lights is additive."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Subtractive_color"
+    },
+    {
+      "promptId": "seed-035",
+      "keyFacts": ["A bigger drum head vibrates more slowly, so it makes a lower-pitched sound."],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Drum"
+    },
+    {
+      "promptId": "seed-036",
+      "keyFacts": [
+        "Firing clay drives out water and changes its minerals permanently, making it hard; iron compounds change colour."
+      ],
+      "mustNotAssert": [],
+      "reference": "https://en.wikipedia.org/wiki/Pottery"
+    }
+  ]
+}

@@ -4,6 +4,8 @@ import type { AssetCredit, VisualManifest } from "@sbi/contracts";
 import { AssetCredits } from "@sbi/ui";
 import type { VisualRegistry } from "@sbi/visuals";
 import { useEffect, useId, useRef } from "react";
+import { elapsedBucket, rangeBucket } from "@sbi/analytics";
+import { track } from "../analytics/track";
 import { useT } from "../i18n/provider";
 import { webRegistry } from "./registry";
 import "./visuals.css";
@@ -26,13 +28,37 @@ export function VisualMount({
     if (!mount) return;
     const controller = new AbortController();
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const started = performance.now();
     let destroy: (() => void) | undefined;
     void registry
       .mount(manifest, mount, { reducedMotion, signal: controller.signal })
       .then((mounted) => {
         if (controller.signal.aborted) mounted.destroy();
-        else destroy = () => mounted.destroy();
+        else {
+          destroy = () => mounted.destroy();
+          track("visual_loaded", {
+            visualId: manifest.visualId,
+            kind: manifest.kind,
+            elapsed: elapsedBucket(performance.now() - started),
+          });
+        }
       });
+    // "change" fires when a slider is let go, so a drag counts once, not per pixel.
+    const figure = mount.closest("figure");
+    const changed = (event: Event) => {
+      const input = event.target;
+      if (!(input instanceof HTMLInputElement) || input.type !== "range") return;
+      const controlId = manifest.controls?.find(
+        (control) => input.id === `${manifest.visualId}-${control.id}`,
+      )?.id;
+      if (!controlId) return;
+      track("interaction_changed", {
+        visualId: manifest.visualId,
+        controlId,
+        rangeBucket: rangeBucket(Number(input.value), Number(input.min), Number(input.max)),
+      });
+    };
+    figure?.addEventListener("change", changed, { signal: controller.signal });
     return () => {
       controller.abort();
       destroy?.();

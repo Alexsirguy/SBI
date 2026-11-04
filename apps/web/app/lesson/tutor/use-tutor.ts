@@ -2,6 +2,7 @@
 
 import type { ApiRequest, TutorExchange } from "@sbi/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { track } from "../../analytics/track";
 import { api } from "../../api";
 
 const KEY_PREFIX = "sbi.tutor-visit.";
@@ -38,11 +39,18 @@ export function useAskTutor(sessionId: string, lessonId: string) {
   return useMutation({
     mutationFn: async (request: ApiRequest<"askTutor">) =>
       (await api("askTutor", request)).exchange,
-    onSuccess: (exchange: TutorExchange) =>
+    onSuccess: (exchange: TutorExchange, request) => {
+      track("tutor_question", {
+        lessonId,
+        version: Number(request.lessonVersion),
+        replyKind: exchange.kind,
+        citedCount: exchange.citedClaimIds.length,
+      });
       client.setQueryData(tutorKey(lessonId, sessionId), (list: TutorExchange[] = []) => [
         ...list,
         exchange,
-      ]),
+      ]);
+    },
   });
 }
 

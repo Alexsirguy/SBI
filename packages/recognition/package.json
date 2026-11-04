@@ -5,12 +5,14 @@
   "description": "Provider-neutral recognition adapter, candidate ranking and ambiguity resolution.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./eval": "./src/eval/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "tsx scripts/eval.ts"
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",
@@ -20,6 +22,9 @@
   },
   "devDependencies": {
     "@sbi/config": "workspace:*",
-    "@sbi/taxonomy": "workspace:*"
+    "@sbi/taxonomy": "workspace:*",
+    "@sbi/orchestrator": "workspace:*",
+    "tsx": "4.23.15",
+    "@types/node": "22.20.5"
   }
 }

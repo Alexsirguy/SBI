@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.34.0"
+    "version": "0.35.0"
   },
   "paths": {
     "/uploads": {
@@ -4885,7 +4885,8 @@
                             "save-photos",
                             "account",
                             "model-improvement",
-                            "research"
+                            "research",
+                            "usage-statistics"
                           ]
                         },
                         "additionalProperties": {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLessonEvents } from "../analytics/use-lesson-events";
 import Link from "next/link";
 import type { LessonDisclaimer, LessonRequest, PolicyResponse } from "@sbi/contracts";
 import { Button, Mark, Notice, StatusLine } from "@sbi/ui";
@@ -13,6 +14,8 @@ import { Scanner } from "../scanner";
 import { AskQuestion } from "./ask-question";
 import { SourceList } from "./citations";
 import { DepthControls } from "./depth-controls";
+import { topicOf } from "../analytics/concept-check";
+import { ConceptCheck } from "./concept-check";
 import { LessonFeedback } from "./feedback";
 import { lessonHref } from "./lesson-request";
 import { cautionText } from "./notice-text";
@@ -170,6 +173,11 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
   const writing = loading && !answer && !lesson && !policy;
   const railVisuals = visuals?.visuals ?? (status === "loading" ? undefined : []);
   const experiment = useLessonExperiment(lesson, railVisuals);
+  useLessonEvents(
+    answer,
+    lesson,
+    status === "ready" && !!lesson && experiment.status !== "pending",
+  );
   const tutoring = webEnv.features.tutor && !!lesson && status === "ready";
   return (
     <main id="main" className="lesson">
@@ -256,13 +264,20 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
               visuals={railVisuals}
               renderVisual={(visual) => <VisualFrame visual={visual} />}
             />
+            {lesson && status === "ready" ? <ConceptCheck lesson={lesson} /> : null}
             {tutoring && lesson ? <Tutor lesson={lesson} sources={sources} prefs={prefs} /> : null}
           </PracticeProvider>
           {lesson && status === "ready" ? (
             <NextConcepts lessonId={lesson.lessonId} version={lesson.version} prefs={prefs} />
           ) : null}
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
-          {lesson ? <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} /> : null}
+          {lesson ? (
+            <LessonFeedback
+              lessonId={lesson.lessonId}
+              version={lesson.version}
+              topic={topicOf(lesson.taxonomyId)}
+            />
+          ) : null}
         </div>
       )}
     </main>

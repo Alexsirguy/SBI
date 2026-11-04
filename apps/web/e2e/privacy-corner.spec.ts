@@ -17,10 +17,10 @@ test("privacy notes open on a first visit, fold into a tab, and stay folded", as
   );
   await expectNoAxeViolations(page);
 
-  await expect(notes.getByRole("group")).toHaveCount(4);
+  await expect(notes.getByRole("group")).toHaveCount(5);
   await page.getByRole("button", { name: "Hide" }).click();
   await expect(notes).toBeHidden();
-  const tab = page.getByRole("button", { name: "Privacy 4 to answer" });
+  const tab = page.getByRole("button", { name: "Privacy 5 to answer" });
   await expect(tab).toHaveAttribute("aria-expanded", "false");
 
   await page.reload();
@@ -80,16 +80,17 @@ test("each request is accepted or declined on its own, and the tab counts what i
   await expectNoAxeViolations(page);
 
   await page.getByRole("button", { name: "Hide" }).click();
-  await expect(page.getByRole("button", { name: "Privacy 2 to answer" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Privacy 3 to answer" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Privacy 2 to answer" }).click();
+  await page.getByRole("button", { name: "Privacy 3 to answer" }).click();
   await notes.getByRole("button", { name: "Decline all" }).click();
-  await expect(notes.locator('[aria-pressed="true"]', { hasText: "Decline" })).toHaveCount(4);
+  await expect(notes.locator('[aria-pressed="true"]', { hasText: "Decline" })).toHaveCount(5);
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("sbi.consent") ?? "{}"));
   expect(stored.choices).toEqual({
     "save-photos": false,
     account: false,
     "model-improvement": false,
     research: false,
+    "usage-statistics": false,
   });
 });

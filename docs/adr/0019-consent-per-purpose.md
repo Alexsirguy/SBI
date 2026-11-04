@@ -1,6 +1,6 @@
 # 0019. Consent is asked per purpose, when it would do something
 
-- Status: accepted, amended 2026-11-03 (every request can be answered)
+- Status: accepted, amended 2026-11-03 (every request can be answered) and 2026-11-04 (a fifth purpose, usage statistics, ADR 0026)
 - Date: 2026-11-02
 - Issue: #70
 

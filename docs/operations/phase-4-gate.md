@@ -15,7 +15,7 @@ It holds nothing from the question or the lesson text. The lesson model's provid
 
 **Turning on prices.** Set `LESSON_PRICE_INPUT_PER_MTOK`, `LESSON_PRICE_CACHED_INPUT_PER_MTOK` and `LESSON_PRICE_OUTPUT_PER_MTOK` (US dollars per million tokens) to the lesson model's current price. Without them, tokens are still logged and `costUsd` is `null`.
 
-**Reading it.** Until the event pipeline exists (#76), the events are log lines tagged `Events`:
+**Reading it.** Lesson cost stays in our own logs, because it carries no learner and never goes to Mixpanel (ADR 0026). The events are log lines tagged `Events`:
 
 ```sh
 # average cost of a fresh lesson over the logs you have

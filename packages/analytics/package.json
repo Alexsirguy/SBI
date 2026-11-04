@@ -2,10 +2,11 @@
   "name": "@sbi/analytics",
   "version": "0.0.0",
   "private": true,
-  "description": "Typed, privacy-safe analytics events and sink adapter.",
+  "description": "Typed, privacy-checked analytics events and swappable sinks (ADR 0026).",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./mixpanel": "./src/mixpanel.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -14,5 +15,9 @@
   },
   "devDependencies": {
     "@sbi/config": "workspace:*"
+  },
+  "dependencies": {
+    "mixpanel-browser": "2.84.0",
+    "zod": "4.6.7"
   }
 }

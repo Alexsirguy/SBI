@@ -17,6 +17,18 @@ export default tseslint.config(
       "local/no-cross-package-internals": "error",
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      // Every event must pass the typed guard in @sbi/analytics first (ADR 0026).
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["mixpanel-browser", "mixpanel-browser/*"],
+              message: "Send events through @sbi/analytics, never Mixpanel directly.",
+            },
+          ],
+        },
+      ],
     },
   },
   prettier,

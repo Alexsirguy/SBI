@@ -6,6 +6,7 @@ import { Button, Notice, Scale, SelectField, TextArea } from "@sbi/ui";
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { ApiRequestError, UNREACHABLE } from "../api-client";
+import { track } from "../analytics/track";
 import { useT } from "../i18n/provider";
 import { type LessonKey, useErrorText } from "./lesson-t";
 
@@ -29,7 +30,16 @@ const failure = (error: unknown) =>
   error instanceof ApiRequestError ? error.message : UNREACHABLE;
 
 /** Rating and problem reports for this exact lesson version, so triage sees what the learner read. */
-export function LessonFeedback({ lessonId, version }: { lessonId: string; version: number }) {
+export function LessonFeedback({
+  lessonId,
+  version,
+  topic,
+}: {
+  lessonId: string;
+  version: number;
+  /** For reporting clarity per topic (#81); see `topicOf`. */
+  topic?: string;
+}) {
   const t = useT("lesson");
   const errorText = useErrorText();
   const scaleWords = {
@@ -70,7 +80,15 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
           aria-label={t("rateForm")}
           onSubmit={(event) => {
             event.preventDefault();
-            if (helpful && clear) rating.mutate({ lessonId, version, rating: { helpful, clear } });
+            if (helpful && clear) {
+              rating.mutate(
+                { lessonId, version, rating: { helpful, clear } },
+                {
+                  onSuccess: () =>
+                    track("lesson_rated", { lessonId, version, topic, helpful, clear }),
+                },
+              );
+            }
           }}
         >
           <Scale
@@ -113,11 +131,15 @@ export function LessonFeedback({ lessonId, version }: { lessonId: string; versio
               return;
             }
             setMissing(undefined);
-            report.mutate({
-              lessonId,
-              version,
-              report: { category, ...(details.trim() ? { details: details.trim() } : {}) },
-            });
+            report.mutate(
+              {
+                lessonId,
+                version,
+                report: { category, ...(details.trim() ? { details: details.trim() } : {}) },
+              },
+              // The category only: whatever the learner typed stays out of usage statistics.
+              { onSuccess: () => track("issue_reported", { lessonId, version, category }) },
+            );
           }}
         >
           <h3>{t("reportProblem")}</h3>

@@ -51,12 +51,30 @@ function button(container: Element, name: string) {
 }
 
 describe("ConsentRequests", () => {
-  it("asks for all four, each unanswered and so off", async () => {
+  it("asks for all five, each unanswered and so off", async () => {
     api.mockImplementation(signedOut);
     const { container } = await view();
-    expect(container.querySelectorAll('[role="group"]')).toHaveLength(4);
-    expect(text(container).match(/Not answered, so off\./g)).toHaveLength(4);
+    expect(container.querySelectorAll('[role="group"]')).toHaveLength(5);
+    expect(text(container).match(/Not answered, so off\./g)).toHaveLength(5);
     expect(container.querySelectorAll('[aria-pressed="true"]')).toHaveLength(0);
+  });
+
+  it("never asks the child pathway for usage statistics", async () => {
+    api.mockImplementation(signedOut);
+    pathway.current = "child";
+    const { container } = await view();
+    expect(container.querySelectorAll('[role="group"]')).toHaveLength(4);
+    expect(text(container)).not.toContain("Share usage statistics");
+  });
+
+  it("declining usage statistics forgets this visit's ID", async () => {
+    api.mockImplementation(signedOut);
+    setConsent("usage-statistics", true);
+    window.sessionStorage.setItem("sbi.visit", "visit-1");
+    const { container } = await view();
+    await click(answer(container, "Share usage statistics", "Decline"));
+    await vi.waitFor(() => expect(consentChoice("usage-statistics")).toBe(false));
+    expect(window.sessionStorage.getItem("sbi.visit")).toBeNull();
   });
 
   it("records each answer on its own, never bundled", async () => {

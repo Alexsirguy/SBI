@@ -74,6 +74,7 @@ export function SectionView({
         <ActivateSection
           section={section}
           task={lesson.tasks.find((task) => task.module === "activate")}
+          lesson={lesson}
         />
       );
     case "demonstrate":

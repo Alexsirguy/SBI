@@ -1,0 +1,3 @@
+rubricVersion,lessonId,version,reviewer,reviewedAt,row,accuracy,evidence,uncertainty,clarity,category,severity,claimId,sectionId,note
+quality-review-v1,<lessonId>,<version>,<role or initials>,<ISO time>,scores,4,3,3,4,,,,,
+quality-review-v1,<lessonId>,<version>,<role or initials>,<ISO time>,finding,,,,,factual-error,critical,<claimId>,<sectionId>,"What is wrong and what is right"

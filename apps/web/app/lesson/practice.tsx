@@ -3,6 +3,7 @@
 import {
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
   useMemo,
   useState,
@@ -18,11 +19,16 @@ interface Practice {
   /** The option the learner locked in for the activate guess. */
   guess?: number;
   lockGuess(index: number): void;
+  /** True once the guess's explanation has been on screen, for the closing concept check (#81). */
+  revealSeen: boolean;
+  markRevealSeen(): void;
   experiment: ExperimentState;
 }
 
 const PracticeContext = createContext<Practice>({
   lockGuess: () => undefined,
+  revealSeen: false,
+  markRevealSeen: () => undefined,
   experiment: { status: "none" },
 });
 
@@ -35,7 +41,12 @@ export function PracticeProvider({
   children: ReactNode;
 }) {
   const [guess, lockGuess] = useState<number>();
-  const value = useMemo(() => ({ guess, lockGuess, experiment }), [guess, experiment]);
+  const [revealSeen, setRevealSeen] = useState(false);
+  const markRevealSeen = useCallback(() => setRevealSeen(true), []);
+  const value = useMemo(
+    () => ({ guess, lockGuess, revealSeen, markRevealSeen, experiment }),
+    [guess, revealSeen, markRevealSeen, experiment],
+  );
   return <PracticeContext value={value}>{children}</PracticeContext>;
 }
 

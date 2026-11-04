@@ -3,6 +3,7 @@
 import { Button } from "@sbi/ui";
 import Link from "next/link";
 import { useAccount } from "../account/use-account";
+import { track } from "../analytics/track";
 import { useT } from "../i18n/provider";
 import { useErrorText } from "./lesson-t";
 import { useRemoveSavedLesson, useSaveLesson, useSavedLessons } from "../account/use-saved-lessons";
@@ -45,7 +46,11 @@ export function SaveLesson({
           size="small"
           aria-pressed
           disabled={busy}
-          onClick={() => remove.mutate(lessonId)}
+          onClick={() =>
+            remove.mutate(lessonId, {
+              onSuccess: () => track("lesson_saved", { lessonId, version, action: "removed" }),
+            })
+          }
         >
           {t("saved")}
           <span className="sbi-visually-hidden">{t("savedRemoveHint")}</span>
@@ -56,7 +61,12 @@ export function SaveLesson({
           size="small"
           aria-pressed={false}
           disabled={busy}
-          onClick={() => save.mutate({ lessonId, version })}
+          onClick={() =>
+            save.mutate(
+              { lessonId, version },
+              { onSuccess: () => track("lesson_saved", { lessonId, version, action: "saved" }) },
+            )
+          }
         >
           {entry ? t("saveThisVersion") : t("saveLesson")}
         </Button>

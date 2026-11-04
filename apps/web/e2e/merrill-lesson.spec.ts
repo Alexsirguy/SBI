@@ -151,3 +151,21 @@ test("shows a stage diagram beside the experiment, and the steps still drive the
     "160 N",
   );
 });
+
+test("the lesson ends by asking its opening question again (#81)", async ({ page }) => {
+  await mockLesson(page, FULL);
+  await mockManifest(page);
+  await page.goto(LESSON_URL);
+  await expect(page.getByRole("status").first()).toHaveText("Lesson ready.");
+
+  const check = page.getByRole("region", { name: "Now what do you think?" });
+  await expect(check.getByRole("group", { name: "Which change raises the pitch?" })).toBeVisible();
+  await expectNoAxeViolations(page);
+  await check.getByRole("radio", { name: "Loosen the string" }).check();
+  await check.getByRole("button", { name: "Answer" }).click();
+  await expect(check.getByRole("status")).toContainText(
+    "Not quite. The answer is Tighten the string.",
+  );
+  await expect(check.getByRole("button", { name: "Answer" })).toHaveCount(0);
+  await expectNoAxeViolations(page);
+});

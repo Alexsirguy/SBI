@@ -42,7 +42,7 @@ test("a photo is kept only after the learner agrees, and can be deleted later", 
 
   await asking.getByRole("button", { name: "Keep it" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Photo kept" })).toBeVisible();
-  expect(kept).toEqual([{ key: PHOTO_KEY, consentVersion: "consent-1" }]);
+  expect(kept).toEqual([{ key: PHOTO_KEY, consentVersion: "consent-2" }]);
 
   await page.getByRole("link", { name: "your privacy choices" }).click();
   const choices = page.getByRole("region", { name: "Your choices" });
@@ -71,7 +71,7 @@ test("a learner who already accepted keeps a photo in one press", async ({ page 
     window.localStorage.setItem(
       "sbi.consent",
       JSON.stringify({
-        version: "consent-1",
+        version: "consent-2",
         choices: { "save-photos": true },
         decidedAt: "2026-11-03T10:00:00.000Z",
       }),
@@ -97,5 +97,5 @@ test("a learner who already accepted keeps a photo in one press", async ({ page 
   await page.getByRole("button", { name: "Upload photo" }).click({ timeout: 15000 });
   await page.getByRole("button", { name: "Keep this photo" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Photo kept" })).toBeVisible();
-  expect(kept).toEqual([{ key: PHOTO_KEY, consentVersion: "consent-1" }]);
+  expect(kept).toEqual([{ key: PHOTO_KEY, consentVersion: "consent-2" }]);
 });

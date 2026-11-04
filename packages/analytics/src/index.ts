@@ -29,8 +29,12 @@ export type AnalyticsEvent = NextConceptEvent | LessonCostEvent;
 
 export type EventSink = (event: AnalyticsEvent) => void;
 
-/** Writes events as structured log lines until the event pipeline exists. */
-// TODO(#76) send these to the typed event pipeline instead of the log.
+/** Server events carry no learner, so they stay in our own logs and never reach Mixpanel (ADR 0026). */
 export function createLogSink(log: (line: string) => void): EventSink {
   return (event) => log(JSON.stringify(event));
 }
+
+export * from "./browser-events";
+export * from "./buckets";
+export { payloadProblems } from "./guard";
+export * from "./tracker";

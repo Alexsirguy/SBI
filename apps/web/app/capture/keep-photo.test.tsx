@@ -44,7 +44,7 @@ describe("KeepPhoto", () => {
     await vi.waitFor(() => expect(text(container)).toContain("Photo kept"));
     expect(api).toHaveBeenCalledWith("keepPhoto", {
       key: "photos/a.jpg",
-      consentVersion: "consent-1",
+      consentVersion: "consent-2",
     });
     expect(hasConsent("save-photos")).toBe(true);
     expect(readKeptPhotos().map((photo) => photo.key)).toEqual(["photos/a.jpg"]);

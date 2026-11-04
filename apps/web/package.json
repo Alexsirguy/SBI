@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.1.1",
+    "@sbi/analytics": "workspace:*",
     "@sbi/contracts": "workspace:*",
     "@sbi/env": "workspace:*",
     "@sbi/media": "workspace:*",

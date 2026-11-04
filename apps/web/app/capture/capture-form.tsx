@@ -28,6 +28,9 @@ import {
 import { assessQuality, readImageData, type QualityCheck } from "./quality";
 import { suggestCrop } from "./suggest-crop";
 import { usePhotoUpload } from "./use-photo-upload";
+import { elapsedBucket, sizeBucket } from "@sbi/analytics";
+import { markFunnelStart, markTiming } from "../analytics/clock";
+import { track } from "../analytics/track";
 import { useRecognisePhoto } from "./use-recognition";
 
 function CameraIcon() {
@@ -77,6 +80,12 @@ function FaceNote({ check }: { check: Pick<BlurResult, "faces" | "checked"> | nu
 }
 
 // A failure we raised ourselves is shown in the learner's language; anything else as it came.
+function fileClass(type: string): "jpeg" | "png" | "webp" | "heic" | "other" {
+  const sub = type.split("/")[1];
+  if (sub === "jpeg" || sub === "png" || sub === "webp") return sub;
+  return sub === "heic" || sub === "heif" ? "heic" : "other";
+}
+
 function problemText(error: unknown, t: CaptureT, fallback: CaptureKey) {
   if (error instanceof CaptureError) return t(error.key);
   return error instanceof Error ? error.message : t(fallback);
@@ -109,6 +118,7 @@ export function CaptureForm() {
   const recognition = useRecognisePhoto();
   // One session per visit groups retakes; accounts will replace it (#102).
   const sessionRef = useRef<string | undefined>(undefined);
+  const sourceRef = useRef<"camera" | "upload">("upload");
   const problem = processingProblem ?? photoUpload.error?.message ?? null;
   const looking = photoUpload.isPending || recognition.isPending;
   const answered = recognition.isSuccess || recognition.isError;
@@ -197,6 +207,8 @@ export function CaptureForm() {
 
   // A live view needs a secure page and browser support; otherwise the device's own camera app opens.
   function takePhoto() {
+    markFunnelStart();
+    track("capture_started", { source: "camera" });
     if (typeof navigator.mediaDevices?.getUserMedia === "function") {
       setCameraNote(null);
       setCameraOpen(true);
@@ -211,8 +223,14 @@ export function CaptureForm() {
     takeRef.current?.focus();
   }
 
-  async function choose(selected: File | undefined) {
+  async function choose(selected: File | undefined, source: "camera" | "upload") {
     if (!selected) return;
+    sourceRef.current = source;
+    // The camera started the clock when it opened; a picked file starts it here.
+    if (source === "upload") {
+      markFunnelStart();
+      track("capture_started", { source });
+    }
     clear();
     const run = runRef.current;
     const issue = validateSelection(selected, limits.maxUploadBytes, t);
@@ -271,6 +289,12 @@ export function CaptureForm() {
     if (!prepared) return;
     setProblem(null);
     recognition.reset();
+    const sent = performance.now();
+    track("photo_submitted", {
+      source: sourceRef.current,
+      fileClass: fileClass(prepared.blob.type),
+      sizeBucket: sizeBucket(prepared.size),
+    });
     photoUpload.mutate(prepared, {
       onSuccess: (photo) =>
         recognition.mutate(
@@ -278,6 +302,13 @@ export function CaptureForm() {
           {
             onSuccess: (reply) => {
               sessionRef.current = reply.sessionId;
+              const ms = performance.now() - sent;
+              track("recognition_shown", {
+                optionCount: reply.options.length,
+                topCertainty: reply.options[0]?.certainty ?? "none",
+                elapsed: elapsedBucket(ms),
+              });
+              markTiming("time_to_label", ms);
             },
           },
         ),
@@ -413,7 +444,7 @@ export function CaptureForm() {
                   aria-invalid={problem ? true : undefined}
                   aria-describedby={problem ? problemId : undefined}
                   accept={ACCEPTED_EXTENSIONS}
-                  onChange={(event) => void choose(event.currentTarget.files?.[0])}
+                  onChange={(event) => void choose(event.currentTarget.files?.[0], "upload")}
                 />
                 <label htmlFor={uploadId} className="sbi-button sbi-button--quiet">
                   <UploadIcon />
@@ -426,7 +457,7 @@ export function CaptureForm() {
                 onCancel={closeCamera}
                 onSnap={(photo) => {
                   setCameraOpen(false);
-                  void choose(photo);
+                  void choose(photo, "camera");
                 }}
                 onUnavailable={(reason) => {
                   setCameraOpen(false);
@@ -467,7 +498,7 @@ export function CaptureForm() {
           hidden
           accept="image/*"
           capture="environment"
-          onChange={(event) => void choose(event.currentTarget.files?.[0])}
+          onChange={(event) => void choose(event.currentTarget.files?.[0], "camera")}
         />
         {/* Kept mounted, so problems and progress are announced as they change. */}
         <div role="alert" id={problemId} className="capture-problem">
@@ -483,7 +514,10 @@ export function CaptureForm() {
           reply={recognition.data}
           error={recognition.error?.message}
           onStart={(label) => handOffPhoto(previewUrl, label)}
-          onRetake={retake}
+          onRetake={() => {
+            track("recognition_corrected", { correctionClass: "retake" });
+            retake();
+          }}
         />
       ) : null}
       {answered && photoUpload.data && recognition.isSuccess ? (

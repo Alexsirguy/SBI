@@ -22,7 +22,7 @@
   /* Its bottom stays well above the privacy tab, so the question box is never covered. */
   .lesson-body--tutor > .tutor-dock {
     grid-column: 2;
-    grid-row: 1 / span 4;
+    grid-row: 1 / span 5;
     position: sticky;
     top: 5.5rem;
     align-self: start;

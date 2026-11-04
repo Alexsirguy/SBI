@@ -18,7 +18,9 @@ import {
 import { useErrorText } from "./i18n/error-text";
 import { useT } from "./i18n/provider";
 import { GrownUpGate } from "./pathway/grown-up-gate";
+import type { Pathway } from "./pathway/pathway";
 import { usePathway } from "./pathway/provider";
+import { forgetVisit } from "./analytics/track";
 
 type Answers = Partial<Record<ConsentPurpose, boolean>>;
 
@@ -27,13 +29,22 @@ const COPY = {
   account: ["consentAccountTitle", "consentAccountText"],
   "model-improvement": ["consentModelTitle", "consentModelText"],
   research: ["consentResearchTitle", "consentResearchText"],
+  "usage-statistics": ["consentUsageTitle", "consentUsageText"],
 } as const;
+
+/** Under-13s are never asked for usage statistics, so it isn't listed for them (ADR 0026). */
+export function askedPurposes(pathway: Pathway | undefined): ConsentPurpose[] {
+  return CONSENT_PURPOSES.filter(
+    (purpose) => !(purpose === "usage-statistics" && pathway === "child"),
+  );
+}
 
 /** How many requests are still unanswered on this device; null before the browser is known. */
 export function useUnanswered(): number | null {
+  const { pathway } = usePathway();
   const snapshot = useSyncExternalStore(subscribeToChoices, choicesSnapshot, () => null);
   if (snapshot === null) return null;
-  return CONSENT_PURPOSES.filter((purpose) => consentChoice(purpose) === undefined).length;
+  return askedPurposes(pathway).filter((purpose) => consentChoice(purpose) === undefined).length;
 }
 
 /** Every consent request with its own Accept and Decline; an unanswered one counts as no. */
@@ -72,6 +83,7 @@ export function ConsentRequests({ headingLevel = 3 }: { headingLevel?: 3 | 4 }) 
           }
         }
         if (purpose === "account" && !allowed && me?.linkedAt) await api("unlinkAccount", {});
+        if (purpose === "usage-statistics" && !allowed) forgetVisit();
         setConsent(purpose, allowed);
       }
     },
@@ -79,13 +91,14 @@ export function ConsentRequests({ headingLevel = 3 }: { headingLevel?: 3 | 4 }) 
   });
 
   // A child's yes waits for a grown-up; a no never does.
+  const asked = askedPurposes(pathway);
   const answer = (answers: Answers) => {
     const accepting = Object.values(answers).some(Boolean);
     if (accepting && pathway === "child") setGated(answers);
     else apply.mutate(answers);
   };
   const all = (allowed: boolean) =>
-    answer(Object.fromEntries(CONSENT_PURPOSES.map((purpose) => [purpose, allowed])));
+    answer(Object.fromEntries(asked.map((purpose) => [purpose, allowed])));
 
   if (snapshot === null) return null;
 
@@ -118,7 +131,7 @@ export function ConsentRequests({ headingLevel = 3 }: { headingLevel?: 3 | 4 }) 
         </Button>
       </div>
       <ul className="consent-requests__list">
-        {CONSENT_PURPOSES.map((purpose) => {
+        {asked.map((purpose) => {
           const choice = consentChoice(purpose);
           const [title, text] = COPY[purpose];
           const titleId = `${ids}-${purpose}`;

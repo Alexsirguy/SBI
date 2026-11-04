@@ -121,6 +121,8 @@ export function fakeRecognition(recogniser: FallbackRecogniser | null = null) {
     get: async (resultId) => saved.get(resultId),
     listBySession: async (sessionId) =>
       [...saved.values()].filter((r) => r.sessionId === sessionId),
+    listSince: async (since) =>
+      [...saved.values()].filter((r) => Date.parse(r.createdAt) >= since.getTime()),
     save: async (result) => void saved.set(result.resultId, result),
     update: async (result) => saved.has(result.resultId) && !!saved.set(result.resultId, result),
   };

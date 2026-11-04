@@ -1,8 +1,11 @@
+import { MIXPANEL_EU_HOST } from "@sbi/analytics";
 import { NextResponse, type NextRequest } from "next/server";
 
 /** The lesson's policy: only our scripts, the API for data and playground frames, and no eval. */
-export function lessonCsp(nonce: string, apiUrl: string): string {
+export function lessonCsp(nonce: string, apiUrl: string, mixpanelToken?: string): string {
   const api = new URL(apiUrl).origin;
+  // Usage statistics reach only Mixpanel's EU host, and only when a project is configured.
+  const usage = mixpanelToken ? ` ${MIXPANEL_EU_HOST}` : "";
   return [
     "default-src 'self'",
     // MuJoCo's Emscripten bindings build functions at run time, so eval is allowed (ADR 0014);
@@ -12,7 +15,7 @@ export function lessonCsp(nonce: string, apiUrl: string): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    `connect-src 'self' ${api}`,
+    `connect-src 'self' ${api}${usage}`,
     `frame-src ${api}`,
     "worker-src 'self' blob:",
     "object-src 'none'",
@@ -24,7 +27,11 @@ export function lessonCsp(nonce: string, apiUrl: string): string {
 
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-  const csp = lessonCsp(nonce, process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000");
+  const csp = lessonCsp(
+    nonce,
+    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
+    process.env.NEXT_PUBLIC_MIXPANEL_TOKEN,
+  );
   // Next reads the nonce from the request's policy and puts it on its own scripts.
   const headers = new Headers(request.headers);
   headers.set("x-nonce", nonce);

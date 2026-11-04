@@ -554,6 +554,26 @@ main.lesson {
   gap: var(--sbi-space-3);
 }
 
+/* The closing concept check (#81) reads as the lesson's last step, in the feedback card's frame. */
+.concept-check {
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  padding: var(--sbi-space-5);
+  display: grid;
+  gap: var(--sbi-space-3);
+}
+
+.concept-check h2,
+.concept-check p {
+  margin: 0;
+}
+
+.concept-check form {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
 .lesson-feedback form {
   display: grid;
   gap: var(--sbi-space-2);
