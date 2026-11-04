@@ -896,6 +896,22 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       const queue = await repos.coverage.reviewQueue();
       expect(queue).toEqual([{ status: lesson.reviewStatus, versions: 3 }]);
     });
+
+    it("lists only servable versions as review candidates, with their reuse count", async () => {
+      const lesson = fixture(Lesson, "lesson", "kettle-full");
+      const served = { ...lesson, reviewStatus: "approved" as const };
+      await repos.lessons.save({ ...served, reuse: { ...served.reuse, reuseCount: 4 } });
+      await repos.lessons.save({ ...lesson, version: 2, reviewStatus: "rejected" as const });
+      expect(await repos.coverage.reviewCandidates()).toEqual([
+        {
+          lessonId: lesson.lessonId,
+          version: lesson.version,
+          taxonomyId: lesson.taxonomyId,
+          safetyClass: lesson.safetyClass,
+          reuseCount: 4,
+        },
+      ]);
+    });
   });
 
   describe("withLock", () => {
