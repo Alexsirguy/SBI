@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "eval": "tsx scripts/eval.ts"
+    "eval": "tsx scripts/eval.ts",
+    "rescore": "tsx scripts/rescore.ts"
   },
   "dependencies": {
     "@sbi/contracts": "workspace:*",
