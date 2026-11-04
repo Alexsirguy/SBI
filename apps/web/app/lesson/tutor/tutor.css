@@ -175,9 +175,32 @@
   justify-self: start;
 }
 
+/* The field's parts join this grid, so Ask shares the input's row even when an error shows. */
 .tutor__form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--sbi-space-2);
+  align-items: center;
+  column-gap: var(--sbi-space-2);
+  row-gap: 6px;
+  margin-block: var(--sbi-space-3);
+}
+
+.tutor__form > .sbi-field {
+  display: contents;
+}
+
+.tutor__form .sbi-field__label,
+.tutor__form .sbi-field__hint,
+.tutor__form .sbi-field__error {
+  grid-column: 1 / -1;
+}
+
+.tutor__form .sbi-control {
+  grid-column: 1;
+}
+
+.tutor__form > .sbi-button {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: stretch;
 }
