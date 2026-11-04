@@ -13,9 +13,8 @@ export interface ServedLesson {
 export function requestFor(prompt: SeedPrompt): LessonRequest {
   return LessonRequest.parse({
     question: prompt.question,
-    ...(prompt.taxonomyId?.startsWith("object.")
-      ? { taxonomyId: prompt.taxonomyId }
-      : { subject: prompt.label }),
+    // By name, as the web app sends a recognised or typed subject (ADR 0013).
+    subject: prompt.label,
     audience: prompt.audience,
     readingLevel: prompt.audience === "child" ? "simple" : "plain",
     locale: "en",

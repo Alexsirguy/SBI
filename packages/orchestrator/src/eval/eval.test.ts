@@ -53,9 +53,9 @@ describe("the lesson benchmark (#78)", () => {
     expect(set.cases.filter((item) => item.expectation).length).toBeGreaterThanOrEqual(30);
   });
 
-  it("asks for a fresh lesson, by catalogue id when the prompt has one", () => {
+  it("asks for a fresh lesson by the subject's name, as the web app does", () => {
     expect(requestFor(allow.prompt)).toMatchObject({
-      taxonomyId: "object.magnifying-glass",
+      subject: "Magnifying glass",
       fresh: true,
       readingLevel: "plain",
     });
