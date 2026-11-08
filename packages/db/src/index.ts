@@ -15,3 +15,12 @@ export type {
 } from "./repositories/accounts";
 export type { SavedLessonRepository, StoredSavedLesson } from "./repositories/saved-lessons";
 export type { CoverageRepository } from "./repositories/coverage";
+export type {
+  ClassChanges,
+  ClassRepository,
+  NewClass,
+  StoredClass,
+  StoredClassActivity,
+  StoredClassControls,
+  StoredClassLesson,
+} from "./repositories/classes";

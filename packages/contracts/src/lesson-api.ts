@@ -16,6 +16,8 @@ export const LessonRequest = z
     safetyClass: SafetyClass,
     assumptions: z.array(z.string().trim().min(1).max(300)).default([]),
     fresh: z.boolean().default(false),
+    /** Asked from a class link: the class's controls apply on the server (#113). */
+    classCode: z.string().max(20).optional(),
   })
   .refine((request) => request.taxonomyId !== undefined || request.subject !== undefined, {
     message: "Name an object or a subject.",

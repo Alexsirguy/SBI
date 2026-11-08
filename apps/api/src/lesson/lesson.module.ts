@@ -41,9 +41,11 @@ import { createEvidenceGatherer } from "./evidence-gatherer";
 import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
 import { AccountModule } from "../account/account.module";
+import { ClassAccessModule } from "../classes/class-access.module";
 import { SavedLessonsController } from "./saved-lessons.controller";
 import { RelatedController } from "./related.controller";
 import { LessonService } from "./lesson.service";
+import { PackController } from "./pack.controller";
 import { QuestionsController } from "./questions.controller";
 import { createVisualMaker } from "../visuals/visual-maker";
 import { VisualsModule } from "../visuals/visuals.module";
@@ -85,10 +87,11 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
 }
 
 @Module({
-  imports: [AccountModule, TaxonomyModule, VisualsModule],
+  imports: [AccountModule, ClassAccessModule, TaxonomyModule, VisualsModule],
   controllers: [
     LessonController,
     LessonFeedbackController,
+    PackController,
     QuestionsController,
     RelatedController,
     SavedLessonsController,
@@ -210,6 +213,6 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
     },
   ],
   // The tutor answers about these same lessons with the same model and safety checks.
-  exports: [LESSONS, LESSON_LLM, RISK_CLASSIFIER],
+  exports: [LESSONS, LESSON_EVIDENCE, LESSON_LLM, RISK_CLASSIFIER],
 })
 export class LessonModule {}

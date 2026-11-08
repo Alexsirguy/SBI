@@ -180,5 +180,16 @@
   "sendReport": "Enviar informe",
   "nextConceptsHeading": "Conceptos siguientes",
   "nextConceptsShared": "También trata de {concept}",
-  "nextConceptsFamily": "De la misma familia"
+  "nextConceptsFamily": "De la misma familia",
+  "curriculumHeading": "Relación con el currículo",
+  "curriculumChoose": "Currículo",
+  "curriculumOff": "Desactivado",
+  "curriculumUs": "Estados Unidos (NGSS, Common Core)",
+  "curriculumNg": "Nigeria (NERDC)",
+  "curriculumLevel": "Nivel",
+  "curriculumAllLevels": "Todos los niveles",
+  "curriculumNone": "Aún no hay estándares de este currículo para esta lección.",
+  "curriculumLoading": "Cargando estándares…",
+  "curriculumPartial": "Relacionado",
+  "curriculumNote": "Es nuestra lectura del currículo, no una correspondencia oficial. Tu elección se queda en este dispositivo."
 }

@@ -34,6 +34,11 @@ function mockResponse(replyHeaders: Record<string, string> = {}) {
 const signedOut = { current: async () => undefined };
 const noSaved = { list: async () => [] };
 const anonymous = { headers: {}, method: "POST" };
+const noClass = {
+  controls: async () => {
+    throw new UserFacingException("No such class.", 404);
+  },
+};
 
 function stubService(behavior: unknown[] | Error): LessonService {
   return {
@@ -61,6 +66,7 @@ describe("LessonController", () => {
       stubService([ANSWER, FULL, VISUALS]),
       signedOut,
       noSaved,
+      noClass,
     );
     const { chunks, res, state } = mockResponse();
 
@@ -78,7 +84,7 @@ describe("LessonController", () => {
 
   it("lets pre-stream failures reach the HTTP error filter", async () => {
     const failure = new UserFacingException("Try again later.", 503);
-    const controller = new LessonController(stubService(failure), signedOut, noSaved);
+    const controller = new LessonController(stubService(failure), signedOut, noSaved, noClass);
     const { res, state } = mockResponse();
 
     await expect(controller.stream({} as never, anonymous, res)).rejects.toBe(failure);
@@ -96,6 +102,7 @@ describe("LessonController", () => {
       } as unknown as LessonService,
       signedOut,
       noSaved,
+      noClass,
     );
     const { chunks, res, state } = mockResponse();
 
@@ -181,6 +188,7 @@ describe("lesson routes", () => {
           },
         ],
       },
+      noClass,
     );
 
     await controller.stream(
@@ -194,5 +202,41 @@ describe("lesson routes", () => {
       { ownLessonIds: new Set(["0192f1a0-0000-7000-8000-0000000000c1"]) },
       { ownLessonIds: undefined },
     ]);
+  });
+
+  it("applies a class's controls: the age band lock and its blocked categories", async () => {
+    const seen: { body: unknown; viewer: unknown }[] = [];
+    const service = {
+      async *streamLesson(body: unknown, viewer: unknown) {
+        seen.push({ body, viewer });
+        yield* [ANSWER];
+      },
+    } as unknown as LessonService;
+    const classAccess = {
+      controls: async (code: string) => {
+        if (code !== "7K3M-9QPX") throw new UserFacingException("No such class.", 404);
+        return {
+          audienceLock: "child" as const,
+          blockedCategories: ["weapons" as const],
+          tutorEnabled: true,
+        };
+      },
+    };
+    const controller = new LessonController(service, signedOut, noSaved, classAccess);
+
+    await controller.stream(
+      { audience: "adult", classCode: "7K3M-9QPX" } as never,
+      anonymous,
+      mockResponse().res,
+    );
+    expect(seen[0]).toEqual({
+      body: { audience: "child", classCode: "7K3M-9QPX" },
+      viewer: { blockedCategories: ["weapons"], ownLessonIds: undefined },
+    });
+
+    await expect(
+      controller.stream({ classCode: "GONE-GONE" } as never, anonymous, mockResponse().res),
+    ).rejects.toMatchObject({ status: 404 });
+    expect(seen).toHaveLength(1);
   });
 });

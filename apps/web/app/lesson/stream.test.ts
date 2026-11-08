@@ -41,6 +41,23 @@ async function collect(fetcher: typeof fetch): Promise<LessonEvent[]> {
 }
 
 describe("streamLesson", () => {
+  it("sends the class code from a class link, so the teacher's controls apply", async () => {
+    const storage = new Map([
+      ["sbi.class", JSON.stringify({ code: "7K3M-9QPX", name: "Physics" })],
+    ]);
+    vi.stubGlobal("window", {
+      sessionStorage: { getItem: (key: string) => storage.get(key) ?? null },
+    });
+    try {
+      const fetcher = streaming(sseFrames([{ type: "lesson", data: SAMPLE_LESSON }]));
+      await collect(fetcher);
+      const body = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body)) as LessonRequest;
+      expect(body.classCode).toBe("7K3M-9QPX");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("posts the request and hands over each checked event in order", async () => {
     const fetcher = streaming(
       sseFrames([

@@ -48,6 +48,10 @@ const TABLES = [
   "sessions",
   "account_tokens",
   "saved_lessons",
+  "educators",
+  "classes",
+  "class_lessons",
+  "class_activity",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -874,6 +878,158 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         "Newer",
         "Older",
       ]);
+    });
+  });
+
+  describe("classes", () => {
+    const teacher = "0192f1a0-0000-7000-8000-00000000000a";
+    const other = "0192f1a0-0000-7000-8000-00000000000b";
+    const classId = "0192f1a0-0000-7000-8000-0000000000e1";
+    const lessonId = "0192f1a0-0000-7000-8000-0000000000c1";
+    const at = (iso: string) => new Date(iso);
+    const controls = { audienceLock: null, blockedCategories: [], tutorEnabled: true };
+    const create = (overrides: Partial<Parameters<Repositories["classes"]["create"]>[0]> = {}) =>
+      repos.classes.create({
+        classId,
+        controls,
+        createdAt: at("2026-11-08T09:00:00Z"),
+        curriculum: "ng",
+        joinCodeHash: "a".repeat(64),
+        joinCodeHint: "7K",
+        level: "SSS2",
+        name: "SSS2 Physics",
+        ownerAccountId: teacher,
+        ...overrides,
+      });
+
+    it("turns teaching tools on once, per account", async () => {
+      expect(await repos.classes.isEducator(teacher)).toBe(false);
+      await repos.classes.enableEducator(teacher, at("2026-11-08T09:00:00Z"));
+      await repos.classes.enableEducator(teacher, at("2026-11-08T10:00:00Z"));
+      expect(await repos.classes.isEducator(teacher)).toBe(true);
+      expect(await repos.classes.isEducator(other)).toBe(false);
+    });
+
+    it("keeps classes to their owner and opens them by code until archived", async () => {
+      await create();
+      expect(await repos.classes.getOwned(other, classId)).toBeUndefined();
+      expect((await repos.classes.listOwned(teacher)).map((item) => item.name)).toEqual([
+        "SSS2 Physics",
+      ]);
+      expect((await repos.classes.findOpenByCode("a".repeat(64)))?.classId).toBe(classId);
+
+      await repos.classes.update(classId, {
+        controls: { audienceLock: "teen", blockedCategories: ["weapons"], tutorEnabled: false },
+        name: "Physics",
+      });
+      expect(await repos.classes.getOwned(teacher, classId)).toMatchObject({
+        controls: { audienceLock: "teen", blockedCategories: ["weapons"], tutorEnabled: false },
+        curriculum: "ng",
+        name: "Physics",
+      });
+
+      await repos.classes.setJoinCode(classId, "b".repeat(64), "9Q");
+      expect(await repos.classes.findOpenByCode("a".repeat(64))).toBeUndefined();
+      expect((await repos.classes.findOpenByCode("b".repeat(64)))?.joinCodeHint).toBe("9Q");
+
+      await repos.classes.update(classId, { archivedAt: at("2026-11-08T12:00:00Z") });
+      expect(await repos.classes.findOpenByCode("b".repeat(64))).toBeUndefined();
+      expect((await repos.classes.getOwned(teacher, classId))?.archivedAt).toEqual(
+        at("2026-11-08T12:00:00Z"),
+      );
+    });
+
+    it("pins lesson versions, lists them in order and removes them", async () => {
+      await create();
+      const second = "0192f1a0-0000-7000-8000-0000000000c2";
+      await repos.classes.addLesson(classId, {
+        addedAt: at("2026-11-08T09:00:00Z"),
+        lessonId,
+        title: "Kettles",
+        version: 1,
+      });
+      await repos.classes.addLesson(classId, {
+        addedAt: at("2026-11-08T10:00:00Z"),
+        lessonId: second,
+        title: "Lenses",
+        version: 4,
+      });
+      await repos.classes.addLesson(classId, {
+        addedAt: at("2026-11-08T11:00:00Z"),
+        lessonId,
+        title: "Kettles, revised",
+        version: 2,
+      });
+      const lessons = (await repos.classes.getOwned(teacher, classId))?.lessons;
+      expect(lessons?.map((item) => [item.title, item.version])).toEqual([
+        ["Kettles, revised", 2],
+        ["Lenses", 4],
+      ]);
+      await repos.classes.removeLesson(classId, lessonId);
+      expect((await repos.classes.getOwned(teacher, classId))?.lessons).toHaveLength(1);
+    });
+
+    it("deletes classes archived long enough ago, with their lessons", async () => {
+      await create({ classId });
+      await repos.classes.addLesson(classId, {
+        addedAt: at("2026-11-08T09:00:00Z"),
+        lessonId,
+        title: "Kettles",
+        version: 1,
+      });
+      const kept = "0192f1a0-0000-7000-8000-0000000000e2";
+      await create({ classId: kept, joinCodeHash: "c".repeat(64) });
+      await repos.classes.update(classId, { archivedAt: at("2026-10-01T00:00:00Z") });
+      await repos.classes.update(kept, { archivedAt: at("2026-11-07T00:00:00Z") });
+
+      expect(await repos.classes.deleteArchivedBefore(at("2026-10-09T00:00:00Z"))).toBe(1);
+      expect((await repos.classes.listOwned(teacher)).map((item) => item.classId)).toEqual([kept]);
+      const [rows] = (await handle.db.execute(
+        sql.raw("SELECT class_id FROM `class_lessons`"),
+      )) as unknown as [unknown[]];
+      expect(rows).toEqual([]);
+    });
+
+    it("counts activity per week and metric, and forgets old weeks", async () => {
+      await create();
+      await repos.classes.recordActivity(classId, "2026-W45", "lesson_opened");
+      await repos.classes.recordActivity(classId, "2026-W45", "lesson_opened");
+      await repos.classes.recordActivity(classId, "2026-W44", "check_answered");
+      expect(
+        (await repos.classes.activity(classId)).sort((a, b) => a.week.localeCompare(b.week)),
+      ).toEqual([
+        { count: 1, metric: "check_answered", week: "2026-W44" },
+        { count: 2, metric: "lesson_opened", week: "2026-W45" },
+      ]);
+      expect(await repos.classes.deleteActivityBefore("2026-W45")).toBe(1);
+      expect(await repos.classes.activity(classId)).toHaveLength(1);
+    });
+
+    it("are deleted with the owner's account", async () => {
+      const account = await repos.accounts.create({
+        ageAtSignup: 30,
+        createdAt: at("2026-11-08T09:00:00Z"),
+        email: "teacher@example.com",
+        emailVerifiedAt: null,
+        firstName: "Ada",
+        googleSub: null,
+        lastName: "Obi",
+        passwordHash: null,
+      });
+      if (!account) throw new Error("account not created");
+      await repos.classes.enableEducator(account.accountId, at("2026-11-08T09:00:00Z"));
+      await create({ ownerAccountId: account.accountId });
+      await repos.classes.addLesson(classId, {
+        addedAt: at("2026-11-08T09:00:00Z"),
+        lessonId,
+        title: "Kettles",
+        version: 1,
+      });
+      await repos.classes.recordActivity(classId, "2026-W45", "lesson_opened");
+      await repos.accounts.delete(account.accountId);
+      expect(await repos.classes.listOwned(account.accountId)).toEqual([]);
+      expect(await repos.classes.activity(classId)).toEqual([]);
+      expect(await repos.classes.isEducator(account.accountId)).toBe(false);
     });
   });
 

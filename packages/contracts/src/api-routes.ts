@@ -24,6 +24,24 @@ import {
   UnlinkedAccount,
   VerifyEmailRequest,
 } from "./account-api";
+import {
+  ArchiveClassRequest,
+  ClassIdRequest,
+  ClassLessonRequest,
+  ClassSummary,
+  ClassSummaryRequest,
+  ClassWithCode,
+  CreateClassRequest,
+  EducatorStatus,
+  OpenClassLessonRequest,
+  OpenClassRequest,
+  OpenedClass,
+  OpenedClassLesson,
+  RecordClassActivityRequest,
+  TeacherClasses,
+  UpdateClassRequest,
+  UpdatedClass,
+} from "./class-api";
 import { Lesson } from "./lesson";
 import {
   LessonFeedbackReceipt,
@@ -69,6 +87,7 @@ import {
   TaxonomySearchResults,
 } from "./taxonomy-api";
 import { ServedVisual, VisualRequest } from "./visual";
+import { LessonPack, LessonPackRequest } from "./pack";
 
 // GET requests travel as query strings. `auth`: "account" needs a session, "session" may set one,
 // "optional" works signed out but sends the cookie so a signed-in learner keeps more.
@@ -171,7 +190,7 @@ export const API_ROUTES = {
     request: TutorTurnRequest,
     response: TutorReply,
     auth: "optional",
-    errors: [400, 404, 429, 503],
+    errors: [400, 403, 404, 429, 503],
   },
   tutorConversation: {
     method: "get",
@@ -200,6 +219,15 @@ export const API_ROUTES = {
     request: LessonRequest,
     response: Lesson,
     errors: [400, 404, 503],
+  },
+  exportLessonPack: {
+    method: "post",
+    path: "/lessons/pack",
+    summary:
+      "Bundle a lesson with its cleared visuals, credits and sources for offline use; others fall back to text.",
+    request: LessonPackRequest,
+    response: LessonPack,
+    errors: [400, 404],
   },
   relatedLessons: {
     method: "get",
@@ -398,6 +426,112 @@ export const API_ROUTES = {
     response: UnlinkedAccount,
     errors: [401, 403],
     auth: "account",
+  },
+  becomeEducator: {
+    method: "post",
+    path: "/classes/educator",
+    summary: "Turn on teaching tools for a confirmed account aged 18 or over (ADR 0027).",
+    request: EmptyRequest,
+    response: EducatorStatus,
+    errors: [401, 403],
+    auth: "account",
+  },
+  classes: {
+    method: "get",
+    path: "/classes",
+    summary: "List the signed-in teacher's classes, with their lessons and controls.",
+    request: EmptyRequest,
+    response: TeacherClasses,
+    errors: [401],
+    auth: "account",
+  },
+  createClass: {
+    method: "post",
+    path: "/classes/create",
+    summary: "Create a class and return its join code, the only time the full code is shown.",
+    request: CreateClassRequest,
+    response: ClassWithCode,
+    errors: [400, 401, 403, 409],
+    auth: "account",
+  },
+  updateClass: {
+    method: "post",
+    path: "/classes/update",
+    summary: "Rename a class or change its curriculum, level or controls.",
+    request: UpdateClassRequest,
+    response: UpdatedClass,
+    errors: [400, 401, 404],
+    auth: "account",
+  },
+  rotateClassCode: {
+    method: "post",
+    path: "/classes/code",
+    summary: "Replace a class's join code; the old link stops working at once.",
+    request: ClassIdRequest,
+    response: ClassWithCode,
+    errors: [400, 401, 404],
+    auth: "account",
+  },
+  archiveClass: {
+    method: "post",
+    path: "/classes/archive",
+    summary: "Archive a class, closing its link, or restore it within 30 days.",
+    request: ArchiveClassRequest,
+    response: UpdatedClass,
+    errors: [400, 401, 404],
+    auth: "account",
+  },
+  addClassLesson: {
+    method: "post",
+    path: "/classes/lessons/add",
+    summary: "Add one of the teacher's saved lessons to a class, at its saved version.",
+    request: ClassLessonRequest,
+    response: UpdatedClass,
+    errors: [400, 401, 404, 409],
+    auth: "account",
+  },
+  removeClassLesson: {
+    method: "post",
+    path: "/classes/lessons/remove",
+    summary: "Remove a lesson from a class.",
+    request: ClassLessonRequest,
+    response: UpdatedClass,
+    errors: [400, 401, 404],
+    auth: "account",
+  },
+  openClass: {
+    method: "get",
+    path: "/class",
+    summary:
+      "Open a class by its join code: its name, curriculum, controls and lessons, no sign-in.",
+    request: OpenClassRequest,
+    response: OpenedClass,
+    errors: [400, 404, 429],
+  },
+  classSummary: {
+    method: "get",
+    path: "/classes/summary",
+    summary: "Weekly counts for a whole class, with any count under 5 hidden; never per pupil.",
+    request: ClassSummaryRequest,
+    response: ClassSummary,
+    errors: [400, 401, 404],
+    auth: "account",
+  },
+  recordClassActivity: {
+    method: "post",
+    path: "/class/activity",
+    summary: "Add one to a class's weekly count; nothing about the pupil is sent or kept.",
+    request: RecordClassActivityRequest,
+    response: Done,
+    errors: [400, 404, 429],
+  },
+  openClassLesson: {
+    method: "get",
+    path: "/class/lesson",
+    summary: "Open one lesson of a class by join code, with its sources and visuals.",
+    request: OpenClassLessonRequest,
+    response: OpenedClassLesson,
+    errors: [400, 404, 429],
   },
 } as const;
 

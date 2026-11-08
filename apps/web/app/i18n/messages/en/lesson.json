@@ -180,5 +180,16 @@
   "sendReport": "Send report",
   "nextConceptsHeading": "Next concepts",
   "nextConceptsShared": "Also about {concept}",
-  "nextConceptsFamily": "From the same family"
+  "nextConceptsFamily": "From the same family",
+  "curriculumHeading": "Curriculum links",
+  "curriculumChoose": "Curriculum",
+  "curriculumOff": "Off",
+  "curriculumUs": "United States (NGSS, Common Core)",
+  "curriculumNg": "Nigeria (NERDC)",
+  "curriculumLevel": "Level",
+  "curriculumAllLevels": "All levels",
+  "curriculumNone": "No standards in this curriculum match this lesson yet.",
+  "curriculumLoading": "Loading standards…",
+  "curriculumPartial": "Related",
+  "curriculumNote": "Our own reading of the curriculum, not an official mapping. Your choice stays on this device."
 }

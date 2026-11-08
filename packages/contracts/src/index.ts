@@ -1,5 +1,6 @@
 export * from "./account-api";
 export * from "./api-routes";
+export * from "./class-api";
 export * from "./common";
 export * from "./consent";
 export * from "./content-hash";
@@ -8,6 +9,7 @@ export * from "./json-schema";
 export * from "./lesson";
 export * from "./lesson-api";
 export * from "./media-api";
+export * from "./pack";
 export * from "./recognition";
 export * from "./recognition-api";
 export * from "./registry";

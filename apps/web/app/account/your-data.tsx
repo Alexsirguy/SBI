@@ -10,16 +10,7 @@ import { api } from "../api";
 import { forgetKeptPhoto, setConsent } from "../consent";
 import { useT } from "../i18n/provider";
 import { useErrorText } from "../i18n/error-text";
-
-// A file the learner keeps; the browser saves it without another round trip.
-function saveFile(name: string, data: unknown) {
-  const url = URL.createObjectURL(
-    new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }),
-  );
-  const link = Object.assign(document.createElement("a"), { download: name, href: url });
-  link.click();
-  URL.revokeObjectURL(url);
-}
+import { saveFile } from "../save-file";
 
 /** Download everything held for the account, or delete it all (#105). */
 export function YourData({ email }: { email: string }) {

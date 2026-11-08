@@ -22,7 +22,12 @@ import {
   LinkAccountRequest,
   type ApiResponse,
 } from "@sbi/contracts";
-import type { AccountRepository, SavedLessonRepository, StoredAccount } from "@sbi/db";
+import type {
+  AccountRepository,
+  ClassRepository,
+  SavedLessonRepository,
+  StoredAccount,
+} from "@sbi/db";
 import {
   deleteOnRequest,
   type DeletionAuditLog,
@@ -41,6 +46,7 @@ import {
   OBJECT_STORAGE,
   SAVED_LESSONS,
   TUTOR_TURNS,
+  CLASSES,
   UPLOAD_POLICY,
 } from "../tokens";
 import {
@@ -65,6 +71,7 @@ const EXPORT_NOTES = [
   "Lessons themselves hold no personal data, so only your list of saved lessons is included.",
   "Photos kept on a device but never linked to this account are listed on that device's privacy page.",
   "Tutor conversations you had while signed in are included; each is deleted 30 days after you asked.",
+  "Classes you run are included. Join codes are stored only as a hash, so they can't be exported; nothing about pupils is ever stored.",
   "Recognition results, feedback and tutor conversations from when you were signed out are not tied to your account; they are deleted on the schedule in our retention policy.",
 ];
 
@@ -83,6 +90,7 @@ export class AccountController {
     @Inject(DELETION_AUDIT) private readonly audit: DeletionAuditLog,
     @Inject(UPLOAD_POLICY) private readonly uploads: Pick<UploadPolicy, "maxBytes">,
     @Inject(TUTOR_TURNS) private readonly tutorTurns: Pick<TutorTurnRepository, "listByAccount">,
+    @Inject(CLASSES) private readonly classes: Pick<ClassRepository, "isEducator" | "listOwned">,
   ) {}
 
   @Get(API_ROUTES.getAccount.path)
@@ -133,10 +141,12 @@ export class AccountController {
 
   @Get(API_ROUTES.exportAccount.path)
   async export(@SignedInAccount() account: StoredAccount): Promise<ApiResponse<"exportAccount">> {
-    const [saved, photos, turns] = await Promise.all([
+    const [saved, photos, turns, educator, classes] = await Promise.all([
       this.saved.list(account.accountId),
       this.accounts.ownedPhotos(account.accountId),
       this.tutorTurns.listByAccount(account.accountId),
+      this.classes.isEducator(account.accountId),
+      this.classes.listOwned(account.accountId),
     ]);
     return {
       account: {
@@ -155,6 +165,21 @@ export class AccountController {
       },
       exportedAt: new Date().toISOString(),
       notes: EXPORT_NOTES,
+      teaching: {
+        classes: classes.map((item) => ({
+          archivedAt: item.archivedAt?.toISOString() ?? null,
+          createdAt: item.createdAt.toISOString(),
+          curriculum: item.curriculum,
+          lessons: item.lessons.map(({ lessonId, title, version }) => ({
+            lessonId,
+            title,
+            version,
+          })),
+          level: item.level,
+          name: item.name,
+        })),
+        educator,
+      },
       photos: photos.map((photo) => ({
         consentVersion: photo.consentVersion,
         download: `${ACCOUNT_PHOTO_PATH}/${photo.key.slice("photos/".length)}`,

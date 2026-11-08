@@ -6,6 +6,7 @@ import type { VisualRegistry } from "@sbi/visuals";
 import { useEffect, useId, useRef } from "react";
 import { elapsedBucket, rangeBucket } from "@sbi/analytics";
 import { track } from "../analytics/track";
+import { countForClass } from "../class/class-activity";
 import { useT } from "../i18n/provider";
 import { webRegistry } from "./registry";
 import "./visuals.css";
@@ -45,6 +46,7 @@ export function VisualMount({
       });
     // "change" fires when a slider is let go, so a drag counts once, not per pixel.
     const figure = mount.closest("figure");
+    let counted = false;
     const changed = (event: Event) => {
       const input = event.target;
       if (!(input instanceof HTMLInputElement) || input.type !== "range") return;
@@ -52,6 +54,9 @@ export function VisualMount({
         (control) => input.id === `${manifest.visualId}-${control.id}`,
       )?.id;
       if (!controlId) return;
+      // Once per visual per visit, so a class's count means visuals tried, not slider drags.
+      if (!counted) countForClass("visual_used");
+      counted = true;
       track("interaction_changed", {
         visualId: manifest.visualId,
         controlId,

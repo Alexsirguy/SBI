@@ -11,6 +11,8 @@ const RESULT: PurgePassResult = {
   evidencePacksPurged: 6,
   catalogGapsPurged: 7,
   accountSecretsPurged: 8,
+  archivedClassesPurged: 1,
+  classActivityPurged: 2,
 };
 
 function logger() {
@@ -44,6 +46,8 @@ describe("startPurgeWorker", () => {
         evidencePacksPurged: 6,
         catalogGapsPurged: 7,
         accountSecretsPurged: 8,
+        archivedClassesPurged: 1,
+        classActivityPurged: 2,
       },
       "media purge pass",
     );

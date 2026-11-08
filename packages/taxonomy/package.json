@@ -5,7 +5,8 @@
   "description": "Canonical taxonomy IDs, aliases, parts, concepts and visual-family routing.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./curriculum": "./src/curriculum/index.ts"
   },
   "scripts": {
     "lint": "eslint .",

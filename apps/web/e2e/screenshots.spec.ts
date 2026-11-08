@@ -187,6 +187,86 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
       await page.getByRole("region", { name: "Sources" }).scrollIntoViewIfNeeded();
     },
   },
+  {
+    name: "teach",
+    open: async (page) => {
+      await mockApi(page, "/account", () => ({
+        json: {
+          accountId: "0192f1a0-0000-7000-8000-000000000001",
+          email: "teacher@example.com",
+          emailVerified: true,
+          firstName: "Ngozi",
+          lastName: "Okafor",
+          linkedAt: null,
+        },
+      }));
+      await mockApi(page, "/account/lessons", () => ({ json: { lessons: [] } }));
+      await mockApi(page, "/classes", () => ({
+        json: {
+          classes: [
+            {
+              archivedAt: null,
+              classId: "0192f1a0-0000-7000-8000-0000000000e1",
+              codeHint: "PX",
+              controls: {
+                audienceLock: "teen",
+                blockedCategories: ["weapons"],
+                tutorEnabled: true,
+              },
+              createdAt: "2026-11-08T09:00:00.000Z",
+              curriculum: "ng",
+              lessons: [
+                { lessonId: SAMPLE_LESSON.lessonId, title: SAMPLE_LESSON.title, version: 1 },
+              ],
+              level: "SSS2",
+              name: "SSS2 Physics",
+            },
+          ],
+          educator: true,
+        },
+      }));
+      await mockApi(page, "/classes/summary?", () => ({
+        json: {
+          minCount: 5,
+          totals: { check_answered: 58, check_correct: 41, lesson_opened: 73, visual_used: null },
+          weeks: [
+            {
+              counts: {
+                check_answered: 31,
+                check_correct: 22,
+                lesson_opened: 38,
+                visual_used: null,
+              },
+              week: "2026-W45",
+            },
+            {
+              counts: { check_answered: 27, check_correct: 19, lesson_opened: 35, visual_used: 0 },
+              week: "2026-W44",
+            },
+          ],
+        },
+      }));
+      await page.goto("/teach");
+      await expect(page.getByRole("region", { name: "SSS2 Physics" })).toBeVisible();
+      await expect(page.getByRole("table")).toBeVisible();
+    },
+  },
+  {
+    name: "class",
+    open: async (page) => {
+      await mockApi(page, "/class?", () => ({
+        json: {
+          controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
+          curriculum: "ng",
+          lessons: [{ lessonId: SAMPLE_LESSON.lessonId, title: SAMPLE_LESSON.title, version: 1 }],
+          level: "SSS2",
+          name: "SSS2 Physics",
+        },
+      }));
+      await page.goto("/class?code=7K3M-9QPX");
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText("SSS2 Physics");
+    },
+  },
 ];
 
 for (const viewport of VIEWPORTS) {

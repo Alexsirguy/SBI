@@ -1,0 +1,121 @@
+.teach-home {
+  display: grid;
+  gap: var(--sbi-space-6);
+}
+
+.teach-form {
+  display: grid;
+  gap: var(--sbi-space-3);
+  max-width: var(--sbi-measure);
+}
+
+.teach-form--inline {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.teach-class {
+  display: grid;
+  gap: var(--sbi-space-4);
+}
+
+.teach-class h3 {
+  font-size: var(--sbi-text-body);
+  margin: 0 0 var(--sbi-space-2);
+}
+
+.teach-lessons {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding-left: 0;
+  list-style: none;
+}
+
+.teach-lessons li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.teach-checks {
+  display: grid;
+  gap: var(--sbi-space-2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.teach-checks label,
+.teach-switch {
+  display: flex;
+  gap: var(--sbi-space-2);
+  align-items: center;
+  min-height: 44px;
+}
+
+.teach-tag {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+  font-weight: normal;
+}
+
+.teach-code {
+  padding: var(--sbi-space-5);
+  background: var(--sbi-paper);
+  border: 2px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+}
+
+.teach-code dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sbi-space-2) var(--sbi-space-4);
+}
+
+.teach-code dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.teach-code__code {
+  font-size: var(--sbi-text-title);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.teach-code__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-3);
+}
+
+.class-page__lessons {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding-left: 0;
+  list-style: none;
+}
+
+.teach-summary {
+  overflow-x: auto;
+}
+
+.teach-summary table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: var(--sbi-text-small);
+}
+
+.teach-summary th,
+.teach-summary td {
+  padding: var(--sbi-space-2) var(--sbi-space-3);
+  border-bottom: 1px solid var(--sbi-rule);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.teach-summary td {
+  font-variant-numeric: tabular-nums;
+}

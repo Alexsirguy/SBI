@@ -24,6 +24,6 @@ import { VisualsController } from "./visuals.controller";
       useFactory: (repos: Repositories) => createSpecIntegrity(repos.visualAssets),
     },
   ],
-  exports: [VISUAL_MANIFESTS],
+  exports: [VISUAL_ASSETS, VISUAL_INTEGRITY, VISUAL_MANIFESTS],
 })
 export class VisualsModule {}

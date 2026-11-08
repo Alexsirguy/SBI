@@ -38,3 +38,4 @@ export * from "./browser-events";
 export * from "./buckets";
 export { payloadProblems } from "./guard";
 export * from "./tracker";
+export * from "./classroom";

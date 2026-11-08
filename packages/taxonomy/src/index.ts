@@ -34,3 +34,14 @@ export {
 export { prioritiseDemand, type DemandPriority } from "./demand";
 export { LABELS_ES } from "./labels-es";
 export { supportMap, type SupportCategory, type SupportObject } from "./support-map";
+export {
+  alignmentsFor,
+  conceptKey,
+  CURRICULA,
+  Curriculum,
+  CurriculumInfo,
+  CurriculumSubject,
+  Standard,
+  type Alignment,
+  type AlignmentOptions,
+} from "./curriculum";
