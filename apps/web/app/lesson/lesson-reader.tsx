@@ -24,6 +24,7 @@ import { useErrorText } from "./lesson-t";
 import { useLessonExperiment } from "./lesson-experiment";
 import { GrownUpGate } from "../pathway/grown-up-gate";
 import { usePathway } from "../pathway/provider";
+import { CurriculumLinks } from "./curriculum-links";
 import { NextConcepts } from "./next-concepts";
 import { PracticeProvider } from "./practice";
 import { SaveLesson } from "./save-lesson";
@@ -269,6 +270,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
           </PracticeProvider>
           {lesson && status === "ready" ? (
             <NextConcepts lessonId={lesson.lessonId} version={lesson.version} prefs={prefs} />
+          ) : null}
+          {lesson && status === "ready" ? (
+            <CurriculumLinks concepts={lesson.concepts.map((concept) => concept.label)} />
           ) : null}
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
           {lesson ? (
