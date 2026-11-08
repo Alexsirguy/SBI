@@ -27,7 +27,7 @@
   color: var(--sbi-ink-soft);
 }
 
-.teach-cards {
+.teach .teach-cards {
   display: grid;
   gap: var(--sbi-space-4);
   margin: 0;
@@ -44,7 +44,7 @@
   border-radius: var(--sbi-radius-m);
 }
 
-.teach-card__name {
+.teach .teach-card__name {
   margin: 0;
   font-size: var(--sbi-text-heading);
 }
@@ -74,7 +74,13 @@
   margin-block: var(--sbi-space-5);
 }
 
-.teach-overview h2 {
+/* Cards size to their content by default; the summary must fit the card so its table scrolls. */
+.teach-overview > section {
+  justify-self: stretch;
+  min-width: 0;
+}
+
+.teach .teach-overview h2 {
   font-size: var(--sbi-text-body);
   margin-top: 0;
 }
@@ -119,12 +125,12 @@
   border-top: 1px solid var(--sbi-rule);
 }
 
-.teach-panel h2 {
+.teach .teach-panel h2 {
   font-size: var(--sbi-text-body);
   margin: 0 0 var(--sbi-space-3);
 }
 
-.teach-lessons {
+.teach .teach-lessons {
   display: grid;
   gap: var(--sbi-space-2);
   padding-left: 0;
@@ -230,4 +236,8 @@
 
 .teach-summary td {
   font-variant-numeric: tabular-nums;
+}
+
+.teach h1 + .teach-card__meta {
+  margin-top: var(--sbi-space-2);
 }

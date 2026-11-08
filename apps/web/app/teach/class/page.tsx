@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import "../../account/account.css";
+import "../../home.css";
 import { getT } from "../../i18n/server";
 import "../teach.css";
 import { ClassPage } from "../class-page";
