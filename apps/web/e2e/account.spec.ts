@@ -85,7 +85,7 @@ test("signing up lands on the account page, which asks to confirm the email", as
   await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByText("Signed in as Ada Lovelace (ada@example.com).")).toBeVisible();
   await expect(page.getByText("Please confirm your email.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Link this device" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Link this device", exact: true })).toBeDisabled();
   await expectNoAxeViolations(page);
 });
 

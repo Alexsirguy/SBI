@@ -11,6 +11,7 @@ import { forgetKeptPhoto, setConsent } from "../consent";
 import { useT } from "../i18n/provider";
 import { useErrorText } from "../i18n/error-text";
 import { saveFile } from "../save-file";
+import { InfoButton } from "./dashboard/info-button";
 
 /** Download everything held for the account, or delete it all (#105). */
 export function YourData({ email }: { email: string }) {
@@ -51,8 +52,13 @@ export function YourData({ email }: { email: string }) {
   const photos = exported.data?.photos ?? [];
   return (
     <section className="account-card" aria-labelledby="your-data">
-      <h2 id="your-data">{t("dataHeading")}</h2>
-      <p>{t("dataIntro")}</p>
+      <div className="account-card__title">
+        <h2 id="your-data">{t("dataHeading")}</h2>
+        <InfoButton topic={t("dataHeading")}>
+          <p>{t("dataIntro")}</p>
+        </InfoButton>
+      </div>
+      <p>{t("dataShort")}</p>
       <Button variant="quiet" disabled={exported.isPending} onClick={download}>
         {exported.isPending ? t("dataPreparing") : t("dataDownload")}
       </Button>

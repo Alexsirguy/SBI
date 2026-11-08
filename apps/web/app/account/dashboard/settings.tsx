@@ -9,6 +9,7 @@ import { useErrorText } from "../../i18n/error-text";
 import { useT } from "../../i18n/provider";
 import { ACCOUNT_KEY, useSignOut } from "../use-account";
 import { YourData } from "../your-data";
+import { InfoButton } from "./info-button";
 
 /** Account housekeeping, kept apart from the learning sections; linking stays an explicit choice. */
 export function AccountSettings({ me }: { me: ApiResponse<"getAccount"> }) {
@@ -42,23 +43,30 @@ export function AccountSettings({ me }: { me: ApiResponse<"getAccount"> }) {
   return (
     <div className="account-settings">
       <section className="account-card" aria-labelledby="account-link">
-        <h2 id="account-link">{t("accountLinkHeading")}</h2>
+        <div className="account-card__title">
+          <h2 id="account-link">{t("accountLinkHeading")}</h2>
+          <InfoButton topic={t("accountLinkHeading")}>
+            <p>
+              {linked
+                ? t("accountLinkedText")
+                : kept === 0
+                  ? t("accountLinkOffNone")
+                  : kept === 1
+                    ? t("accountLinkOffOne")
+                    : t("accountLinkOffOther", { count: kept })}
+            </p>
+          </InfoButton>
+        </div>
         {linked ? (
           <>
-            <p>{t("accountLinkedText")}</p>
+            <p>{t("accountLinkShortOn")}</p>
             <Button variant="quiet" disabled={busy} onClick={() => unlink.mutate()}>
               {t("accountUnlinkButton")}
             </Button>
           </>
         ) : (
           <>
-            <p>
-              {kept === 0
-                ? t("accountLinkOffNone")
-                : kept === 1
-                  ? t("accountLinkOffOne")
-                  : t("accountLinkOffOther", { count: kept })}
-            </p>
+            <p>{t("accountLinkShortOff")}</p>
             {me.emailVerified ? null : (
               <p className="account-card__hint">{t("accountConfirmFirst")}</p>
             )}

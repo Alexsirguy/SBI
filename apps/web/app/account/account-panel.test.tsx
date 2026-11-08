@@ -81,7 +81,9 @@ describe("AccountPanel", () => {
 
     await click(link);
 
-    await vi.waitFor(() => expect(text(container)).toContain("This device is linked."));
+    await vi.waitFor(() =>
+      expect(text(container)).toContain("On. This device's photos are tied to your account."),
+    );
     expect(api).toHaveBeenCalledWith("linkAccount", {
       consent: expect.objectContaining({ choices: expect.objectContaining({ account: true }) }),
       photoKeys: ["photos/a.jpg"],
@@ -110,8 +112,27 @@ describe("AccountPanel", () => {
     });
     const { container } = await view();
     await click(await enabled(container, "Unlink this device"));
-    await vi.waitFor(() => expect(text(container)).toContain("Off. Linking"));
+    await vi.waitFor(() => expect(text(container)).toContain("Off. Keep this device's photos"));
     expect(hasConsent("account")).toBe(false);
+  });
+
+  it("keeps the linking note short, with the full explanation behind the info icon", async () => {
+    api.mockImplementation(async (name: string) => (name === "getAccount" ? ADA : { ok: true }));
+    const { container } = await view();
+    const info = await vi.waitFor(() => {
+      const found = container.querySelector<HTMLButtonElement>(
+        'button[aria-label="More about Link this device"]',
+      );
+      expect(found).not.toBeNull();
+      return found as HTMLButtonElement;
+    });
+    const dialog = info.nextElementSibling as HTMLDialogElement;
+    expect(dialog.open).toBe(false);
+
+    await click(info);
+
+    expect(dialog.open).toBe(true);
+    expect(text(dialog)).toContain("clearing this browser does not leave them behind");
   });
 
   it("signs out and returns to the sign-in page", async () => {
