@@ -220,6 +220,74 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
     },
   },
   {
+    name: "account-teacher",
+    open: async (page) => {
+      await mockApi(page, "/account", () => ({
+        json: {
+          accountId: "0192f1a0-0000-7000-8000-000000000001",
+          educator: true,
+          educatorPending: false,
+          email: "teacher@example.com",
+          emailVerified: true,
+          firstName: "Ngozi",
+          lastName: "Okafor",
+          linkedAt: null,
+        },
+      }));
+      await mockApi(page, "/account/lessons", () => ({
+        json: {
+          lessons: [
+            {
+              lessonId: SAMPLE_LESSON.lessonId,
+              savedAt: "2026-11-07T10:00:00.000Z",
+              sharedAt: null,
+              title: SAMPLE_LESSON.title,
+              version: 1,
+            },
+          ],
+        },
+      }));
+      await mockApi(page, "/classes", () => ({
+        json: {
+          classes: ["SSS2 Physics", "SSS1 Chemistry"].map((name, index) => ({
+            archivedAt: null,
+            classId: `0192f1a0-0000-7000-8000-0000000000e${index + 1}`,
+            codeHint: index ? "QR" : "PX",
+            controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
+            createdAt: "2026-11-08T09:00:00.000Z",
+            curriculum: "ng",
+            lessons: index
+              ? []
+              : [{ lessonId: SAMPLE_LESSON.lessonId, title: SAMPLE_LESSON.title, version: 1 }],
+            level: index ? "SSS1" : "SSS2",
+            name,
+          })),
+          educator: true,
+        },
+      }));
+      await mockApi(page, "/classes/summary?", () => ({
+        json: {
+          minCount: 5,
+          totals: { check_answered: 31, check_correct: 22, lesson_opened: 38, visual_used: null },
+          weeks: [
+            {
+              counts: {
+                check_answered: 31,
+                check_correct: 22,
+                lesson_opened: 38,
+                visual_used: null,
+              },
+              week: "2026-W45",
+            },
+          ],
+        },
+      }));
+      await page.goto("/account");
+      await expect(page.getByText("SSS1 Chemistry")).toBeVisible();
+      await expect(page.getByText("Week 2026-W45: 38 lessons opened").first()).toBeVisible();
+    },
+  },
+  {
     name: "teach",
     open: async (page) => {
       await mockApi(page, "/account", () => ({

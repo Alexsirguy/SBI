@@ -2,6 +2,7 @@
 
 import type { ApiRequest, ApiResponse, TeacherClass } from "@sbi/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ACCOUNT_KEY } from "../account/use-account";
 import { api } from "../api";
 
 // Under the account key, so signing out drops every class from the cache.
@@ -35,11 +36,16 @@ export function useBecomeEducator() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: () => api("becomeEducator", {}),
-    onSuccess: () =>
+    onSuccess: () => {
       client.setQueryData(CLASSES_KEY, (data: Classes | undefined) => ({
         classes: data?.classes ?? [],
         educator: true,
-      })),
+      }));
+      // The account page picks its layout from the account, so it learns too.
+      client.setQueryData(ACCOUNT_KEY, (me: ApiResponse<"getAccount"> | null | undefined) =>
+        me ? { ...me, educator: true, educatorPending: false } : me,
+      );
+    },
   });
 }
 

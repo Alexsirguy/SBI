@@ -108,5 +108,11 @@
   "editSavedOne": "Edits saved and updated in 1 class.",
   "editSavedMany": "Edits saved and updated in {count} classes.",
   "editOpening": "Opening the lesson…",
-  "editOnlyTeachers": "Turn on teaching tools to edit lessons."
+  "editOnlyTeachers": "Turn on teaching tools to edit lessons.",
+  "dashNewClass": "New class",
+  "dashManage": "Manage classes",
+  "dashLessonOne": "1 lesson",
+  "dashLessonOther": "{count} lessons",
+  "dashWeek": "Week {week}: {count} lessons opened",
+  "dashNoActivity": "No pupil activity yet"
 }

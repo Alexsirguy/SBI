@@ -53,7 +53,7 @@ export function CodePanel({ shown, onDone }: { shown: ShownCode; onDone: () => v
   );
 }
 
-function CreateClass({ onCreated }: { onCreated: (shown: ShownCode) => void }) {
+export function CreateClass({ onCreated }: { onCreated: (shown: ShownCode) => void }) {
   const t = useT("teach");
   const errorText = useErrorText();
   const create = useClassMutation("createClass");

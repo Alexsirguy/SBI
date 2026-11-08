@@ -2,13 +2,13 @@
 
 import { Button } from "@sbi/ui";
 import { useMutation } from "@tanstack/react-query";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { api } from "../api";
 import { choicesSnapshot, subscribeToChoices } from "../consent";
 import { useErrorText } from "../i18n/error-text";
 import { useT } from "../i18n/provider";
+import { ClassesOverview } from "./dashboard/classes-overview";
 import { OfflineSection } from "./dashboard/offline-section";
 import { SavedLessonsSection } from "./dashboard/saved-lessons-section";
 import { AccountSettings } from "./dashboard/settings";
@@ -19,7 +19,6 @@ import { useAccount } from "./use-account";
 export function AccountPanel() {
   const errorText = useErrorText();
   const t = useT("account");
-  const teachT = useT("teach");
   const router = useRouter();
   const account = useAccount();
   const snapshot = useSyncExternalStore(
@@ -69,14 +68,7 @@ export function AccountPanel() {
         )}
       </div>
       <div className="account-dash">
-        {me.educator ? (
-          <section className="account-card" aria-labelledby="account-teach">
-            <h2 id="account-teach">{teachT("accountCardHeading")}</h2>
-            <Link href="/teach" className="account-card__row">
-              {teachT("accountCardLink")}
-            </Link>
-          </section>
-        ) : null}
+        {me.educator ? <ClassesOverview /> : null}
         <SavedLessonsSection educator={me.educator} />
         <OfflineSection />
         {me.educator || me.educatorPending ? null : <TeachInvite />}

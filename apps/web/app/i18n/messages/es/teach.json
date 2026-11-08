@@ -108,5 +108,11 @@
   "editSavedOne": "Cambios guardados y actualizados en 1 clase.",
   "editSavedMany": "Cambios guardados y actualizados en {count} clases.",
   "editOpening": "Abriendo la lección…",
-  "editOnlyTeachers": "Activa las herramientas docentes para editar lecciones."
+  "editOnlyTeachers": "Activa las herramientas docentes para editar lecciones.",
+  "dashNewClass": "Nueva clase",
+  "dashManage": "Gestionar clases",
+  "dashLessonOne": "1 lección",
+  "dashLessonOther": "{count} lecciones",
+  "dashWeek": "Semana {week}: {count} lecciones abiertas",
+  "dashNoActivity": "Aún no hay actividad de alumnos"
 }

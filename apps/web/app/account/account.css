@@ -394,6 +394,41 @@ main.account h1 {
   margin: 0;
 }
 
+.account-classes__head {
+  justify-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-2);
+}
+
+.account-classes__list {
+  justify-self: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-classes__row {
+  display: grid;
+  gap: var(--sbi-space-1);
+  padding-block: var(--sbi-space-3);
+  border-bottom: 1px solid var(--sbi-rule);
+}
+
+.account-classes__name {
+  font-weight: 700;
+}
+
+.account-classes__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-1) var(--sbi-space-4);
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}
+
 .account-dash__invite {
   margin: 0;
   color: var(--sbi-ink-soft);

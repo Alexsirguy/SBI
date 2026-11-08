@@ -145,7 +145,7 @@ describe("AccountPanel", () => {
     expect(container.querySelector('a[href^="/lesson/saved/edit"]')).toBeNull();
   });
 
-  it("gives a teacher their classes link and an edit link on each saved lesson", async () => {
+  it("gives a teacher a classes overview and an edit link on each saved lesson", async () => {
     const lesson = {
       lessonId: "0192f1a0-0000-7000-8000-000000000100",
       savedAt: "2026-11-02T10:00:00.000Z",
@@ -153,21 +153,60 @@ describe("AccountPanel", () => {
       title: "Kettles",
       version: 1,
     };
-    api.mockImplementation(async (name: string) =>
-      name === "getAccount"
-        ? { ...ADA, educator: true }
-        : name === "savedLessons"
-          ? { lessons: [lesson] }
-          : { ok: true },
-    );
+    const physics = {
+      archivedAt: null,
+      classId: "0192f1a0-0000-7000-8000-0000000000e1",
+      codeHint: "PX",
+      controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
+      createdAt: "2026-11-08T09:00:00.000Z",
+      curriculum: null,
+      lessons: [{ lessonId: lesson.lessonId, title: "Kettles", version: 1 }],
+      level: null,
+      name: "SSS2 Physics",
+    };
+    const replies: Record<string, unknown> = {
+      classSummary: {
+        minCount: 5,
+        totals: { check_answered: 0, check_correct: 0, lesson_opened: 3, visual_used: 0 },
+        weeks: [
+          {
+            counts: { check_answered: 0, check_correct: 0, lesson_opened: null, visual_used: 0 },
+            week: "2026-W45",
+          },
+        ],
+      },
+      classes: {
+        classes: [
+          physics,
+          {
+            ...physics,
+            archivedAt: "2026-11-08T10:00:00.000Z",
+            classId: "0192f1a0-0000-7000-8000-0000000000e2",
+            name: "Old class",
+          },
+        ],
+        educator: true,
+      },
+      getAccount: { ...ADA, educator: true },
+      savedLessons: { lessons: [lesson] },
+    };
+    api.mockImplementation(async (name: string) => replies[name] ?? { ok: true });
     const { container } = await view();
 
-    await vi.waitFor(() => expect(text(container)).toContain("Kettles"));
-    expect(text(container)).toContain("Your classes");
+    await vi.waitFor(() =>
+      expect(text(container)).toContain("Week 2026-W45: fewer than 5 lessons opened"),
+    );
+    expect(text(container)).toContain("SSS2 Physics");
+    expect(text(container)).toContain("Code ends in PX");
+    expect(text(container)).toContain("1 lesson");
+    expect(text(container)).not.toContain("Old class");
     expect(text(container)).not.toContain("Turn on teaching tools");
     expect(
       container.querySelector(`a[href="/lesson/saved/edit?id=${lesson.lessonId}"]`),
     ).not.toBeNull();
+
+    await click(button(container, "New class"));
+    expect(container.querySelector("#teach-create")).not.toBeNull();
   });
 });
 
