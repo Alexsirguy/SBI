@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Inject,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -14,6 +15,7 @@ import {
   CLASS_LESSONS_MAX,
   ClassIdRequest,
   ClassLessonRequest,
+  ClassSummaryRequest,
   CreateClassRequest,
   DEFAULT_CLASS_CONTROLS,
   newId,
@@ -21,6 +23,7 @@ import {
   type ApiResponse,
 } from "@sbi/contracts";
 import type { ClassRepository, SavedLessonRepository, StoredAccount, StoredClass } from "@sbi/db";
+import { CLASS_METRICS, summariseClass, type ClassMetric } from "@sbi/analytics";
 import { CURRICULA, type Curriculum } from "@sbi/taxonomy";
 import type { z } from "zod";
 import { SameOriginGuard, SessionGuard, SignedInAccount } from "../account/account.guard";
@@ -241,5 +244,17 @@ export class ClassesController {
     await this.owned(account, classId);
     await this.classes.removeLesson(classId, lessonId);
     return this.view(account, classId);
+  }
+
+  @Get(API_ROUTES.classSummary.path)
+  async summary(
+    @SignedInAccount() account: StoredAccount,
+    @Query(new ZodPipe(ClassSummaryRequest, "Say which class to summarise."))
+    { classId }: z.output<typeof ClassSummaryRequest>,
+  ): Promise<ApiResponse<"classSummary">> {
+    await this.owned(account, classId);
+    const known = new Set<string>(CLASS_METRICS);
+    const rows = (await this.classes.activity(classId)).filter((row) => known.has(row.metric));
+    return summariseClass(rows.map((row) => ({ ...row, metric: row.metric as ClassMetric })));
   }
 }

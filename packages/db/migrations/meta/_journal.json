@@ -148,6 +148,13 @@
       "when": 1794142320709,
       "tag": "0020_classes",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1794143851954,
+      "tag": "0021_class_activity",
+      "breakpoints": true
     }
   ]
 }

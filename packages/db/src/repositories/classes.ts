@@ -1,6 +1,6 @@
-import { and, asc, eq, inArray, isNotNull, lte } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, lt, lte, sql } from "drizzle-orm";
 import type { Database } from "../client";
-import { classes, classLessons, educators } from "../schema";
+import { classActivity, classes, classLessons, educators } from "../schema";
 
 export interface StoredClassControls {
   audienceLock: string | null;
@@ -28,6 +28,12 @@ export interface StoredClass {
   lessons: StoredClassLesson[];
 }
 
+export interface StoredClassActivity {
+  week: string;
+  metric: string;
+  count: number;
+}
+
 export type NewClass = Omit<StoredClass, "lessons" | "archivedAt"> & { joinCodeHash: string };
 export type ClassChanges = Partial<
   Pick<StoredClass, "name" | "curriculum" | "level" | "controls" | "archivedAt">
@@ -48,6 +54,11 @@ export interface ClassRepository {
   removeLesson(classId: string, lessonId: string): Promise<void>;
   /** Deletes classes archived on or before `before`, with their lessons; returns how many. */
   deleteArchivedBefore(before: Date): Promise<number>;
+  /** Adds one to a class's count for a week; there is nothing to say who. */
+  recordActivity(classId: string, week: string, metric: string): Promise<void>;
+  activity(classId: string): Promise<StoredClassActivity[]>;
+  /** Deletes counts for ISO weeks before `week`; returns how many rows. */
+  deleteActivityBefore(week: string): Promise<number>;
 }
 
 type ClassRow = typeof classes.$inferSelect;
@@ -196,9 +207,30 @@ export function createClassRepository(db: Database): ClassRepository {
         const ids = rows.map((row) => row.classId);
         if (ids.length === 0) return 0;
         await tx.delete(classLessons).where(inArray(classLessons.classId, ids));
+        await tx.delete(classActivity).where(inArray(classActivity.classId, ids));
         await tx.delete(classes).where(inArray(classes.classId, ids));
         return ids.length;
       });
+    },
+    async recordActivity(classId, week, metric) {
+      await db
+        .insert(classActivity)
+        .values({ classId, count: 1, metric, week })
+        .onDuplicateKeyUpdate({ set: { count: sql`${classActivity.count} + 1` } });
+    },
+    async activity(classId) {
+      return db
+        .select({
+          count: classActivity.count,
+          metric: classActivity.metric,
+          week: classActivity.week,
+        })
+        .from(classActivity)
+        .where(eq(classActivity.classId, classId));
+    },
+    async deleteActivityBefore(week) {
+      const [result] = await db.delete(classActivity).where(lt(classActivity.week, week));
+      return result.affectedRows;
     },
   };
 }

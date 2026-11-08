@@ -20,6 +20,7 @@ export type {
   ClassRepository,
   NewClass,
   StoredClass,
+  StoredClassActivity,
   StoredClassControls,
   StoredClassLesson,
 } from "./repositories/classes";

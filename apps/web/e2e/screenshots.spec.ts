@@ -225,8 +225,30 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
           educator: true,
         },
       }));
+      await mockApi(page, "/classes/summary?", () => ({
+        json: {
+          minCount: 5,
+          totals: { check_answered: 58, check_correct: 41, lesson_opened: 73, visual_used: null },
+          weeks: [
+            {
+              counts: {
+                check_answered: 31,
+                check_correct: 22,
+                lesson_opened: 38,
+                visual_used: null,
+              },
+              week: "2026-W45",
+            },
+            {
+              counts: { check_answered: 27, check_correct: 19, lesson_opened: 35, visual_used: 0 },
+              week: "2026-W44",
+            },
+          ],
+        },
+      }));
       await page.goto("/teach");
       await expect(page.getByRole("region", { name: "SSS2 Physics" })).toBeVisible();
+      await expect(page.getByRole("table")).toBeVisible();
     },
   },
   {

@@ -73,5 +73,15 @@
   "backToClass": "Back to {name}",
   "classLessonMetaTitle": "Class lesson",
   "accountCardHeading": "Teaching",
-  "accountCardLink": "Your classes"
+  "accountCardLink": "Your classes",
+  "summaryHeading": "Class summary",
+  "summaryLead": "Counts for the whole class by week. Any number under {min} is shown as \"fewer than {min}\", so no pupil can be picked out. There is no view of single pupils.",
+  "summaryEmpty": "Nothing yet. Counts appear once pupils open the class's lessons.",
+  "summaryWeek": "Week",
+  "summaryLessons": "Lessons opened",
+  "summaryChecks": "Checks answered",
+  "summaryCorrect": "Checks right",
+  "summaryVisuals": "Visuals tried",
+  "summaryTotal": "All weeks",
+  "summaryHidden": "fewer than {min}"
 }

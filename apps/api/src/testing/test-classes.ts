@@ -3,6 +3,7 @@ import type { ClassRepository, StoredClass } from "@sbi/db";
 /** In-memory class tables, with the same unique join-code rule as the database. */
 export function fakeClasses() {
   const educators = new Set<string>();
+  const activity = new Map<string, number>();
   const rows = new Map<string, StoredClass & { joinCodeHash: string }>();
   const copy = (row: StoredClass & { joinCodeHash: string }): StoredClass =>
     structuredClone(
@@ -58,6 +59,22 @@ export function fakeClasses() {
       }
       return count;
     },
+    recordActivity: async (classId, week, metric) => {
+      const key = [classId, week, metric].join("|");
+      activity.set(key, (activity.get(key) ?? 0) + 1);
+    },
+    activity: async (classId) =>
+      [...activity].flatMap(([key, count]) => {
+        const [id, week = "", metric = ""] = key.split("|");
+        return id === classId ? [{ count, metric, week }] : [];
+      }),
+    deleteActivityBefore: async (week) => {
+      let count = 0;
+      for (const key of activity.keys()) {
+        if ((key.split("|")[1] ?? "") < week) count += Number(activity.delete(key));
+      }
+      return count;
+    },
   };
-  return { educators, repository, rows };
+  return { activity, educators, repository, rows };
 }

@@ -115,3 +115,29 @@ export const OpenedClassLesson = z.object({
   sources: LessonSources,
   visuals: LessonVisuals,
 });
+
+/** What a pupil's page may count for the class; lesson opens are counted by the API itself. */
+export const ClassActivityMetric = z.enum(["check_answered", "check_correct", "visual_used"]);
+
+export const RecordClassActivityRequest = z.object({
+  code: JoinCode,
+  metric: ClassActivityMetric,
+});
+
+const Cell = z.number().int().min(0).nullable();
+const MetricCells = z.object({
+  lesson_opened: Cell,
+  check_answered: Cell,
+  check_correct: Cell,
+  visual_used: Cell,
+});
+
+/** Weekly counts for the whole class, hidden below `minCount`; there is no per-pupil view. */
+export const ClassSummary = z.object({
+  minCount: z.number().int().positive(),
+  totals: MetricCells,
+  weeks: z.array(z.object({ week: z.string().regex(/^\d{4}-W\d{2}$/), counts: MetricCells })),
+});
+export type ClassSummary = z.infer<typeof ClassSummary>;
+
+export const ClassSummaryRequest = z.object({ classId: Uuid });

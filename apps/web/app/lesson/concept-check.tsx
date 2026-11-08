@@ -5,6 +5,7 @@ import { Button, RadioGroup } from "@sbi/ui";
 import { useId, useState } from "react";
 import { CONCEPT_CHECK, topicOf } from "../analytics/concept-check";
 import { track } from "../analytics/track";
+import { countForClass } from "../class/class-activity";
 import { useT } from "../i18n/provider";
 import { rich } from "./lesson-t";
 import { usePractice } from "./practice";
@@ -37,6 +38,8 @@ export function ConceptCheck({ lesson }: { lesson: Lesson }) {
             if (choice === undefined) return;
             const picked = Number(choice);
             setAnswered(picked);
+            countForClass("check_answered");
+            if (picked === task.answerIndex) countForClass("check_correct");
             track("concept_check_answered", {
               lessonId: lesson.lessonId,
               version: lesson.version,

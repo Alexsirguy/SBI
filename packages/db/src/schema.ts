@@ -375,3 +375,18 @@ export const classLessons = mysqlTable(
     index("class_lessons_added_idx").on(table.classId, table.addedAt),
   ],
 );
+
+// Counts only: one row per class, week and metric, never a pupil, visit or time finer than a week.
+export const classActivity = mysqlTable(
+  "class_activity",
+  {
+    classId: uuid("class_id").notNull(),
+    week: char("week", { length: 8 }).notNull(),
+    metric: varchar("metric", { length: 24 }).notNull(),
+    count: int("count").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.classId, table.week, table.metric] }),
+    index("class_activity_week_idx").on(table.week),
+  ],
+);

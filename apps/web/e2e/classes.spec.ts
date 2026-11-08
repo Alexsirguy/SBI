@@ -34,6 +34,18 @@ test("a teacher turns on teaching tools, makes a class and sees its code once", 
     educator = true;
     return { json: { educator: true } };
   });
+  await mockApi(page, "/classes/summary?", () => ({
+    json: {
+      minCount: 5,
+      totals: { check_answered: 3, check_correct: null, lesson_opened: 12, visual_used: 0 },
+      weeks: [
+        {
+          counts: { check_answered: null, check_correct: null, lesson_opened: 12, visual_used: 0 },
+          week: "2026-W45",
+        },
+      ],
+    },
+  }));
   await mockApi(page, "/classes/create", (body) => ({
     json: { class: { ...CLASS, name: (body as { name: string }).name }, joinCode: "7K3M-9QPX" },
   }));
@@ -53,6 +65,7 @@ test("a teacher turns on teaching tools, makes a class and sees its code once", 
   await code.getByRole("button", { name: "Done" }).click();
   await expect(page.getByText("7K3M-9QPX")).toHaveCount(0);
   await expect(page.getByRole("region", { name: "SSS2 Physics" })).toContainText("Code ends in PX");
+  await expect(page.getByRole("table")).toContainText("fewer than 5");
   const tutor = page.getByLabel("Pupils can ask the tutor");
   await tabTo(page, tutor);
   await expectVisibleFocus(tutor);

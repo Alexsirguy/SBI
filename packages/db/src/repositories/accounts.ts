@@ -2,6 +2,7 @@ import { newId } from "@sbi/contracts";
 import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import type { Database } from "../client";
 import {
+  classActivity,
   classes,
   classLessons,
   educators,
@@ -154,6 +155,7 @@ export function createAccountRepository(db: Database): AccountRepository {
           .from(classes)
           .where(eq(classes.ownerAccountId, accountId));
         await tx.delete(classLessons).where(inArray(classLessons.classId, owned));
+        await tx.delete(classActivity).where(inArray(classActivity.classId, owned));
         await tx.delete(classes).where(eq(classes.ownerAccountId, accountId));
         await tx.delete(educators).where(eq(educators.accountId, accountId));
         await tx.delete(savedLessons).where(eq(savedLessons.accountId, accountId));

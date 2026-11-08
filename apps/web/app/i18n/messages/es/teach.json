@@ -73,5 +73,15 @@
   "backToClass": "Volver a {name}",
   "classLessonMetaTitle": "Lección de clase",
   "accountCardHeading": "Docencia",
-  "accountCardLink": "Tus clases"
+  "accountCardLink": "Tus clases",
+  "summaryHeading": "Resumen de la clase",
+  "summaryLead": "Recuentos de toda la clase por semana. Cualquier número menor que {min} aparece como «menos de {min}», para que nadie pueda ser identificado. No hay vista de alumnos concretos.",
+  "summaryEmpty": "Aún no hay nada. Los recuentos aparecen cuando el alumnado abre las lecciones de la clase.",
+  "summaryWeek": "Semana",
+  "summaryLessons": "Lecciones abiertas",
+  "summaryChecks": "Preguntas respondidas",
+  "summaryCorrect": "Respuestas correctas",
+  "summaryVisuals": "Visuales probados",
+  "summaryTotal": "Todas las semanas",
+  "summaryHidden": "menos de {min}"
 }

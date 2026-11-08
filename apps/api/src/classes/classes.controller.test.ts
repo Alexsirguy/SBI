@@ -1,7 +1,13 @@
 import { join } from "node:path";
-import { Lesson, OpenedClass, TeacherClasses, type Lesson as LessonRecord } from "@sbi/contracts";
+import {
+  ClassSummary,
+  Lesson,
+  OpenedClass,
+  TeacherClasses,
+  type Lesson as LessonRecord,
+} from "@sbi/contracts";
 import { loadFixtures } from "@sbi/testing";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fakeGaps,
   fakeMedia,
@@ -254,5 +260,62 @@ describe("classes", () => {
       classes: [{ curriculum: "ng", level: "SSS2", lessons: [], name: "SSS2 Physics" }],
       educator: true,
     });
+  });
+
+  it("counts a class's activity and shows the teacher whole-class totals only", async () => {
+    const s = await start();
+    test = s.test;
+    const { classId, headers, joinCode } = await teacherWithClass(s);
+    await test.post("/account/lessons/save", { lessonId: kettle.lessonId, version: 1 }, headers);
+    await test.post("/classes/lessons/add", { classId, lessonId: kettle.lessonId }, headers);
+
+    for (let pupil = 0; pupil < 6; pupil += 1) {
+      await test.get(`/class/lesson?code=${joinCode}&lessonId=${kettle.lessonId}`);
+    }
+    for (let pupil = 0; pupil < 3; pupil += 1) {
+      const sent = await test.post(
+        "/class/activity",
+        { code: joinCode, metric: "check_answered" },
+        { origin: WEB_ORIGIN },
+      );
+      expect(await sent.json()).toEqual({ ok: true });
+    }
+    await vi.waitFor(async () =>
+      expect((await s.classes.repository.activity(classId)).length).toBe(2),
+    );
+
+    const summary = ClassSummary.parse(
+      await (await test.get(`/classes/summary?classId=${classId}`, headers)).json(),
+    );
+    expect(summary.minCount).toBe(5);
+    expect(summary.weeks).toHaveLength(1);
+    expect(summary.weeks[0]?.counts).toEqual({
+      check_answered: null,
+      check_correct: 0,
+      lesson_opened: 6,
+      visual_used: 0,
+    });
+    expect(summary.totals.check_answered).toBeNull();
+
+    const other = await s.signUp({ ...TEACHER, email: "other@example.com" });
+    expect((await test.get(`/classes/summary?classId=${classId}`, other)).status).toBe(404);
+    expect(
+      (
+        await test.post(
+          "/class/activity",
+          { code: "ZZZZ-ZZZZ", metric: "visual_used" },
+          { origin: WEB_ORIGIN },
+        )
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await test.post(
+          "/class/activity",
+          { code: joinCode, metric: "lesson_opened" },
+          { origin: WEB_ORIGIN },
+        )
+      ).status,
+    ).toBe(400);
   });
 });

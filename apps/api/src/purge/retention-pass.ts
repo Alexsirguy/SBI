@@ -1,3 +1,4 @@
+import { CLASS_ACTIVITY_WEEKS, weeksBefore } from "@sbi/analytics";
 import type { Repositories } from "@sbi/db";
 import { runDeletionPass, type ObjectStorage, type RetentionPolicy } from "@sbi/media";
 import type { ApiEnv } from "../env";
@@ -82,8 +83,13 @@ export async function runRetentionPass(
   const archivedClassesPurged = await repos.classes.deleteArchivedBefore(
     ago(ARCHIVED_CLASS_DAYS * DAY_MS),
   );
+  // Whole ISO weeks, so the oldest week kept is never cut in half.
+  const classActivityPurged = await repos.classes.deleteActivityBefore(
+    weeksBefore(now, CLASS_ACTIVITY_WEEKS),
+  );
   return {
     ...result,
+    classActivityPurged,
     accountSecretsPurged,
     archivedClassesPurged,
     recognitionPurged,

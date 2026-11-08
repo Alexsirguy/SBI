@@ -51,6 +51,7 @@ const TABLES = [
   "educators",
   "classes",
   "class_lessons",
+  "class_activity",
 ];
 
 function fixture<T>(schema: { parse(input: unknown): T }, contract: string, name: string): T {
@@ -989,6 +990,21 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(rows).toEqual([]);
     });
 
+    it("counts activity per week and metric, and forgets old weeks", async () => {
+      await create();
+      await repos.classes.recordActivity(classId, "2026-W45", "lesson_opened");
+      await repos.classes.recordActivity(classId, "2026-W45", "lesson_opened");
+      await repos.classes.recordActivity(classId, "2026-W44", "check_answered");
+      expect(
+        (await repos.classes.activity(classId)).sort((a, b) => a.week.localeCompare(b.week)),
+      ).toEqual([
+        { count: 1, metric: "check_answered", week: "2026-W44" },
+        { count: 2, metric: "lesson_opened", week: "2026-W45" },
+      ]);
+      expect(await repos.classes.deleteActivityBefore("2026-W45")).toBe(1);
+      expect(await repos.classes.activity(classId)).toHaveLength(1);
+    });
+
     it("are deleted with the owner's account", async () => {
       const account = await repos.accounts.create({
         ageAtSignup: 30,
@@ -1009,8 +1025,10 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         title: "Kettles",
         version: 1,
       });
+      await repos.classes.recordActivity(classId, "2026-W45", "lesson_opened");
       await repos.accounts.delete(account.accountId);
       expect(await repos.classes.listOwned(account.accountId)).toEqual([]);
+      expect(await repos.classes.activity(classId)).toEqual([]);
       expect(await repos.classes.isEducator(account.accountId)).toBe(false);
     });
   });

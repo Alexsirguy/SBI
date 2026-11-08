@@ -14,6 +14,7 @@ import { useSavedLessons } from "../account/use-saved-lessons";
 import { INTL_LOCALE } from "../i18n/locales";
 import { useLocale, useT } from "../i18n/provider";
 import { useErrorText } from "../lesson/lesson-t";
+import { ClassSummaryTable } from "./class-summary";
 import { CURRICULUM_LEVELS } from "./levels";
 import type { ShownCode } from "./teach-home";
 import { useClassMutation } from "./use-classes";
@@ -279,6 +280,7 @@ export function ClassCard({
           <Details item={item} />
           <Lessons item={item} />
           <Controls item={item} />
+          <ClassSummaryTable classId={item.classId} />
           <p>
             <Button
               variant="quiet"
