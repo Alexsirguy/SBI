@@ -9,6 +9,7 @@ export * from "./json-schema";
 export * from "./lesson";
 export * from "./lesson-api";
 export * from "./media-api";
+export * from "./pack";
 export * from "./recognition";
 export * from "./recognition-api";
 export * from "./registry";

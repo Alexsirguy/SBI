@@ -889,3 +889,31 @@ main.lesson {
   color: var(--sbi-ink-soft);
   font-size: var(--sbi-text-small);
 }
+
+.save-offline {
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.offline-list {
+  display: grid;
+  gap: var(--sbi-space-3);
+  padding-left: 0;
+  list-style: none;
+}
+
+.offline-list li {
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.offline-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+}
+
+.lesson-body > .save-offline {
+  margin-block: var(--sbi-space-6);
+  max-width: var(--sbi-measure);
+}

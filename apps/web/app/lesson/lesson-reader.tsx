@@ -29,6 +29,7 @@ import { CurriculumLinks } from "./curriculum-links";
 import { NextConcepts } from "./next-concepts";
 import { PracticeProvider } from "./practice";
 import { SaveLesson } from "./save-lesson";
+import { SaveOffline } from "./save-offline";
 import { type LessonPrefs, writePrefs } from "./prefs";
 import { useLessonStream } from "./use-lesson-stream";
 import { VisualFrame } from "./visual-frame";
@@ -276,6 +277,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
           ) : null}
           {lesson && status === "ready" ? (
             <CurriculumLinks concepts={lesson.concepts.map((concept) => concept.label)} />
+          ) : null}
+          {lesson && status === "ready" ? (
+            <SaveOffline lessonId={lesson.lessonId} version={lesson.version} />
           ) : null}
           {lesson && sources ? <SourceList sources={sources} lesson={lesson} /> : null}
           {lesson ? (

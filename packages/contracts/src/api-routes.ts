@@ -87,6 +87,7 @@ import {
   TaxonomySearchResults,
 } from "./taxonomy-api";
 import { ServedVisual, VisualRequest } from "./visual";
+import { LessonPack, LessonPackRequest } from "./pack";
 
 // GET requests travel as query strings. `auth`: "account" needs a session, "session" may set one,
 // "optional" works signed out but sends the cookie so a signed-in learner keeps more.
@@ -218,6 +219,15 @@ export const API_ROUTES = {
     request: LessonRequest,
     response: Lesson,
     errors: [400, 404, 503],
+  },
+  exportLessonPack: {
+    method: "post",
+    path: "/lessons/pack",
+    summary:
+      "Bundle a lesson with its cleared visuals, credits and sources for offline use; others fall back to text.",
+    request: LessonPackRequest,
+    response: LessonPack,
+    errors: [400, 404],
   },
   relatedLessons: {
     method: "get",
