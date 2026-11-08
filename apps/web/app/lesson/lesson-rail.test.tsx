@@ -68,4 +68,23 @@ describe("LessonRail", () => {
     );
     expect(none).not.toContain("visuals-heading");
   });
+
+  it("marks only the sections a teacher edited", () => {
+    const [first, second] = SAMPLE_LESSON.sections;
+    if (!first || !second) throw new Error("sample needs two sections");
+    const lesson = {
+      ...SAMPLE_LESSON,
+      disclaimers: [
+        ...(SAMPLE_LESSON.disclaimers ?? []),
+        { kind: "teacher-edited" as const, message: "Edited.", sectionIds: [first.sectionId] },
+      ],
+    };
+    const html = renderToStaticMarkup(
+      <LessonRail lesson={lesson} label="Magnifying glass" askQuestion={null} visuals={[]} />,
+    );
+    expect(html.match(/Edited by your teacher/g)).toHaveLength(1);
+    const tag = html.indexOf("Edited by your teacher");
+    expect(html.lastIndexOf(`data-section-id="${first.sectionId}"`, tag)).toBeGreaterThan(-1);
+    expect(html.indexOf(`data-section-id="${second.sectionId}"`)).toBeGreaterThan(tag);
+  });
 });

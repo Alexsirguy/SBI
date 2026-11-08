@@ -917,3 +917,44 @@ main.lesson {
   margin-block: var(--sbi-space-6);
   max-width: var(--sbi-measure);
 }
+
+.add-to-class {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+  align-items: end;
+}
+
+.add-to-class p {
+  margin: 0;
+}
+
+.edited-tag {
+  display: inline-block;
+  margin: 0 0 var(--sbi-space-1);
+  padding: 2px var(--sbi-space-2);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}
+
+.lesson-edit__part {
+  display: grid;
+  gap: var(--sbi-space-3);
+  padding: var(--sbi-space-4);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+}
+
+.lesson-edit__part legend {
+  padding-inline: var(--sbi-space-1);
+  font-weight: 700;
+}
+
+.lesson-edit__option {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding-block: var(--sbi-space-2);
+  border-top: 1px solid var(--sbi-rule);
+}

@@ -161,8 +161,14 @@ export function fakeSavedLessons() {
   const rows = new Map<string, StoredSavedLesson>();
   const key = (accountId: string, lessonId: string) => `${accountId} ${lessonId}`;
   const repository: SavedLessonRepository = {
-    save: async (accountId, lesson) =>
-      void rows.set(key(accountId, lesson.lessonId), { ...lesson }),
+    // Saving again keeps where an edited copy came from, as the database row does.
+    save: async (accountId, lesson) => {
+      const before = rows.get(key(accountId, lesson.lessonId));
+      rows.set(key(accountId, lesson.lessonId), {
+        ...lesson,
+        editedFrom: before?.editedFrom ?? lesson.editedFrom ?? null,
+      });
+    },
     list: async (accountId) =>
       [...rows]
         .filter(([id]) => id.startsWith(`${accountId} `))

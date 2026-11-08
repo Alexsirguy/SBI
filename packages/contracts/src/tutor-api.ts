@@ -49,3 +49,18 @@ export const TutorConversation = z.object({ exchanges: z.array(TutorExchange) })
 export const TutorResetRequest = z.object({ sessionId: Uuid, lessonId: Uuid });
 
 export const TutorReset = z.object({ deleted: z.int().nonnegative() });
+
+/** The signed-in learner's recent conversations, read back in place on the account page. */
+export const TutorConversationsRequest = z.object({ locale: Locale.default("en") });
+
+export const TutorConversationSummary = z.object({
+  lessonId: Uuid,
+  /** Null when the lesson is no longer stored. */
+  lessonTitle: z.string().nullable(),
+  lastAskedAt: IsoDateTime,
+  exchanges: z.array(TutorExchange),
+});
+
+export const TutorConversations = z.object({
+  conversations: z.array(TutorConversationSummary),
+});

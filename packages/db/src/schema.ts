@@ -245,6 +245,8 @@ export const accounts = mysqlTable(
     linkedAt: timestamp("linked_at"),
     // The account opt-in that linking happened under (ADR 0019).
     consentVersion: varchar("consent_version", { length: 40 }),
+    // Set when "I teach or tutor" was chosen at sign-up; cleared once teaching tools switch on.
+    educatorRequestedAt: timestamp("educator_requested_at"),
   },
   (table) => [
     uniqueIndex("accounts_email_idx").on(table.email),
@@ -264,6 +266,8 @@ export const savedLessons = mysqlTable(
     // The anonymous copy made when the learner shared it (#104); it holds nothing about them.
     sharedLessonId: uuid("shared_lesson_id"),
     sharedAt: timestamp("shared_at"),
+    // Set on a teacher's edited copy (#398): it is theirs, so later edits make new versions of it.
+    editedFromLessonId: uuid("edited_from_lesson_id"),
   },
   (table) => [
     primaryKey({ columns: [table.accountId, table.lessonId] }),

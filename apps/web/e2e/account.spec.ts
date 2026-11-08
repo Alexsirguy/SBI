@@ -85,7 +85,35 @@ test("signing up lands on the account page, which asks to confirm the email", as
   await expect(page).toHaveURL(/\/account$/);
   await expect(page.getByText("Signed in as Ada Lovelace (ada@example.com).")).toBeVisible();
   await expect(page.getByText("Please confirm your email.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Link this device" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Link this device", exact: true })).toBeDisabled();
+  await expectNoAxeViolations(page);
+});
+
+test("a teacher signing up is told teaching tools switch on once the email is confirmed", async ({
+  page,
+}) => {
+  let role: unknown;
+  const teacher = { ...ADA, educatorPending: true };
+  await mockApi(page, "/auth/sign-up", (body) => {
+    role = (body as { role?: unknown }).role;
+    return { json: teacher };
+  });
+  await mockApi(page, "/account", () =>
+    role ? { json: teacher } : { json: { error: "Sign in to use your account." }, status: 401 },
+  );
+  await page.goto("/account/sign-up");
+
+  await page.getByText("I teach or tutor").click();
+  await page.getByLabel("First name").fill("Ada");
+  await page.getByLabel("Last name").fill("Lovelace");
+  await page.getByLabel("Age", { exact: true }).selectOption("34");
+  await page.getByLabel("Email").fill("ada@example.com");
+  await page.getByLabel("Password").fill("analytical engine notes");
+  await page.getByRole("button", { name: "Create Account" }).click();
+
+  await expect(page).toHaveURL(/\/account$/);
+  expect(role).toBe("educator");
+  await expect(page.getByText("Confirm your email to switch on teaching tools.")).toBeVisible();
   await expectNoAxeViolations(page);
 });
 

@@ -1,8 +1,10 @@
 /* App layout on top of @sbi/ui/styles.css; colours, type and spacing come from its tokens. */
 
-/* Comfortable touch targets for controls not yet on @sbi/ui (E15-3); choice cards, the crop area
-   and the password Show button size themselves. */
-button:not(.sbi-button):not(.choice):not(.back-link):not(.crop-overlay__area):not(.auth__reveal),
+/* Touch targets for controls not yet on @sbi/ui (E15-3); choice cards, the crop area, the
+   password Show button and the account info icon size themselves. */
+button:not(.sbi-button):not(.choice):not(.back-link):not(.crop-overlay__area):not(
+    .auth__reveal
+  ):not(.account-info__button),
 input:not(.sbi-control):not([type="radio"]):not([type="checkbox"]),
 select:not(.sbi-control) {
   min-height: var(--sbi-touch-min);
@@ -10,7 +12,9 @@ select:not(.sbi-control) {
   font: inherit;
 }
 
-button:not(.sbi-button):not(.choice):not(.back-link):not(.crop-overlay__area):not(.auth__reveal) {
+button:not(.sbi-button):not(.choice):not(.back-link):not(.crop-overlay__area):not(
+    .auth__reveal
+  ):not(.account-info__button) {
   min-width: var(--sbi-touch-min);
   padding: 0 var(--sbi-space-4);
 }

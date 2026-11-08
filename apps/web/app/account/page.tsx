@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "../home.css";
 import { getT } from "../i18n/server";
 import { AccountPanel } from "./account-panel";
+import "../teach/teach.css";
 import "./account.css";
 
 export async function generateMetadata(): Promise<Metadata> {

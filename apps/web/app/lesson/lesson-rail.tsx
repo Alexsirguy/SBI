@@ -74,6 +74,11 @@ export function LessonRail({
     );
   }
   const merrill = isMerrillLesson(lesson);
+  const edited = new Set(
+    (lesson.disclaimers ?? []).flatMap((item) =>
+      item.kind === "teacher-edited" ? item.sectionIds : [],
+    ),
+  );
   const slot = <VisualsSlot visuals={visuals} renderVisual={renderVisual} experiment={merrill} />;
   return (
     <ol className="rail" aria-label={t("lessonSteps")}>
@@ -83,6 +88,7 @@ export function LessonRail({
           data-section-id={section.sectionId}
           className={`rail__step${section.module === "short-answer" ? " rail__step--answer" : ""}`}
         >
+          {edited.has(section.sectionId) ? <p className="edited-tag">{t("editedTag")}</p> : null}
           <SectionView
             section={section}
             lesson={lesson}

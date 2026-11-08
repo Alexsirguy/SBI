@@ -34,11 +34,11 @@ afterEach(() => {
   api.mockReset();
 });
 
-async function view() {
+async function view(role: "learner" | "educator" = "learner") {
   const onSignedIn = vi.fn();
   const mounted = await mount(
     <QueryClientProvider client={new QueryClient()}>
-      <GoogleButton mode="signup" onSignedIn={onSignedIn} />
+      <GoogleButton mode="signup" role={role} onSignedIn={onSignedIn} />
     </QueryClientProvider>,
   );
   await vi.waitFor(() => expect(google.state.callback).toBeDefined());
@@ -92,6 +92,31 @@ describe("GoogleButton", () => {
       credential: "google-id-token",
       firstName: "Grace",
       lastName: "Hopper",
+      role: "learner",
     });
+  });
+
+  it('carries "I teach or tutor" through, stopping under-18s before sending', async () => {
+    api.mockImplementation(async (name: string) =>
+      name === "googleSignIn"
+        ? { firstName: "Grace", lastName: "Hopper", status: "needs-details" }
+        : { accountId: "x" },
+    );
+    const { container, onSignedIn } = await view("educator");
+    await act(async () => google.state.callback?.({ credential: "google-id-token" }));
+    await vi.waitFor(() => expect(text(container)).toContain("One more step"));
+
+    await choose(container, "Age", "16");
+    await click(button(container, "Finish"));
+    expect(text(container)).toContain("Teaching tools are for adults aged 18 or over.");
+    expect(api).not.toHaveBeenCalledWith("finishGoogleSignUp", expect.anything());
+
+    await choose(container, "Age", "40");
+    await click(button(container, "Finish"));
+    await vi.waitFor(() => expect(onSignedIn).toHaveBeenCalled());
+    expect(api).toHaveBeenCalledWith(
+      "finishGoogleSignUp",
+      expect.objectContaining({ age: 40, role: "educator" }),
+    );
   });
 });

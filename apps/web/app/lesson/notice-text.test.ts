@@ -43,4 +43,13 @@ describe("cautionText", () => {
   it("leaves the safety notice to stand on its own", () => {
     expect(cautionText([note("safety")])).toBeUndefined();
   });
+
+  it("names a teacher's edits first, and alone when nothing else needs saying", () => {
+    expect(cautionText([note("teacher-edited")])).toBe(
+      "Your teacher edited parts of this lesson. Those parts weren't re-checked against its sources.",
+    );
+    expect(cautionText([note("teacher-edited"), note("awaiting-review")])).toBe(
+      "Your teacher edited parts of this lesson. Those parts weren't re-checked against its sources. A reviewer has not checked this lesson yet, so report anything that looks wrong.",
+    );
+  });
 });

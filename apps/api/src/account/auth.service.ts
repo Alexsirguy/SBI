@@ -1,5 +1,6 @@
 import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
 import {
+  EDUCATOR_MIN_AGE,
   MIN_ACCOUNT_AGE,
   UNDER_MIN_AGE,
   type ApiResponse,
@@ -12,10 +13,12 @@ import type { z } from "zod";
 import type {
   AccountRepository,
   AccountTokenRepository,
+  ClassRepository,
   SessionRepository,
   StoredAccount,
   TokenPurpose,
 } from "@sbi/db";
+import { checkEducatorAge } from "../classes/educator-age";
 import { UserFacingException } from "../common/user-facing.exception";
 import type { RateLimiter } from "../common/rate-limiter";
 import type { ApiEnv } from "../env";
@@ -24,6 +27,7 @@ import {
   ACCOUNTS,
   API_ENV,
   AUTH_LIMITERS,
+  CLASSES,
   GOOGLE_VERIFIER,
   MAILER,
   PASSWORD_PARAMS,
@@ -52,9 +56,11 @@ export interface AuthLimiters {
   emailByAddress: RateLimiter;
 }
 
-export function toAccount(account: StoredAccount): ApiResponse<"getAccount"> {
+export function toAccount(account: StoredAccount, educator: boolean): ApiResponse<"getAccount"> {
   return {
     accountId: account.accountId,
+    educator,
+    educatorPending: !educator && account.educatorRequestedAt !== null,
     email: account.email,
     emailVerified: account.emailVerifiedAt !== null,
     firstName: account.firstName,
@@ -79,6 +85,8 @@ export class AuthService {
     @Inject(SESSIONS) private readonly sessions: SessionRepository,
     @Inject(ACCOUNT_TOKENS) private readonly tokens: AccountTokenRepository,
     @Inject(MAILER) private readonly mail: Mailer,
+    @Inject(CLASSES)
+    private readonly classes: Pick<ClassRepository, "isEducator" | "enableEducator">,
     @Inject(GOOGLE_VERIFIER) private readonly google: GoogleVerifier | null,
     @Inject(PASSWORD_PARAMS) private readonly passwordParams: ScryptParams,
     @Inject(AUTH_LIMITERS) private readonly limits: AuthLimiters,
@@ -89,10 +97,13 @@ export class AuthService {
   async signUp(request: z.output<typeof SignUpRequest>, ip: string): Promise<SignedIn> {
     this.allow(this.limits.signUpByIp, ip);
     this.checkAge(request.age);
+    if (request.role === "educator") checkEducatorAge(request.age);
     this.checkPassword(request.password, request.email);
+    const now = new Date();
     const account = await this.accounts.create({
       ageAtSignup: request.age,
-      createdAt: new Date(),
+      createdAt: now,
+      educatorRequestedAt: request.role === "educator" ? now : null,
       email: request.email,
       emailVerifiedAt: null,
       firstName: request.firstName,
@@ -154,11 +165,13 @@ export class AuthService {
   async finishGoogleSignUp(request: z.output<typeof FinishGoogleSignUpRequest>): Promise<SignedIn> {
     const identity = await this.verifyGoogle(request.credential);
     this.checkAge(request.age);
+    if (request.role === "educator") checkEducatorAge(request.age);
     const known = await this.accountForGoogle(identity);
     if (known) return this.startSession(known);
     const account = await this.accounts.create({
       ageAtSignup: request.age,
       createdAt: new Date(),
+      educatorRequestedAt: null,
       email: identity.email,
       emailVerifiedAt: new Date(),
       firstName: request.firstName,
@@ -172,6 +185,9 @@ export class AuthService {
         HttpStatus.CONFLICT,
       );
     }
+    // Google has already proven the inbox, so there is nothing to wait for.
+    if (request.role === "educator")
+      await this.classes.enableEducator(account.accountId, new Date());
     return this.startSession(account);
   }
 
@@ -179,6 +195,12 @@ export class AuthService {
     const accountId = await this.tokens.consume(hashSecret(token), "verify-email", new Date());
     if (!accountId) throw new UserFacingException(BAD_LINK, HttpStatus.BAD_REQUEST);
     await this.accounts.update(accountId, { emailVerifiedAt: new Date() });
+    await this.enableRequestedEducator(accountId);
+  }
+
+  /** The account as the web sees it, including whether teaching tools are on. */
+  async view(account: StoredAccount): Promise<ApiResponse<"getAccount">> {
+    return toAccount(account, await this.classes.isEducator(account.accountId));
   }
 
   async resendVerification(account: StoredAccount, ip: string): Promise<void> {
@@ -212,6 +234,14 @@ export class AuthService {
     });
     // Whoever knew the old password is signed out everywhere.
     await this.sessions.deleteForAccount(account.accountId);
+    await this.enableRequestedEducator(account.accountId);
+  }
+
+  private async enableRequestedEducator(accountId: string) {
+    const account = await this.accounts.get(accountId);
+    if (!account?.educatorRequestedAt || account.ageAtSignup < EDUCATOR_MIN_AGE) return;
+    await this.classes.enableEducator(accountId, new Date());
+    await this.accounts.update(accountId, { educatorRequestedAt: null });
   }
 
   private async accountForGoogle(identity: GoogleIdentity) {
@@ -227,6 +257,7 @@ export class AuthService {
       passwordHash: proven ? byEmail.passwordHash : null,
     });
     if (!proven) await this.sessions.deleteForAccount(byEmail.accountId);
+    await this.enableRequestedEducator(byEmail.accountId);
     return this.accounts.get(byEmail.accountId);
   }
 
@@ -267,7 +298,7 @@ export class AuthService {
       new Date(now.getTime() + ttlSeconds * 1000),
     );
     return {
-      account: toAccount(account),
+      account: await this.view(account),
       cookie: sessionCookie(token, ttlSeconds, this.env.sessionCookieSecure),
     };
   }

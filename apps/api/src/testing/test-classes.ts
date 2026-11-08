@@ -52,6 +52,18 @@ export function fakeClasses() {
       const row = rows.get(classId);
       if (row) row.lessons = row.lessons.filter((item) => item.lessonId !== lessonId);
     },
+    swapLesson: async (accountId, fromLessonId, to) => {
+      let count = 0;
+      for (const row of rows.values()) {
+        const found = row.lessons.find((item) => item.lessonId === fromLessonId);
+        if (row.ownerAccountId !== accountId || !found) continue;
+        row.lessons = row.lessons
+          .filter((item) => item.lessonId !== to.lessonId || item === found)
+          .map((item) => (item === found ? { ...to, addedAt: found.addedAt } : item));
+        count += 1;
+      }
+      return count;
+    },
     deleteArchivedBefore: async (before) => {
       let count = 0;
       for (const [id, row] of rows) {

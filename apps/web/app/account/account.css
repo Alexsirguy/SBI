@@ -146,6 +146,72 @@
   color: var(--sbi-ink);
 }
 
+/* Two cards rather than a dropdown, so the teaching choice is seen before anything is typed. */
+.auth-role {
+  margin: 0 0 var(--sbi-space-4);
+  padding: 0;
+  border: 0;
+}
+
+.auth-role__legend {
+  margin-bottom: var(--sbi-space-2);
+  font-family: var(--sbi-font-display);
+  font-weight: 600;
+}
+
+.auth-role__options {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+@media (min-width: 480px) {
+  .auth-role__options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.auth-role__option {
+  position: relative;
+  display: grid;
+  gap: var(--sbi-space-1);
+  min-height: var(--sbi-touch-min);
+  padding: var(--sbi-space-3);
+  border: 1.5px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper);
+  cursor: pointer;
+  transition: border-color var(--sbi-duration-quick) var(--sbi-ease);
+}
+
+.auth-role__option:hover {
+  border-color: var(--sbi-ink-soft);
+}
+
+.auth-role__option:has(input:checked) {
+  border-color: var(--sbi-action);
+  background: var(--sbi-note-wash);
+}
+
+.auth-role__option:has(input:focus-visible) {
+  outline: 2px solid var(--sbi-action);
+  outline-offset: 2px;
+}
+
+.auth-role__option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.auth-role__label {
+  font-weight: 600;
+}
+
+.auth-role__hint {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}
+
 .auth__label-row {
   display: flex;
   align-items: baseline;
@@ -299,9 +365,183 @@ main.account h1 {
   margin: 0;
 }
 
-.account-cards {
+.account-settings,
+.account-dash {
   display: grid;
   gap: var(--sbi-space-4);
+  align-content: start;
+}
+
+/* Housekeeping reads quieter than the learning beside it: flat, smaller headings. */
+.account-settings .account-card {
+  padding: var(--sbi-space-4);
+  box-shadow: none;
+  background: transparent;
+}
+
+.account-settings .account-card h2 {
+  font-size: var(--sbi-text-body);
+}
+
+.saved-list li a.saved-list__edit {
+  flex: none;
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+}
+
+.account-dash .saved-list {
+  justify-self: stretch;
+  margin: 0;
+}
+
+.account-classes__head {
+  justify-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-2);
+}
+
+.account-card__title {
+  justify-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-2);
+}
+
+.account-classes__list {
+  justify-self: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-classes__row {
+  display: grid;
+  gap: var(--sbi-space-1);
+  padding-block: var(--sbi-space-3);
+  border-bottom: 1px solid var(--sbi-rule);
+}
+
+.account-classes__name {
+  font-weight: 700;
+}
+
+.account-classes__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-1) var(--sbi-space-4);
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}
+
+.account-chats__list,
+.account-chats__exchanges {
+  justify-self: stretch;
+  display: grid;
+  gap: var(--sbi-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-chats__summary {
+  display: inline-grid;
+  gap: 2px;
+}
+
+.account-chats__title {
+  font-weight: 700;
+}
+
+.account-chats__meta {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+  font-weight: 400;
+}
+
+/* A transcript reads as turns: the learner's question set off from the tutor's reply. */
+.account-chats__exchanges li {
+  padding: var(--sbi-space-3) 0;
+  border-top: 1px solid var(--sbi-rule);
+}
+
+.account-chats__exchanges p {
+  margin: 0;
+}
+
+.account-chats__exchanges .account-chats__question {
+  margin-bottom: var(--sbi-space-1);
+  font-weight: 700;
+}
+
+.account-card__title h2 {
+  margin: 0;
+}
+
+/* Icon-sized in the layout; the invisible ::after still gives a full touch target. */
+.account-info__button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sbi-ink-soft);
+  cursor: pointer;
+}
+
+.account-info__button::after {
+  content: "";
+  position: absolute;
+  inset: calc((var(--sbi-touch-min) - 24px) / -2);
+}
+
+.account-info__button:hover {
+  color: var(--sbi-action);
+}
+
+.account-info {
+  box-sizing: border-box;
+  width: min(32rem, calc(100% - 2 * var(--sbi-space-4)));
+  padding: var(--sbi-space-5);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-l);
+  background: var(--sbi-paper);
+  color: var(--sbi-ink);
+  box-shadow: var(--sbi-lift);
+}
+
+.account-info[open] {
+  display: grid;
+  gap: var(--sbi-space-3);
+  justify-items: start;
+}
+
+.account-info::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.account-info h2 {
+  margin: 0;
+  font-size: var(--sbi-text-heading);
+}
+
+.account-info__body p {
+  margin: 0;
+  max-width: var(--sbi-measure);
+}
+
+.account-dash__invite {
+  margin: 0;
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
 }
 
 .account-card {
@@ -395,17 +635,28 @@ main.account h1 {
     padding-top: var(--sbi-space-7);
   }
 
-  main.account > :not(.account-cards) {
-    grid-column: 1;
+  main.account {
+    grid-template-areas:
+      "title dash"
+      "profile dash"
+      "settings dash";
+    grid-template-rows: auto auto 1fr;
   }
 
-  .account-cards {
-    grid-column: 2;
-    grid-row: 1 / span 4;
+  main.account > h1 {
+    grid-area: title;
   }
 
   .account-profile {
-    position: sticky;
-    top: var(--sbi-space-5);
+    grid-area: profile;
+  }
+
+  .account-settings {
+    grid-area: settings;
+    margin-top: var(--sbi-space-4);
+  }
+
+  .account-dash {
+    grid-area: dash;
   }
 }

@@ -14,12 +14,20 @@ import {
 import {
   API_ROUTES,
   TutorConversationRequest,
+  TutorConversationsRequest,
   TutorResetRequest,
   TutorTurnRequest,
   type ApiResponse,
 } from "@sbi/contracts";
 import type { z } from "zod";
-import { SameOriginGuard, sessionToken, type SessionRequest } from "../account/account.guard";
+import type { StoredAccount } from "@sbi/db";
+import {
+  SameOriginGuard,
+  SessionGuard,
+  SignedInAccount,
+  sessionToken,
+  type SessionRequest,
+} from "../account/account.guard";
 import { AuthService } from "../account/auth.service";
 import { ClassAccess } from "../classes/class-access";
 import { UserFacingException } from "../common/user-facing.exception";
@@ -67,6 +75,16 @@ export class TutorController {
     @Req() request: SessionRequest,
   ): Promise<ApiResponse<"tutorConversation">> {
     return { exchanges: await this.tutor.conversation(query, await this.accountId(request)) };
+  }
+
+  @Get(API_ROUTES.tutorConversations.path)
+  @UseGuards(SessionGuard)
+  async conversations(
+    @SignedInAccount() account: StoredAccount,
+    @Query(new ZodPipe(TutorConversationsRequest, "Name the page's language."))
+    { locale }: z.output<typeof TutorConversationsRequest>,
+  ): Promise<ApiResponse<"tutorConversations">> {
+    return { conversations: await this.tutor.recentConversations(account.accountId, locale) };
   }
 
   @Post(API_ROUTES.resetTutorConversation.path)

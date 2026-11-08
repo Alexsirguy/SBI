@@ -48,6 +48,12 @@ async function choose(scope: Element, label: string, value: string) {
   });
 }
 
+async function pick(scope: Element, role: string) {
+  const radio = scope.querySelector<HTMLInputElement>(`input[name="role"][value="${role}"]`);
+  if (!radio) throw new Error(`no ${role} choice`);
+  await act(async () => radio.click());
+}
+
 async function fill(scope: Element, age: string) {
   await type(scope, "First name", "Ada");
   await type(scope, "Last name", "Lovelace");
@@ -98,7 +104,30 @@ describe("SignUpForm", () => {
       firstName: "Ada",
       lastName: "Lovelace",
       password: "analytical engine notes",
+      role: "learner",
     });
+  });
+
+  it("stops an under-18 choosing teaching tools on the device", async () => {
+    const { container } = await view();
+    await pick(container, "educator");
+    await fill(container, "16");
+    await click(button(container, "Create Account"));
+
+    expect(text(container)).toContain("Teaching tools are for adults aged 18 or over.");
+    expect(api).not.toHaveBeenCalled();
+  });
+
+  it('asks for teaching tools when an adult chooses "I teach or tutor"', async () => {
+    api.mockResolvedValue({});
+    const { container } = await view();
+    await pick(container, "educator");
+    await fill(container, "34");
+    await click(button(container, "Create Account"));
+
+    await vi.waitFor(() =>
+      expect(api).toHaveBeenCalledWith("signUp", expect.objectContaining({ role: "educator" })),
+    );
   });
 
   it("shows the server's answer when the email is taken", async () => {

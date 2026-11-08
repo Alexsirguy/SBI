@@ -81,7 +81,9 @@ describe("AccountPanel", () => {
 
     await click(link);
 
-    await vi.waitFor(() => expect(text(container)).toContain("This device is linked."));
+    await vi.waitFor(() =>
+      expect(text(container)).toContain("On. This device's photos are tied to your account."),
+    );
     expect(api).toHaveBeenCalledWith("linkAccount", {
       consent: expect.objectContaining({ choices: expect.objectContaining({ account: true }) }),
       photoKeys: ["photos/a.jpg"],
@@ -110,15 +112,190 @@ describe("AccountPanel", () => {
     });
     const { container } = await view();
     await click(await enabled(container, "Unlink this device"));
-    await vi.waitFor(() => expect(text(container)).toContain("Off. Linking"));
+    await vi.waitFor(() => expect(text(container)).toContain("Off. Keep this device's photos"));
     expect(hasConsent("account")).toBe(false);
   });
 
-  it("signs out and returns to the sign-in page", async () => {
+  it("keeps the linking note short, with the full explanation behind the info icon", async () => {
     api.mockImplementation(async (name: string) => (name === "getAccount" ? ADA : { ok: true }));
+    const { container } = await view();
+    const info = await vi.waitFor(() => {
+      const found = container.querySelector<HTMLButtonElement>(
+        'button[aria-label="More about Link this device"]',
+      );
+      expect(found).not.toBeNull();
+      return found as HTMLButtonElement;
+    });
+    const dialog = info.nextElementSibling as HTMLDialogElement;
+    expect(dialog.open).toBe(false);
+
+    await click(info);
+
+    expect(dialog.open).toBe(true);
+    expect(text(dialog)).toContain("clearing this browser does not leave them behind");
+  });
+
+  it("signs out and returns to the sign-in page", async () => {
+    api.mockImplementation(async (name: string) =>
+      name === "getAccount" ? ADA : name === "savedLessons" ? { lessons: [] } : { ok: true },
+    );
     const { container } = await view();
     await click(await enabled(container, "Sign out"));
     await vi.waitFor(() => expect(router.replace).toHaveBeenCalledWith("/account/sign-in"));
     expect(api).toHaveBeenCalledWith("signOut", {});
+  });
+
+  it("shows a learner's latest saved lessons and a way in to teaching tools", async () => {
+    const lessons = Array.from({ length: 7 }, (_, index) => ({
+      lessonId: `0192f1a0-0000-7000-8000-00000000010${index}`,
+      savedAt: "2026-11-02T10:00:00.000Z",
+      sharedAt: null,
+      title: `Lesson ${index + 1}`,
+      version: 1,
+    }));
+    api.mockImplementation(async (name: string) =>
+      name === "getAccount" ? ADA : name === "savedLessons" ? { lessons } : { ok: true },
+    );
+    const { container } = await view();
+
+    await vi.waitFor(() => expect(text(container)).toContain("Lesson 5"));
+    expect(text(container)).not.toContain("Lesson 6");
+    expect(text(container)).toContain("See all 7 saved lessons");
+    expect(text(container)).toContain("Turn on teaching tools");
+    expect(text(container)).not.toContain("Your classes");
+    expect(container.querySelector('a[href^="/lesson/saved/edit"]')).toBeNull();
+  });
+
+  it("gives a teacher a classes overview and an edit link on each saved lesson", async () => {
+    const lesson = {
+      lessonId: "0192f1a0-0000-7000-8000-000000000100",
+      savedAt: "2026-11-02T10:00:00.000Z",
+      sharedAt: null,
+      title: "Kettles",
+      version: 1,
+    };
+    const physics = {
+      archivedAt: null,
+      classId: "0192f1a0-0000-7000-8000-0000000000e1",
+      codeHint: "PX",
+      controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
+      createdAt: "2026-11-08T09:00:00.000Z",
+      curriculum: null,
+      lessons: [{ lessonId: lesson.lessonId, title: "Kettles", version: 1 }],
+      level: null,
+      name: "SSS2 Physics",
+    };
+    const replies: Record<string, unknown> = {
+      classSummary: {
+        minCount: 5,
+        totals: { check_answered: 0, check_correct: 0, lesson_opened: 3, visual_used: 0 },
+        weeks: [
+          {
+            counts: { check_answered: 0, check_correct: 0, lesson_opened: null, visual_used: 0 },
+            week: "2026-W45",
+          },
+        ],
+      },
+      classes: {
+        classes: [
+          physics,
+          {
+            ...physics,
+            archivedAt: "2026-11-08T10:00:00.000Z",
+            classId: "0192f1a0-0000-7000-8000-0000000000e2",
+            name: "Old class",
+          },
+        ],
+        educator: true,
+      },
+      getAccount: { ...ADA, educator: true },
+      savedLessons: { lessons: [lesson] },
+    };
+    api.mockImplementation(async (name: string) => replies[name] ?? { ok: true });
+    const { container } = await view();
+
+    await vi.waitFor(() =>
+      expect(text(container)).toContain("Week 2026-W45: fewer than 5 lessons opened"),
+    );
+    expect(text(container)).toContain("SSS2 Physics");
+    expect(text(container)).toContain("Code ends in PX");
+    expect(text(container)).toContain("1 lesson");
+    expect(text(container)).not.toContain("Old class");
+    expect(text(container)).not.toContain("Turn on teaching tools");
+    expect(
+      container.querySelector(`a[href="/lesson/saved/edit?id=${lesson.lessonId}"]`),
+    ).not.toBeNull();
+
+    await click(button(container, "New class"));
+    expect(container.querySelector("#teach-create")).not.toBeNull();
+  });
+});
+
+describe("OfflineSection", () => {
+  it("lists packs on this device and hides when there are none", async () => {
+    const { OfflineSection } = await import("./dashboard/offline-section");
+    const { memoryPacks } = await import("../offline/packs");
+    const { TEST_PACK } = await import("../offline/offline-test-pack");
+    const empty = await mount(<OfflineSection store={memoryPacks()} />);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(text(empty.container)).toBe("");
+
+    const store = memoryPacks();
+    await store.save(TEST_PACK);
+    const { container } = await mount(<OfflineSection store={store} />);
+    await vi.waitFor(() => expect(text(container)).toContain(TEST_PACK.lesson.title));
+    expect(text(container)).toContain("On this device");
+  });
+});
+
+describe("TutorChatsSection", () => {
+  it("reads a conversation back in place, and shows nothing without one", async () => {
+    const { TutorChatsSection } = await import("./dashboard/tutor-chats-section");
+    const exchange = (turnId: string, userText: string, text: string) => ({
+      citedClaimIds: [],
+      createdAt: "2026-11-07T10:00:00.000Z",
+      kind: "lesson",
+      text,
+      turnId,
+      userText,
+    });
+    const wrap = (node: React.ReactNode) => (
+      <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
+    );
+
+    api.mockResolvedValue({ conversations: [] });
+    const empty = await mount(wrap(<TutorChatsSection />));
+    await vi.waitFor(() =>
+      expect(api).toHaveBeenCalledWith("tutorConversations", { locale: "en" }),
+    );
+    expect(text(empty.container)).toBe("");
+    document.body.replaceChildren();
+
+    api.mockResolvedValue({
+      conversations: [
+        {
+          exchanges: [
+            exchange(
+              "0192f1a0-0000-7000-8000-0000000000c1",
+              "Why does it whistle?",
+              "Steam squeezes through the spout.",
+            ),
+            exchange(
+              "0192f1a0-0000-7000-8000-0000000000c2",
+              "Why is it loud?",
+              "The hole is small.",
+            ),
+          ],
+          lastAskedAt: "2026-11-07T10:00:00.000Z",
+          lessonId: "0192f1a0-0000-7000-8000-000000000100",
+          lessonTitle: "Why a kettle whistles",
+        },
+      ],
+    });
+    const { container } = await mount(wrap(<TutorChatsSection />));
+    await vi.waitFor(() => expect(text(container)).toContain("Why a kettle whistles"));
+    expect(text(container)).toContain("2 questions, last on 7 Nov 2026");
+    expect(text(container)).toContain("Steam squeezes through the spout.");
+    expect(container.querySelector("details")?.open).toBe(false);
   });
 });

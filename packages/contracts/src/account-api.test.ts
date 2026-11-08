@@ -29,7 +29,9 @@ describe("account API contracts", () => {
       firstName: "Ada",
       lastName: "Lovelace",
       password: "correct horse battery",
+      role: "learner",
     });
+    expect(SignUpRequest.safeParse({ ...signUp, role: "admin" }).success).toBe(false);
   });
 
   it("refuses short passwords, bad emails and fractional ages", () => {

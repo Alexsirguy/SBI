@@ -191,5 +191,7 @@
   "curriculumNone": "Aún no hay estándares de este currículo para esta lección.",
   "curriculumLoading": "Cargando estándares…",
   "curriculumPartial": "Relacionado",
-  "curriculumNote": "Es nuestra lectura del currículo, no una correspondencia oficial. Tu elección se queda en este dispositivo."
+  "curriculumNote": "Es nuestra lectura del currículo, no una correspondencia oficial. Tu elección se queda en este dispositivo.",
+  "cautionTeacherEdited": "Tu docente editó partes de esta lección. Esas partes no se volvieron a comprobar con sus fuentes.",
+  "editedTag": "Editado por tu docente"
 }

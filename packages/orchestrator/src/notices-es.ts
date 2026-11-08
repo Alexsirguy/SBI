@@ -13,6 +13,8 @@ export const NOTICES_ES: Record<Exclude<LessonDisclaimer["kind"], "safety">, str
     "Algunas afirmaciones todavía se debaten o aún no las confirma una fuente fiable.",
   "limited-evidence": "Algunas afirmaciones se basan en pocas pruebas.",
   "reading-level": "Puede que esta lección sea más difícil de leer que el nivel que elegiste.",
+  "teacher-edited":
+    "Tu docente editó partes de esta lección. Esas partes no se volvieron a comprobar con sus fuentes.",
 };
 
 export const GENERIC_SAFETY_NOTICE_ES =

@@ -52,6 +52,8 @@ export interface ClassRepository {
   setJoinCode(classId: string, joinCodeHash: string, joinCodeHint: string): Promise<void>;
   addLesson(classId: string, lesson: StoredClassLesson): Promise<void>;
   removeLesson(classId: string, lessonId: string): Promise<void>;
+  /** In every class the account owns, puts `to` where `fromLessonId` was; returns how many. */
+  swapLesson(accountId: string, fromLessonId: string, to: StoredClassLesson): Promise<number>;
   /** Deletes classes archived on or before `before`, with their lessons; returns how many. */
   deleteArchivedBefore(before: Date): Promise<number>;
   /** Adds one to a class's count for a week; there is nothing to say who. */
@@ -197,6 +199,36 @@ export function createClassRepository(db: Database): ClassRepository {
       await db
         .delete(classLessons)
         .where(and(eq(classLessons.classId, classId), eq(classLessons.lessonId, lessonId)));
+    },
+    async swapLesson(accountId, fromLessonId, to) {
+      return db.transaction(async (tx) => {
+        const rows = await tx
+          .select({ addedAt: classLessons.addedAt, classId: classLessons.classId })
+          .from(classLessons)
+          .innerJoin(classes, eq(classes.classId, classLessons.classId))
+          .where(
+            and(eq(classes.ownerAccountId, accountId), eq(classLessons.lessonId, fromLessonId)),
+          );
+        for (const row of rows) {
+          await tx
+            .delete(classLessons)
+            .where(
+              and(eq(classLessons.classId, row.classId), eq(classLessons.lessonId, fromLessonId)),
+            );
+          // Kept in its place in the list: the edited lesson takes the original's added time.
+          await tx
+            .insert(classLessons)
+            .values({
+              addedAt: row.addedAt,
+              classId: row.classId,
+              lessonId: to.lessonId,
+              lessonVersion: to.version,
+              title: to.title,
+            })
+            .onDuplicateKeyUpdate({ set: { lessonVersion: to.version, title: to.title } });
+        }
+        return rows.length;
+      });
     },
     async deleteArchivedBefore(before) {
       return db.transaction(async (tx) => {

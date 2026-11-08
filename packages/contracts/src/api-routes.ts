@@ -5,11 +5,13 @@ import {
   DeleteAccountRequest,
   DeletedAccount,
   Done,
+  EditedLesson,
   EmptyRequest,
   FinishGoogleSignUpRequest,
   GoogleSignInRequest,
   GoogleSignInResult,
   ForgotPasswordRequest,
+  LessonEditRequest,
   LinkAccountRequest,
   LinkedAccount,
   OpenedLesson,
@@ -56,6 +58,8 @@ import {
 } from "./lesson-api";
 import {
   TutorConversation,
+  TutorConversations,
+  TutorConversationsRequest,
   TutorConversationRequest,
   TutorReset,
   TutorResetRequest,
@@ -201,6 +205,16 @@ export const API_ROUTES = {
     response: TutorConversation,
     auth: "optional",
     errors: [400, 503],
+  },
+  tutorConversations: {
+    method: "get",
+    path: "/tutor/conversations",
+    summary:
+      "List the signed-in learner's recent tutor conversations, one per lesson, newest first.",
+    request: TutorConversationsRequest,
+    response: TutorConversations,
+    errors: [400, 401],
+    auth: "account",
   },
   resetTutorConversation: {
     method: "post",
@@ -389,6 +403,16 @@ export const API_ROUTES = {
     request: SavedLessonRequest,
     response: SharedLesson,
     errors: [400, 401, 403, 404, 409],
+    auth: "account",
+  },
+  editSavedLesson: {
+    method: "post",
+    path: "/account/lessons/edit",
+    summary:
+      "A teacher's edits to a saved lesson's text and questions, saved as their own copy and swapped into their classes.",
+    request: LessonEditRequest,
+    response: EditedLesson,
+    errors: [400, 401, 403, 404],
     auth: "account",
   },
   removeSavedLesson: {

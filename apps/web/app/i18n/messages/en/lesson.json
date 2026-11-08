@@ -191,5 +191,7 @@
   "curriculumNone": "No standards in this curriculum match this lesson yet.",
   "curriculumLoading": "Loading standards…",
   "curriculumPartial": "Related",
-  "curriculumNote": "Our own reading of the curriculum, not an official mapping. Your choice stays on this device."
+  "curriculumNote": "Our own reading of the curriculum, not an official mapping. Your choice stays on this device.",
+  "cautionTeacherEdited": "Your teacher edited parts of this lesson. Those parts weren't re-checked against its sources.",
+  "editedTag": "Edited by your teacher"
 }

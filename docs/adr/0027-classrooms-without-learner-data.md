@@ -10,7 +10,7 @@ Epic #111 adds teachers and classes. Its phase gate asked for validated teacher 
 
 ## Decision
 
-- **Only teachers have accounts.** Teaching tools are an opt-in on an existing account, for people 18 or over.
+- **Only teachers have accounts.** Teaching tools are an opt-in for people 18 or over. It can be chosen at sign-up ("I teach or tutor") or later on `/teach`, and needs a confirmed email either way. A Google sign-up counts as confirmed (2026-11-08 update).
 - **Pupils join by code, with no account and no stored data.** A class has a random join code, stored only as a hash. The code rides with a pupil's lesson and tutor requests for the visit. Rotating it revokes the old link.
 - **Controls are enforced on the server:** age band lock, blocked risk categories and tutor off. They can only make the app stricter.
 - **The class summary is counts only.** Weekly counts per class, no pupil or visit id, any count under 5 hidden, with complementary suppression. No per-pupil view will be added under this ADR.

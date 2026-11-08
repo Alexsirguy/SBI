@@ -152,6 +152,8 @@ export const DisclaimerKind = z.enum([
   "limited-evidence",
   "reading-level",
   "model-knowledge",
+  // Parts a teacher rewrote (#398); they keep their citations but weren't re-checked.
+  "teacher-edited",
 ]);
 
 /** Shown with a lesson served before review, so learners know what was not fully checked. */

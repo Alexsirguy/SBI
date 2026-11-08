@@ -188,6 +188,127 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
     },
   },
   {
+    name: "account",
+    open: async (page) => {
+      await mockApi(page, "/account", () => ({
+        json: {
+          accountId: "0192f1a0-0000-7000-8000-000000000001",
+          educator: false,
+          educatorPending: false,
+          email: "ada@example.com",
+          emailVerified: true,
+          firstName: "Ada",
+          lastName: "Lovelace",
+          linkedAt: null,
+        },
+      }));
+      await mockApi(page, "/account/lessons", () => ({
+        json: {
+          lessons: ["Why a kettle whistles", "How a bicycle stays up", "Why bread rises"].map(
+            (title, index) => ({
+              lessonId: `0192f1a0-0000-7000-8000-00000000010${index}`,
+              savedAt: `2026-11-0${7 - index}T10:00:00.000Z`,
+              sharedAt: null,
+              title,
+              version: 1,
+            }),
+          ),
+        },
+      }));
+      await mockApi(page, "/tutor/conversations?", () => ({
+        json: {
+          conversations: [
+            {
+              exchanges: [
+                {
+                  citedClaimIds: [],
+                  createdAt: "2026-11-07T10:05:00.000Z",
+                  kind: "lesson",
+                  text: "Steam squeezes through the small hole in the spout and makes the air vibrate.",
+                  turnId: "0192f1a0-0000-7000-8000-0000000000c1",
+                  userText: "Why does it get louder?",
+                },
+              ],
+              lastAskedAt: "2026-11-07T10:05:00.000Z",
+              lessonId: "0192f1a0-0000-7000-8000-000000000100",
+              lessonTitle: "Why a kettle whistles",
+            },
+          ],
+        },
+      }));
+      await page.goto("/account");
+      await expect(page.getByText("Tutor conversations")).toBeVisible();
+    },
+  },
+  {
+    name: "account-teacher",
+    open: async (page) => {
+      await mockApi(page, "/account", () => ({
+        json: {
+          accountId: "0192f1a0-0000-7000-8000-000000000001",
+          educator: true,
+          educatorPending: false,
+          email: "teacher@example.com",
+          emailVerified: true,
+          firstName: "Ngozi",
+          lastName: "Okafor",
+          linkedAt: null,
+        },
+      }));
+      await mockApi(page, "/account/lessons", () => ({
+        json: {
+          lessons: [
+            {
+              lessonId: SAMPLE_LESSON.lessonId,
+              savedAt: "2026-11-07T10:00:00.000Z",
+              sharedAt: null,
+              title: SAMPLE_LESSON.title,
+              version: 1,
+            },
+          ],
+        },
+      }));
+      await mockApi(page, "/classes", () => ({
+        json: {
+          classes: ["SSS2 Physics", "SSS1 Chemistry"].map((name, index) => ({
+            archivedAt: null,
+            classId: `0192f1a0-0000-7000-8000-0000000000e${index + 1}`,
+            codeHint: index ? "QR" : "PX",
+            controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
+            createdAt: "2026-11-08T09:00:00.000Z",
+            curriculum: "ng",
+            lessons: index
+              ? []
+              : [{ lessonId: SAMPLE_LESSON.lessonId, title: SAMPLE_LESSON.title, version: 1 }],
+            level: index ? "SSS1" : "SSS2",
+            name,
+          })),
+          educator: true,
+        },
+      }));
+      await mockApi(page, "/classes/summary?", () => ({
+        json: {
+          minCount: 5,
+          totals: { check_answered: 31, check_correct: 22, lesson_opened: 38, visual_used: null },
+          weeks: [
+            {
+              counts: {
+                check_answered: 31,
+                check_correct: 22,
+                lesson_opened: 38,
+                visual_used: null,
+              },
+              week: "2026-W45",
+            },
+          ],
+        },
+      }));
+      await page.goto("/account");
+      await expect(page.getByText("SSS1 Chemistry")).toBeVisible();
+      await expect(page.getByText("Week 2026-W45: 38 lessons opened").first()).toBeVisible();
+    },
+  },
+  {
     name: "teach",
     open: async (page) => {
       await mockApi(page, "/account", () => ({

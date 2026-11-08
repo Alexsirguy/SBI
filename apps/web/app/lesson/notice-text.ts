@@ -13,7 +13,9 @@ const NOT_BACKED = new Set<LessonDisclaimer["kind"]>([
 export function cautionText(items: LessonDisclaimer[], t: LessonT): string | undefined {
   const kinds = new Set(items.map((item) => item.kind));
   kinds.delete("safety");
-  if (kinds.size === 0) return undefined;
+  // A teacher's edits are said first and on their own; they aren't a doubt about the sources.
+  const teacher = kinds.delete("teacher-edited") ? t("cautionTeacherEdited") : undefined;
+  if (kinds.size === 0) return teacher;
   const model = kinds.has("model-knowledge");
   const notBacked = [...kinds].some((kind) => NOT_BACKED.has(kind));
   const parts =
@@ -25,6 +27,7 @@ export function cautionText(items: LessonDisclaimer[], t: LessonT): string | und
           ? t("cautionNotBacked")
           : undefined;
   const sentences = [
+    ...(teacher ? [teacher] : []),
     ...(parts ? [parts] : []),
     ...(kinds.has("reading-level") ? [t("cautionReadingLevel")] : []),
     parts ? t("cautionReviewIt") : t("cautionReviewLesson"),

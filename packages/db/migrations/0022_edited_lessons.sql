@@ -1,0 +1,1 @@
+ALTER TABLE `saved_lessons` ADD `edited_from_lesson_id` uuid;
