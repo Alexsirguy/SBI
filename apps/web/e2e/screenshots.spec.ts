@@ -274,6 +274,7 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
             archivedAt: null,
             classId: `0192f1a0-0000-7000-8000-0000000000e${index + 1}`,
             codeHint: index ? "QR" : "PX",
+            joinCode: index ? "4H8J-2MQR" : "7K3M-9QPX",
             controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
             createdAt: "2026-11-08T09:00:00.000Z",
             curriculum: "ng",
@@ -329,6 +330,7 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
               archivedAt: null,
               classId: "0192f1a0-0000-7000-8000-0000000000e1",
               codeHint: "PX",
+              joinCode: "7K3M-9QPX",
               controls: {
                 audienceLock: "teen",
                 blockedCategories: ["weapons"],
@@ -393,6 +395,7 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
               archivedAt: null,
               classId: "0192f1a0-0000-7000-8000-0000000000e1",
               codeHint: "PX",
+              joinCode: "7K3M-9QPX",
               controls: {
                 audienceLock: "teen",
                 blockedCategories: ["weapons"],

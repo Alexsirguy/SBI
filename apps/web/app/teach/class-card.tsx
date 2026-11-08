@@ -5,6 +5,7 @@ import { VisuallyHidden } from "@sbi/ui";
 import Link from "next/link";
 import { useT } from "../i18n/provider";
 import { LatestWeek } from "./class-summary";
+import { CardShare } from "./share-class";
 
 export const CLASS_TABS = ["edit", "lessons", "controls"] as const;
 export type ClassTab = (typeof CLASS_TABS)[number];
@@ -36,7 +37,7 @@ export function ClassCard({ item }: { item: TeacherClass }) {
       </h2>
       <p className="teach-card__meta">
         {level ? <span>{level}</span> : null}
-        <span>{t("codeHint", { hint: item.codeHint })}</span>
+        {item.joinCode ? null : <span>{t("codeHint", { hint: item.codeHint })}</span>}
         <span>
           {item.lessons.length === 1
             ? t("dashLessonOne")
@@ -44,6 +45,7 @@ export function ClassCard({ item }: { item: TeacherClass }) {
         </span>
         {archived ? null : <LatestWeek classId={item.classId} />}
       </p>
+      {archived ? null : <CardShare item={item} />}
       <p className="teach-card__actions">
         {tabs.map((tab) => (
           <Link

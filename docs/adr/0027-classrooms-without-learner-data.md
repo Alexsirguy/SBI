@@ -11,7 +11,7 @@ Epic #111 adds teachers and classes. Its phase gate asked for validated teacher 
 ## Decision
 
 - **Only teachers have accounts.** Teaching tools are an opt-in for people 18 or over. It can be chosen at sign-up ("I teach or tutor") or later on `/teach`, and needs a confirmed email either way. A Google sign-up counts as confirmed (2026-11-08 update).
-- **Pupils join by code, with no account and no stored data.** A class has a random join code, stored only as a hash. The code rides with a pupil's lesson and tutor requests for the visit. Rotating it revokes the old link.
+- **Pupils join by code, with no account and no stored data.** A class has a random join code. Lookups use its hash; the code itself is also kept so the teacher can copy it again (2026-11-08 update, #412). The code rides with a pupil's lesson and tutor requests for the visit. Rotating it revokes the old link.
 - **Controls are enforced on the server:** age band lock, blocked risk categories and tutor off. They can only make the app stricter.
 - **The class summary is counts only.** Weekly counts per class, no pupil or visit id, any count under 5 hidden, with complementary suppression. No per-pupil view will be added under this ADR.
 - **Curriculum is shown, not tracked.** Each class picks a curriculum and level; pupils can also choose one on their own device. Nothing about the choice is stored on the server.
@@ -20,6 +20,6 @@ Epic #111 adds teachers and classes. Its phase gate asked for validated teacher 
 
 - Classes work for any age without parental consent flows, and add no child personal data to the retention table.
 - Teachers can't see which pupil struggled or set individual work. If interviews show teachers need that, it needs a new ADR, a legal basis for children's data, and probably school contracts.
-- A leaked join code lets anyone see the class's lesson list until it is rotated. The list holds no personal data.
+- A leaked join code lets anyone see the class's lesson list until it is rotated. The list holds no personal data. Keeping the code means a copy of the database leaks every class's code in the same way; that is the price of teachers being able to share a code again without changing it.
 - Class names are free text a teacher could fill with a pupil's name. The form warns against it; counsel may ask for more (`privacy-legal-design.md`).
 - The demand question is still open; this ADR should be revisited when the teacher synthesis is done.

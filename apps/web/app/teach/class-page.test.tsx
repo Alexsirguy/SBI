@@ -19,6 +19,7 @@ const CLASS: TeacherClass = {
   archivedAt: null,
   classId: "0192f1a0-0000-7000-8000-0000000000e1",
   codeHint: "PX",
+  joinCode: "7K3M-9QPX",
   controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
   createdAt: "2026-11-08T09:00:00.000Z",
   curriculum: "ng",
@@ -135,14 +136,47 @@ describe("ClassPage", () => {
     });
   });
 
-  it("makes a new code from the edit tab and shows it once", async () => {
-    respond({ ...base, rotateClassCode: { class: CLASS, joinCode: "7K3M-9QPX" } });
+  it("keeps the code and link at the top, ready to copy", async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    respond(base);
+    const page = await open("lessons");
+    const share = find(page, ".teach-share");
+    expect(text(share)).toContain("7K3M-9QPX");
+    expect(text(share)).toContain(`${window.location.origin}/class?code=7K3M-9QPX`);
+
+    await click(button(share, "Copy link"));
+    await vi.waitFor(() => expect(text(share)).toContain("Link copied."));
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/class?code=7K3M-9QPX`);
+    await click(button(share, "Copy code"));
+    await vi.waitFor(() => expect(text(share)).toContain("Code copied."));
+    expect(writeText).toHaveBeenLastCalledWith("7K3M-9QPX");
+  });
+
+  it("asks for a new code when an older class has none to show", async () => {
+    const older = { ...CLASS, joinCode: null };
+    respond({
+      ...base,
+      classes: { classes: [older], educator: true },
+      rotateClassCode: { class: { ...CLASS, joinCode: "2B4D-6F9Q" }, joinCode: "2B4D-6F9Q" },
+    });
+    const page = await open("lessons");
+    const share = find(page, ".teach-share");
+    expect(text(share)).toContain("made before codes were kept");
+    await click(button(share, "Make a new code"));
+    await vi.waitFor(() => expect(text(find(page, ".teach-share"))).toContain("2B4D-6F9Q"));
+  });
+
+  it("makes a new code from the edit tab, and the share box shows it", async () => {
+    respond({
+      ...base,
+      rotateClassCode: { class: { ...CLASS, joinCode: "2B4D-6F9Q" }, joinCode: "2B4D-6F9Q" },
+    });
     const page = await open("edit");
     expect(text(page)).toContain("Class details");
     await click(button(page, "Make a new code"));
-    await vi.waitFor(() => expect(text(page)).toContain("7K3M-9QPX"));
-    await click(button(page, "Done"));
-    expect(text(page)).not.toContain("7K3M-9QPX");
+    await vi.waitFor(() => expect(text(page)).toContain("New code made."));
+    expect(text(find(page, ".teach-share"))).toContain("2B4D-6F9Q");
   });
 
   it("shows only restore for an archived class", async () => {

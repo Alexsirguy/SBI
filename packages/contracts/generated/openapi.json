@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.41.0"
+    "version": "0.42.0"
   },
   "paths": {
     "/uploads": {
@@ -9157,6 +9157,12 @@
                           "codeHint": {
                             "type": "string"
                           },
+                          "joinCode": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "curriculum": {
                             "anyOf": [
                               {
@@ -9271,6 +9277,7 @@
                           "classId",
                           "name",
                           "codeHint",
+                          "joinCode",
                           "curriculum",
                           "level",
                           "controls",
@@ -9394,6 +9401,12 @@
                         "codeHint": {
                           "type": "string"
                         },
+                        "joinCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "curriculum": {
                           "anyOf": [
                             {
@@ -9508,6 +9521,7 @@
                         "classId",
                         "name",
                         "codeHint",
+                        "joinCode",
                         "curriculum",
                         "level",
                         "controls",
@@ -9739,6 +9753,12 @@
                         "codeHint": {
                           "type": "string"
                         },
+                        "joinCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "curriculum": {
                           "anyOf": [
                             {
@@ -9853,6 +9873,7 @@
                         "classId",
                         "name",
                         "codeHint",
+                        "joinCode",
                         "curriculum",
                         "level",
                         "controls",
@@ -9986,6 +10007,12 @@
                         "codeHint": {
                           "type": "string"
                         },
+                        "joinCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "curriculum": {
                           "anyOf": [
                             {
@@ -10100,6 +10127,7 @@
                         "classId",
                         "name",
                         "codeHint",
+                        "joinCode",
                         "curriculum",
                         "level",
                         "controls",
@@ -10241,6 +10269,12 @@
                         "codeHint": {
                           "type": "string"
                         },
+                        "joinCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "curriculum": {
                           "anyOf": [
                             {
@@ -10355,6 +10389,7 @@
                         "classId",
                         "name",
                         "codeHint",
+                        "joinCode",
                         "curriculum",
                         "level",
                         "controls",
@@ -10494,6 +10529,12 @@
                         "codeHint": {
                           "type": "string"
                         },
+                        "joinCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "curriculum": {
                           "anyOf": [
                             {
@@ -10608,6 +10649,7 @@
                         "classId",
                         "name",
                         "codeHint",
+                        "joinCode",
                         "curriculum",
                         "level",
                         "controls",
@@ -10767,6 +10809,12 @@
                         "codeHint": {
                           "type": "string"
                         },
+                        "joinCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "curriculum": {
                           "anyOf": [
                             {
@@ -10881,6 +10929,7 @@
                         "classId",
                         "name",
                         "codeHint",
+                        "joinCode",
                         "curriculum",
                         "level",
                         "controls",

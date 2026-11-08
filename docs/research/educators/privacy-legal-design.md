@@ -21,13 +21,13 @@ The 18+ limit is ours, not the law's: it keeps a 13-year-old account holder from
 
 ## What a class stores
 
-| Data                                                 | Personal data?                                                            | Kept for                                                    | Deleted by                     |
-| ---------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------ |
-| Class name                                           | Possibly, if a teacher types a pupil's name; the form asks them not to    | Until the teacher archives the class or deletes the account | Teacher; account deletion      |
-| Join code                                            | No: stored only as a SHA-256 hash, plus its last two characters as a hint | Until rotated                                               | Rotating the code              |
-| Lesson list, curriculum and level                    | No                                                                        | With the class                                              | With the class                 |
-| Controls (age band, blocked topics, tutor on or off) | No                                                                        | With the class                                              | With the class                 |
-| Class activity counts (#117)                         | No: weekly counts per class, no visit or pupil id                         | 52 weeks                                                    | Retention pass; with the class |
+| Data                                                 | Personal data?                                                                    | Kept for                                                    | Deleted by                     |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------ |
+| Class name                                           | Possibly, if a teacher types a pupil's name; the form asks them not to            | Until the teacher archives the class or deletes the account | Teacher; account deletion      |
+| Join code                                            | No: kept with a SHA-256 hash for lookups, so the teacher can copy it again (#412) | Until rotated                                               | Rotating the code              |
+| Lesson list, curriculum and level                    | No                                                                                | With the class                                              | With the class                 |
+| Controls (age band, blocked topics, tutor on or off) | No                                                                                | With the class                                              | With the class                 |
+| Class activity counts (#117)                         | No: weekly counts per class, no visit or pupil id                                 | 52 weeks                                                    | Retention pass; with the class |
 
 An archived class stops resolving straight away and is deleted 30 days later, so a mistaken archive can be undone. Account deletion removes classes in the same transaction as the account.
 

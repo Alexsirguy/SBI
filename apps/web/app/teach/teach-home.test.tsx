@@ -17,6 +17,7 @@ const CLASS: TeacherClass = {
   archivedAt: null,
   classId: "0192f1a0-0000-7000-8000-0000000000e1",
   codeHint: "PX",
+  joinCode: "7K3M-9QPX",
   controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
   createdAt: "2026-11-08T09:00:00.000Z",
   curriculum: "ng",
@@ -87,7 +88,7 @@ describe("TeachHome", () => {
     expect(api).toHaveBeenCalledWith("becomeEducator", {});
   });
 
-  it("shows the new class's code once, then hides it", async () => {
+  it("shows the new class's code, then keeps it on the class's card", async () => {
     respond({
       classes: { classes: [], educator: true },
       createClass: (body: { name: string }) => ({
@@ -112,8 +113,8 @@ describe("TeachHome", () => {
     });
     expect(text(container)).toContain("/class?code=7K3M-9QPX");
     await click(button(container, "Done"));
-    expect(text(container)).not.toContain("7K3M-9QPX");
-    expect(text(container)).toContain("Code ends in PX");
+    expect(text(container)).not.toContain("Code for SSS2 Physics");
+    expect(text(container)).toContain("Code: 7K3M-9QPX");
   });
 
   it("lists each class with a way into its edit, lessons and controls", async () => {

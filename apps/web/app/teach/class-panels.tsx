@@ -15,7 +15,6 @@ import { useSavedLessons } from "../account/use-saved-lessons";
 import { useT } from "../i18n/provider";
 import { useErrorText } from "../lesson/lesson-t";
 import { CURRICULUM_LEVELS } from "./levels";
-import { CodePanel, type ShownCode } from "./teach-home";
 import { useClassMutation } from "./use-classes";
 
 const AGE_KEY = {
@@ -104,13 +103,10 @@ function JoinCode({ item }: { item: TeacherClass }) {
   const t = useT("teach");
   const errorText = useErrorText();
   const rotate = useClassMutation("rotateClassCode");
-  const [shown, setShown] = useState<ShownCode>();
   const headingId = useId();
   return (
     <section aria-labelledby={headingId}>
       <h2 id={headingId}>{t("codeSection")}</h2>
-      {shown ? <CodePanel shown={shown} onDone={() => setShown(undefined)} /> : null}
-      <p>{t("codeHint", { hint: item.codeHint })}</p>
       <p className="account-card__hint" id={`${headingId}-hint`}>
         {t("newCodeHint")}
       </p>
@@ -118,22 +114,11 @@ function JoinCode({ item }: { item: TeacherClass }) {
         variant="quiet"
         disabled={rotate.isPending}
         aria-describedby={`${headingId}-hint`}
-        onClick={() =>
-          rotate.mutate(
-            { classId: item.classId },
-            {
-              onSuccess: (result) =>
-                setShown({
-                  classId: item.classId,
-                  joinCode: result.joinCode,
-                  name: result.class.name,
-                }),
-            },
-          )
-        }
+        onClick={() => rotate.mutate({ classId: item.classId })}
       >
         {t("newCode")}
       </Button>
+      {rotate.isSuccess ? <p role="status">{t("newCodeMade")}</p> : null}
       {rotate.error ? <p role="alert">{errorText(rotate.error.message)}</p> : null}
     </section>
   );

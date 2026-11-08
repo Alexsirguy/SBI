@@ -9,6 +9,7 @@ import { useErrorText } from "../lesson/lesson-t";
 import { CLASS_TABS, classHref, TAB_KEY, useClassLevel, type ClassTab } from "./class-card";
 import { ArchiveClass, ControlsPanel, EditPanel, LessonsPanel } from "./class-panels";
 import { ClassSummaryTable } from "./class-summary";
+import { ShareBox } from "./share-class";
 import { useClasses } from "./use-classes";
 
 const isTab = (value: string | null): value is ClassTab =>
@@ -64,14 +65,12 @@ export function ClassPage() {
         {item.name}
         {item.archivedAt ? <span className="teach-tag"> · {t("archivedTag")}</span> : null}
       </h1>
-      <p className="teach-card__meta">
-        {level ? <span>{level}</span> : null}
-        <span>{t("codeHint", { hint: item.codeHint })}</span>
-      </p>
+      <p className="teach-card__meta">{level ? <span>{level}</span> : null}</p>
       {item.archivedAt ? (
         <ArchiveClass item={item} />
       ) : (
         <>
+          <ShareBox item={item} />
           <div className="account-card teach-overview">
             <ClassSummaryTable classId={item.classId} />
           </div>

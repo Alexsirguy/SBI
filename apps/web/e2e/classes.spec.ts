@@ -20,6 +20,7 @@ const CLASS = {
   archivedAt: null,
   classId: "0192f1a0-0000-7000-8000-0000000000e1",
   codeHint: "PX",
+  joinCode: "7K3M-9QPX",
   controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
   createdAt: "2026-11-08T09:00:00.000Z",
   curriculum: "ng",
@@ -28,7 +29,7 @@ const CLASS = {
   name: "SSS2 Physics",
 };
 
-test("a teacher turns on teaching tools, makes a class and sees its code once", async ({
+test("a teacher turns on teaching tools, makes a class and can always copy its code", async ({
   page,
 }) => {
   let educator = false;
@@ -70,12 +71,15 @@ test("a teacher turns on teaching tools, makes a class and sees its code once", 
   await expectNoAxeViolations(page);
 
   await code.getByRole("button", { name: "Done" }).click();
-  await expect(page.getByText("7K3M-9QPX")).toHaveCount(0);
+  await expect(code).toHaveCount(0);
   const card = page.getByRole("listitem").filter({ hasText: "SSS2 Physics" });
-  await expect(card).toContainText("Code ends in PX");
+  await expect(card).toContainText("Code: 7K3M-9QPX");
   await expect(card).toContainText("Week 2026-W45: 12 lessons opened");
 
   await card.getByRole("link", { name: /^Controls.*SSS2 Physics/ }).click();
+  const share = page.getByRole("region", { name: "Share with your class" });
+  await expect(share).toContainText("7K3M-9QPX");
+  await expect(share).toContainText("/class?code=7K3M-9QPX");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("SSS2 Physics");
   await expect(page.getByRole("link", { name: "Controls", exact: true })).toHaveAttribute(
     "aria-current",

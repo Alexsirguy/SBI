@@ -123,6 +123,7 @@ export class ClassesController {
           controls: DEFAULT_CLASS_CONTROLS,
           createdAt: new Date(),
           curriculum,
+          joinCode,
           joinCodeHash: hashJoinCode(joinCode),
           joinCodeHint: codeHint(joinCode),
           level,
@@ -177,7 +178,11 @@ export class ClassesController {
     for (let attempt = 0; ; attempt += 1) {
       const joinCode = newJoinCode();
       try {
-        await this.classes.setJoinCode(classId, hashJoinCode(joinCode), codeHint(joinCode));
+        await this.classes.setJoinCode(classId, {
+          joinCode,
+          joinCodeHash: hashJoinCode(joinCode),
+          joinCodeHint: codeHint(joinCode),
+        });
         return { ...(await this.view(account, classId)), joinCode };
       } catch (error) {
         if (!isDuplicate(error) || attempt >= 2) throw error;

@@ -8,10 +8,11 @@ import { useAccount } from "../account/use-account";
 import { useT } from "../i18n/provider";
 import { useErrorText } from "../lesson/lesson-t";
 import { ClassCard } from "./class-card";
+import { classLink } from "./share-class";
 import { CURRICULUM_LEVELS } from "./levels";
 import { useBecomeEducator, useClasses, useClassMutation } from "./use-classes";
 
-/** The full code, shown once after creating or rotating; only its hash is kept (ADR 0027). */
+/** The new class's code, put in front of the teacher straight after creating it. */
 export interface ShownCode {
   classId: string;
   name: string;
@@ -21,7 +22,7 @@ export interface ShownCode {
 export function CodePanel({ shown, onDone }: { shown: ShownCode; onDone: () => void }) {
   const t = useT("teach");
   const [copied, setCopied] = useState(false);
-  const link = `${window.location.origin}/class?code=${shown.joinCode}`;
+  const link = classLink(shown.joinCode);
   return (
     <section className="teach-code" aria-labelledby="teach-code-heading" tabIndex={-1}>
       <h2 id="teach-code-heading">{t("codeHeading", { name: shown.name })}</h2>

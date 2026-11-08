@@ -179,20 +179,33 @@
   font-weight: normal;
 }
 
-.teach-code {
+.teach-code,
+.teach-share {
   padding: var(--sbi-space-5);
   background: var(--sbi-paper);
   border: 2px solid var(--sbi-rule);
   border-radius: var(--sbi-radius-m);
 }
 
-.teach-code dl {
+.teach-share {
+  margin-top: var(--sbi-space-5);
+}
+
+.teach .teach-share h2 {
+  font-size: var(--sbi-text-body);
+  margin: 0 0 var(--sbi-space-3);
+}
+
+.teach-code dl,
+.teach-share dl {
   display: grid;
+  align-items: baseline;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--sbi-space-2) var(--sbi-space-4);
 }
 
-.teach-code dd {
+.teach-code dd,
+.teach-share dd {
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -240,4 +253,15 @@
 
 .teach h1 + .teach-card__meta {
   margin-top: var(--sbi-space-2);
+}
+
+.teach-card__share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+}
+
+.teach-share__code-inline {
+  letter-spacing: 0.06em;
 }

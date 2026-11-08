@@ -37,9 +37,9 @@ export function fakeClasses() {
         if (value !== undefined) Object.assign(row, { [key]: structuredClone(value) });
       }
     },
-    setJoinCode: async (classId, joinCodeHash, joinCodeHint) => {
-      if (codeTaken(joinCodeHash, classId)) throw duplicate();
-      Object.assign(rows.get(classId) ?? {}, { joinCodeHash, joinCodeHint });
+    setJoinCode: async (classId, code) => {
+      if (codeTaken(code.joinCodeHash, classId)) throw duplicate();
+      Object.assign(rows.get(classId) ?? {}, code);
     },
     addLesson: async (classId, lesson) => {
       const row = rows.get(classId);

@@ -896,6 +896,7 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         controls,
         createdAt: at("2026-11-08T09:00:00Z"),
         curriculum: "ng",
+        joinCode: "7K3M-9Q7K",
         joinCodeHash: "a".repeat(64),
         joinCodeHint: "7K",
         level: "SSS2",
@@ -930,9 +931,17 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
         name: "Physics",
       });
 
-      await repos.classes.setJoinCode(classId, "b".repeat(64), "9Q");
+      expect((await repos.classes.getOwned(teacher, classId))?.joinCode).toBe("7K3M-9Q7K");
+      await repos.classes.setJoinCode(classId, {
+        joinCode: "2B4D-6F9Q",
+        joinCodeHash: "b".repeat(64),
+        joinCodeHint: "9Q",
+      });
       expect(await repos.classes.findOpenByCode("a".repeat(64))).toBeUndefined();
-      expect((await repos.classes.findOpenByCode("b".repeat(64)))?.joinCodeHint).toBe("9Q");
+      expect(await repos.classes.findOpenByCode("b".repeat(64))).toMatchObject({
+        joinCode: "2B4D-6F9Q",
+        joinCodeHint: "9Q",
+      });
 
       await repos.classes.update(classId, { archivedAt: at("2026-11-08T12:00:00Z") });
       expect(await repos.classes.findOpenByCode("b".repeat(64))).toBeUndefined();

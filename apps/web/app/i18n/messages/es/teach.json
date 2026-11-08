@@ -19,7 +19,7 @@
   "levelAny": "Cualquier nivel",
   "createButton": "Crear clase",
   "codeHeading": "Código de {name}",
-  "codeText": "Comparte este enlace o código con tu clase. Solo se muestra ahora. Si lo pierdes, crea uno nuevo.",
+  "codeText": "Comparte este enlace o código con tu clase. Puedes volver a verlos en la página de la clase.",
   "codeLabel": "Código",
   "linkLabel": "Enlace",
   "copyLink": "Copiar enlace",
@@ -128,5 +128,10 @@
   "lessonEdit": "Editar",
   "lessonRemove": "Quitar",
   "lessonAdd": "Añadir",
-  "makeLesson": "Crear una lección nueva"
+  "makeLesson": "Crear una lección nueva",
+  "shareHeading": "Comparte con tu clase",
+  "copyCode": "Copiar código",
+  "copiedCode": "Código copiado.",
+  "codeMissing": "Esta clase se creó antes de que guardáramos los códigos, así que no se puede mostrar. Crea un código nuevo para compartirla. El enlace anterior deja de funcionar.",
+  "newCodeMade": "Código nuevo creado. El enlace anterior ya no funciona."
 }

@@ -340,7 +340,7 @@ export const educators = mysqlTable("educators", {
   enabledAt: timestamp("enabled_at").notNull(),
 });
 
-// Only a hash of the join code is kept, like sessions, so a database copy cannot open a class.
+// The hash finds a class; the code itself is kept so its teacher can share it again (ADR 0027).
 export const classes = mysqlTable(
   "classes",
   {
@@ -349,6 +349,7 @@ export const classes = mysqlTable(
     name: varchar("name", { length: 60 }).notNull(),
     joinCodeHash: char("join_code_hash", { length: 64 }).notNull(),
     joinCodeHint: varchar("join_code_hint", { length: 4 }).notNull(),
+    joinCode: varchar("join_code", { length: 9 }),
     curriculum: varchar("curriculum", { length: 4 }),
     level: varchar("level", { length: 8 }),
     audienceLock: varchar("audience_lock", { length: 8 }),
