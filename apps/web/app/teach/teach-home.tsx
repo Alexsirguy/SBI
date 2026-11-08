@@ -1,7 +1,7 @@
 "use client";
 
 import { CurriculumId } from "@sbi/contracts";
-import { Button, SelectField, StatusLine, TextField } from "@sbi/ui";
+import { Button, Disclosure, SelectField, StatusLine, TextField } from "@sbi/ui";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useAccount } from "../account/use-account";
@@ -128,7 +128,7 @@ export function CreateClass({ onCreated }: { onCreated: (shown: ShownCode) => vo
   );
 }
 
-/** A teacher's classes: turn on teaching tools, create classes, then manage each one (#113). */
+/** A teacher's classes as a short list; each class is managed on its own page (#113, #410). */
 export function TeachHome() {
   const t = useT("teach");
   const errorText = useErrorText();
@@ -137,6 +137,7 @@ export function TeachHome() {
   const classes = useClasses(signedIn);
   const become = useBecomeEducator();
   const [shown, setShown] = useState<ShownCode>();
+  const [creating, setCreating] = useState(false);
 
   if (account.isPending || (signedIn && classes.isPending)) {
     return <StatusLine>{t("checking")}</StatusLine>;
@@ -164,17 +165,45 @@ export function TeachHome() {
       </section>
     );
   }
+  const open = classes.data.classes.filter((item) => !item.archivedAt);
+  const archived = classes.data.classes.filter((item) => item.archivedAt);
+  // With no classes yet, making one is the only thing to do, so the form starts open.
+  const showCreate = creating || classes.data.classes.length === 0;
   return (
     <div className="teach-home">
       {shown ? <CodePanel shown={shown} onDone={() => setShown(undefined)} /> : null}
-      <CreateClass onCreated={setShown} />
-      {classes.data.classes.length === 0 ? (
-        <p>{t("noClasses")}</p>
-      ) : (
-        classes.data.classes.map((item) => (
-          <ClassCard key={item.classId} item={item} onNewCode={setShown} />
-        ))
-      )}
+      <div className="teach-home__head">
+        {open.length === 0 ? <p className="teach-home__count">{t("noClasses")}</p> : <span />}
+        {classes.data.classes.length > 0 ? (
+          <Button aria-expanded={showCreate} onClick={() => setCreating(!creating)}>
+            {t("dashNewClass")}
+          </Button>
+        ) : null}
+      </div>
+      {showCreate ? (
+        <CreateClass
+          onCreated={(created) => {
+            setCreating(false);
+            setShown(created);
+          }}
+        />
+      ) : null}
+      {open.length > 0 ? (
+        <ul className="teach-cards">
+          {open.map((item) => (
+            <ClassCard key={item.classId} item={item} />
+          ))}
+        </ul>
+      ) : null}
+      {archived.length > 0 ? (
+        <Disclosure summary={t("archivedHeading", { count: archived.length })}>
+          <ul className="teach-cards">
+            {archived.map((item) => (
+              <ClassCard key={item.classId} item={item} />
+            ))}
+          </ul>
+        </Disclosure>
+      ) : null}
     </div>
   );
 }

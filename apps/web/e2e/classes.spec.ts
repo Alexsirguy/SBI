@@ -32,9 +32,10 @@ test("a teacher turns on teaching tools, makes a class and sees its code once", 
   page,
 }) => {
   let educator = false;
+  const made: unknown[] = [];
   await mockApi(page, "/account", () => ({ json: ACCOUNT }));
   await mockApi(page, "/account/lessons", () => ({ json: { lessons: [] } }));
-  await mockApi(page, "/classes", () => ({ json: { classes: [], educator } }));
+  await mockApi(page, "/classes", () => ({ json: { classes: made, educator } }));
   await mockApi(page, "/classes/educator", () => {
     educator = true;
     return { json: { educator: true } };
@@ -51,9 +52,10 @@ test("a teacher turns on teaching tools, makes a class and sees its code once", 
       ],
     },
   }));
-  await mockApi(page, "/classes/create", (body) => ({
-    json: { class: { ...CLASS, name: (body as { name: string }).name }, joinCode: "7K3M-9QPX" },
-  }));
+  await mockApi(page, "/classes/create", (body) => {
+    made.push({ ...CLASS, name: (body as { name: string }).name });
+    return { json: { class: made[0], joinCode: "7K3M-9QPX" } };
+  });
   await page.goto("/teach");
 
   await page.getByRole("button", { name: "Turn on teaching tools" }).click();
@@ -69,11 +71,28 @@ test("a teacher turns on teaching tools, makes a class and sees its code once", 
 
   await code.getByRole("button", { name: "Done" }).click();
   await expect(page.getByText("7K3M-9QPX")).toHaveCount(0);
-  await expect(page.getByRole("region", { name: "SSS2 Physics" })).toContainText("Code ends in PX");
+  const card = page.getByRole("listitem").filter({ hasText: "SSS2 Physics" });
+  await expect(card).toContainText("Code ends in PX");
+  await expect(card).toContainText("Week 2026-W45: 12 lessons opened");
+
+  await card.getByRole("link", { name: /^Controls.*SSS2 Physics/ }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("SSS2 Physics");
+  await expect(page.getByRole("link", { name: "Controls", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   await expect(page.getByRole("table")).toContainText("fewer than 5");
   const tutor = page.getByLabel("Pupils can ask the tutor");
   await tabTo(page, tutor);
   await expectVisibleFocus(tutor);
+  await expectNoAxeViolations(page);
+
+  await page.getByRole("link", { name: "Lessons", exact: true }).click();
+  await expect(page.getByText("In this class (0)")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Make a new lesson" })).toHaveAttribute(
+    "href",
+    "/capture",
+  );
   await expectNoAxeViolations(page);
 });
 
