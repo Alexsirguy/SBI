@@ -127,5 +127,10 @@
   "dashOfflineIntro": "Lessons saved for offline use. They stay on this device, not in your account.",
   "dashOfflineLink": "Open offline lessons",
   "dashTeachInvite": "Teach or tutor?",
-  "dashTeachInviteLink": "Turn on teaching tools"
+  "dashTeachInviteLink": "Turn on teaching tools",
+  "accountLinkShortOff": "Off. Keep this device's photos with your account.",
+  "accountLinkShortOn": "On. This device's photos are tied to your account.",
+  "dataShort": "Get a copy of everything tied to your account.",
+  "infoMore": "More about {topic}",
+  "infoClose": "Close"
 }
