@@ -13,6 +13,7 @@ import { OfflineSection } from "./dashboard/offline-section";
 import { SavedLessonsSection } from "./dashboard/saved-lessons-section";
 import { AccountSettings } from "./dashboard/settings";
 import { TeachInvite } from "./dashboard/teach-invite";
+import { TutorChatsSection } from "./dashboard/tutor-chats-section";
 import { useAccount } from "./use-account";
 
 /** Signed-in home; on phones learning comes before housekeeping, on desktop they sit side by side. */
@@ -70,6 +71,7 @@ export function AccountPanel() {
       <div className="account-dash">
         {me.educator ? <ClassesOverview /> : null}
         <SavedLessonsSection educator={me.educator} />
+        <TutorChatsSection />
         <OfflineSection />
         {me.educator || me.educatorPending ? null : <TeachInvite />}
       </div>

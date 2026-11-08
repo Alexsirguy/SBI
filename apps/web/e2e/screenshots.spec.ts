@@ -215,8 +215,29 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
           ),
         },
       }));
+      await mockApi(page, "/tutor/conversations?", () => ({
+        json: {
+          conversations: [
+            {
+              exchanges: [
+                {
+                  citedClaimIds: [],
+                  createdAt: "2026-11-07T10:05:00.000Z",
+                  kind: "lesson",
+                  text: "Steam squeezes through the small hole in the spout and makes the air vibrate.",
+                  turnId: "0192f1a0-0000-7000-8000-0000000000c1",
+                  userText: "Why does it get louder?",
+                },
+              ],
+              lastAskedAt: "2026-11-07T10:05:00.000Z",
+              lessonId: "0192f1a0-0000-7000-8000-000000000100",
+              lessonTitle: "Why a kettle whistles",
+            },
+          ],
+        },
+      }));
       await page.goto("/account");
-      await expect(page.getByText("Why a kettle whistles")).toBeVisible();
+      await expect(page.getByText("Tutor conversations")).toBeVisible();
     },
   },
   {

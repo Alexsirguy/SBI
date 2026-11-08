@@ -429,6 +429,46 @@ main.account h1 {
   font-size: var(--sbi-text-small);
 }
 
+.account-chats__list,
+.account-chats__exchanges {
+  justify-self: stretch;
+  display: grid;
+  gap: var(--sbi-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.account-chats__summary {
+  display: inline-grid;
+  gap: 2px;
+}
+
+.account-chats__title {
+  font-weight: 700;
+}
+
+.account-chats__meta {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+  font-weight: 400;
+}
+
+/* A transcript reads as turns: the learner's question set off from the tutor's reply. */
+.account-chats__exchanges li {
+  padding: var(--sbi-space-3) 0;
+  border-top: 1px solid var(--sbi-rule);
+}
+
+.account-chats__exchanges p {
+  margin: 0;
+}
+
+.account-chats__exchanges .account-chats__question {
+  margin-bottom: var(--sbi-space-1);
+  font-weight: 700;
+}
+
 .account-dash__invite {
   margin: 0;
   color: var(--sbi-ink-soft);

@@ -127,5 +127,10 @@
   "dashOfflineIntro": "Lecciones guardadas para usar sin conexión. Se quedan en este dispositivo, no en tu cuenta.",
   "dashOfflineLink": "Abrir lecciones sin conexión",
   "dashTeachInvite": "¿Enseñas o das clases particulares?",
-  "dashTeachInviteLink": "Activa las herramientas para docentes"
+  "dashTeachInviteLink": "Activa las herramientas para docentes",
+  "chatsHeading": "Conversaciones con el tutor",
+  "chatsIntro": "Tus preguntas al tutor, guardadas durante 30 días. Solo tú puedes verlas.",
+  "chatsUnknownLesson": "Una lección que ya no está disponible",
+  "chatsCountOne": "1 pregunta, la última el {date}",
+  "chatsCountOther": "{count} preguntas, la última el {date}"
 }

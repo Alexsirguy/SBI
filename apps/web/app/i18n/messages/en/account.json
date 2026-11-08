@@ -127,5 +127,10 @@
   "dashOfflineIntro": "Lessons saved for offline use. They stay on this device, not in your account.",
   "dashOfflineLink": "Open offline lessons",
   "dashTeachInvite": "Teach or tutor?",
-  "dashTeachInviteLink": "Turn on teaching tools"
+  "dashTeachInviteLink": "Turn on teaching tools",
+  "chatsHeading": "Tutor conversations",
+  "chatsIntro": "Your questions to the tutor, kept for 30 days. Only you can see them.",
+  "chatsUnknownLesson": "A lesson that is no longer available",
+  "chatsCountOne": "1 question, last on {date}",
+  "chatsCountOther": "{count} questions, last on {date}"
 }

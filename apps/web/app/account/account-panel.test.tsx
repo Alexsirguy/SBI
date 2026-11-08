@@ -226,3 +226,55 @@ describe("OfflineSection", () => {
     expect(text(container)).toContain("On this device");
   });
 });
+
+describe("TutorChatsSection", () => {
+  it("reads a conversation back in place, and shows nothing without one", async () => {
+    const { TutorChatsSection } = await import("./dashboard/tutor-chats-section");
+    const exchange = (turnId: string, userText: string, text: string) => ({
+      citedClaimIds: [],
+      createdAt: "2026-11-07T10:00:00.000Z",
+      kind: "lesson",
+      text,
+      turnId,
+      userText,
+    });
+    const wrap = (node: React.ReactNode) => (
+      <QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>
+    );
+
+    api.mockResolvedValue({ conversations: [] });
+    const empty = await mount(wrap(<TutorChatsSection />));
+    await vi.waitFor(() =>
+      expect(api).toHaveBeenCalledWith("tutorConversations", { locale: "en" }),
+    );
+    expect(text(empty.container)).toBe("");
+    document.body.replaceChildren();
+
+    api.mockResolvedValue({
+      conversations: [
+        {
+          exchanges: [
+            exchange(
+              "0192f1a0-0000-7000-8000-0000000000c1",
+              "Why does it whistle?",
+              "Steam squeezes through the spout.",
+            ),
+            exchange(
+              "0192f1a0-0000-7000-8000-0000000000c2",
+              "Why is it loud?",
+              "The hole is small.",
+            ),
+          ],
+          lastAskedAt: "2026-11-07T10:00:00.000Z",
+          lessonId: "0192f1a0-0000-7000-8000-000000000100",
+          lessonTitle: "Why a kettle whistles",
+        },
+      ],
+    });
+    const { container } = await mount(wrap(<TutorChatsSection />));
+    await vi.waitFor(() => expect(text(container)).toContain("Why a kettle whistles"));
+    expect(text(container)).toContain("2 questions, last on 7 Nov 2026");
+    expect(text(container)).toContain("Steam squeezes through the spout.");
+    expect(container.querySelector("details")?.open).toBe(false);
+  });
+});

@@ -1,5 +1,11 @@
 import { HttpStatus, Inject, Injectable, Logger } from "@nestjs/common";
-import type { Lesson, TutorExchange, TutorTurn, TutorTurnRequest } from "@sbi/contracts";
+import type {
+  ApiResponse,
+  Lesson,
+  TutorExchange,
+  TutorTurn,
+  TutorTurnRequest,
+} from "@sbi/contracts";
 import type { LlmProvider } from "@sbi/llm";
 import type { LessonRepository } from "@sbi/orchestrator";
 import type { RiskClassifier } from "@sbi/safety";
@@ -33,6 +39,8 @@ const logger = new Logger("Tutor");
 const TURN_TIMEOUT_MS = 30_000;
 
 /** Turns saved before replies had a kind read as lesson or beyond by their citations. */
+const RECENT_CONVERSATIONS = 10;
+
 export function toExchange(turn: TutorTurn, locale?: string): TutorExchange {
   const cited = turn.response.citedClaimIds;
   const kind = turn.response.kind ?? (cited.length > 0 ? "lesson" : "beyond-lesson");
@@ -138,6 +146,30 @@ export class TutorService {
       query.lessonId,
     );
     return turns.map((turn) => toExchange(turn, query.locale));
+  }
+
+  /** Works with the tutor switched off too, so a learner can always see what was kept. */
+  async recentConversations(
+    accountId: string,
+    locale?: string,
+  ): Promise<ApiResponse<"tutorConversations">["conversations"]> {
+    const byLesson = new Map<string, TutorTurn[]>();
+    // Oldest first from the store, so each list ends with the latest turn.
+    for (const turn of await this.turns.listByAccount(accountId)) {
+      byLesson.set(turn.lessonId, [...(byLesson.get(turn.lessonId) ?? []), turn]);
+    }
+    const recent = [...byLesson.values()]
+      .map((turns) => ({ last: turns[turns.length - 1] as TutorTurn, turns }))
+      .sort((a, b) => b.last.createdAt.localeCompare(a.last.createdAt))
+      .slice(0, RECENT_CONVERSATIONS);
+    return Promise.all(
+      recent.map(async ({ last, turns }) => ({
+        exchanges: turns.map((turn) => toExchange(turn, locale)),
+        lastAskedAt: last.createdAt,
+        lessonId: last.lessonId,
+        lessonTitle: (await this.lessons.get(last.lessonId, last.lessonVersion))?.title ?? null,
+      })),
+    );
   }
 
   /** Works even with the tutor switched off, so a learner can always clear what was kept. */

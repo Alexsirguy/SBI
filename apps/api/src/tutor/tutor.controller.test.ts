@@ -2,6 +2,7 @@ import { join } from "node:path";
 import {
   Lesson,
   TutorConversation,
+  TutorConversations,
   TutorReply,
   TutorReset,
   type VisualManifest,
@@ -305,6 +306,41 @@ describe("tutor endpoints", () => {
       `/tutor/conversation?sessionId=${laterVisit}&lessonId=${kettle.lessonId}`,
     );
     expect(TutorConversation.parse(await signedOut.json()).exchanges).toEqual([]);
+  });
+
+  it("lists only the signed-in learner's own conversations, one per lesson", async () => {
+    const started = await start();
+    test = started.test;
+    const app = started.test;
+    const signUp = async (email: string) => {
+      const response = await app.post(
+        "/auth/sign-up",
+        { age: 14, email, firstName: "Ada", lastName: "L", password: "analytical engine notes" },
+        { origin: WEB_ORIGIN },
+      );
+      return { cookie: sessionFrom(response), origin: WEB_ORIGIN };
+    };
+    const ada = await signUp("ada@example.com");
+    const bob = await signUp("bob@example.com");
+    await app.post("/tutor/turns", question(), ada);
+    await app.post("/tutor/turns", question({ text: "Why does it whistle?" }), ada);
+    await app.post("/tutor/turns", question({ text: "Someone else's question" }));
+
+    const mine = TutorConversations.parse(
+      await (await app.get("/tutor/conversations", ada)).json(),
+    );
+    expect(mine.conversations).toHaveLength(1);
+    expect(mine.conversations[0]).toMatchObject({
+      lessonId: kettle.lessonId,
+      lessonTitle: kettle.title,
+    });
+    expect(mine.conversations[0]?.exchanges.map((exchange) => exchange.userText)).toEqual([
+      "What makes the water hot?",
+      "Why does it whistle?",
+    ]);
+    const theirs = await app.get("/tutor/conversations", bob);
+    expect(TutorConversations.parse(await theirs.json()).conversations).toEqual([]);
+    expect((await app.get("/tutor/conversations", { origin: WEB_ORIGIN })).status).toBe(401);
   });
 
   it("resets a lesson's conversation, even with the tutor switched off", async () => {

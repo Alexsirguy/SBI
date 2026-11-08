@@ -58,6 +58,8 @@ import {
 } from "./lesson-api";
 import {
   TutorConversation,
+  TutorConversations,
+  TutorConversationsRequest,
   TutorConversationRequest,
   TutorReset,
   TutorResetRequest,
@@ -203,6 +205,16 @@ export const API_ROUTES = {
     response: TutorConversation,
     auth: "optional",
     errors: [400, 503],
+  },
+  tutorConversations: {
+    method: "get",
+    path: "/tutor/conversations",
+    summary:
+      "List the signed-in learner's recent tutor conversations, one per lesson, newest first.",
+    request: TutorConversationsRequest,
+    response: TutorConversations,
+    errors: [400, 401],
+    auth: "account",
   },
   resetTutorConversation: {
     method: "post",
