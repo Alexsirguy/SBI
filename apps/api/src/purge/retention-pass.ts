@@ -5,6 +5,8 @@ import type { PurgePassResult } from "./purge-worker";
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
+/** An archived class can be restored for 30 days, then it is gone (privacy-legal-design.md). */
+export const ARCHIVED_CLASS_DAYS = 30;
 
 export type RetentionSettings = Pick<
   ApiEnv,
@@ -22,6 +24,7 @@ export interface RetentionDeps {
     Repositories,
     | "accountTokens"
     | "catalogGaps"
+    | "classes"
     | "deletionAudit"
     | "evidencePacks"
     | "lessonFeedback"
@@ -76,9 +79,13 @@ export async function runRetentionPass(
   // Sessions and email links stop working at expiry; this only removes the dead rows.
   const accountSecretsPurged =
     (await repos.sessions.deleteExpired(now)) + (await repos.accountTokens.deleteExpired(now));
+  const archivedClassesPurged = await repos.classes.deleteArchivedBefore(
+    ago(ARCHIVED_CLASS_DAYS * DAY_MS),
+  );
   return {
     ...result,
     accountSecretsPurged,
+    archivedClassesPurged,
     recognitionPurged,
     feedbackDetailsCleared,
     tutorTurnsPurged,

@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import type { Repositories } from "@sbi/db";
 import { createRateLimiter } from "../common/rate-limiter";
 import type { ApiEnv } from "../env";
+import { ClassAccessModule } from "../classes/class-access.module";
 import { MediaModule } from "../media/media.module";
 import {
   ACCOUNT_TOKENS,
@@ -27,7 +28,7 @@ import { DEFAULT_SCRYPT } from "./passwords";
 const MINUTE_MS = 60_000;
 
 @Module({
-  imports: [MediaModule],
+  imports: [ClassAccessModule, MediaModule],
   controllers: [AuthController, AccountController],
   providers: [
     AuthService,

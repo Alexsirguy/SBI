@@ -9,6 +9,7 @@ import {
   type Claim,
   type LessonRequest,
   type PolicyResponse,
+  type SafetyCategory,
 } from "@sbi/contracts";
 import {
   createCitationResolver,
@@ -137,6 +138,12 @@ export type EvidenceGatherer = (
   options: GatherOptions,
 ) => Promise<GatheredEvidence | undefined>;
 
+/** Who is asking: their own saved lessons, and a class's blocked risk categories (#113). */
+export interface LessonViewer {
+  ownLessonIds?: ReadonlySet<string>;
+  blockedCategories?: readonly SafetyCategory[];
+}
+
 export type LessonStreamEvent =
   | { type: "policy"; data: PolicyResponse }
   | { type: "progress"; data: LessonProgress }
@@ -264,7 +271,7 @@ export class LessonService {
   // before anything gives it away (ADR 0017).
   async *streamLesson(
     request: LessonRequest,
-    viewer: { ownLessonIds?: ReadonlySet<string> } = {},
+    viewer: LessonViewer = {},
   ): AsyncGenerator<LessonStreamEvent> {
     const outcome: Served = {};
     try {
@@ -277,7 +284,7 @@ export class LessonService {
 
   private async *writeLesson(
     request: LessonRequest,
-    viewer: { ownLessonIds?: ReadonlySet<string> },
+    viewer: LessonViewer,
     outcome: Served,
   ): AsyncGenerator<LessonStreamEvent> {
     const text = lessonText(request.locale);
@@ -305,6 +312,15 @@ export class LessonService {
     if (risk.intent === "harm") {
       outcome.refused = true;
       yield { type: "policy", data: policyResponse(risk.categories[0], request.locale) };
+      return;
+    }
+    // A teacher can hold whole risk categories for a class; it can only ever make lessons stricter.
+    const blocked = risk.categories.find((category) =>
+      viewer.blockedCategories?.includes(category),
+    );
+    if (blocked) {
+      outcome.refused = true;
+      yield { type: "policy", data: policyResponse(blocked, request.locale) };
       return;
     }
     // A question for an older age band than the one chosen says how to change it instead.

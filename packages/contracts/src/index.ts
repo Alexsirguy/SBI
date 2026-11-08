@@ -1,5 +1,6 @@
 export * from "./account-api";
 export * from "./api-routes";
+export * from "./class-api";
 export * from "./common";
 export * from "./consent";
 export * from "./content-hash";

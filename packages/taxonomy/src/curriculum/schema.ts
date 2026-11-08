@@ -1,7 +1,8 @@
+import { CurriculumId } from "@sbi/contracts";
 import { z } from "zod";
 
-/** The curricula a learner or class can switch between. */
-export const Curriculum = z.enum(["us", "ng"]);
+/** The curricula a learner or class can switch between; the id list lives in the contracts. */
+export const Curriculum = CurriculumId;
 export const CurriculumSubject = z.enum(["science", "maths", "physics", "chemistry", "biology"]);
 
 const ConceptKey = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);

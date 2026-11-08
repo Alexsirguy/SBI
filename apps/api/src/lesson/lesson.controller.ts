@@ -5,6 +5,7 @@ import { withUsageScope } from "@sbi/llm";
 import type { SavedLessonRepository } from "@sbi/db";
 import { sessionToken, type SessionRequest } from "../account/account.guard";
 import { AuthService } from "../account/auth.service";
+import { ClassAccess } from "../classes/class-access";
 import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
 import { SAVED_LESSONS } from "../tokens";
@@ -43,6 +44,7 @@ export class LessonController {
     @Inject(LessonService) private readonly lessons: LessonService,
     @Inject(AuthService) private readonly auth: Pick<AuthService, "current">,
     @Inject(SAVED_LESSONS) private readonly saved: Pick<SavedLessonRepository, "list">,
+    @Inject(ClassAccess) private readonly classAccess: Pick<ClassAccess, "controls">,
   ) {}
 
   // Lessons work signed out; a session only adds the asker's own saved lessons to reuse (#342).
@@ -64,7 +66,11 @@ export class LessonController {
   }
 
   private async respond(body: LessonRequest, request: SessionRequest, res: RawResponse) {
-    const events = this.lessons.streamLesson(body, {
+    // A class's controls are applied here, on the server, because a pupil can edit the page (#113).
+    const controls = body.classCode ? await this.classAccess.controls(body.classCode) : undefined;
+    const asked = controls?.audienceLock ? { ...body, audience: controls.audienceLock } : body;
+    const events = this.lessons.streamLesson(asked, {
+      blockedCategories: controls?.blockedCategories,
       ownLessonIds: await this.ownLessonIds(request),
     });
     const first = await events.next();

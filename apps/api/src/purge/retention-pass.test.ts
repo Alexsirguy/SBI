@@ -11,6 +11,7 @@ function deps() {
   const repos = {
     accountTokens: { deleteExpired: vi.fn(async () => 1) },
     catalogGaps: { deleteLastSeenBefore: vi.fn(async () => 1) },
+    classes: { deleteArchivedBefore: vi.fn(async () => 5) },
     deletionAudit: { record: vi.fn(), purgeOlderThan: vi.fn(async () => 0) },
     evidencePacks: { deleteCreatedBefore: vi.fn(async () => 2) },
     lessonFeedback: { clearDetailsBefore: vi.fn(async () => 3) },
@@ -53,6 +54,7 @@ describe("runRetentionPass", () => {
     expect(repos.deletionAudit.purgeOlderThan).toHaveBeenCalledWith(days(365));
     expect(repos.sessions.deleteExpired).toHaveBeenCalledWith(NOW);
     expect(repos.accountTokens.deleteExpired).toHaveBeenCalledWith(NOW);
+    expect(repos.classes.deleteArchivedBefore).toHaveBeenCalledWith(days(30));
     expect(result).toMatchObject({
       recognitionPurged: 4,
       feedbackDetailsCleared: 3,
@@ -60,6 +62,7 @@ describe("runRetentionPass", () => {
       evidencePacksPurged: 2,
       catalogGapsPurged: 1,
       accountSecretsPurged: 3,
+      archivedClassesPurged: 5,
     });
   });
 

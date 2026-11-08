@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import type { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { AccountModule } from "./account/account.module";
+import { ClassesModule } from "./classes/classes.module";
 import { ApiErrorFilter } from "./common/api-error.filter";
 import { ConfigModule } from "./config/config.module";
 import { DatabaseModule } from "./database/database.module";
@@ -18,6 +19,7 @@ import { VisualsModule } from "./visuals/visuals.module";
 @Module({
   imports: [
     AccountModule,
+    ClassesModule,
     ConfigModule,
     DatabaseModule,
     EvidenceModule,

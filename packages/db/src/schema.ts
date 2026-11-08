@@ -329,3 +329,49 @@ export const catalogGaps = mysqlTable(
     index("catalog_gaps_last_seen_idx").on(table.lastSeen),
   ],
 );
+
+// Teaching tools are an opt-in on an existing adult account (ADR 0027); no learner rows exist.
+export const educators = mysqlTable("educators", {
+  accountId: uuid("account_id").primaryKey(),
+  enabledAt: timestamp("enabled_at").notNull(),
+});
+
+// Only a hash of the join code is kept, like sessions, so a database copy cannot open a class.
+export const classes = mysqlTable(
+  "classes",
+  {
+    classId: uuid("class_id").primaryKey(),
+    ownerAccountId: uuid("owner_account_id").notNull(),
+    name: varchar("name", { length: 60 }).notNull(),
+    joinCodeHash: char("join_code_hash", { length: 64 }).notNull(),
+    joinCodeHint: varchar("join_code_hint", { length: 4 }).notNull(),
+    curriculum: varchar("curriculum", { length: 4 }),
+    level: varchar("level", { length: 8 }),
+    audienceLock: varchar("audience_lock", { length: 8 }),
+    blockedCategories: jsonDocument("blocked_categories").notNull(),
+    tutorEnabled: boolean("tutor_enabled").notNull(),
+    createdAt: timestamp("created_at").notNull(),
+    archivedAt: timestamp("archived_at"),
+  },
+  (table) => [
+    uniqueIndex("classes_join_code_idx").on(table.joinCodeHash),
+    index("classes_owner_idx").on(table.ownerAccountId, table.createdAt),
+    index("classes_archived_idx").on(table.archivedAt),
+  ],
+);
+
+// The version is pinned at the teacher's saved version, so learners see what the teacher checked.
+export const classLessons = mysqlTable(
+  "class_lessons",
+  {
+    classId: uuid("class_id").notNull(),
+    lessonId: uuid("lesson_id").notNull(),
+    lessonVersion: int("lesson_version").notNull(),
+    title: varchar("title", { length: 200 }).notNull(),
+    addedAt: timestamp("added_at").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.classId, table.lessonId] }),
+    index("class_lessons_added_idx").on(table.classId, table.addedAt),
+  ],
+);

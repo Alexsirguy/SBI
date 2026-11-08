@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  HttpStatus,
   Inject,
   Ip,
   Post,
@@ -20,6 +21,8 @@ import {
 import type { z } from "zod";
 import { SameOriginGuard, sessionToken, type SessionRequest } from "../account/account.guard";
 import { AuthService } from "../account/auth.service";
+import { ClassAccess } from "../classes/class-access";
+import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
 import { TutorService } from "./tutor.service";
 
@@ -29,6 +32,7 @@ export class TutorController {
   constructor(
     @Inject(TutorService) private readonly tutor: TutorService,
     @Inject(AuthService) private readonly auth: Pick<AuthService, "current">,
+    @Inject(ClassAccess) private readonly classAccess: Pick<ClassAccess, "controls">,
   ) {}
 
   // The tutor works signed out; a session only keeps the conversation with the account.
@@ -45,7 +49,15 @@ export class TutorController {
     @Ip() ip: string,
     @Req() request: SessionRequest,
   ): Promise<ApiResponse<"askTutor">> {
-    return { exchange: await this.tutor.ask(body, ip, await this.accountId(request)) };
+    const controls = body.classCode ? await this.classAccess.controls(body.classCode) : undefined;
+    if (controls && !controls.tutorEnabled) {
+      throw new UserFacingException(
+        "Your teacher has turned the tutor off for this class.",
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const asked = controls?.audienceLock ? { ...body, audience: controls.audienceLock } : body;
+    return { exchange: await this.tutor.ask(asked, ip, await this.accountId(request)) };
   }
 
   @Get(API_ROUTES.tutorConversation.path)

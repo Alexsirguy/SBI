@@ -16,6 +16,8 @@ export const TutorTurnRequest = z.object({
   audience: AudienceBand.default("general"),
   readingLevel: ReadingLevel.default("plain"),
   locale: Locale.default("en"),
+  /** Asked from a class link: refused when the class has the tutor off (#113). */
+  classCode: z.string().max(20).optional(),
 });
 
 /** One exchange as the learner sees it; versions and retention stay on the server. */

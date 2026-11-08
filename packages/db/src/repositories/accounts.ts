@@ -2,6 +2,9 @@ import { newId } from "@sbi/contracts";
 import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import type { Database } from "../client";
 import {
+  classes,
+  classLessons,
+  educators,
   accountTokens,
   accounts,
   mediaObjects,
@@ -146,6 +149,13 @@ export function createAccountRepository(db: Database): AccountRepository {
     async delete(accountId) {
       // One transaction, so a failure part-way never leaves a half-deleted account behind.
       await db.transaction(async (tx) => {
+        const owned = tx
+          .select({ classId: classes.classId })
+          .from(classes)
+          .where(eq(classes.ownerAccountId, accountId));
+        await tx.delete(classLessons).where(inArray(classLessons.classId, owned));
+        await tx.delete(classes).where(eq(classes.ownerAccountId, accountId));
+        await tx.delete(educators).where(eq(educators.accountId, accountId));
         await tx.delete(savedLessons).where(eq(savedLessons.accountId, accountId));
         await tx.delete(tutorTurns).where(eq(tutorTurns.accountId, accountId));
         await tx.delete(accountTokens).where(eq(accountTokens.accountId, accountId));

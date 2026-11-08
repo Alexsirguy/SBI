@@ -154,6 +154,22 @@ export const AccountExport = z.object({
       }),
     )
     .default([]),
+  /** Classes the account runs (ADR 0027); they hold nothing about pupils. */
+  teaching: z
+    .object({
+      educator: z.boolean(),
+      classes: z.array(
+        z.object({
+          name: z.string(),
+          curriculum: z.string().nullable(),
+          level: z.string().nullable(),
+          createdAt: z.iso.datetime({ offset: true }),
+          archivedAt: z.iso.datetime({ offset: true }).nullable(),
+          lessons: z.array(z.object({ lessonId: Uuid, title: z.string(), version: z.number() })),
+        }),
+      ),
+    })
+    .default({ classes: [], educator: false }),
   notes: z.array(z.string()),
 });
 
