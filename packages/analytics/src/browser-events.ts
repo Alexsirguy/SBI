@@ -20,6 +20,8 @@ export const EventContext = z.strictObject({
   // Never "child": under-13s send nothing at all.
   ageBand: z.enum(["teen", "adult", "general"]),
   deviceTier: z.enum(["low", "mid", "high"]),
+  // Installed-app share is the signal ADR 0028 watches before considering native clients.
+  displayMode: z.enum(["browser", "installed"]),
 });
 export type EventContext = z.infer<typeof EventContext>;
 

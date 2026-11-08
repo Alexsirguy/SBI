@@ -27,6 +27,7 @@ function setup(overrides: Partial<WebTrackerOptions> = {}, storage = memoryStora
     path: () => "/lesson",
     lang: () => "es",
     navigator: () => ({ hardwareConcurrency: 8, deviceMemory: 8 }),
+    installed: () => false,
     ...overrides,
   });
   return { ...web, sink, visits, storage };
@@ -45,10 +46,17 @@ describe("createWebTracker", () => {
       locale: "es",
       ageBand: "general",
       deviceTier: "high",
+      displayMode: "browser",
       source: "camera",
     });
     expect(visits).toHaveLength(1);
     expect(storage.data.get("sbi.visit")).toBe(visits[0]);
+  });
+
+  it("marks events from the installed app", () => {
+    const { track, sink } = setup({ installed: () => true });
+    track("capture_started", { source: "camera" });
+    expect(sink.events[0]?.props).toMatchObject({ displayMode: "installed" });
   });
 
   it("sends nothing without consent or without a token", () => {

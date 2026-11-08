@@ -25,6 +25,7 @@ export interface WebTrackerOptions {
   path: () => string;
   lang: () => string;
   navigator: () => Parameters<typeof deviceTier>[0];
+  installed: () => boolean;
 }
 
 const ROUTES: [RegExp, EventContext["route"]][] = [
@@ -71,6 +72,7 @@ export function createWebTracker(options: WebTrackerOptions): {
       locale: isLocale(lang) ? lang : "en",
       ageBand: age === "teen" || age === "adult" ? age : "general",
       deviceTier: deviceTier(options.navigator()),
+      displayMode: options.installed() ? "installed" : "browser",
     };
   };
 
@@ -96,6 +98,13 @@ export function createWebTracker(options: WebTrackerOptions): {
       options.storage()?.removeItem(VISIT_KEY);
     },
   };
+}
+
+// iOS Safari reports a home-screen launch only through its own navigator flag.
+function installed(): boolean {
+  if (typeof window === "undefined") return false;
+  const standalone = (navigator as { standalone?: boolean }).standalone === true;
+  return standalone || window.matchMedia?.("(display-mode: standalone)").matches === true;
 }
 
 function session(): Storage | undefined {
@@ -127,6 +136,7 @@ const web = createWebTracker({
   path: () => (typeof location === "undefined" ? "/" : location.pathname),
   lang: () => (typeof document === "undefined" ? "en" : document.documentElement.lang),
   navigator: () => (typeof navigator === "undefined" ? {} : (navigator as never)),
+  installed,
 });
 
 /** Sends one spec §13 event when the learner has said yes; otherwise does nothing. */

@@ -12,7 +12,7 @@ Usage statistics follow ADR 0026: they're sent to Mixpanel only after the learne
 
 ## 2. What arrives
 
-Every event carries `consentVersion`, `route`, `locale`, `ageBand` (`teen`, `adult` or `general`) and `deviceTier` (`low`, `mid` or `high`). `distinct_id` is the visit ID.
+Every event carries `consentVersion`, `route`, `locale`, `ageBand` (`teen`, `adult` or `general`), `deviceTier` (`low`, `mid` or `high`) and `displayMode` (`browser` or `installed`, for ADR 0028). `distinct_id` is the visit ID.
 
 | Event                   | Sent when                                                | Properties                                                     |
 | ----------------------- | -------------------------------------------------------- | -------------------------------------------------------------- |

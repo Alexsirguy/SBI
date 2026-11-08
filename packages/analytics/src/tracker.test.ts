@@ -11,6 +11,7 @@ const context: EventContext = {
   locale: "en",
   ageBand: "teen",
   deviceTier: "mid",
+  displayMode: "browser",
 };
 const LESSON = "0192f1a0-0000-7000-8000-00000000000c";
 
