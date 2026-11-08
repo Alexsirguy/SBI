@@ -204,6 +204,13 @@
   gap: var(--sbi-space-2) var(--sbi-space-4);
 }
 
+/* The browser's own monospace varies between machines; the link uses the site's. */
+.teach-code code,
+.teach-share code {
+  font-family: var(--sbi-font-mono);
+  font-size: var(--sbi-text-small);
+}
+
 .teach-code dd,
 .teach-share dd {
   margin: 0;

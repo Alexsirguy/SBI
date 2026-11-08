@@ -74,7 +74,8 @@ describe("ClassPage", () => {
     respond(base);
     const page = await open(null);
     expect(text(find(page, "h1"))).toBe("SSS2 Physics");
-    expect(text(page)).toContain("Class summary");
+    // The summary is its own request, so it can land after the class.
+    await vi.waitFor(() => expect(text(page)).toContain("Class summary"));
     const current = page.querySelector("[aria-current=page]");
     expect(current && text(current)).toBe("Lessons");
     expect(link(page, "Controls")?.getAttribute("href")).toBe(
