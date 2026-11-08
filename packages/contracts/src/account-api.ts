@@ -23,6 +23,11 @@ export const NewPassword = z
   .min(10, "Use at least 10 characters.")
   .max(128, "Use at most 128 characters.");
 const Age = z.coerce.number().int("Enter your age in whole years.").min(0).max(120);
+/** Teaching tools are for adults (ADR 0027); a 13-year-old account shouldn't run a class. */
+export const EDUCATOR_MIN_AGE = 18;
+export const UNDER_EDUCATOR_AGE = "Teaching tools are for adults aged 18 or over.";
+/** Chosen at sign-up; "educator" switches teaching tools on once the email is confirmed. */
+export const AccountRole = z.enum(["learner", "educator"]);
 const Token = z.string().regex(/^[A-Za-z0-9_-]{43}$/, "This link is not valid.");
 
 export const SignUpRequest = z.object({
@@ -31,6 +36,7 @@ export const SignUpRequest = z.object({
   age: Age,
   email: Email,
   password: NewPassword,
+  role: AccountRole.default("learner"),
 });
 
 export const SignInRequest = z.object({
@@ -58,6 +64,7 @@ export const FinishGoogleSignUpRequest = z.object({
   firstName: Name,
   lastName: Name,
   age: Age,
+  role: AccountRole.default("learner"),
 });
 
 export const VerifyEmailRequest = z.object({ token: Token });
@@ -75,6 +82,9 @@ export const Account = z.object({
   email: z.string(),
   emailVerified: z.boolean(),
   linkedAt: z.iso.datetime({ offset: true }).nullable(),
+  educator: z.boolean().default(false),
+  /** Asked for teaching tools at sign-up and still waiting on email confirmation. */
+  educatorPending: z.boolean().default(false),
 });
 
 /** Linking needs the account opt-in under current wording; photos travel by their private keys. */

@@ -56,7 +56,7 @@ import {
   sessionToken,
   type SessionRequest,
 } from "./account.guard";
-import { AuthService, toAccount } from "./auth.service";
+import { AuthService } from "./auth.service";
 
 const DONE = { ok: true } as const;
 const PHOTO_FILE = /^[0-9a-f-]{36}\.(jpg|png)$/;
@@ -94,8 +94,8 @@ export class AccountController {
   ) {}
 
   @Get(API_ROUTES.getAccount.path)
-  get(@SignedInAccount() account: StoredAccount): ApiResponse<"getAccount"> {
-    return toAccount(account);
+  get(@SignedInAccount() account: StoredAccount): Promise<ApiResponse<"getAccount">> {
+    return this.auth.view(account);
   }
 
   @Post(API_ROUTES.resendVerification.path)

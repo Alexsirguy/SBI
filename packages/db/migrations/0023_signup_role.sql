@@ -1,0 +1,1 @@
+ALTER TABLE `accounts` ADD `educator_requested_at` datetime(3);

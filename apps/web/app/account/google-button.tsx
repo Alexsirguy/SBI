@@ -7,6 +7,7 @@ import { webEnv } from "../../env";
 import { api } from "../api";
 import { useLocale, useT } from "../i18n/provider";
 import { AgeSelect, readAge } from "./age-select";
+import { tooYoungToTeach, type Role } from "./role-choice";
 import { forgetAccountData } from "./use-account";
 import { useErrorText } from "../i18n/error-text";
 
@@ -71,9 +72,11 @@ function loadGoogle(): Promise<GoogleIdentity> {
 /** Google's own button: its account picker opens in a popup, so the page never navigates away. */
 export function GoogleButton({
   mode,
+  role = "learner",
   onSignedIn,
 }: {
   mode: "signin" | "signup";
+  role?: Role;
   onSignedIn: () => void;
 }) {
   const t = useT("account");
@@ -140,6 +143,7 @@ export function GoogleButton({
     return (
       <GoogleDetails
         {...details}
+        role={role}
         onDone={async () => {
           forgetAccountData(client);
           onSignedIn();
@@ -164,11 +168,13 @@ function GoogleDetails({
   credential,
   firstName,
   lastName,
+  role,
   onDone,
 }: {
   credential: string;
   firstName: string;
   lastName: string;
+  role: Role;
   onDone: () => Promise<void>;
 }) {
   const t = useT("account");
@@ -188,9 +194,13 @@ function GoogleDetails({
       setError(t(age.problem));
       return;
     }
+    if (tooYoungToTeach(role, age.age)) {
+      setError(t("errorUnderEducatorAge"));
+      return;
+    }
     setBusy(true);
     try {
-      await api("finishGoogleSignUp", { ...values, age: age.age, credential });
+      await api("finishGoogleSignUp", { ...values, age: age.age, credential, role });
       await onDone();
     } catch (failure) {
       setError(errorText((failure as Error).message));

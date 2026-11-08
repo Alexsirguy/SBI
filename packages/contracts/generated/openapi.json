@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Science Behind It contracts",
-    "version": "0.39.0"
+    "version": "0.40.0"
   },
   "paths": {
     "/uploads": {
@@ -4972,6 +4972,14 @@
                     "type": "string",
                     "minLength": 10,
                     "maxLength": 128
+                  },
+                  "role": {
+                    "default": "learner",
+                    "type": "string",
+                    "enum": [
+                      "learner",
+                      "educator"
+                    ]
                   }
                 },
                 "required": [
@@ -5021,6 +5029,14 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "educator": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "educatorPending": {
+                      "default": false,
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -5029,7 +5045,9 @@
                     "lastName",
                     "email",
                     "emailVerified",
-                    "linkedAt"
+                    "linkedAt",
+                    "educator",
+                    "educatorPending"
                   ],
                   "additionalProperties": false
                 }
@@ -5184,6 +5202,14 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "educator": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "educatorPending": {
+                      "default": false,
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -5192,7 +5218,9 @@
                     "lastName",
                     "email",
                     "emailVerified",
-                    "linkedAt"
+                    "linkedAt",
+                    "educator",
+                    "educatorPending"
                   ],
                   "additionalProperties": false
                 }
@@ -5524,6 +5552,14 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 120
+                  },
+                  "role": {
+                    "default": "learner",
+                    "type": "string",
+                    "enum": [
+                      "learner",
+                      "educator"
+                    ]
                   }
                 },
                 "required": [
@@ -5572,6 +5608,14 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "educator": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "educatorPending": {
+                      "default": false,
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -5580,7 +5624,9 @@
                     "lastName",
                     "email",
                     "emailVerified",
-                    "linkedAt"
+                    "linkedAt",
+                    "educator",
+                    "educatorPending"
                   ],
                   "additionalProperties": false
                 }
@@ -6023,6 +6069,14 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "educator": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "educatorPending": {
+                      "default": false,
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -6031,7 +6085,9 @@
                     "lastName",
                     "email",
                     "emailVerified",
-                    "linkedAt"
+                    "linkedAt",
+                    "educator",
+                    "educatorPending"
                   ],
                   "additionalProperties": false
                 }

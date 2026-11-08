@@ -245,6 +245,8 @@ export const accounts = mysqlTable(
     linkedAt: timestamp("linked_at"),
     // The account opt-in that linking happened under (ADR 0019).
     consentVersion: varchar("consent_version", { length: 40 }),
+    // Set when "I teach or tutor" was chosen at sign-up; cleared once teaching tools switch on.
+    educatorRequestedAt: timestamp("educator_requested_at"),
   },
   (table) => [
     uniqueIndex("accounts_email_idx").on(table.email),

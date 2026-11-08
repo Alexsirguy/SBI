@@ -13,6 +13,7 @@ import { AuthDivider } from "../auth-card";
 import { fieldErrors } from "../form-errors";
 import { GoogleButton } from "../google-button";
 import { PasswordField } from "../password-field";
+import { RoleChoice, tooYoungToTeach, type Role } from "../role-choice";
 import { ACCOUNT_KEY, forgetAccountData } from "../use-account";
 import { useErrorText } from "../../i18n/error-text";
 
@@ -24,6 +25,7 @@ export function SignUpForm() {
   const router = useRouter();
   const client = useQueryClient();
   const [values, setValues] = useState(EMPTY);
+  const [role, setRole] = useState<Role>("learner");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [failure, setFailure] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -41,7 +43,16 @@ export function SignUpForm() {
       setFailure(t(age.problem));
       return;
     }
-    const parsed = SignUpRequest.safeParse({ ...values, age: "age" in age ? age.age : undefined });
+    if ("age" in age && tooYoungToTeach(role, age.age)) {
+      setErrors({});
+      setFailure(t("errorUnderEducatorAge"));
+      return;
+    }
+    const parsed = SignUpRequest.safeParse({
+      ...values,
+      age: "age" in age ? age.age : undefined,
+      role,
+    });
     const found: Record<string, string> = parsed.success
       ? {}
       : fieldErrors(parsed.error, {
@@ -67,7 +78,8 @@ export function SignUpForm() {
 
   return (
     <>
-      <GoogleButton mode="signup" onSignedIn={done} />
+      <RoleChoice value={role} onChange={setRole} />
+      <GoogleButton mode="signup" role={role} onSignedIn={done} />
       <AuthDivider />
       <form className="auth__form" onSubmit={(event) => void submit(event)} noValidate>
         <div className="auth__row">

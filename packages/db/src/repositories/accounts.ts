@@ -24,6 +24,7 @@ export interface NewAccount {
   passwordHash: string | null;
   googleSub: string | null;
   emailVerifiedAt: Date | null;
+  educatorRequestedAt: Date | null;
   createdAt: Date;
 }
 
@@ -37,7 +38,9 @@ export interface AccountRepository {
   findByGoogleSub(googleSub: string): Promise<StoredAccount | undefined>;
   update(
     accountId: string,
-    changes: Partial<Pick<StoredAccount, "emailVerifiedAt" | "googleSub" | "passwordHash">>,
+    changes: Partial<
+      Pick<StoredAccount, "emailVerifiedAt" | "googleSub" | "passwordHash" | "educatorRequestedAt">
+    >,
   ): Promise<void>;
   /** Claims kept, unowned photos for the account; returns how many it now owns of those keys. */
   link(accountId: string, keys: string[], consentVersion: string, now: Date): Promise<number>;

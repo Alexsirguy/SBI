@@ -146,6 +146,72 @@
   color: var(--sbi-ink);
 }
 
+/* Two cards rather than a dropdown, so the teaching choice is seen before anything is typed. */
+.auth-role {
+  margin: 0 0 var(--sbi-space-4);
+  padding: 0;
+  border: 0;
+}
+
+.auth-role__legend {
+  margin-bottom: var(--sbi-space-2);
+  font-family: var(--sbi-font-display);
+  font-weight: 600;
+}
+
+.auth-role__options {
+  display: grid;
+  gap: var(--sbi-space-2);
+}
+
+@media (min-width: 480px) {
+  .auth-role__options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.auth-role__option {
+  position: relative;
+  display: grid;
+  gap: var(--sbi-space-1);
+  min-height: var(--sbi-touch-min);
+  padding: var(--sbi-space-3);
+  border: 1.5px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+  background: var(--sbi-paper);
+  cursor: pointer;
+  transition: border-color var(--sbi-duration-quick) var(--sbi-ease);
+}
+
+.auth-role__option:hover {
+  border-color: var(--sbi-ink-soft);
+}
+
+.auth-role__option:has(input:checked) {
+  border-color: var(--sbi-action);
+  background: var(--sbi-note-wash);
+}
+
+.auth-role__option:has(input:focus-visible) {
+  outline: 2px solid var(--sbi-action);
+  outline-offset: 2px;
+}
+
+.auth-role__option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.auth-role__label {
+  font-weight: 600;
+}
+
+.auth-role__hint {
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}
+
 .auth__label-row {
   display: flex;
   align-items: baseline;

@@ -113,5 +113,12 @@
   "savedOn": "Saved {date}",
   "savedOnShared": "Saved {date}, shared for review",
   "savedRemove": "Remove",
-  "savedRemoved": "Removed."
+  "savedRemoved": "Removed.",
+  "roleLegend": "How will you use Science Behind It?",
+  "roleLearner": "I'm learning",
+  "roleLearnerHint": "Save lessons and pick up where you left off.",
+  "roleEducator": "I teach or tutor",
+  "roleEducatorHint": "Also make classes and share lessons with them. 18 or over.",
+  "errorUnderEducatorAge": "Teaching tools are for adults aged 18 or over. Choose “I'm learning” to make your account.",
+  "educatorPendingNotice": "Confirm your email to switch on teaching tools."
 }

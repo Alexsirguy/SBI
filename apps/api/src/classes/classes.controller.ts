@@ -31,6 +31,7 @@ import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
 import { CLASSES, SAVED_LESSONS } from "../tokens";
 import { teacherView } from "./class-view";
+import { checkEducatorAge } from "./educator-age";
 import { codeHint, hashJoinCode, newJoinCode } from "./join-code";
 
 /** Enough for a teacher's timetable; stops one account minting codes without end. */
@@ -81,13 +82,7 @@ export class ClassesController {
         HttpStatus.FORBIDDEN,
       );
     }
-    // Ours, not the law's: a 13-year-old account shouldn't run a class of younger children.
-    if (account.ageAtSignup < 18) {
-      throw new UserFacingException(
-        "Teaching tools are for adults aged 18 or over.",
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    checkEducatorAge(account.ageAtSignup);
     await this.classes.enableEducator(account.accountId, new Date());
     return { educator: true };
   }

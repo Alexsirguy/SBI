@@ -1,4 +1,4 @@
-import { Account, CONSENT_VERSION, UNDER_MIN_AGE } from "@sbi/contracts";
+import { Account, CONSENT_VERSION, UNDER_EDUCATOR_AGE, UNDER_MIN_AGE } from "@sbi/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   fakeGaps,
@@ -165,6 +165,70 @@ describe("auth routes", () => {
     expect(Account.parse(await (await test.get("/account", { cookie })).json()).emailVerified).toBe(
       true,
     );
+  });
+
+  it("switches teaching tools on for a teacher once their email is confirmed", async () => {
+    const s = await start();
+    test = s.test;
+    const teacher = { ...ADA, age: 34, role: "educator" };
+    const signedUp = await test.post("/auth/sign-up", teacher, s.fromWeb());
+    const cookie = sessionFrom(signedUp);
+    const app = s.test;
+    const account = async () => Account.parse(await (await app.get("/account", { cookie })).json());
+
+    expect(Account.parse(await signedUp.json())).toMatchObject({
+      educator: false,
+      educatorPending: true,
+    });
+    await test.post("/auth/verify", { token: s.mail.linkIn(s.mail.sent[0]) }, s.fromWeb());
+    expect(await account()).toMatchObject({ educator: true, educatorPending: false });
+  });
+
+  it("refuses teaching tools at sign-up for under-18s, by email or Google", async () => {
+    const s = await start();
+    test = s.test;
+    const credential = await s.google.sign({ email: "grace@example.com", sub: "g-1" });
+
+    const byEmail = await test.post("/auth/sign-up", { ...ADA, role: "educator" }, s.fromWeb());
+    const byGoogle = await test.post(
+      "/auth/google/finish",
+      { age: 16, credential, firstName: "Grace", lastName: "Hopper", role: "educator" },
+      s.fromWeb(),
+    );
+
+    expect(byEmail.status).toBe(403);
+    expect(await byEmail.json()).toEqual({ error: UNDER_EDUCATOR_AGE });
+    expect(byGoogle.status).toBe(403);
+    expect(s.store.accounts.size).toBe(0);
+  });
+
+  it("switches teaching tools on straight away for a Google teacher", async () => {
+    const s = await start();
+    test = s.test;
+    const credential = await s.google.sign({ email: "grace@example.com", sub: "g-1" });
+
+    const finished = await test.post(
+      "/auth/google/finish",
+      { age: 40, credential, firstName: "Grace", lastName: "Hopper", role: "educator" },
+      s.fromWeb(),
+    );
+
+    expect(Account.parse(await finished.json())).toMatchObject({
+      educator: true,
+      educatorPending: false,
+    });
+  });
+
+  it("leaves a learner's account without teaching tools", async () => {
+    const s = await start();
+    test = s.test;
+
+    const response = await test.post("/auth/sign-up", ADA, s.fromWeb());
+
+    expect(Account.parse(await response.json())).toMatchObject({
+      educator: false,
+      educatorPending: false,
+    });
   });
 
   it("resets a password once, signing out every session, without revealing who has an account", async () => {

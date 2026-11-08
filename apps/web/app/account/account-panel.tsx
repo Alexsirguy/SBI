@@ -90,6 +90,7 @@ export function AccountPanel() {
             >
               {resend.isSuccess ? t("accountLinkSent") : t("accountSendLinkAgain")}
             </Button>
+            {me.educatorPending ? <p>{t("educatorPendingNotice")}</p> : null}
           </div>
         )}
       </div>
