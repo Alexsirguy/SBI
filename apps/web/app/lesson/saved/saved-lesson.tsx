@@ -18,7 +18,9 @@ import { LessonRail } from "../lesson-rail";
 import { useErrorText } from "../lesson-t";
 import { PracticeProvider } from "../practice";
 import { VisualFrame } from "../visual-frame";
+import { useAccount } from "../../account/use-account";
 import { AddToClass } from "../../teach/add-to-class";
+import { useClasses } from "../../teach/use-classes";
 import { ShareLesson } from "./share-lesson";
 
 /** A saved lesson exactly as it was saved: nothing is regenerated, so it never changes (#103). */
@@ -27,7 +29,13 @@ export function SavedLesson() {
   const locale = useLocale();
   const errorText = useErrorText();
   const router = useRouter();
-  const lessonId = useSearchParams().get("id") ?? "";
+  const params = useSearchParams();
+  const lessonId = params.get("id") ?? "";
+  // Set by the edit page, so the teacher hears their edits were saved and where they went.
+  const edited = params.get("edited");
+  const teachT = useT("teach");
+  const account = useAccount();
+  const educator = !!useClasses(!!account.data).data?.educator;
   const opened = useQuery({
     queryFn: () => api("openSavedLesson", { lessonId }),
     queryKey: ["account", "saved-lesson", lessonId],
@@ -91,6 +99,20 @@ export function SavedLesson() {
         </p>
         {remove.error ? <p role="alert">{errorText(remove.error.message)}</p> : null}
         <AddToClass lessonId={lesson.lessonId} version={lesson.version} />
+        {educator ? (
+          <Link href={`/lesson/saved/edit?id=${lesson.lessonId}`} className="save-lesson">
+            {teachT("editLesson")}
+          </Link>
+        ) : null}
+        {edited !== null ? (
+          <p role="status">
+            {edited === "0"
+              ? teachT("editSaved")
+              : edited === "1"
+                ? teachT("editSavedOne")
+                : teachT("editSavedMany", { count: edited })}
+          </p>
+        ) : null}
       </header>
       <LessonNotice items={lesson.disclaimers ?? []} />
       <div className="lesson-body">

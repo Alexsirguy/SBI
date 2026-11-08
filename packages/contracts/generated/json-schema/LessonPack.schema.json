@@ -727,7 +727,8 @@
                   "open-questions",
                   "limited-evidence",
                   "reading-level",
-                  "model-knowledge"
+                  "model-knowledge",
+                  "teacher-edited"
                 ]
               },
               "message": {

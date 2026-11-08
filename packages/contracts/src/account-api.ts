@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Uuid } from "./common";
+import { Id, Uuid } from "./common";
 import { ConsentRecord } from "./consent";
 import { Lesson } from "./lesson";
 import { LessonSources, LessonVisuals } from "./lesson-api";
@@ -178,3 +178,39 @@ export const DeleteAccountRequest = z.object({ email: Email });
 
 /** The photo keys deleted, so the device can drop them from its own list too. */
 export const DeletedAccount = z.object({ deletedPhotos: z.array(PhotoKey) });
+
+/** A teacher's changes to a saved lesson (#398); visuals and sources can't be edited. */
+export const LessonEditRequest = z.object({
+  lessonId: Uuid,
+  title: z.string().trim().min(1).max(200).optional(),
+  summary: z.string().trim().min(1).max(1000).optional(),
+  sections: z
+    .array(
+      z.object({
+        sectionId: Id,
+        heading: z.string().trim().min(1).max(120).optional(),
+        text: z.string().trim().min(1).max(4000),
+      }),
+    )
+    .max(20)
+    .default([]),
+  tasks: z
+    .array(
+      z.object({
+        taskId: Id,
+        prompt: z.string().trim().min(1).max(400),
+        options: z.array(z.string().trim().min(1).max(200)).min(2).max(4),
+        answerIndex: z.number().int().min(0),
+        feedback: z.array(z.string().trim().min(1).max(400)).min(2).max(4),
+      }),
+    )
+    .max(10)
+    .default([]),
+});
+export type LessonEditRequest = z.infer<typeof LessonEditRequest>;
+
+export const EditedLesson = z.object({
+  lesson: SavedLesson,
+  /** How many of the teacher's classes now hold the edited version. */
+  classesUpdated: z.number().int().min(0),
+});

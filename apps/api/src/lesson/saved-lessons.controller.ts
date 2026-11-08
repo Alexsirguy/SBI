@@ -11,13 +11,21 @@ import {
 } from "@nestjs/common";
 import {
   API_ROUTES,
+  LessonEditRequest,
   LessonVisuals,
   SavedLessonRequest,
   SaveLessonRequest,
   type ApiResponse,
 } from "@sbi/contracts";
-import type { SavedLessonRepository, StoredAccount, StoredSavedLesson } from "@sbi/db";
+import type {
+  ClassRepository,
+  SavedLessonRepository,
+  StoredAccount,
+  StoredSavedLesson,
+} from "@sbi/db";
 import {
+  editLesson,
+  LessonEditError,
   NotShareableError,
   shareLesson,
   type LessonRepository,
@@ -27,7 +35,7 @@ import type { z } from "zod";
 import { SameOriginGuard, SessionGuard, SignedInAccount } from "../account/account.guard";
 import { UserFacingException } from "../common/user-facing.exception";
 import { ZodPipe } from "../common/zod.pipe";
-import { LESSON_EVIDENCE, LESSON_REVIEW_AUDIT, LESSONS, SAVED_LESSONS } from "../tokens";
+import { CLASSES, LESSON_EVIDENCE, LESSON_REVIEW_AUDIT, LESSONS, SAVED_LESSONS } from "../tokens";
 import type { EvidenceRepositories } from "@sbi/evidence";
 import { lessonSources } from "./sources";
 
@@ -52,6 +60,7 @@ export class SavedLessonsController {
     @Inject(LESSONS) private readonly lessons: Pick<LessonRepository, "get" | "save">,
     @Inject(LESSON_REVIEW_AUDIT) private readonly reviewAudit: Pick<ReviewAuditLog, "record">,
     @Inject(LESSON_EVIDENCE) private readonly evidence: Pick<EvidenceRepositories, "sources">,
+    @Inject(CLASSES) private readonly classes: Pick<ClassRepository, "isEducator" | "swapLesson">,
   ) {}
 
   @Post(API_ROUTES.saveLesson.path)
@@ -127,6 +136,50 @@ export class SavedLessonsController {
     await this.reviewAudit.record(copy.audit);
     await this.lessons.save(copy.lesson);
     return { reviewStatus: "needs-review", sharedAt: now.toISOString() };
+  }
+
+  @Post(API_ROUTES.editSavedLesson.path)
+  @HttpCode(200)
+  async edit(
+    @SignedInAccount() account: StoredAccount,
+    @Body(new ZodPipe(LessonEditRequest, "Say which saved lesson to change, and how."))
+    { lessonId, ...edits }: z.output<typeof LessonEditRequest>,
+  ): Promise<ApiResponse<"editSavedLesson">> {
+    // The notice says "your teacher", so only accounts with teaching tools on can edit.
+    if (!(await this.classes.isEducator(account.accountId))) {
+      throw new UserFacingException(
+        "Turn on teaching tools to edit lessons.",
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    const saved = await this.saved.get(account.accountId, lessonId);
+    const lesson = saved && (await this.lessons.get(lessonId, saved.version));
+    if (!saved || !lesson) throw new UserFacingException(NOT_SAVED, HttpStatus.NOT_FOUND);
+    // A lesson anyone else might reuse is copied first; the teacher's own copy just gets a new version.
+    const ownCopy = !!saved.editedFrom;
+    let edited;
+    try {
+      edited = await editLesson(lesson, edits, { newCopy: !ownCopy, now: new Date() });
+    } catch (error) {
+      if (!(error instanceof LessonEditError)) throw error;
+      throw new UserFacingException(error.message, HttpStatus.BAD_REQUEST);
+    }
+    await this.lessons.save(edited.lesson);
+    const entry = {
+      editedFrom: ownCopy ? saved.editedFrom : lessonId,
+      lessonId: edited.lesson.lessonId,
+      savedAt: new Date(),
+      title: edited.lesson.title.slice(0, 200),
+      version: edited.lesson.version,
+    };
+    await this.saved.save(account.accountId, entry);
+    const classesUpdated = await this.classes.swapLesson(account.accountId, lessonId, {
+      addedAt: entry.savedAt,
+      lessonId: entry.lessonId,
+      title: entry.title,
+      version: entry.version,
+    });
+    return { classesUpdated, lesson: toSaved(entry) };
   }
 
   @Post(API_ROUTES.removeSavedLesson.path)

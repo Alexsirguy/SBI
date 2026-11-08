@@ -833,6 +833,7 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       });
       expect(await repos.savedLessons.list(account)).toEqual([
         {
+          editedFrom: null,
           lessonId,
           savedAt: at("2026-11-03T10:00:00Z"),
           sharedAt: null,
@@ -1005,6 +1006,52 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.classes.activity(classId)).toHaveLength(1);
     });
 
+    it("swaps an edited lesson into the owner's classes only, in the same place", async () => {
+      await create();
+      const second = "0192f1a0-0000-7000-8000-0000000000c2";
+      const copy = "0192f1a0-0000-7000-8000-0000000000c3";
+      const othersClass = "0192f1a0-0000-7000-8000-0000000000e2";
+      await create({ classId: othersClass, joinCodeHash: "d".repeat(64), ownerAccountId: other });
+      for (const id of [classId, othersClass]) {
+        await repos.classes.addLesson(id, {
+          addedAt: at("2026-11-08T09:00:00Z"),
+          lessonId,
+          title: "Kettles",
+          version: 1,
+        });
+      }
+      await repos.classes.addLesson(classId, {
+        addedAt: at("2026-11-08T10:00:00Z"),
+        lessonId: second,
+        title: "Lenses",
+        version: 1,
+      });
+
+      const swapped = await repos.classes.swapLesson(teacher, lessonId, {
+        addedAt: at("2026-11-08T12:00:00Z"),
+        lessonId: copy,
+        title: "Kettles, edited",
+        version: 1,
+      });
+      expect(swapped).toBe(1);
+      expect(
+        (await repos.classes.getOwned(teacher, classId))?.lessons.map((item) => item.lessonId),
+      ).toEqual([copy, second]);
+      expect(
+        (await repos.classes.getOwned(other, othersClass))?.lessons.map((item) => item.lessonId),
+      ).toEqual([lessonId]);
+
+      expect(
+        await repos.classes.swapLesson(teacher, copy, {
+          addedAt: at("2026-11-08T13:00:00Z"),
+          lessonId: copy,
+          title: "Kettles, edited",
+          version: 2,
+        }),
+      ).toBe(1);
+      expect((await repos.classes.getOwned(teacher, classId))?.lessons[0]?.version).toBe(2);
+    });
+
     it("are deleted with the owner's account", async () => {
       const account = await repos.accounts.create({
         ageAtSignup: 30,
@@ -1030,6 +1077,22 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       expect(await repos.classes.listOwned(account.accountId)).toEqual([]);
       expect(await repos.classes.activity(classId)).toEqual([]);
       expect(await repos.classes.isEducator(account.accountId)).toBe(false);
+    });
+  });
+
+  describe("edited copies", () => {
+    it("remember which lesson a saved copy was edited from", async () => {
+      const account = "0192f1a0-0000-7000-8000-00000000000a";
+      await repos.savedLessons.save(account, {
+        editedFrom: "0192f1a0-0000-7000-8000-0000000000c1",
+        lessonId: "0192f1a0-0000-7000-8000-0000000000c3",
+        savedAt: new Date("2026-11-08T12:00:00Z"),
+        title: "Kettles, edited",
+        version: 1,
+      });
+      expect(
+        (await repos.savedLessons.get(account, "0192f1a0-0000-7000-8000-0000000000c3"))?.editedFrom,
+      ).toBe("0192f1a0-0000-7000-8000-0000000000c1");
     });
   });
 

@@ -8,6 +8,8 @@ export interface StoredSavedLesson {
   title: string;
   savedAt: Date;
   sharedAt?: Date | null;
+  /** The lesson this one was edited from, when it is the account's own edited copy. */
+  editedFrom?: string | null;
 }
 
 export interface SavedLessonRepository {
@@ -29,16 +31,24 @@ const toSaved = (row: typeof savedLessons.$inferSelect): StoredSavedLesson => ({
   lessonId: row.lessonId,
   savedAt: row.savedAt,
   sharedAt: row.sharedAt,
+  editedFrom: row.editedFromLessonId,
   title: row.title,
   version: row.lessonVersion,
 });
 
 export function createSavedLessonRepository(db: Database): SavedLessonRepository {
   return {
-    async save(accountId, { lessonId, version, title, savedAt }) {
+    async save(accountId, { lessonId, version, title, savedAt, editedFrom }) {
       await db
         .insert(savedLessons)
-        .values({ accountId, lessonId, lessonVersion: version, savedAt, title })
+        .values({
+          accountId,
+          editedFromLessonId: editedFrom ?? null,
+          lessonId,
+          lessonVersion: version,
+          savedAt,
+          title,
+        })
         .onDuplicateKeyUpdate({ set: { lessonVersion: version, savedAt, title } });
     },
     async list(accountId) {

@@ -264,6 +264,8 @@ export const savedLessons = mysqlTable(
     // The anonymous copy made when the learner shared it (#104); it holds nothing about them.
     sharedLessonId: uuid("shared_lesson_id"),
     sharedAt: timestamp("shared_at"),
+    // Set on a teacher's edited copy (#398): it is theirs, so later edits make new versions of it.
+    editedFromLessonId: uuid("edited_from_lesson_id"),
   },
   (table) => [
     primaryKey({ columns: [table.accountId, table.lessonId] }),
