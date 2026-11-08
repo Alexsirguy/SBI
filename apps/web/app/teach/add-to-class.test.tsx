@@ -16,6 +16,7 @@ const physics: TeacherClass = {
   archivedAt: null,
   classId: "0192f1a0-0000-7000-8000-0000000000e1",
   codeHint: "PX",
+  joinCode: "7K3M-9QPX",
   controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
   createdAt: "2026-11-08T09:00:00.000Z",
   curriculum: "ng",

@@ -1,0 +1,1 @@
+ALTER TABLE `classes` ADD `join_code` varchar(9);

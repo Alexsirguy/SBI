@@ -117,7 +117,7 @@ describe("classes", () => {
     });
   });
 
-  it("shows the join code once and keeps only its hash", async () => {
+  it("keeps the join code for its teacher and finds the class by its hash", async () => {
     const s = await start();
     test = s.test;
     const { classId, headers, joinCode } = await teacherWithClass(s);
@@ -125,17 +125,17 @@ describe("classes", () => {
     expect(joinCode).toMatch(/^[0-9A-HJKMNP-TV-Z]{4}-[0-9A-HJKMNP-TV-Z]{4}$/);
     const row = s.classes.rows.get(classId);
     expect(row?.joinCodeHash).toBe(hashJoinCode(joinCode));
-    expect(JSON.stringify(row)).not.toContain(joinCode.replace("-", ""));
+    expect(row?.joinCode).toBe(joinCode);
 
     const listed = TeacherClasses.parse(await (await test.get("/classes", headers)).json());
     expect(listed.classes[0]).toMatchObject({
       codeHint: joinCode.slice(-2),
+      joinCode,
       controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
       curriculum: "ng",
       level: "SSS2",
       name: "SSS2 Physics",
     });
-    expect(JSON.stringify(listed)).not.toContain(joinCode);
   });
 
   it("checks a level belongs to the class's curriculum", async () => {
@@ -188,6 +188,8 @@ describe("classes", () => {
     const { joinCode: fresh } = (await rotated.json()) as { joinCode: string };
     expect((await test.get(`/class?code=${joinCode}`)).status).toBe(404);
     expect((await test.get(`/class?code=${fresh}`)).status).toBe(200);
+    const listed = TeacherClasses.parse(await (await test.get("/classes", headers)).json());
+    expect(listed.classes[0]?.joinCode).toBe(fresh);
 
     await test.post("/classes/archive", { archived: true, classId }, headers);
     expect((await test.get(`/class?code=${fresh}`)).status).toBe(404);

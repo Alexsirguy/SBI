@@ -16,6 +16,7 @@ export function teacherView(stored: StoredClass): TeacherClass {
     archivedAt: stored.archivedAt?.toISOString() ?? null,
     classId: stored.classId,
     codeHint: stored.joinCodeHint,
+    joinCode: stored.joinCode,
     controls: controlsOf(stored),
     createdAt: stored.createdAt.toISOString(),
     curriculum: curriculumOf(stored),

@@ -274,6 +274,7 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
             archivedAt: null,
             classId: `0192f1a0-0000-7000-8000-0000000000e${index + 1}`,
             codeHint: index ? "QR" : "PX",
+            joinCode: index ? "4H8J-2MQR" : "7K3M-9QPX",
             controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
             createdAt: "2026-11-08T09:00:00.000Z",
             curriculum: "ng",
@@ -329,6 +330,7 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
               archivedAt: null,
               classId: "0192f1a0-0000-7000-8000-0000000000e1",
               codeHint: "PX",
+              joinCode: "7K3M-9QPX",
               controls: {
                 audienceLock: "teen",
                 blockedCategories: ["weapons"],
@@ -368,7 +370,72 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
         },
       }));
       await page.goto("/teach");
-      await expect(page.getByRole("region", { name: "SSS2 Physics" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "SSS2 Physics" })).toBeVisible();
+      await expect(page.getByText(/Week 2026-W45/)).toBeVisible();
+    },
+  },
+  {
+    name: "teach-class",
+    open: async (page) => {
+      await mockApi(page, "/account", () => ({
+        json: {
+          accountId: "0192f1a0-0000-7000-8000-000000000001",
+          email: "teacher@example.com",
+          emailVerified: true,
+          firstName: "Ngozi",
+          lastName: "Okafor",
+          linkedAt: null,
+        },
+      }));
+      await mockApi(page, "/account/lessons", () => ({ json: { lessons: [] } }));
+      await mockApi(page, "/classes", () => ({
+        json: {
+          classes: [
+            {
+              archivedAt: null,
+              classId: "0192f1a0-0000-7000-8000-0000000000e1",
+              codeHint: "PX",
+              joinCode: "7K3M-9QPX",
+              controls: {
+                audienceLock: "teen",
+                blockedCategories: ["weapons"],
+                tutorEnabled: true,
+              },
+              createdAt: "2026-11-08T09:00:00.000Z",
+              curriculum: "ng",
+              lessons: [
+                { lessonId: SAMPLE_LESSON.lessonId, title: SAMPLE_LESSON.title, version: 1 },
+              ],
+              level: "SSS2",
+              name: "SSS2 Physics",
+            },
+          ],
+          educator: true,
+        },
+      }));
+      await mockApi(page, "/classes/summary?", () => ({
+        json: {
+          minCount: 5,
+          totals: { check_answered: 58, check_correct: 41, lesson_opened: 73, visual_used: null },
+          weeks: [
+            {
+              counts: {
+                check_answered: 31,
+                check_correct: 22,
+                lesson_opened: 38,
+                visual_used: null,
+              },
+              week: "2026-W45",
+            },
+            {
+              counts: { check_answered: 27, check_correct: 19, lesson_opened: 35, visual_used: 0 },
+              week: "2026-W44",
+            },
+          ],
+        },
+      }));
+      await page.goto("/teach/class?id=0192f1a0-0000-7000-8000-0000000000e1&tab=lessons");
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText("SSS2 Physics");
       await expect(page.getByRole("table")).toBeVisible();
     },
   },

@@ -3,7 +3,7 @@ import type { TeacherClass } from "@sbi/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { button, click, mount, text } from "../lesson/dom-test";
+import { button, click, find, mount, text } from "../lesson/dom-test";
 
 const api = vi.hoisted(() => vi.fn());
 vi.mock("../api", () => ({ api }));
@@ -17,6 +17,7 @@ const CLASS: TeacherClass = {
   archivedAt: null,
   classId: "0192f1a0-0000-7000-8000-0000000000e1",
   codeHint: "PX",
+  joinCode: "7K3M-9QPX",
   controls: { audienceLock: null, blockedCategories: [], tutorEnabled: true },
   createdAt: "2026-11-08T09:00:00.000Z",
   curriculum: "ng",
@@ -87,7 +88,7 @@ describe("TeachHome", () => {
     expect(api).toHaveBeenCalledWith("becomeEducator", {});
   });
 
-  it("shows the new class's code once, then hides it", async () => {
+  it("shows the new class's code, then keeps it on the class's card", async () => {
     respond({
       classes: { classes: [], educator: true },
       createClass: (body: { name: string }) => ({
@@ -112,44 +113,37 @@ describe("TeachHome", () => {
     });
     expect(text(container)).toContain("/class?code=7K3M-9QPX");
     await click(button(container, "Done"));
-    expect(text(container)).not.toContain("7K3M-9QPX");
-    expect(text(container)).toContain("Code ends in PX");
+    expect(text(container)).not.toContain("Code for SSS2 Physics");
+    expect(text(container)).toContain("Code: 7K3M-9QPX");
   });
 
-  it("adds a saved lesson and saves the controls", async () => {
+  it("lists each class with a way into its edit, lessons and controls", async () => {
+    const archived = {
+      ...CLASS,
+      archivedAt: "2026-11-01T09:00:00.000Z",
+      classId: CLASS.classId.replace("e1", "e2"),
+      name: "Old class",
+    };
     respond({
-      addClassLesson: { class: { ...CLASS, lessons: [LESSON] } },
-      classes: { classes: [CLASS], educator: true },
+      classSummary: { minCount: 5, totals: {}, weeks: [] },
+      classes: { classes: [{ ...CLASS, lessons: [LESSON] }, archived], educator: true },
       getAccount: ACCOUNT,
-      savedLessons: {
-        lessons: [{ ...LESSON, savedAt: "2026-11-08T09:00:00.000Z", sharedAt: null }],
-      },
-      updateClass: (body: { controls: TeacherClass["controls"] }) => ({
-        class: { ...CLASS, controls: body.controls },
-      }),
     });
     const { container } = await view();
-    await vi.waitFor(() => expect(text(container)).toContain("Add a saved lesson"));
-    await type(field<HTMLSelectElement>(container, "Add a saved lesson"), LESSON.lessonId);
-    await click(button(container, "Add lesson"));
-    await vi.waitFor(() => expect(text(container)).toContain("Remove Kettles"));
-    expect(api).toHaveBeenCalledWith("addClassLesson", {
-      classId: CLASS.classId,
-      lessonId: LESSON.lessonId,
-    });
+    await vi.waitFor(() => expect(text(container)).toContain("SSS2 Physics"));
+    expect(text(container)).toContain("Nigeria · SSS2");
+    expect(text(container)).toContain("1 lesson");
+    // The form stays closed until asked for, once there is a class.
+    expect(container.querySelector("form")).toBeNull();
+    const links = [...find(container, ".teach-cards").querySelectorAll("a")];
+    expect(links.map((a) => [text(a), a.getAttribute("href")])).toEqual([
+      ["Edit class: SSS2 Physics", `/teach/class?id=${CLASS.classId}&tab=edit`],
+      ["Lessons: SSS2 Physics", `/teach/class?id=${CLASS.classId}&tab=lessons`],
+      ["Controls: SSS2 Physics", `/teach/class?id=${CLASS.classId}&tab=controls`],
+    ]);
+    expect(text(find(container, "details"))).toContain("Archived classes (1)");
 
-    await type(field<HTMLSelectElement>(container, "Age band for every lesson"), "child");
-    const weapons = [...container.querySelectorAll("label")].find((l) => text(l) === "Weapons");
-    await act(async () => weapons?.querySelector("input")?.click());
-    const tutor = [...container.querySelectorAll("label")].find((l) =>
-      text(l).startsWith("Pupils can ask the tutor"),
-    );
-    await act(async () => tutor?.querySelector("input")?.click());
-    await click(button(container, "Save controls"));
-    await vi.waitFor(() => expect(text(container)).toContain("Controls saved."));
-    expect(api).toHaveBeenCalledWith("updateClass", {
-      classId: CLASS.classId,
-      controls: { audienceLock: "child", blockedCategories: ["weapons"], tutorEnabled: false },
-    });
+    await click(button(container, "New class"));
+    expect(container.querySelector("form")).not.toBeNull();
   });
 });

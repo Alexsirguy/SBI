@@ -14,17 +14,123 @@
   align-items: end;
 }
 
-.teach-class {
+.teach-home__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sbi-space-3);
+}
+
+.teach-home__count {
+  margin: 0;
+  color: var(--sbi-ink-soft);
+}
+
+.teach .teach-cards {
   display: grid;
   gap: var(--sbi-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.teach-class h3 {
+.teach-card {
+  display: grid;
+  gap: var(--sbi-space-2);
+  padding: var(--sbi-space-5);
+  background: var(--sbi-paper);
+  border: 1px solid var(--sbi-rule);
+  border-radius: var(--sbi-radius-m);
+}
+
+.teach .teach-card__name {
+  margin: 0;
+  font-size: var(--sbi-text-heading);
+}
+
+.teach-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-1) var(--sbi-space-4);
+  margin: 0;
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+}
+
+.teach-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
+  margin: var(--sbi-space-2) 0 0;
+}
+
+.teach-back {
+  margin: 0 0 var(--sbi-space-3);
+  font-size: var(--sbi-text-small);
+}
+
+.teach-overview {
+  margin-block: var(--sbi-space-5);
+}
+
+/* Cards size to their content by default; the summary must fit the card so its table scrolls. */
+.teach-overview > section {
+  justify-self: stretch;
+  min-width: 0;
+}
+
+.teach .teach-overview h2 {
   font-size: var(--sbi-text-body);
-  margin: 0 0 var(--sbi-space-2);
+  margin-top: 0;
 }
 
-.teach-lessons {
+.teach-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-1);
+  margin-bottom: var(--sbi-space-4);
+  border-bottom: 1px solid var(--sbi-rule);
+}
+
+.teach-tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sbi-touch-min);
+  padding: 0 var(--sbi-space-4);
+  color: var(--sbi-ink-soft);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+
+.teach-tabs a:hover {
+  color: var(--sbi-ink);
+}
+
+.teach-tabs a[aria-current="page"] {
+  color: var(--sbi-ink);
+  font-weight: 700;
+  border-bottom-color: currentColor;
+}
+
+.teach-panel {
+  display: grid;
+  gap: var(--sbi-space-6);
+  justify-self: stretch;
+}
+
+.teach-panel > section + section {
+  padding-top: var(--sbi-space-5);
+  border-top: 1px solid var(--sbi-rule);
+}
+
+.teach .teach-panel h2 {
+  font-size: var(--sbi-text-body);
+  margin: 0 0 var(--sbi-space-3);
+}
+
+.teach .teach-lessons {
   display: grid;
   gap: var(--sbi-space-2);
   padding-left: 0;
@@ -37,6 +143,18 @@
   gap: var(--sbi-space-2);
   align-items: center;
   justify-content: space-between;
+  padding-block: var(--sbi-space-2);
+  border-bottom: 1px solid var(--sbi-rule);
+}
+
+.teach-lessons__title {
+  flex: 1 1 12rem;
+}
+
+.teach-lessons__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2);
 }
 
 .teach-checks {
@@ -61,20 +179,40 @@
   font-weight: normal;
 }
 
-.teach-code {
+.teach-code,
+.teach-share {
   padding: var(--sbi-space-5);
   background: var(--sbi-paper);
   border: 2px solid var(--sbi-rule);
   border-radius: var(--sbi-radius-m);
 }
 
-.teach-code dl {
+.teach-share {
+  margin-top: var(--sbi-space-5);
+}
+
+.teach .teach-share h2 {
+  font-size: var(--sbi-text-body);
+  margin: 0 0 var(--sbi-space-3);
+}
+
+.teach-code dl,
+.teach-share dl {
   display: grid;
+  align-items: baseline;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--sbi-space-2) var(--sbi-space-4);
 }
 
-.teach-code dd {
+/* The browser's own monospace varies between machines; the link uses the site's. */
+.teach-code code,
+.teach-share code {
+  font-family: var(--sbi-font-mono);
+  font-size: var(--sbi-text-small);
+}
+
+.teach-code dd,
+.teach-share dd {
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -118,4 +256,19 @@
 
 .teach-summary td {
   font-variant-numeric: tabular-nums;
+}
+
+.teach h1 + .teach-card__meta {
+  margin-top: var(--sbi-space-2);
+}
+
+.teach-card__share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+}
+
+.teach-share__code-inline {
+  letter-spacing: 0.06em;
 }

@@ -169,6 +169,13 @@
       "when": 1794149587989,
       "tag": "0023_signup_role",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1794171111361,
+      "tag": "0024_class_join_codes",
+      "breakpoints": true
     }
   ]
 }

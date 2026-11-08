@@ -59,6 +59,8 @@ export const TeacherClass = z.object({
   name: z.string().min(1),
   /** The code's last two characters, so a teacher can tell codes apart without it being stored. */
   codeHint: z.string(),
+  /** The full code, for sharing again; null for a class made before codes were kept. */
+  joinCode: z.string().nullable(),
   curriculum: CurriculumId.nullable(),
   level: z.string().nullable(),
   controls: ClassControls,

@@ -20,6 +20,8 @@ export interface StoredClass {
   ownerAccountId: string;
   name: string;
   joinCodeHint: string;
+  /** Null for classes made before codes were kept; a new code fills it. */
+  joinCode: string | null;
   curriculum: string | null;
   level: string | null;
   controls: StoredClassControls;
@@ -49,7 +51,10 @@ export interface ClassRepository {
   /** An open (not archived) class by its join-code hash, for learners. */
   findOpenByCode(joinCodeHash: string): Promise<StoredClass | undefined>;
   update(classId: string, changes: ClassChanges): Promise<void>;
-  setJoinCode(classId: string, joinCodeHash: string, joinCodeHint: string): Promise<void>;
+  setJoinCode(
+    classId: string,
+    code: { joinCode: string; joinCodeHash: string; joinCodeHint: string },
+  ): Promise<void>;
   addLesson(classId: string, lesson: StoredClassLesson): Promise<void>;
   removeLesson(classId: string, lessonId: string): Promise<void>;
   /** In every class the account owns, puts `to` where `fromLessonId` was; returns how many. */
@@ -76,6 +81,7 @@ function toClass(row: ClassRow, lessons: StoredClassLesson[]): StoredClass {
     },
     createdAt: row.createdAt,
     curriculum: row.curriculum,
+    joinCode: row.joinCode,
     joinCodeHint: row.joinCodeHint,
     lessons,
     level: row.level,
@@ -133,6 +139,7 @@ export function createClassRepository(db: Database): ClassRepository {
         classId: input.classId,
         createdAt: input.createdAt,
         curriculum: input.curriculum,
+        joinCode: input.joinCode,
         joinCodeHash: input.joinCodeHash,
         joinCodeHint: input.joinCodeHint,
         level: input.level,
@@ -177,10 +184,10 @@ export function createClassRepository(db: Database): ClassRepository {
         await db.update(classes).set(set).where(eq(classes.classId, classId));
       }
     },
-    async setJoinCode(classId, joinCodeHash, joinCodeHint) {
+    async setJoinCode(classId, { joinCode, joinCodeHash, joinCodeHint }) {
       await db
         .update(classes)
-        .set({ joinCodeHash, joinCodeHint })
+        .set({ joinCode, joinCodeHash, joinCodeHint })
         .where(eq(classes.classId, classId));
     },
     async addLesson(classId, lesson) {

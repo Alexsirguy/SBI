@@ -14,15 +14,38 @@ const COLUMNS = [
   ["visual_used", "summaryVisuals"],
 ] as const;
 
-/** Whole-class weekly counts with small numbers hidden (#117); there is no per-pupil view. */
-export function ClassSummaryTable({ classId }: { classId: string }) {
-  const t = useT("teach");
-  const headingId = useId();
-  const summary = useQuery({
+// One key for every view of a class's counts, so the list and the class page share a request.
+function useClassSummary(classId: string) {
+  return useQuery({
     queryFn: () => api("classSummary", { classId }),
     queryKey: [...CLASSES_KEY, "summary", classId],
     retry: false,
   });
+}
+
+/** The latest week's lessons opened, for a one-line glance at a class. */
+export function LatestWeek({ classId }: { classId: string }) {
+  const t = useT("teach");
+  const summary = useClassSummary(classId);
+  if (!summary.data) return null;
+  const [latest] = summary.data.weeks;
+  if (!latest) return <span>{t("dashNoActivity")}</span>;
+  const opened = latest.counts.lesson_opened;
+  return (
+    <span>
+      {t("dashWeek", {
+        count: opened === null ? t("summaryHidden", { min: summary.data.minCount }) : opened,
+        week: latest.week,
+      })}
+    </span>
+  );
+}
+
+/** Whole-class weekly counts with small numbers hidden (#117); there is no per-pupil view. */
+export function ClassSummaryTable({ classId }: { classId: string }) {
+  const t = useT("teach");
+  const headingId = useId();
+  const summary = useClassSummary(classId);
   const data: ClassSummary | undefined = summary.data;
   if (!data) return null;
   const cell = (value: number | null) =>
@@ -30,7 +53,7 @@ export function ClassSummaryTable({ classId }: { classId: string }) {
 
   return (
     <section aria-labelledby={headingId}>
-      <h3 id={headingId}>{t("summaryHeading")}</h3>
+      <h2 id={headingId}>{t("summaryHeading")}</h2>
       <p className="account-card__hint">{t("summaryLead", { min: data.minCount })}</p>
       {data.weeks.length === 0 ? (
         <p>{t("summaryEmpty")}</p>
