@@ -120,5 +120,12 @@
   "roleEducator": "I teach or tutor",
   "roleEducatorHint": "Also make classes and share lessons with them. 18 or over.",
   "errorUnderEducatorAge": "Teaching tools are for adults aged 18 or over. Choose “I'm learning” to make your account.",
-  "educatorPendingNotice": "Confirm your email to switch on teaching tools."
+  "educatorPendingNotice": "Confirm your email to switch on teaching tools.",
+  "dashEdit": "Edit",
+  "dashSeeAllCount": "See all {count} saved lessons",
+  "dashOfflineHeading": "On this device",
+  "dashOfflineIntro": "Lessons saved for offline use. They stay on this device, not in your account.",
+  "dashOfflineLink": "Open offline lessons",
+  "dashTeachInvite": "Teach or tutor?",
+  "dashTeachInviteLink": "Turn on teaching tools"
 }

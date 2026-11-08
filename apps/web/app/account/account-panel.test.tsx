@@ -115,10 +115,75 @@ describe("AccountPanel", () => {
   });
 
   it("signs out and returns to the sign-in page", async () => {
-    api.mockImplementation(async (name: string) => (name === "getAccount" ? ADA : { ok: true }));
+    api.mockImplementation(async (name: string) =>
+      name === "getAccount" ? ADA : name === "savedLessons" ? { lessons: [] } : { ok: true },
+    );
     const { container } = await view();
     await click(await enabled(container, "Sign out"));
     await vi.waitFor(() => expect(router.replace).toHaveBeenCalledWith("/account/sign-in"));
     expect(api).toHaveBeenCalledWith("signOut", {});
+  });
+
+  it("shows a learner's latest saved lessons and a way in to teaching tools", async () => {
+    const lessons = Array.from({ length: 7 }, (_, index) => ({
+      lessonId: `0192f1a0-0000-7000-8000-00000000010${index}`,
+      savedAt: "2026-11-02T10:00:00.000Z",
+      sharedAt: null,
+      title: `Lesson ${index + 1}`,
+      version: 1,
+    }));
+    api.mockImplementation(async (name: string) =>
+      name === "getAccount" ? ADA : name === "savedLessons" ? { lessons } : { ok: true },
+    );
+    const { container } = await view();
+
+    await vi.waitFor(() => expect(text(container)).toContain("Lesson 5"));
+    expect(text(container)).not.toContain("Lesson 6");
+    expect(text(container)).toContain("See all 7 saved lessons");
+    expect(text(container)).toContain("Turn on teaching tools");
+    expect(text(container)).not.toContain("Your classes");
+    expect(container.querySelector('a[href^="/lesson/saved/edit"]')).toBeNull();
+  });
+
+  it("gives a teacher their classes link and an edit link on each saved lesson", async () => {
+    const lesson = {
+      lessonId: "0192f1a0-0000-7000-8000-000000000100",
+      savedAt: "2026-11-02T10:00:00.000Z",
+      sharedAt: null,
+      title: "Kettles",
+      version: 1,
+    };
+    api.mockImplementation(async (name: string) =>
+      name === "getAccount"
+        ? { ...ADA, educator: true }
+        : name === "savedLessons"
+          ? { lessons: [lesson] }
+          : { ok: true },
+    );
+    const { container } = await view();
+
+    await vi.waitFor(() => expect(text(container)).toContain("Kettles"));
+    expect(text(container)).toContain("Your classes");
+    expect(text(container)).not.toContain("Turn on teaching tools");
+    expect(
+      container.querySelector(`a[href="/lesson/saved/edit?id=${lesson.lessonId}"]`),
+    ).not.toBeNull();
+  });
+});
+
+describe("OfflineSection", () => {
+  it("lists packs on this device and hides when there are none", async () => {
+    const { OfflineSection } = await import("./dashboard/offline-section");
+    const { memoryPacks } = await import("../offline/packs");
+    const { TEST_PACK } = await import("../offline/offline-test-pack");
+    const empty = await mount(<OfflineSection store={memoryPacks()} />);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(text(empty.container)).toBe("");
+
+    const store = memoryPacks();
+    await store.save(TEST_PACK);
+    const { container } = await mount(<OfflineSection store={store} />);
+    await vi.waitFor(() => expect(text(container)).toContain(TEST_PACK.lesson.title));
+    expect(text(container)).toContain("On this device");
   });
 });

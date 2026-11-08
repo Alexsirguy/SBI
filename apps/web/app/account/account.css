@@ -365,9 +365,39 @@ main.account h1 {
   margin: 0;
 }
 
-.account-cards {
+.account-settings,
+.account-dash {
   display: grid;
   gap: var(--sbi-space-4);
+  align-content: start;
+}
+
+/* Housekeeping reads quieter than the learning beside it: flat, smaller headings. */
+.account-settings .account-card {
+  padding: var(--sbi-space-4);
+  box-shadow: none;
+  background: transparent;
+}
+
+.account-settings .account-card h2 {
+  font-size: var(--sbi-text-body);
+}
+
+.saved-list li a.saved-list__edit {
+  flex: none;
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+}
+
+.account-dash .saved-list {
+  justify-self: stretch;
+  margin: 0;
+}
+
+.account-dash__invite {
+  margin: 0;
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
 }
 
 .account-card {
@@ -461,17 +491,28 @@ main.account h1 {
     padding-top: var(--sbi-space-7);
   }
 
-  main.account > :not(.account-cards) {
-    grid-column: 1;
+  main.account {
+    grid-template-areas:
+      "title dash"
+      "profile dash"
+      "settings dash";
+    grid-template-rows: auto auto 1fr;
   }
 
-  .account-cards {
-    grid-column: 2;
-    grid-row: 1 / span 4;
+  main.account > h1 {
+    grid-area: title;
   }
 
   .account-profile {
-    position: sticky;
-    top: var(--sbi-space-5);
+    grid-area: profile;
+  }
+
+  .account-settings {
+    grid-area: settings;
+    margin-top: var(--sbi-space-4);
+  }
+
+  .account-dash {
+    grid-area: dash;
   }
 }

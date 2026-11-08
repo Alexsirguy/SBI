@@ -32,7 +32,11 @@ export function useSignOut() {
   return useMutation({
     mutationFn: () => api("signOut", {}),
     onSuccess: () => {
-      forgetAccountData(client);
+      // The account entry is updated in place, not removed, so pages watching it see the sign-out.
+      client.removeQueries({
+        predicate: (query) => query.queryKey.length > 1,
+        queryKey: ACCOUNT_KEY,
+      });
       client.setQueryData(ACCOUNT_KEY, null);
     },
   });

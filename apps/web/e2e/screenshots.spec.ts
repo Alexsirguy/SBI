@@ -188,6 +188,38 @@ const STATES: { name: string; open: (page: Page) => Promise<void> }[] = [
     },
   },
   {
+    name: "account",
+    open: async (page) => {
+      await mockApi(page, "/account", () => ({
+        json: {
+          accountId: "0192f1a0-0000-7000-8000-000000000001",
+          educator: false,
+          educatorPending: false,
+          email: "ada@example.com",
+          emailVerified: true,
+          firstName: "Ada",
+          lastName: "Lovelace",
+          linkedAt: null,
+        },
+      }));
+      await mockApi(page, "/account/lessons", () => ({
+        json: {
+          lessons: ["Why a kettle whistles", "How a bicycle stays up", "Why bread rises"].map(
+            (title, index) => ({
+              lessonId: `0192f1a0-0000-7000-8000-00000000010${index}`,
+              savedAt: `2026-11-0${7 - index}T10:00:00.000Z`,
+              sharedAt: null,
+              title,
+              version: 1,
+            }),
+          ),
+        },
+      }));
+      await page.goto("/account");
+      await expect(page.getByText("Why a kettle whistles")).toBeVisible();
+    },
+  },
+  {
     name: "teach",
     open: async (page) => {
       await mockApi(page, "/account", () => ({
