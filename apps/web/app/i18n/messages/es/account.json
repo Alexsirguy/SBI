@@ -132,5 +132,10 @@
   "chatsIntro": "Tus preguntas al tutor, guardadas durante 30 días. Solo tú puedes verlas.",
   "chatsUnknownLesson": "Una lección que ya no está disponible",
   "chatsCountOne": "1 pregunta, la última el {date}",
-  "chatsCountOther": "{count} preguntas, la última el {date}"
+  "chatsCountOther": "{count} preguntas, la última el {date}",
+  "accountLinkShortOff": "Desactivado. Guarda las fotos de este dispositivo con tu cuenta.",
+  "accountLinkShortOn": "Activado. Las fotos de este dispositivo están vinculadas a tu cuenta.",
+  "dataShort": "Obtén una copia de todo lo vinculado a tu cuenta.",
+  "infoMore": "Más sobre {topic}",
+  "infoClose": "Cerrar"
 }

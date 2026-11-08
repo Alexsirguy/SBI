@@ -132,5 +132,10 @@
   "chatsIntro": "Your questions to the tutor, kept for 30 days. Only you can see them.",
   "chatsUnknownLesson": "A lesson that is no longer available",
   "chatsCountOne": "1 question, last on {date}",
-  "chatsCountOther": "{count} questions, last on {date}"
+  "chatsCountOther": "{count} questions, last on {date}",
+  "accountLinkShortOff": "Off. Keep this device's photos with your account.",
+  "accountLinkShortOn": "On. This device's photos are tied to your account.",
+  "dataShort": "Get a copy of everything tied to your account.",
+  "infoMore": "More about {topic}",
+  "infoClose": "Close"
 }
