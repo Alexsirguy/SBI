@@ -22,6 +22,7 @@ import { useErrorText } from "../i18n/error-text";
 export function AccountPanel() {
   const errorText = useErrorText();
   const t = useT("account");
+  const teachT = useT("teach");
   const router = useRouter();
   const client = useQueryClient();
   const account = useAccount();
@@ -97,6 +98,12 @@ export function AccountPanel() {
           <h2 id="account-saved">{t("accountSavedHeading")}</h2>
           <Link href="/account/lessons" className="account-card__row">
             {t("accountSeeSaved")}
+          </Link>
+        </section>
+        <section className="account-card" aria-labelledby="account-teach">
+          <h2 id="account-teach">{teachT("accountCardHeading")}</h2>
+          <Link href="/teach" className="account-card__row">
+            {teachT("accountCardLink")}
           </Link>
         </section>
         <section className="account-card" aria-labelledby="account-link">

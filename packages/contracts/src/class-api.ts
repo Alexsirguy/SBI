@@ -6,6 +6,7 @@ import { SafetyCategory } from "./safety";
 
 /** The curricula a class or learner can choose (#114). */
 export const CurriculumId = z.enum(["us", "ng"]);
+export type CurriculumId = z.infer<typeof CurriculumId>;
 
 export const CLASS_NAME_MAX = 60;
 export const CLASS_LESSONS_MAX = 50;

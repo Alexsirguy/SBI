@@ -24,6 +24,7 @@ import { useErrorText } from "./lesson-t";
 import { useLessonExperiment } from "./lesson-experiment";
 import { GrownUpGate } from "../pathway/grown-up-gate";
 import { usePathway } from "../pathway/provider";
+import { readClass } from "../class/class-context";
 import { CurriculumLinks } from "./curriculum-links";
 import { NextConcepts } from "./next-concepts";
 import { PracticeProvider } from "./practice";
@@ -179,7 +180,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
     lesson,
     status === "ready" && !!lesson && experiment.status !== "pending",
   );
-  const tutoring = webEnv.features.tutor && !!lesson && status === "ready";
+  // A class with the tutor off hides it here; the API refuses it either way (#113).
+  const tutoring =
+    webEnv.features.tutor && !!lesson && status === "ready" && readClass()?.tutorEnabled !== false;
   return (
     <main id="main" className="lesson">
       <header className="lesson-head">

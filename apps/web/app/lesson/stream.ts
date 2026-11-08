@@ -10,6 +10,7 @@ import {
   QuickAnswer,
 } from "@sbi/contracts";
 import { ApiRequestError, UNREACHABLE } from "../api-client";
+import { classCode } from "../class/class-context";
 
 export type LessonEvent =
   | { type: "policy"; data: PolicyResponse }
@@ -62,7 +63,8 @@ export async function streamLesson(
   options: { signal?: AbortSignal; fetcher?: typeof fetch } = {},
 ): Promise<void> {
   const fetcher = options.fetcher ?? fetch;
-  const body = LessonRequest.parse(request);
+  // From a class link, the class code goes too, so the teacher's controls apply (#113).
+  const body = LessonRequest.parse({ ...request, classCode: request.classCode ?? classCode() });
   let response: Response;
   try {
     response = await fetcher(`${baseUrl.replace(/\/+$/, "")}${API_ROUTES.requestLesson.path}`, {
