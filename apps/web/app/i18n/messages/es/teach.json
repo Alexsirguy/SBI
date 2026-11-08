@@ -83,5 +83,11 @@
   "summaryCorrect": "Respuestas correctas",
   "summaryVisuals": "Visuales probados",
   "summaryTotal": "Todas las semanas",
-  "summaryHidden": "menos de {min}"
+  "summaryHidden": "menos de {min}",
+  "addToClassLabel": "Clase",
+  "addToClass": "Añadir a la clase",
+  "addToNamed": "Añadir a {name}",
+  "addedTo": "Añadida a {name}.",
+  "alreadyIn": "Esta versión ya está en {name}.",
+  "seeClasses": "Tus clases"
 }

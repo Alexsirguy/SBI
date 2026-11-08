@@ -1,7 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { SAMPLE_LESSON, SAMPLE_SOURCES } from "../app/lesson/sample-lesson";
+import {
+  SAMPLE_ANSWER,
+  SAMPLE_LESSON,
+  SAMPLE_SOURCES,
+  sseFrames,
+} from "../app/lesson/sample-lesson";
 import { expectNoAxeViolations, expectVisibleFocus, tabTo } from "./a11y";
-import { mockApi } from "./mock-api";
+import { mockApi, mockLesson } from "./mock-api";
 
 const ACCOUNT = {
   accountId: "0192f1a0-0000-7000-8000-000000000001",
@@ -115,4 +120,46 @@ test("a pupil with an old code is told to ask for the new one", async ({ page })
   await page.goto("/class?code=7K3M-9QPX");
   await expect(page.getByRole("alert").filter({ hasText: "Ask your teacher" })).toBeVisible();
   await expect(page.getByLabel("Class code")).toHaveValue("7K3M-9QPX");
+});
+
+test("a teacher adds the lesson on screen to a class without leaving it", async ({ page }) => {
+  const added: unknown[] = [];
+  await mockLesson(
+    page,
+    sseFrames([
+      { type: "quick-answer", data: SAMPLE_ANSWER },
+      { type: "lesson", data: SAMPLE_LESSON },
+      { type: "sources", data: SAMPLE_SOURCES },
+      { type: "visuals", data: { lessonId: SAMPLE_LESSON.lessonId, visuals: [] } },
+    ]),
+  );
+  await mockApi(page, "/account", () => ({ json: ACCOUNT }));
+  await mockApi(page, "/account/lessons", () => ({ json: { lessons: [] } }));
+  await mockApi(page, "/classes", () => ({ json: { classes: [CLASS], educator: true } }));
+  await mockApi(page, "/account/lessons/save", () => ({
+    json: {
+      lessonId: SAMPLE_LESSON.lessonId,
+      savedAt: "2026-11-08T09:00:00.000Z",
+      sharedAt: null,
+      title: SAMPLE_LESSON.title,
+      version: SAMPLE_LESSON.version,
+    },
+  }));
+  await mockApi(page, "/classes/lessons/add", (body) => {
+    added.push(body);
+    return {
+      json: {
+        class: {
+          ...CLASS,
+          lessons: [{ lessonId: SAMPLE_LESSON.lessonId, title: SAMPLE_LESSON.title, version: 1 }],
+        },
+      },
+    };
+  });
+  await page.goto("/lesson?taxonomyId=object.magnifying-glass&label=Magnifying+glass");
+
+  await page.getByRole("button", { name: "Add to SSS2 Physics" }).click();
+  await expect(page.getByText("Added to SSS2 Physics.")).toBeVisible();
+  expect(added).toEqual([{ classId: CLASS.classId, lessonId: SAMPLE_LESSON.lessonId }]);
+  await expectNoAxeViolations(page);
 });

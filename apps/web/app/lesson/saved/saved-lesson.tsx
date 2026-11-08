@@ -18,6 +18,7 @@ import { LessonRail } from "../lesson-rail";
 import { useErrorText } from "../lesson-t";
 import { PracticeProvider } from "../practice";
 import { VisualFrame } from "../visual-frame";
+import { AddToClass } from "../../teach/add-to-class";
 import { ShareLesson } from "./share-lesson";
 
 /** A saved lesson exactly as it was saved: nothing is regenerated, so it never changes (#103). */
@@ -89,6 +90,7 @@ export function SavedLesson() {
           </Button>
         </p>
         {remove.error ? <p role="alert">{errorText(remove.error.message)}</p> : null}
+        <AddToClass lessonId={lesson.lessonId} version={lesson.version} />
       </header>
       <LessonNotice items={lesson.disclaimers ?? []} />
       <div className="lesson-body">

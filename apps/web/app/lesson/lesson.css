@@ -917,3 +917,14 @@ main.lesson {
   margin-block: var(--sbi-space-6);
   max-width: var(--sbi-measure);
 }
+
+.add-to-class {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-2) var(--sbi-space-3);
+  align-items: end;
+}
+
+.add-to-class p {
+  margin: 0;
+}

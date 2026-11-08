@@ -25,6 +25,7 @@ import { useLessonExperiment } from "./lesson-experiment";
 import { GrownUpGate } from "../pathway/grown-up-gate";
 import { usePathway } from "../pathway/provider";
 import { readClass } from "../class/class-context";
+import { AddToClass } from "../teach/add-to-class";
 import { CurriculumLinks } from "./curriculum-links";
 import { NextConcepts } from "./next-concepts";
 import { PracticeProvider } from "./practice";
@@ -200,6 +201,9 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
             version={lesson.version}
             returnTo={lessonHref(subject, { question, prefs })}
           />
+        ) : null}
+        {lesson && status === "ready" ? (
+          <AddToClass lessonId={lesson.lessonId} version={lesson.version} />
         ) : null}
       </header>
       <StatusLine>

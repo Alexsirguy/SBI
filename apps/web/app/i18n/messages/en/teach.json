@@ -83,5 +83,11 @@
   "summaryCorrect": "Checks right",
   "summaryVisuals": "Visuals tried",
   "summaryTotal": "All weeks",
-  "summaryHidden": "fewer than {min}"
+  "summaryHidden": "fewer than {min}",
+  "addToClassLabel": "Class",
+  "addToClass": "Add to class",
+  "addToNamed": "Add to {name}",
+  "addedTo": "Added to {name}.",
+  "alreadyIn": "This version is in {name}.",
+  "seeClasses": "Your classes"
 }
