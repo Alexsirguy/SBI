@@ -56,7 +56,7 @@ import {
   type RiskAssessment,
   type RiskClassifier,
 } from "@sbi/safety";
-import { sourcedFacts, type Taxonomy } from "@sbi/taxonomy";
+import { conceptKey, sourcedFacts, type Taxonomy } from "@sbi/taxonomy";
 import {
   LESSON_EVIDENCE,
   LESSON_GATHERER,
@@ -146,11 +146,8 @@ export type LessonStreamEvent =
   | { type: "visuals"; data: LessonVisuals };
 
 function slug(label: string, taken: Set<string>): string {
-  const base =
-    label
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "concept";
+  // Concept ids share the curriculum key so standards can be looked up from a lesson.
+  const base = conceptKey(label) || "concept";
   let candidate = base;
   for (let suffix = 2; taken.has(candidate); suffix += 1) candidate = `${base}-${suffix}`;
   taken.add(candidate);
