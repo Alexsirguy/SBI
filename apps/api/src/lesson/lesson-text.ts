@@ -4,6 +4,7 @@ import { isSpanish } from "@sbi/safety";
 const EN = {
   unavailable: "Lesson generation is unavailable right now. Try again later.",
   unknownCategory: "Unknown category.",
+  unknownTopic: "That curriculum topic could not be found.",
   noCoverage: "No lesson coverage for this category yet.",
   noEvidence: "We could not find trusted sources for this question yet. Try asking it another way.",
   held: "A reviewer needs to check this lesson before we can show it. Try again later.",
@@ -23,6 +24,7 @@ const EN = {
 const ES: typeof EN = {
   unavailable: "Ahora mismo no se pueden crear lecciones. Inténtalo más tarde.",
   unknownCategory: "Categoría desconocida.",
+  unknownTopic: "No se ha encontrado ese tema del currículo.",
   noCoverage: "Todavía no hay lecciones sobre esta categoría.",
   noEvidence:
     "Todavía no encontramos fuentes fiables para esta pregunta. Prueba a hacerla de otra forma.",

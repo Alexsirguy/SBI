@@ -1,4 +1,4 @@
-import { Curricula, CurriculumTopicResult, CurriculumTopics } from "@sbi/contracts";
+import { Curricula, CurriculumTopicResult, CurriculumTopics, LessonTopics } from "@sbi/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { CURRICULUM } from "../tokens";
 import { fakeCurriculum } from "../testing/test-curriculum";
@@ -54,5 +54,26 @@ describe("curriculum routes", () => {
     expect(topic).toMatchObject({ code, retiredAt: "2026-11-10T09:00:00.000Z" });
     expect((await test.get("/curricula/topic?code=NOPE-1")).status).toBe(404);
     expect((await test.get("/curricula/topics?curriculum=fr")).status).toBe(400);
+  });
+
+  it("lists a lesson's topics with made-for links first", async () => {
+    const { curriculum, test } = await start();
+    const lessonId = "0192f1a0-0000-7000-8000-0000000000c1";
+    await curriculum.repository.linkLesson(
+      lessonId,
+      [
+        { link: "inferred", topicCode: "HS-PS1-3" },
+        { link: "exact", topicCode: "MS-PS1-4" },
+      ],
+      new Date(),
+    );
+    const { links } = LessonTopics.parse(
+      await (await test.get(`/lessons/topics?lessonId=${lessonId}`)).json(),
+    );
+    expect(links.map((item) => [item.link, item.topic.code])).toEqual([
+      ["exact", "MS-PS1-4"],
+      ["inferred", "HS-PS1-3"],
+    ]);
+    expect((await test.get("/lessons/topics?lessonId=nope")).status).toBe(400);
   });
 });

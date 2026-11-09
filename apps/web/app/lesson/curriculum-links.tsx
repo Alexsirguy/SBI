@@ -1,5 +1,6 @@
 "use client";
 
+import type { ApiResponse } from "@sbi/contracts";
 import type { Alignment, Curriculum } from "@sbi/taxonomy/curriculum";
 import { useEffect, useId, useState } from "react";
 import { useT } from "../i18n/provider";
@@ -17,6 +18,8 @@ interface Loaded {
   alignments: Alignment[];
 }
 
+type Linked = ApiResponse<"lessonTopics">["links"];
+
 const CHOICE_KEY = { none: "curriculumOff", us: "curriculumUs", ng: "curriculumNg" } as const;
 // The notices each framework's terms ask for wherever its name or codes appear (ADR 0029).
 const NOTICE_KEYS = {
@@ -25,12 +28,20 @@ const NOTICE_KEYS = {
 } as const;
 
 /** Standards this lesson teaches in the learner's chosen curriculum (#114). */
-export function CurriculumLinks({ concepts }: { concepts: readonly string[] }) {
+export function CurriculumLinks({
+  concepts,
+  lessonId,
+}: {
+  concepts: readonly string[];
+  /** Saved lessons have stored links; a topic lesson's own topic comes first (#422). */
+  lessonId?: string;
+}) {
   const t = useT("lesson");
   const id = useId();
   // Only drawn once a lesson has streamed in, so reading device storage here can't break hydration.
   const [pref, setPref] = useState<CurriculumPref>(() => readCurriculum());
   const [loaded, setLoaded] = useState<Loaded>();
+  const [linked, setLinked] = useState<{ lessonId: string; links: Linked }>();
 
   const { curriculum, level } = pref;
   const conceptList = concepts.join("\n");
@@ -54,11 +65,35 @@ export function CurriculumLinks({ concepts }: { concepts: readonly string[] }) {
     };
   }, [curriculum, level, conceptList]);
 
+  useEffect(() => {
+    if (curriculum === "none" || !lessonId) return;
+    let live = true;
+    // Lazily, like the standards, and a failed lookup just leaves the matched links.
+    void import("../api")
+      .then(({ api }) => api("lessonTopics", { lessonId }))
+      .then((result) => live && setLinked({ lessonId, links: result.links }))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [curriculum, lessonId]);
+
   const choose = (next: CurriculumPref) => {
     setPref(next);
     writeCurriculum(next);
   };
   const ready = loaded?.curriculum === curriculum ? loaded : undefined;
+  const exact =
+    linked?.lessonId === lessonId
+      ? (linked?.links ?? []).filter(
+          ({ link, topic }) =>
+            link === "exact" &&
+            topic.curriculum === curriculum &&
+            (!level || topic.level === level),
+        )
+      : [];
+  const madeFor = new Set(exact.map(({ topic }) => topic.code));
+  const matched = ready?.alignments.filter(({ standard }) => !madeFor.has(standard.code)) ?? [];
 
   return (
     <section aria-labelledby={`${id}-heading`} className="curriculum-links">
@@ -100,11 +135,20 @@ export function CurriculumLinks({ concepts }: { concepts: readonly string[] }) {
       </div>
       {curriculum === "none" ? null : !ready ? (
         <p role="status">{t("curriculumLoading")}</p>
-      ) : ready.alignments.length === 0 ? (
+      ) : exact.length + matched.length === 0 ? (
         <p>{t("curriculumNone")}</p>
       ) : (
         <ul>
-          {ready.alignments.map(({ standard, match }) => (
+          {exact.map(({ topic }) => (
+            <li key={topic.code}>
+              <code>{topic.code}</code>
+              <span>{topic.title}</span>
+              <span className="curriculum-links__meta">
+                {topic.level} · {t("curriculumMadeFor")}
+              </span>
+            </li>
+          ))}
+          {matched.map(({ standard, match }) => (
             <li key={standard.code}>
               <code>{standard.code}</code>
               <span>{standard.title}</span>

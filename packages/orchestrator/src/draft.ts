@@ -45,6 +45,17 @@ export interface DraftInput {
   cacheScope?: Lesson["reuse"]["cacheScope"];
   /** Pinned prompt version; latest when omitted. */
   promptVersion?: string;
+  /** A curriculum topic the lesson is made for; it then uses the topic prompt (#422). */
+  topic?: DraftTopic;
+}
+
+export interface DraftTopic {
+  code: string;
+  title: string;
+  level: string;
+  /** "United States" or "Nigeria", so examples suit the learner's country. */
+  curriculum: string;
+  goals: readonly string[];
 }
 
 export interface DraftDeps {
@@ -215,6 +226,25 @@ const LESSON_DRAFT_PROMPT_V7: PromptVersion = {
 
 export const LESSON_DRAFT_PROMPT: PromptVersion = LESSON_DRAFT_PROMPT_V7;
 
+// Its own id, so topic lessons don't change the version every other cached lesson is reused by.
+export const LESSON_TOPIC_DRAFT_PROMPT: PromptVersion = {
+  id: "lesson-draft-topic",
+  version: "1",
+  system: [
+    LESSON_DRAFT_PROMPT_V7.system,
+    "A curriculum topic follows the question. The lesson teaches that topic at that level: the " +
+      "problem, the demonstration and every task serve its goals, and nothing goes beyond the " +
+      "level. Choose a problem and a new case a learner of that age meets in everyday life in " +
+      "the topic's country, using its familiar objects, places and units.",
+  ].join("\n"),
+  template: LESSON_DRAFT_PROMPT_V7.template.replace(
+    "{{question}}\n",
+    "{{question}}\n{{curriculumTopic}}\n",
+  ),
+};
+
+export const LESSON_TOPIC_DRAFT_PROMPT_VERSION = `${LESSON_TOPIC_DRAFT_PROMPT.id}@${LESSON_TOPIC_DRAFT_PROMPT.version}`;
+
 /** How a lesson drafted with the current prompt records it; reuse serves only these. */
 export const LESSON_DRAFT_PROMPT_VERSION = `${LESSON_DRAFT_PROMPT.id}@${LESSON_DRAFT_PROMPT.version}`;
 
@@ -227,6 +257,7 @@ export function createDraftPromptRegistry(): PromptRegistry {
     LESSON_DRAFT_PROMPT_V5,
     LESSON_DRAFT_PROMPT_V6,
     LESSON_DRAFT_PROMPT_V7,
+    LESSON_TOPIC_DRAFT_PROMPT,
   ]);
 }
 
@@ -310,7 +341,17 @@ const MERRILL_FRAGMENT_SCHEMA: Record<string, unknown> = {
   required: [...(LEGACY_FRAGMENT_SCHEMA.required as string[]), "newCase", "tasks", "experiment"],
 };
 
-const isMerrillPrompt = (version: string) => Number(version) >= 7;
+// Every topic prompt is Merrill; lesson-draft became Merrill at v7.
+const isMerrillPrompt = (ref: string) =>
+  ref.startsWith(`${LESSON_TOPIC_DRAFT_PROMPT.id}@`) || Number(ref.split("@").at(-1)) >= 7;
+
+function renderTopic(topic: DraftTopic): string {
+  const goals = topic.goals.map((goal) => `- ${goal}`).join("\n");
+  return (
+    `Curriculum topic: ${topic.code}, ${topic.title} (${topic.curriculum}, ${topic.level})` +
+    (goals ? `\nGoals:\n${goals}` : "")
+  );
+}
 
 function toFragment(value: unknown): DraftFragment {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -359,7 +400,7 @@ async function assemble(
   promptVersion: string,
 ): Promise<Lesson> {
   const known = new Set(input.claims.map((claim) => claim.claimId));
-  const merrill = isMerrillPrompt(promptVersion.split("@").at(-1) ?? "");
+  const merrill = isMerrillPrompt(promptVersion);
   const draft = {
     lessonId: newId(),
     version: 1,
@@ -425,13 +466,17 @@ async function assemble(
 /** Generates a Lesson draft grounded in the given claims, or throws LlmError. */
 export async function generateDraft(input: DraftInput, deps: DraftDeps): Promise<Lesson> {
   const prompts = deps.prompts ?? createDraftPromptRegistry();
-  const prompt = prompts.get(LESSON_DRAFT_PROMPT.id, input.promptVersion);
-  const everyModule = Number(prompt.version) >= 6;
-  const merrill = isMerrillPrompt(prompt.version);
+  const prompt = input.topic
+    ? prompts.get(LESSON_TOPIC_DRAFT_PROMPT.id)
+    : prompts.get(LESSON_DRAFT_PROMPT.id, input.promptVersion);
+  const merrill = isMerrillPrompt(`${prompt.id}@${prompt.version}`);
+  const everyModule = merrill || Number(prompt.version) >= 6;
   const messages = prompts.render(
-    LESSON_DRAFT_PROMPT.id,
+    prompt.id,
     {
-      question: fencedQuestion(input.question, prompt.version),
+      // Only lesson-draft@1 used the unfenced question.
+      question: fencedQuestion(input.question, merrill ? "fenced" : prompt.version),
+      curriculumTopic: input.topic ? renderTopic(input.topic) : "",
       safetyRule: [
         languageRule(input.locale),
         input.safetyClass === "high" ? HIGH_RISK_DRAFT_RULE : "",

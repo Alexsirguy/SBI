@@ -31,6 +31,7 @@ import {
   generateDraft,
   generateModelClaims,
   LESSON_DRAFT_PROMPT_VERSION,
+  LESSON_TOPIC_DRAFT_PROMPT_VERSION,
   misconceptionCheck,
   readingLevelCheck,
   repairable,
@@ -58,7 +59,11 @@ import {
   type RiskClassifier,
 } from "@sbi/safety";
 import { conceptKey, sourcedFacts, type Taxonomy } from "@sbi/taxonomy";
+import { alignmentsFor, Curriculum } from "@sbi/taxonomy/curriculum";
+import type { CurriculumRepository, StoredTopic } from "@sbi/db";
+import { topicAudience, topicSubject } from "./topic";
 import {
+  CURRICULUM,
   LESSON_EVIDENCE,
   LESSON_GATHERER,
   LESSON_RIGHTS,
@@ -142,6 +147,8 @@ export type EvidenceGatherer = (
 export interface LessonViewer {
   ownLessonIds?: ReadonlySet<string>;
   blockedCategories?: readonly SafetyCategory[];
+  /** A class fixed the age band, so a topic's level must not change it. */
+  audienceLocked?: boolean;
 }
 
 export type LessonStreamEvent =
@@ -263,6 +270,7 @@ export class LessonService {
     @Optional() @Inject(RISK_CLASSIFIER) classify?: RiskClassifier,
     @Optional() @Inject(EVENT_SINK) private readonly events?: EventSink,
     @Optional() @Inject(LESSON_PRICES) private readonly prices?: TokenPrices | null,
+    @Optional() @Inject(CURRICULUM) private readonly curriculum?: CurriculumRepository,
   ) {
     this.classify = classify ?? createRiskClassifier({ provider: null });
   }
@@ -296,13 +304,30 @@ export class LessonService {
     const started = performance.now();
     const timings: Record<string, number> = {};
     const mark = (stage: string) => (timings[stage] = Math.round(performance.now() - started));
-    const entry = resolveSubject(request, this.taxonomy);
+    let topic: StoredTopic | undefined;
+    if (request.topicCode) {
+      topic = await this.curriculum?.topic(request.topicCode);
+      // A retired topic still resolves for old links, but nothing new is made for it.
+      if (!topic || topic.retiredAt) {
+        throw new UserFacingException(text.unknownTopic, HttpStatus.NOT_FOUND);
+      }
+      if (!viewer.audienceLocked) request = { ...request, ...topicAudience(topic.level) };
+    }
+    const entry = topic ? topicSubject(topic) : resolveSubject(request, this.taxonomy);
     if (!entry) throw new UserFacingException(text.unknownCategory, HttpStatus.NOT_FOUND);
     const taxonomyId = entry.id;
     const taken = new Set<string>();
-    const concepts = (this.taxonomy.get(taxonomyId) ? this.taxonomy.concepts(taxonomyId) : []).map(
-      (label) => ({ conceptId: slug(label, taken), label, prerequisites: [] as string[] }),
-    );
+    const conceptLabels = topic
+      ? topic.concepts.map((key) => key.replace(/-/g, " "))
+      : this.taxonomy.get(taxonomyId)
+        ? this.taxonomy.concepts(taxonomyId)
+        : [];
+    const concepts = conceptLabels.map((label) => ({
+      conceptId: slug(label, taken),
+      label,
+      prerequisites: [] as string[],
+    }));
+    const promptVersion = topic ? LESSON_TOPIC_DRAFT_PROMPT_VERSION : LESSON_DRAFT_PROMPT_VERSION;
     // Entries without taxonomy concepts are still teachable; the plan supplies the principles.
     if (concepts.length === 0) {
       concepts.push({ conceptId: slug(entry.label, taken), label: entry.label, prerequisites: [] });
@@ -355,7 +380,7 @@ export class LessonService {
       intent,
       assumptions: request.assumptions,
       policyVersion: LESSON_POLICY_VERSION,
-      promptVersion: LESSON_DRAFT_PROMPT_VERSION,
+      promptVersion,
       fresh: request.fresh,
       ownLessonIds: viewer.ownLessonIds,
     });
@@ -447,6 +472,13 @@ export class LessonService {
           claims,
           evidenceSnapshotId: newId(),
           policyVersion: LESSON_POLICY_VERSION,
+          topic: topic && {
+            code: topic.topicCode,
+            curriculum: topic.curriculumId === "ng" ? "Nigeria" : "United States",
+            goals: topic.goals,
+            level: topic.level,
+            title: topic.title,
+          },
         },
         { provider },
       );
@@ -535,7 +567,7 @@ export class LessonService {
           audience: request.audience,
           safetyClass,
           policyVersion: LESSON_POLICY_VERSION,
-          promptVersion: LESSON_DRAFT_PROMPT_VERSION,
+          promptVersion,
         },
       );
       const firstDone = await Promise.race([checking.then(() => "checking"), outcomePending]);
@@ -575,6 +607,7 @@ export class LessonService {
       }
       lesson = outcome.lesson;
       kind = outcome.kind;
+      if (kind === "fresh") await this.linkTopics(outcome.lesson, topic);
     }
 
     const validated = Lesson.parse(lesson);
@@ -612,6 +645,25 @@ export class LessonService {
       type: "visuals",
       data: LessonVisuals.parse({ lessonId: validated.lessonId, visuals }),
     };
+  }
+
+  // A lesson made for a topic links to it exactly; any lesson also links to topics its concepts match.
+  private async linkTopics(lesson: Lesson, topic: StoredTopic | undefined) {
+    if (!this.curriculum) return;
+    const labels = lesson.concepts.map((concept) => concept.label);
+    const inferred = Curriculum.options.flatMap((curriculum) =>
+      alignmentsFor(labels, curriculum)
+        .filter((alignment) => alignment.match === "exact")
+        .map((alignment) => ({ link: "inferred" as const, topicCode: alignment.standard.code })),
+    );
+    const links = [
+      ...(topic ? [{ link: "exact" as const, topicCode: topic.topicCode }] : []),
+      ...inferred.filter((item) => item.topicCode !== topic?.topicCode),
+    ];
+    // A failed link never costs the learner the lesson; the matcher can find it again later.
+    await this.curriculum.linkLesson(lesson.lessonId, links, new Date()).catch((error: unknown) => {
+      this.logger.warn(`Could not link lesson to topics: ${(error as Error)?.name}`);
+    });
   }
 
   private recordCost(served: Served) {
