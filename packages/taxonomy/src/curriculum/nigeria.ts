@@ -1,4 +1,4 @@
-import type { CurriculumInfo, CurriculumSubject, Standard } from "./schema";
+import type { CurriculumInfo, Standard, SubjectInfo } from "./schema";
 
 export const NIGERIA_INFO: CurriculumInfo = {
   id: "ng",
@@ -11,6 +11,11 @@ export const NIGERIA_INFO: CurriculumInfo = {
       source: "https://nerdc.gov.ng",
     },
     {
+      id: "nerdc-mth",
+      name: "NERDC 9-Year Basic Education Curriculum: Mathematics",
+      source: "https://nerdc.gov.ng",
+    },
+    {
       id: "nerdc-sss",
       name: "NERDC Senior Secondary School Curriculum: Mathematics, Physics, Chemistry, Biology",
       source: "https://nerdc.gov.ng",
@@ -18,7 +23,39 @@ export const NIGERIA_INFO: CurriculumInfo = {
   ],
 };
 
-const SUBJECT_CODE: Record<CurriculumSubject, string> = {
+const SSS = ["SSS1", "SSS2", "SSS3"];
+const JSS = ["JSS1", "JSS2", "JSS3"];
+
+export const NIGERIA_SUBJECTS: readonly SubjectInfo[] = [
+  {
+    id: "ng-basic-science",
+    curriculum: "ng",
+    framework: "nerdc-bst",
+    name: "Basic Science and Technology",
+    levels: ["P4-6", ...JSS],
+  },
+  {
+    id: "ng-jss-maths",
+    curriculum: "ng",
+    framework: "nerdc-mth",
+    name: "Mathematics",
+    levels: JSS,
+  },
+  {
+    id: "ng-sss-maths",
+    curriculum: "ng",
+    framework: "nerdc-sss",
+    name: "Mathematics",
+    levels: SSS,
+  },
+  { id: "ng-physics", curriculum: "ng", framework: "nerdc-sss", name: "Physics", levels: SSS },
+  { id: "ng-chemistry", curriculum: "ng", framework: "nerdc-sss", name: "Chemistry", levels: SSS },
+  { id: "ng-biology", curriculum: "ng", framework: "nerdc-sss", name: "Biology", levels: SSS },
+];
+
+type Discipline = "science" | "maths" | "physics" | "chemistry" | "biology";
+
+const SUBJECT_CODE: Record<Discipline, string> = {
   science: "BST",
   maths: "MTH",
   physics: "PHY",
@@ -26,10 +63,22 @@ const SUBJECT_CODE: Record<CurriculumSubject, string> = {
   biology: "BIO",
 };
 
+const subjectFor = (discipline: Discipline, level: string) =>
+  discipline === "science"
+    ? "ng-basic-science"
+    : discipline === "maths"
+      ? level.startsWith("SSS")
+        ? "ng-sss-maths"
+        : "ng-jss-maths"
+      : `ng-${discipline}`;
+
+const themeName = (theme: string) =>
+  theme.charAt(0) + theme.slice(1).toLowerCase().replace(/-/g, " ");
+
 // NERDC topics have no official codes, so codes are ours: NG-<subject>-<class>-<theme>-<topic>.
 function topic(
   level: string,
-  subject: CurriculumSubject,
+  subject: Discipline,
   theme: string,
   name: string,
   title: string,
@@ -38,10 +87,11 @@ function topic(
   const sss = level.startsWith("SSS");
   return {
     curriculum: "ng",
-    framework: sss ? "nerdc-sss" : "nerdc-bst",
+    framework: sss ? "nerdc-sss" : subject === "maths" ? "nerdc-mth" : "nerdc-bst",
     code: ["NG", SUBJECT_CODE[subject], level, theme, name].join("-"),
     level,
-    subject,
+    subject: subjectFor(subject, level),
+    theme: themeName(theme),
     title,
     concepts,
   };

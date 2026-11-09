@@ -90,6 +90,14 @@ import {
   TaxonomySearchRequest,
   TaxonomySearchResults,
 } from "./taxonomy-api";
+import {
+  Curricula,
+  CurriculaRequest,
+  CurriculumTopicRequest,
+  CurriculumTopicResult,
+  CurriculumTopics,
+  CurriculumTopicsRequest,
+} from "./curriculum-api";
 import { ServedVisual, VisualRequest } from "./visual";
 import { LessonPack, LessonPackRequest } from "./pack";
 
@@ -152,6 +160,30 @@ export const API_ROUTES = {
     request: SupportMapRequest,
     response: SupportMap,
     errors: [400],
+  },
+  curricula: {
+    method: "get",
+    path: "/curricula",
+    summary: "List the supported curricula with their frameworks, notices and subjects.",
+    request: CurriculaRequest,
+    response: Curricula,
+    errors: [],
+  },
+  curriculumTopics: {
+    method: "get",
+    path: "/curricula/topics",
+    summary: "List a curriculum's current topics, optionally for one subject or level.",
+    request: CurriculumTopicsRequest,
+    response: CurriculumTopics,
+    errors: [400],
+  },
+  curriculumTopic: {
+    method: "get",
+    path: "/curricula/topic",
+    summary: "Read one topic by code, including a retired one.",
+    request: CurriculumTopicRequest,
+    response: CurriculumTopicResult,
+    errors: [400, 404],
   },
   keepPhoto: {
     method: "post",

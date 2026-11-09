@@ -18,6 +18,7 @@ import { createDatabase, type DatabaseHandle } from "./client";
 import { runMigrations } from "./migrate";
 import { createRepositories, type Repositories } from "./repositories";
 import { mediaObjects } from "./schema";
+import { curriculumCatalogue, type CurriculumCatalogue } from "@sbi/taxonomy/curriculum";
 
 try {
   process.loadEnvFile(join(import.meta.dirname, "../.env"));
@@ -29,6 +30,10 @@ const url = process.env.TEST_DATABASE_URL;
 const fixtures = join(import.meta.dirname, "../../contracts/src/fixtures");
 const TABLES = [
   "lessons",
+  "curricula",
+  "curriculum_subjects",
+  "curriculum_topics",
+  "lesson_topics",
   "evidence_sources",
   "claims",
   "visual_assets",
@@ -1169,6 +1174,73 @@ describe.skipIf(!url)("repositories (MariaDB)", () => {
       } finally {
         await second.close();
       }
+    });
+  });
+
+  describe("curriculum", () => {
+    const at = new Date("2026-11-09T09:00:00Z");
+    const catalogue = curriculumCatalogue();
+    const without = (code: string): CurriculumCatalogue => ({
+      ...catalogue,
+      topics: catalogue.topics.filter((topic) => topic.code !== code),
+    });
+
+    it("loads the catalogue with subjects, counts and teaching order", async () => {
+      expect(await repos.curriculum.sync(catalogue, at)).toEqual({
+        retired: 0,
+        topics: catalogue.topics.length,
+      });
+      const [ng] = (await repos.curriculum.curricula()).filter((c) => c.curriculumId === "ng");
+      expect(ng?.subjects.map((s) => s.subjectId)).toEqual([
+        "ng-basic-science",
+        "ng-jss-maths",
+        "ng-sss-maths",
+        "ng-physics",
+        "ng-chemistry",
+        "ng-biology",
+      ]);
+      const physics = ng?.subjects.find((s) => s.subjectId === "ng-physics");
+      const listed = await repos.curriculum.topics({ curriculumId: "ng", subjectId: "ng-physics" });
+      expect(physics?.topicCount).toBe(listed.length);
+      const levels = listed.map((topic) => ["SSS1", "SSS2", "SSS3"].indexOf(topic.level));
+      expect(levels).toEqual([...levels].sort((a, b) => a - b));
+      expect(
+        (await repos.curriculum.topics({ curriculumId: "ng", level: "SSS2" })).every(
+          (topic) => topic.level === "SSS2",
+        ),
+      ).toBe(true);
+    });
+
+    it("retires a topic the files drop, keeps it by code, and restores it if it returns", async () => {
+      const code = "NG-PHY-SSS2-WAVES-LIGHT-REFRACTION";
+      await repos.curriculum.sync(catalogue, at);
+      const later = new Date("2026-11-10T09:00:00Z");
+      expect((await repos.curriculum.sync(without(code), later)).retired).toBe(1);
+      expect((await repos.curriculum.topic(code))?.retiredAt).toEqual(later);
+      const current = await repos.curriculum.topics({ curriculumId: "ng" });
+      expect(current.map((topic) => topic.topicCode)).not.toContain(code);
+
+      await repos.curriculum.sync(catalogue, later);
+      expect((await repos.curriculum.topic(code))?.retiredAt).toBeNull();
+    });
+
+    it("keeps an exact lesson link when the matcher finds the topic again", async () => {
+      const lessonId = "0192f1a0-0000-7000-8000-0000000000c1";
+      await repos.curriculum.linkLesson(lessonId, [{ link: "exact", topicCode: "MS-PS1-4" }], at);
+      await repos.curriculum.linkLesson(
+        lessonId,
+        [
+          { link: "inferred", topicCode: "MS-PS1-4" },
+          { link: "inferred", topicCode: "HS-PS1-3" },
+        ],
+        at,
+      );
+      expect(await repos.curriculum.lessonTopics(lessonId)).toEqual(
+        expect.arrayContaining([
+          { link: "exact", topicCode: "MS-PS1-4" },
+          { link: "inferred", topicCode: "HS-PS1-3" },
+        ]),
+      );
     });
   });
 });

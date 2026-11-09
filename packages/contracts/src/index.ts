@@ -4,6 +4,7 @@ export * from "./class-api";
 export * from "./common";
 export * from "./consent";
 export * from "./content-hash";
+export * from "./curriculum-api";
 export * from "./evidence";
 export * from "./json-schema";
 export * from "./lesson";

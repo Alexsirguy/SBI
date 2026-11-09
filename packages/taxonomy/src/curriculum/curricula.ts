@@ -1,13 +1,23 @@
-import { NIGERIA_INFO, NIGERIA_STANDARDS } from "./nigeria";
-import { conceptKey, type Curriculum, type CurriculumInfo, type Standard } from "./schema";
-import { US_INFO, US_STANDARDS } from "./us";
+import { NIGERIA_INFO, NIGERIA_STANDARDS, NIGERIA_SUBJECTS } from "./nigeria";
+import type { z } from "zod";
+import {
+  conceptKey,
+  type Curriculum,
+  type CurriculumInfo,
+  Standard,
+  type SubjectInfo,
+} from "./schema";
+import { US_INFO, US_STANDARDS, US_SUBJECTS } from "./us";
 
 /** Every curriculum a learner or class can choose, with its standards. */
 export const CURRICULA: Readonly<
-  Record<Curriculum, CurriculumInfo & { standards: readonly Standard[] }>
+  Record<
+    Curriculum,
+    CurriculumInfo & { subjects: readonly SubjectInfo[]; standards: readonly Standard[] }
+  >
 > = {
-  us: { ...US_INFO, standards: US_STANDARDS },
-  ng: { ...NIGERIA_INFO, standards: NIGERIA_STANDARDS },
+  us: { ...US_INFO, subjects: US_SUBJECTS, standards: US_STANDARDS },
+  ng: { ...NIGERIA_INFO, subjects: NIGERIA_SUBJECTS, standards: NIGERIA_STANDARDS },
 };
 
 export interface Alignment {
@@ -52,3 +62,33 @@ export function alignmentsFor(
       a.standard.code.localeCompare(b.standard.code),
   );
 }
+
+export type CatalogueTopic = z.output<typeof Standard> & { position: number };
+
+/** Everything the database's curriculum tables hold, in teaching order (ADR 0029). */
+export function curriculumCatalogue() {
+  const curricula = Object.values(CURRICULA);
+  const topics: CatalogueTopic[] = [];
+  for (const { subjects, standards } of curricula) {
+    for (const subject of subjects) {
+      // File order is teaching order, so position counts within each subject.
+      standards
+        .filter((standard) => standard.subject === subject.id)
+        .forEach((standard, position) => topics.push({ ...Standard.parse(standard), position }));
+    }
+  }
+  return {
+    curricula: curricula.map(({ id, label, levels, frameworks }) => ({
+      id,
+      label,
+      levels,
+      frameworks,
+    })),
+    subjects: curricula.flatMap(({ subjects }) =>
+      subjects.map((subject, position) => ({ ...subject, position })),
+    ),
+    topics,
+  };
+}
+
+export type CurriculumCatalogue = ReturnType<typeof curriculumCatalogue>;

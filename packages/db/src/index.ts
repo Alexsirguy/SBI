@@ -24,3 +24,12 @@ export type {
   StoredClassControls,
   StoredClassLesson,
 } from "./repositories/classes";
+export type {
+  CurriculumRepository,
+  StoredCurriculum,
+  StoredFramework,
+  StoredSubject,
+  StoredTopic,
+  TopicFilter,
+  TopicLink,
+} from "./repositories/curriculum";

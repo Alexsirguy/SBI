@@ -7,6 +7,7 @@ import {
 import { createCatalogGapRepository } from "./catalog-gaps";
 import { createClassRepository } from "./classes";
 import { createCoverageRepository } from "./coverage";
+import { createCurriculumRepository } from "./curriculum";
 import { createClaimRepository, createEvidenceSourceRepository } from "./evidence";
 import { createEvidencePackRepository } from "./evidence-packs";
 import { createLessonFeedbackRepository } from "./lesson-feedback";
@@ -27,6 +28,7 @@ export function createRepositories(db: Database) {
     catalogGaps: createCatalogGapRepository(db),
     classes: createClassRepository(db),
     coverage: createCoverageRepository(db),
+    curriculum: createCurriculumRepository(db),
     deletionAudit: createDeletionAuditLog(db),
     lessons: createLessonRepository(db),
     lessonFeedback: createLessonFeedbackRepository(db),

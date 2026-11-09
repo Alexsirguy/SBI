@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { SEED_TAXONOMY } from "../seed";
 import { createTaxonomy } from "../taxonomy";
 import { alignmentsFor, CURRICULA } from "./curricula";
-import { conceptKey, Curriculum, Standard } from "./schema";
+import { conceptKey, Curriculum, Standard, SubjectInfo } from "./schema";
 
 const taxonomy = createTaxonomy(SEED_TAXONOMY);
 const seedKeys = new Set(
@@ -28,6 +28,23 @@ describe.each(Curriculum.options)("%s curriculum", (curriculum) => {
     }
     const all = standards.map((s) => s.code);
     expect(new Set(all).size).toBe(all.length);
+  });
+
+  it("puts every standard in one of its subjects, at a level that subject teaches", () => {
+    const subjects = new Map(CURRICULA[curriculum].subjects.map((s) => [s.id, s]));
+    const frameworks = new Set(CURRICULA[curriculum].frameworks.map((f) => f.id));
+    for (const subject of subjects.values()) {
+      expect(() => SubjectInfo.parse(subject)).not.toThrow();
+      expect(subject.curriculum).toBe(curriculum);
+      expect(frameworks).toContain(subject.framework);
+      for (const level of subject.levels) expect(levels).toContain(level);
+    }
+    for (const standard of standards) {
+      const subject = subjects.get(standard.subject);
+      expect(subject, standard.code).toBeDefined();
+      expect(subject?.framework, standard.code).toBe(standard.framework);
+      expect(subject?.levels, standard.code).toContain(standard.level);
+    }
   });
 
   it("has a rights record for every framework it uses (ADR 0029)", () => {
@@ -57,7 +74,12 @@ describe("Nigeria senior secondary", () => {
       const subjects = new Set(
         CURRICULA.ng.standards.filter((s) => s.level === level).map((s) => s.subject),
       );
-      expect([...subjects].sort(), level).toEqual(["biology", "chemistry", "maths", "physics"]);
+      expect([...subjects].sort(), level).toEqual([
+        "ng-biology",
+        "ng-chemistry",
+        "ng-physics",
+        "ng-sss-maths",
+      ]);
     }
   });
 

@@ -395,3 +395,62 @@ export const classActivity = mysqlTable(
     index("class_activity_week_idx").on(table.week),
   ],
 );
+
+// Loaded from @sbi/taxonomy's files by the migrate step; repo files stay the reviewed source (ADR 0029).
+export const curricula = mysqlTable("curricula", {
+  curriculumId: varchar("curriculum_id", { length: 8 }).primaryKey(),
+  label: varchar("label", { length: 80 }).notNull(),
+  levels: jsonDocument("levels").notNull(),
+  frameworks: jsonDocument("frameworks").notNull(),
+  syncedAt: timestamp("synced_at").notNull(),
+});
+
+export const curriculumSubjects = mysqlTable(
+  "curriculum_subjects",
+  {
+    subjectId: varchar("subject_id", { length: 40 }).primaryKey(),
+    curriculumId: varchar("curriculum_id", { length: 8 }).notNull(),
+    frameworkId: varchar("framework_id", { length: 40 }).notNull(),
+    name: varchar("name", { length: 80 }).notNull(),
+    levels: jsonDocument("levels").notNull(),
+    position: int("position").notNull(),
+  },
+  (table) => [index("curriculum_subjects_curriculum_idx").on(table.curriculumId, table.position)],
+);
+
+export const curriculumTopics = mysqlTable(
+  "curriculum_topics",
+  {
+    topicCode: varchar("topic_code", { length: 60 }).primaryKey(),
+    curriculumId: varchar("curriculum_id", { length: 8 }).notNull(),
+    subjectId: varchar("subject_id", { length: 40 }).notNull(),
+    frameworkId: varchar("framework_id", { length: 40 }).notNull(),
+    level: varchar("level", { length: 8 }).notNull(),
+    theme: varchar("theme", { length: 120 }),
+    title: varchar("title", { length: 300 }).notNull(),
+    goals: jsonDocument("goals").notNull(),
+    concepts: jsonDocument("concepts").notNull(),
+    sourceUrl: varchar("source_url", { length: 500 }),
+    position: int("position").notNull(),
+    // Topics are retired, never deleted, so a lesson never loses its link.
+    retiredAt: timestamp("retired_at"),
+  },
+  (table) => [
+    index("curriculum_topics_subject_idx").on(table.subjectId, table.level, table.position),
+  ],
+);
+
+export const lessonTopics = mysqlTable(
+  "lesson_topics",
+  {
+    lessonId: uuid("lesson_id").notNull(),
+    topicCode: varchar("topic_code", { length: 60 }).notNull(),
+    // "exact" when the lesson was made for the topic, "inferred" when matched from its concepts.
+    link: varchar("link", { length: 8 }).notNull(),
+    linkedAt: timestamp("linked_at").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.lessonId, table.topicCode] }),
+    index("lesson_topics_topic_idx").on(table.topicCode),
+  ],
+);
