@@ -1,9 +1,11 @@
 import { createEnv } from "@sbi/env";
 import { LIBRARY_ASSETS } from "@sbi/rights";
+import { curriculumCatalogue } from "@sbi/taxonomy/curriculum";
 import { REFERENCE_VISUALS, referenceAssets } from "@sbi/visuals";
 import { z } from "zod";
 import { createDatabase } from "../src/client";
 import { runMigrations } from "../src/migrate";
+import { createCurriculumRepository } from "../src/repositories/curriculum";
 import { createVisualAssetRepository } from "../src/repositories/visual-assets";
 import { createVisualManifestRepository } from "../src/repositories/visual-manifests";
 
@@ -23,6 +25,9 @@ try {
   const manifests = createVisualManifestRepository(db);
   for (const manifest of Object.values(REFERENCE_VISUALS)) await manifests.save(manifest);
   console.log(`Reference visuals: ${references.length} up to date.`);
+  // The repo's topic files are the reviewed source; each deploy brings the tables into line.
+  const synced = await createCurriculumRepository(db).sync(curriculumCatalogue(), new Date());
+  console.log(`Curriculum: ${synced.topics} topics up to date, ${synced.retired} retired.`);
 } finally {
   await close();
 }

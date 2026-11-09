@@ -176,6 +176,13 @@
       "when": 1794171111361,
       "tag": "0024_class_join_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1794230409199,
+      "tag": "0025_curriculum_catalogue",
+      "breakpoints": true
     }
   ]
 }

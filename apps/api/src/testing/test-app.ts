@@ -16,6 +16,7 @@ import { AppModule, configureApp } from "../app.module";
 import { loadEnv } from "../env";
 import { fakeAccountStore, fakeMailer, fakeSavedLessons, TEST_SCRYPT } from "./test-auth";
 import { fakeClasses } from "./test-classes";
+import { fakeCurriculum } from "./test-curriculum";
 import { fakeTutorTurns } from "./test-tutor";
 import {
   ACCOUNT_TOKENS,
@@ -30,6 +31,7 @@ import {
   SESSIONS,
   CATALOG_GAPS,
   CLASSES,
+  CURRICULUM,
   DATABASE,
   FRESHNESS_PASS,
   MALWARE_SCANNER,
@@ -198,6 +200,8 @@ export async function startTestApp(
     .useValue(fakeTutorTurns().repository)
     .overrideProvider(CLASSES)
     .useValue(fakeClasses().repository)
+    .overrideProvider(CURRICULUM)
+    .useValue(fakeCurriculum().repository)
     .overrideProvider(COVERAGE)
     .useValue({
       taughtBySubject: async () => [

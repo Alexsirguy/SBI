@@ -46,3 +46,4 @@ export const TUTOR_STRIKES = Symbol("TUTOR_STRIKES");
 export const CLASSES = Symbol("CLASSES");
 export const CLASS_OPEN_LIMITER = Symbol("CLASS_OPEN_LIMITER");
 export const CLASS_ACTIVITY_LIMITER = Symbol("CLASS_ACTIVITY_LIMITER");
+export const CURRICULUM = Symbol("CURRICULUM");

@@ -59,6 +59,7 @@ export const CURRICULUM_SOURCES: readonly CurriculumSource[] = [
     reviewDueOn: REVIEW_DUE,
   },
   { frameworkId: "nerdc-bst", ...NERDC },
+  { frameworkId: "nerdc-mth", ...NERDC },
   { frameworkId: "nerdc-sss", ...NERDC },
 ];
 

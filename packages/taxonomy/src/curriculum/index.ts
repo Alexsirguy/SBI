@@ -1,2 +1,10 @@
-export { conceptKey, Curriculum, CurriculumInfo, CurriculumSubject, Standard } from "./schema";
-export { alignmentsFor, CURRICULA, type Alignment, type AlignmentOptions } from "./curricula";
+export { conceptKey, Curriculum, CurriculumInfo, Standard, SubjectId, SubjectInfo } from "./schema";
+export {
+  alignmentsFor,
+  CURRICULA,
+  curriculumCatalogue,
+  type Alignment,
+  type AlignmentOptions,
+  type CatalogueTopic,
+  type CurriculumCatalogue,
+} from "./curricula";
