@@ -12,3 +12,4 @@ export {
   pubChemStructureAsset,
 } from "./libraries";
 export { creditFor, isShareAlike } from "./credit";
+export { CURRICULUM_SOURCES, curriculumSource, type CurriculumSource } from "./curricula";

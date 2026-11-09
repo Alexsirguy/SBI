@@ -184,7 +184,7 @@
   "curriculumHeading": "Curriculum links",
   "curriculumChoose": "Curriculum",
   "curriculumOff": "Off",
-  "curriculumUs": "United States (NGSS, Common Core)",
+  "curriculumUs": "United States (NGSS*, Common Core)",
   "curriculumNg": "Nigeria (NERDC)",
   "curriculumLevel": "Level",
   "curriculumAllLevels": "All levels",
@@ -193,5 +193,8 @@
   "curriculumPartial": "Related",
   "curriculumNote": "Our own reading of the curriculum, not an official mapping. Your choice stays on this device.",
   "cautionTeacherEdited": "Your teacher edited parts of this lesson. Those parts weren't re-checked against its sources.",
-  "editedTag": "Edited by your teacher"
+  "editedTag": "Edited by your teacher",
+  "curriculumNoticeNgss": "*NGSS is a registered trademark of WestEd. Neither WestEd nor the lead states and partners that developed the Next Generation Science Standards were involved in the production of this product, and do not endorse it.",
+  "curriculumNoticeCcss": "Common Core State Standards © Copyright 2010. National Governors Association Center for Best Practices and Council of Chief State School Officers. All rights reserved.",
+  "curriculumNoticeNerdc": "Topic list from the NERDC curriculum; goals and alignments are our own."
 }
