@@ -73,7 +73,10 @@ export function ClassLesson() {
             renderVisual={(visual) => <VisualFrame visual={visual} />}
           />
         </PracticeProvider>
-        <CurriculumLinks concepts={lesson.concepts.map((concept) => concept.label)} />
+        <CurriculumLinks
+          concepts={lesson.concepts.map((concept) => concept.label)}
+          lessonId={lesson.lessonId}
+        />
         <SourceList sources={sources} lesson={lesson} />
         <LessonFeedback lessonId={lesson.lessonId} version={lesson.version} />
       </div>

@@ -9,6 +9,11 @@ export const LessonRequest = z
     question: z.string().trim().min(3).max(500),
     taxonomyId: Id.optional(),
     subject: z.string().trim().min(2).max(80).optional(),
+    /** A curriculum topic to teach; the lesson is written to its goals and level (#422). */
+    topicCode: z
+      .string()
+      .regex(/^[A-Za-z0-9.-]{2,60}$/)
+      .optional(),
     audience: AudienceBand,
     readingLevel: ReadingLevel,
     locale: Locale,
@@ -19,10 +24,16 @@ export const LessonRequest = z
     /** Asked from a class link: the class's controls apply on the server (#113). */
     classCode: z.string().max(20).optional(),
   })
-  .refine((request) => request.taxonomyId !== undefined || request.subject !== undefined, {
-    message: "Name an object or a subject.",
-    path: ["subject"],
-  });
+  .refine(
+    (request) =>
+      request.taxonomyId !== undefined ||
+      request.subject !== undefined ||
+      request.topicCode !== undefined,
+    {
+      message: "Name an object, a subject or a curriculum topic.",
+      path: ["subject"],
+    },
+  );
 
 /** Asks for questions a learner might have about the object they just named (#325). */
 export const QuestionSuggestionRequest = z.object({

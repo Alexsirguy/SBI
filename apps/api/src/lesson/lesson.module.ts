@@ -42,6 +42,7 @@ import { LessonFeedbackController } from "./feedback.controller";
 import { LessonController } from "./lesson.controller";
 import { AccountModule } from "../account/account.module";
 import { ClassAccessModule } from "../classes/class-access.module";
+import { CurriculumModule } from "../curriculum/curriculum.module";
 import { SavedLessonsController } from "./saved-lessons.controller";
 import { RelatedController } from "./related.controller";
 import { LessonService } from "./lesson.service";
@@ -87,7 +88,7 @@ export function lessonProviderFor(env: Pick<ApiEnv, "lessonSource">): LlmProvide
 }
 
 @Module({
-  imports: [AccountModule, ClassAccessModule, TaxonomyModule, VisualsModule],
+  imports: [AccountModule, ClassAccessModule, CurriculumModule, TaxonomyModule, VisualsModule],
   controllers: [
     LessonController,
     LessonFeedbackController,

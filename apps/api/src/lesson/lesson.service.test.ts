@@ -28,6 +28,7 @@ import {
 import {
   createMemoryReviewAuditLog,
   LESSON_DRAFT_PROMPT_VERSION,
+  LESSON_TOPIC_DRAFT_PROMPT_VERSION,
   type LessonRepository,
   type TaxonomyLessonLookup,
 } from "@sbi/orchestrator";
@@ -40,6 +41,7 @@ import {
 } from "@sbi/safety";
 import { createTaxonomy, type Taxonomy } from "@sbi/taxonomy";
 import { UserFacingException } from "../common/user-facing.exception";
+import { fakeCurriculum } from "../testing/test-curriculum";
 import {
   effectiveSafetyClass,
   LESSON_POLICY_VERSION,
@@ -239,7 +241,7 @@ function scriptedProvider(options: Script = {}): LlmProvider {
       let payload: string;
       if (request.prompt?.id === "lesson-revise") {
         payload = JSON.stringify({ text: REVISED });
-      } else if (request.prompt?.id === "lesson-draft") {
+      } else if (request.prompt?.id.startsWith("lesson-draft")) {
         payload = JSON.stringify(options.fragment ?? FRAGMENT);
       } else if (text.includes("<section-") && options.revisionPasses && text.includes(REVISED)) {
         payload = SUPPORTS;
@@ -504,6 +506,90 @@ describe("LessonService", () => {
     const lesson = events.find((event) => event.type === "lesson");
     expect(lesson?.type === "lesson" && lesson.data.taxonomyId).toBe("subject.camping-kettle");
     expect(lessons.at(-1)?.concepts.map((concept) => concept.label)).toEqual(["Camping kettle"]);
+  });
+
+  it("writes a lesson for a curriculum topic at its level and links it to the topic", async () => {
+    const { lessons, repo } = memoryLessons();
+    const curriculum = fakeCurriculum();
+    const seen: string[] = [];
+    const provider = scriptedProvider();
+    const watching: LlmProvider = {
+      ...provider,
+      complete: (request) => {
+        seen.push(JSON.stringify(request.messages));
+        return provider.complete(request);
+      },
+    };
+    const target = new LessonService(
+      watching,
+      taxonomy(),
+      repo,
+      EVIDENCE.evidence,
+      createMemoryReviewAuditLog(),
+      gatherer([EVIDENCE.claim]),
+      CLEARED,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      curriculum.repository,
+    );
+    const code = "NG-PHY-SSS1-MOTION-FRICTION";
+    const events = await collect(target, {
+      ...REQUEST,
+      question: "Teach friction",
+      taxonomyId: undefined,
+      topicCode: code,
+    });
+    const lesson = events.find((event) => event.type === "lesson");
+    if (lesson?.type !== "lesson") throw new Error("Expected a lesson");
+    expect(lesson.data).toMatchObject({
+      audience: ["teen"],
+      readingLevel: "plain",
+      taxonomyId: `topic.${code}`,
+    });
+    expect(lesson.data.reuse.promptVersion).toBe(LESSON_TOPIC_DRAFT_PROMPT_VERSION);
+    expect(seen.some((messages) => messages.includes(`Curriculum topic: ${code}`))).toBe(true);
+    expect(lessons).toHaveLength(1);
+    const links = await curriculum.repository.lessonTopics(lesson.data.lessonId);
+    expect(links[0]).toEqual({ link: "exact", topicCode: code });
+  });
+
+  it("keeps a class's age lock over a topic's level, and refuses unknown or retired topics", async () => {
+    const curriculum = fakeCurriculum();
+    const code = "NG-PHY-SSS1-MOTION-FRICTION";
+    const build = () =>
+      new LessonService(
+        scriptedProvider(),
+        taxonomy(),
+        memoryLessons().repo,
+        EVIDENCE.evidence,
+        createMemoryReviewAuditLog(),
+        gatherer([EVIDENCE.claim]),
+        CLEARED,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        curriculum.repository,
+      );
+    const request = {
+      ...REQUEST,
+      audience: "child" as const,
+      taxonomyId: undefined,
+      topicCode: code,
+    };
+    const events: LessonStreamEvent[] = [];
+    for await (const event of build().streamLesson(request, { audienceLocked: true })) {
+      events.push(event);
+    }
+    const lesson = events.find((event) => event.type === "lesson");
+    expect(lesson?.type === "lesson" && lesson.data.audience).toEqual(["child"]);
+
+    const unknown = await userFacing(() => collect(build(), { ...request, topicCode: "NG-NOPE" }));
+    expect(unknown).toEqual({ message: "That curriculum topic could not be found.", status: 404 });
+    curriculum.retired.set(code, new Date());
+    expect((await userFacing(() => collect(build(), request))).status).toBe(404);
   });
 
   it("serves a free subject on a high-risk topic with that topic's safety notice", async () => {

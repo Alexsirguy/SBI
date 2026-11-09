@@ -280,7 +280,10 @@ export function LessonReader({ request, label, prefs, question, fetcher }: Lesso
             <NextConcepts lessonId={lesson.lessonId} version={lesson.version} prefs={prefs} />
           ) : null}
           {lesson && status === "ready" ? (
-            <CurriculumLinks concepts={lesson.concepts.map((concept) => concept.label)} />
+            <CurriculumLinks
+              concepts={lesson.concepts.map((concept) => concept.label)}
+              lessonId={lesson.lessonId}
+            />
           ) : null}
           {lesson && status === "ready" ? (
             <SaveOffline lessonId={lesson.lessonId} version={lesson.version} />

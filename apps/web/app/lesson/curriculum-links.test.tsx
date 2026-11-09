@@ -5,6 +5,9 @@ import { CurriculumLinks } from "./curriculum-links";
 import { readCurriculum } from "./curriculum-pref";
 import { mount, text } from "./dom-test";
 
+const api = vi.hoisted(() => vi.fn());
+vi.mock("../api", () => ({ api }));
+
 const KEY = "sbi.curriculum";
 // The standards load on demand, which can be slow while the whole suite runs in parallel.
 const LOADED = { timeout: 5000 };
@@ -80,5 +83,33 @@ describe("CurriculumLinks", () => {
   it("ignores a stored value it doesn't know", () => {
     window.localStorage.setItem(KEY, JSON.stringify({ curriculum: "fr", level: "x" }));
     expect(readCurriculum()).toEqual({ curriculum: "none" });
+  });
+
+  it("lists the topic a lesson was made for first, marked, without repeating it", async () => {
+    window.localStorage.setItem(KEY, JSON.stringify({ curriculum: "ng" }));
+    const topic = {
+      code: "NG-PHY-SSS2-WAVES-LIGHT-REFRACTION",
+      concepts: ["refraction"],
+      curriculum: "ng",
+      frameworkId: "nerdc-sss",
+      goals: [],
+      level: "SSS2",
+      retiredAt: null,
+      sourceUrl: null,
+      subjectId: "ng-physics",
+      theme: "Waves",
+      title: "Refraction of light",
+    };
+    api.mockResolvedValue({ links: [{ link: "exact", topic }] });
+    const { container } = await mount(
+      <CurriculumLinks concepts={["refraction"]} lessonId="0192f1a0-0000-7000-8000-0000000000c1" />,
+    );
+    await vi.waitFor(() => expect(text(container)).toContain("Made for this topic"), LOADED);
+    await vi.waitFor(() => expect(codes(container).length).toBeGreaterThan(1), LOADED);
+    expect(codes(container)[0]).toBe(topic.code);
+    expect(codes(container).filter((code) => code === topic.code)).toHaveLength(1);
+    expect(api).toHaveBeenCalledWith("lessonTopics", {
+      lessonId: "0192f1a0-0000-7000-8000-0000000000c1",
+    });
   });
 });

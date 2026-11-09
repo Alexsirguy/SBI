@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CurriculumId } from "./class-api";
+import { Uuid } from "./common";
 
 const Code = z.string().regex(/^[A-Za-z0-9.-]{2,60}$/);
 const SubjectId = z.string().regex(/^(us|ng)(?:-[a-z]+)+$/);
@@ -57,6 +58,14 @@ export const CurriculumTopics = z.object({ topics: z.array(CurriculumTopic) });
 
 export const CurriculumTopicRequest = z.object({ code: Code });
 export const CurriculumTopicResult = z.object({ topic: CurriculumTopic });
+
+export const TopicLinkKind = z.enum(["exact", "inferred"]);
+
+export const LessonTopicsRequest = z.object({ lessonId: Uuid });
+/** Topics a lesson is linked to: "exact" when made for the topic, "inferred" when matched. */
+export const LessonTopics = z.object({
+  links: z.array(z.object({ link: TopicLinkKind, topic: CurriculumTopic })),
+});
 
 export type CurriculumSummary = z.infer<typeof CurriculumSummary>;
 export type CurriculumTopic = z.infer<typeof CurriculumTopic>;

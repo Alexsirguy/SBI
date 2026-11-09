@@ -70,6 +70,7 @@ export class LessonController {
     const controls = body.classCode ? await this.classAccess.controls(body.classCode) : undefined;
     const asked = controls?.audienceLock ? { ...body, audience: controls.audienceLock } : body;
     const events = this.lessons.streamLesson(asked, {
+      audienceLocked: !!controls?.audienceLock,
       blockedCategories: controls?.blockedCategories,
       ownLessonIds: await this.ownLessonIds(request),
     });

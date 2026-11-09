@@ -4,6 +4,7 @@ import {
   CurriculumId,
   CurriculumTopicRequest,
   CurriculumTopicsRequest,
+  LessonTopicsRequest,
   type ApiResponse,
   type CurriculumTopic,
 } from "@sbi/contracts";
@@ -70,6 +71,24 @@ export class CurriculumController {
       subjectId: subject,
     });
     return { topics: stored.map(toTopic) };
+  }
+
+  @Get(API_ROUTES.lessonTopics.path)
+  async lessonTopics(
+    @Query(new ZodPipe(LessonTopicsRequest, "Give a lesson id."))
+    { lessonId }: z.output<typeof LessonTopicsRequest>,
+  ): Promise<ApiResponse<"lessonTopics">> {
+    const links = await this.curriculum.lessonTopics(lessonId);
+    const found = await Promise.all(
+      links.map(async ({ topicCode, link }) => {
+        const topic = await this.curriculum.topic(topicCode);
+        return topic ? [{ link, topic: toTopic(topic) }] : [];
+      }),
+    );
+    // Only links, never who asked: a lesson id says nothing about a learner.
+    return {
+      links: found.flat().sort((a, b) => Number(a.link !== "exact") - Number(b.link !== "exact")),
+    };
   }
 
   @Get(API_ROUTES.curriculumTopic.path)

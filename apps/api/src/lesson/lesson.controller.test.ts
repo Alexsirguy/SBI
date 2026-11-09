@@ -199,8 +199,11 @@ describe("lesson routes", () => {
     await controller.stream({} as never, anonymous, mockResponse().res);
 
     expect(seen).toEqual([
-      { ownLessonIds: new Set(["0192f1a0-0000-7000-8000-0000000000c1"]) },
-      { ownLessonIds: undefined },
+      {
+        audienceLocked: false,
+        ownLessonIds: new Set(["0192f1a0-0000-7000-8000-0000000000c1"]),
+      },
+      { audienceLocked: false, ownLessonIds: undefined },
     ]);
   });
 
@@ -231,7 +234,7 @@ describe("lesson routes", () => {
     );
     expect(seen[0]).toEqual({
       body: { audience: "child", classCode: "7K3M-9QPX" },
-      viewer: { blockedCategories: ["weapons"], ownLessonIds: undefined },
+      viewer: { audienceLocked: true, blockedCategories: ["weapons"], ownLessonIds: undefined },
     });
 
     await expect(

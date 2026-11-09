@@ -6,6 +6,7 @@ import {
   generateDraft,
   HIGH_RISK_DRAFT_RULE,
   LESSON_DRAFT_PROMPT_VERSION,
+  LESSON_TOPIC_DRAFT_PROMPT_VERSION,
   type DraftInput,
 } from "./draft";
 
@@ -338,6 +339,33 @@ describe("generateDraft", () => {
     }
     expect(system).not.toContain("short-answer");
     expect(system).not.toContain("history");
+  });
+
+  it("writes to a curriculum topic with the topic prompt, leaving other lessons on v7", async () => {
+    const seen: CompletionRequest[] = [];
+    const topic = {
+      code: "NG-PHY-SSS1-MOTION-SPEED",
+      curriculum: "Nigeria",
+      goals: ["Work out speed from distance and time", "Tell speed from velocity"],
+      level: "SSS1",
+      title: "Speed and velocity",
+    };
+    const lesson = await generateDraft(
+      { ...base, topic },
+      { provider: stubProvider(JSON.stringify(fragment), seen) },
+    );
+    expect(isMerrillLesson(lesson)).toBe(true);
+    expect(lesson.reuse.promptVersion).toBe(LESSON_TOPIC_DRAFT_PROMPT_VERSION);
+    const [system, user] = seen[0]?.messages ?? [];
+    expect(String(system?.content)).toContain("teaches that topic at that level");
+    expect(String(user?.content)).toContain(
+      "Curriculum topic: NG-PHY-SSS1-MOTION-SPEED, Speed and velocity (Nigeria, SSS1)",
+    );
+    expect(String(user?.content)).toContain("- Tell speed from velocity");
+    expect(String(user?.content)).toMatch(/<question-[0-9a-f]+>/);
+
+    await generateDraft(base, { provider: stubProvider(JSON.stringify(fragment), seen) });
+    expect(String(seen[1]?.messages[1]?.content)).not.toContain("Curriculum topic");
   });
 
   it("fences the learner's question so it cannot pose as instructions", async () => {

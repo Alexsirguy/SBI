@@ -15,9 +15,11 @@ export {
   HIGH_RISK_DRAFT_RULE,
   LESSON_DRAFT_PROMPT,
   LESSON_DRAFT_PROMPT_VERSION,
+  LESSON_TOPIC_DRAFT_PROMPT_VERSION,
   REUSE_MATCH_DIMENSIONS,
   type DraftDeps,
   type DraftInput,
+  type DraftTopic,
 } from "./draft";
 export {
   citationCheck,

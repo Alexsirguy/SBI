@@ -97,6 +97,8 @@ import {
   CurriculumTopicResult,
   CurriculumTopics,
   CurriculumTopicsRequest,
+  LessonTopics,
+  LessonTopicsRequest,
 } from "./curriculum-api";
 import { ServedVisual, VisualRequest } from "./visual";
 import { LessonPack, LessonPackRequest } from "./pack";
@@ -184,6 +186,14 @@ export const API_ROUTES = {
     request: CurriculumTopicRequest,
     response: CurriculumTopicResult,
     errors: [400, 404],
+  },
+  lessonTopics: {
+    method: "get",
+    path: "/lessons/topics",
+    summary: "List the curriculum topics a lesson is linked to, made-for links first.",
+    request: LessonTopicsRequest,
+    response: LessonTopics,
+    errors: [400],
   },
   keepPhoto: {
     method: "post",
