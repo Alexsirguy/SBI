@@ -18,6 +18,11 @@ interface Loaded {
 }
 
 const CHOICE_KEY = { none: "curriculumOff", us: "curriculumUs", ng: "curriculumNg" } as const;
+// The notices each framework's terms ask for wherever its name or codes appear (ADR 0029).
+const NOTICE_KEYS = {
+  us: ["curriculumNoticeNgss", "curriculumNoticeCcss"],
+  ng: ["curriculumNoticeNerdc"],
+} as const;
 
 /** Standards this lesson teaches in the learner's chosen curriculum (#114). */
 export function CurriculumLinks({ concepts }: { concepts: readonly string[] }) {
@@ -112,7 +117,14 @@ export function CurriculumLinks({ concepts }: { concepts: readonly string[] }) {
         </ul>
       )}
       {curriculum === "none" ? null : (
-        <p className="curriculum-links__note">{t("curriculumNote")}</p>
+        <>
+          <p className="curriculum-links__note">{t("curriculumNote")}</p>
+          {NOTICE_KEYS[curriculum].map((key) => (
+            <p key={key} className="curriculum-links__note">
+              {t(key)}
+            </p>
+          ))}
+        </>
       )}
     </section>
   );

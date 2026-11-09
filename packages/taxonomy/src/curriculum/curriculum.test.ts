@@ -1,3 +1,4 @@
+import { curriculumSource } from "@sbi/rights";
 import { describe, expect, it } from "vitest";
 import { SEED_TAXONOMY } from "../seed";
 import { createTaxonomy } from "../taxonomy";
@@ -27,6 +28,12 @@ describe.each(Curriculum.options)("%s curriculum", (curriculum) => {
     }
     const all = standards.map((s) => s.code);
     expect(new Set(all).size).toBe(all.length);
+  });
+
+  it("has a rights record for every framework it uses (ADR 0029)", () => {
+    for (const framework of CURRICULA[curriculum].frameworks) {
+      expect(curriculumSource(framework.id), framework.id).toBeDefined();
+    }
   });
 
   it("only names concepts the seed teaches", () => {
