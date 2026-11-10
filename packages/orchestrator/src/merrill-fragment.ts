@@ -205,3 +205,98 @@ export function draftTasks(
     };
   });
 }
+
+export interface FragmentFormula {
+  name: string;
+  expression: string;
+  words: string;
+  symbols: { symbol: string; meaning: string; unit: string; quantityId: string }[];
+  example: { problem: string; steps: string[]; answer: string };
+  practice: { prompt: string; answer: number; unit: string; tolerance: number; working: string[] };
+}
+
+const text = { type: "string" };
+
+/** Topic drafts from lesson-draft-topic@2: the formulas the topic is taught with, or []. */
+export const FORMULAS_FRAGMENT_PROPERTY: Record<string, unknown> = {
+  type: "array",
+  maxItems: 2,
+  items: {
+    type: "object",
+    properties: {
+      name: text,
+      expression: text,
+      words: text,
+      symbols: {
+        type: "array",
+        minItems: 2,
+        maxItems: 6,
+        items: {
+          type: "object",
+          properties: { symbol: text, meaning: text, unit: text, quantityId: text },
+          required: ["symbol", "meaning", "unit", "quantityId"],
+          additionalProperties: false,
+        },
+      },
+      example: {
+        type: "object",
+        properties: { problem: text, steps: strings, answer: text },
+        required: ["problem", "steps", "answer"],
+        additionalProperties: false,
+      },
+      practice: {
+        type: "object",
+        properties: {
+          prompt: text,
+          answer: { type: "number" },
+          unit: text,
+          tolerance: { type: "number" },
+          working: strings,
+        },
+        required: ["prompt", "answer", "unit", "tolerance", "working"],
+        additionalProperties: false,
+      },
+    },
+    required: ["name", "expression", "words", "symbols", "example", "practice"],
+    additionalProperties: false,
+  },
+};
+
+// Rounding to two significant figures must still count as right.
+const toleranceFor = (answer: number, given: number) =>
+  given > 0 ? given : Math.max(Math.abs(answer) * 0.02, 0.01);
+
+/** Formulas with assigned ids; a symbol's quantity that the experiment lacks is dropped. */
+export function draftFormulas(
+  formulas: FragmentFormula[] = [],
+  experiment: FragmentExperiment | undefined,
+): Lesson["formulas"] {
+  const quantities = new Set([
+    ...(experiment?.controls.map((control) => control.id) ?? []),
+    ...(experiment?.readouts.map((readout) => readout.id) ?? []),
+  ]);
+  return formulas.slice(0, 2).map((formula, index) => ({
+    formulaId: `formula-${index + 1}`,
+    name: withoutInlineIds(formula.name),
+    expression: formula.expression.trim(),
+    words: withoutInlineIds(formula.words),
+    symbols: formula.symbols.map((symbol) => ({
+      symbol: symbol.symbol.trim(),
+      meaning: withoutInlineIds(symbol.meaning),
+      unit: symbol.unit.trim(),
+      quantityId: quantities.has(symbol.quantityId) ? symbol.quantityId : undefined,
+    })),
+    example: {
+      problem: withoutInlineIds(formula.example.problem),
+      steps: formula.example.steps.slice(0, 6).map(withoutInlineIds),
+      answer: withoutInlineIds(formula.example.answer),
+    },
+    practice: {
+      prompt: withoutInlineIds(formula.practice.prompt),
+      answer: formula.practice.answer,
+      unit: formula.practice.unit.trim(),
+      tolerance: toleranceFor(formula.practice.answer, formula.practice.tolerance),
+      working: formula.practice.working.slice(0, 6).map(withoutInlineIds),
+    },
+  }));
+}

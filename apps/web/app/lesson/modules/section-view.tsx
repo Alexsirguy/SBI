@@ -84,6 +84,8 @@ export function SectionView({
           concepts={lesson.concepts}
           guess={lesson.tasks.find((task) => task.module === "activate")}
           pictures={pictures}
+          formulas={lesson.formulas}
+          experiment={lesson.experiment}
         />
       );
     case "apply":
@@ -92,6 +94,7 @@ export function SectionView({
           section={section}
           tasks={lesson.tasks.filter((task) => task.module === "apply")}
           experiment={lesson.experiment}
+          formulas={lesson.formulas}
         />
       );
     case "integrate":

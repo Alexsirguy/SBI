@@ -368,6 +368,54 @@ describe("generateDraft", () => {
     expect(String(seen[1]?.messages[1]?.content)).not.toContain("Curriculum topic");
   });
 
+  it("asks a topic draft for its formulas and keeps them, tied to the experiment", async () => {
+    const seen: CompletionRequest[] = [];
+    const topic = { code: "NG-X", curriculum: "Nigeria", goals: [], level: "SSS1", title: "Heat" };
+    const formula = {
+      name: "Energy to heat water",
+      expression: "E = P × t",
+      words: "More power for longer gives more energy.",
+      symbols: [
+        { symbol: "E", meaning: "energy", unit: "J", quantityId: "" },
+        { symbol: "P", meaning: "power", unit: "W", quantityId: "power" },
+        { symbol: "t", meaning: "time", unit: "s", quantityId: "boilTime" },
+        { symbol: "m", meaning: "mass", unit: "kg", quantityId: "mass" },
+      ],
+      example: { problem: "2000 W for 60 s?", steps: ["E = 2000 × 60"], answer: "120 000 J" },
+      practice: {
+        prompt: "1500 W for 10 s?",
+        answer: 15000,
+        unit: "J",
+        tolerance: 0,
+        working: ["E = 1500 × 10 = 15 000 J"],
+      },
+    };
+    const lesson = await generateDraft(
+      { ...base, topic },
+      { provider: stubProvider(JSON.stringify({ ...fragment, formulas: [formula] }), seen) },
+    );
+    expect(String(seen[0]?.messages[0]?.content)).toContain("give it in formulas");
+    const schema = seen[0]?.jsonSchema?.schema as { required: string[] };
+    expect(schema.required).toContain("formulas");
+    const [kept] = lesson.formulas;
+    expect(kept?.formulaId).toBe("formula-1");
+    expect(kept?.symbols.map((symbol) => symbol.quantityId)).toEqual([
+      undefined,
+      "power",
+      "boilTime",
+      undefined,
+    ]);
+    expect(kept?.practice.tolerance).toBe(300);
+
+    const plain = await generateDraft(base, {
+      provider: stubProvider(JSON.stringify({ ...fragment, formulas: [formula] }), seen),
+    });
+    expect(plain.formulas).toEqual([]);
+    expect((seen[1]?.jsonSchema?.schema as { required: string[] }).required).not.toContain(
+      "formulas",
+    );
+  });
+
   it("fences the learner's question so it cannot pose as instructions", async () => {
     const seen: CompletionRequest[] = [];
     await generateDraft(

@@ -126,6 +126,39 @@ export const DemonstrationStep = z.object({
   settings: z.array(ControlSetting).max(4).default([]),
 });
 
+/** One letter of a formula; a quantity the lab shows names its control or readout id. */
+export const FormulaSymbol = z.object({
+  symbol: Text.max(12),
+  meaning: Text.max(80),
+  unit: z.string().max(20).default(""),
+  quantityId: ParamId.optional(),
+});
+
+/** A calculation the learner works out; right within tolerance, then shown the working. */
+export const FormulaPractice = z.object({
+  prompt: Text.max(400),
+  answer: z.number(),
+  unit: z.string().max(20).default(""),
+  tolerance: z.number().positive(),
+  working: z.array(Text.max(300)).min(1).max(6),
+});
+
+/** A formula the topic is taught with: its symbols, a worked example and one to try (#434). */
+export const Formula = z.object({
+  formulaId: Id,
+  name: Text.max(80),
+  expression: Text.max(80),
+  /** The relation in words, e.g. "the rougher the surface, the bigger the friction". */
+  words: Text.max(300),
+  symbols: z.array(FormulaSymbol).min(2).max(6),
+  example: z.object({
+    problem: Text.max(400),
+    steps: z.array(Text.max(300)).min(1).max(6),
+    answer: Text.max(80),
+  }),
+  practice: FormulaPractice,
+});
+
 export const Concept = z.object({
   conceptId: Id,
   label: Text,
@@ -200,6 +233,7 @@ const LessonShape = z.object({
   /** Merrill lessons: the activate guess and the apply challenges. */
   tasks: z.array(LessonTask).default([]),
   experiment: Experiment.optional(),
+  formulas: z.array(Formula).max(2).default([]),
   safetyClass: SafetyClass,
   reviewStatus: ReviewStatus,
   reviewedAt: IsoDateTime.optional(),
@@ -252,6 +286,7 @@ function lessonIssues(lesson: z.output<typeof LessonShape>): Issue[] {
   });
 
   if (merrill) issues.push(...merrillIssues(lesson, claims));
+  issues.push(...formulaIssues(lesson));
 
   lesson.sections.forEach((section, index) => {
     const path = ["sections", index, "claimIds"];
@@ -357,6 +392,28 @@ function merrillIssues(
   return issues;
 }
 
+function formulaIssues(lesson: z.output<typeof LessonShape>): Issue[] {
+  const issues: Issue[] = [];
+  const quantities = new Set([
+    ...(lesson.experiment?.controls.map((control) => control.id) ?? []),
+    ...(lesson.experiment?.readouts.map((readout) => readout.id) ?? []),
+  ]);
+  lesson.formulas.forEach((formula, index) => {
+    formula.symbols.forEach((symbol, symbolIndex) => {
+      if (symbol.quantityId && !quantities.has(symbol.quantityId)) {
+        issues.push({
+          message: `Unknown quantity "${symbol.quantityId}"`,
+          path: ["formulas", index, "symbols", symbolIndex, "quantityId"],
+        });
+      }
+    });
+  });
+  for (const id of duplicates(lesson.formulas.map((formula) => formula.formulaId))) {
+    issues.push({ message: `Duplicate id "${id}"`, path: ["formulas"] });
+  }
+  return issues;
+}
+
 export const Lesson = LessonShape.superRefine((lesson, ctx) => {
   for (const issue of lessonIssues(lesson)) ctx.addIssue({ code: "custom", ...issue });
 });
@@ -369,6 +426,8 @@ export type Experiment = z.infer<typeof Experiment>;
 export type ExperimentGoal = z.infer<typeof ExperimentGoal>;
 export type ControlSetting = z.infer<typeof ControlSetting>;
 export type DemonstrationStep = z.infer<typeof DemonstrationStep>;
+export type Formula = z.infer<typeof Formula>;
+export type FormulaSymbol = z.infer<typeof FormulaSymbol>;
 export type Lesson = z.infer<typeof Lesson>;
 export type LessonDisclaimer = z.infer<typeof LessonDisclaimer>;
 export type DisclaimerKind = z.infer<typeof DisclaimerKind>;

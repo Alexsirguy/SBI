@@ -220,6 +220,26 @@ export interface LessonForVisual {
   steps?: string[];
   /** The sliders and readouts the lesson's demonstration and challenges name. */
   experiment?: ExperimentForVisual;
+  /** The formulas the lesson teaches; readouts must compute the same relation (#434). */
+  formulas?: FormulaForVisual[];
+}
+
+export interface FormulaForVisual {
+  expression: string;
+  symbols: { symbol: string; meaning: string; unit: string; quantityId?: string }[];
+}
+
+function renderFormulas(formulas: FormulaForVisual[] | undefined): string {
+  if (!formulas?.length) return "";
+  const lines = formulas.map((formula) => {
+    const symbols = formula.symbols.map(
+      (symbol) =>
+        `${symbol.symbol} = ${symbol.meaning}${symbol.unit ? ` (${symbol.unit})` : ""}` +
+        (symbol.quantityId ? ` is ${symbol.quantityId}` : ""),
+    );
+    return `- ${formula.expression}, where ${symbols.join("; ")}`;
+  });
+  return `\nFormulas the lesson teaches (each readout's formula must compute the same relation):\n${lines.join("\n")}`;
 }
 
 function renderExperiment(experiment: ExperimentForVisual | undefined): string {
@@ -240,7 +260,7 @@ export function visualUserPrompt(lesson: LessonForVisual): string {
   const steps = lesson.steps?.length
     ? `\nDemonstration steps:\n${lesson.steps.map((step, index) => `${index + 1}. ${step}`).join("\n")}`
     : "";
-  return `Lesson: ${lesson.title}\nReading level: ${lesson.readingLevel}\nSummary: ${lesson.summary}\nClaims:\n${claims}${steps}${renderExperiment(lesson.experiment)}`;
+  return `Lesson: ${lesson.title}\nReading level: ${lesson.readingLevel}\nSummary: ${lesson.summary}\nClaims:\n${claims}${steps}${renderExperiment(lesson.experiment)}${renderFormulas(lesson.formulas)}`;
 }
 
 /** Turns the AI's flat answer into a manifest; labels citing claims outside the lesson are dropped. */
