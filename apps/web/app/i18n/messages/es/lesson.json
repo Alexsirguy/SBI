@@ -197,5 +197,20 @@
   "curriculumNoticeNgss": "*NGSS es una marca registrada de WestEd. Ni WestEd ni los estados y socios principales que desarrollaron los Next Generation Science Standards participaron en la creación de este producto, ni lo respaldan.",
   "curriculumNoticeCcss": "Common Core State Standards © Copyright 2010. National Governors Association Center for Best Practices y Council of Chief State School Officers. Todos los derechos reservados.",
   "curriculumNoticeNerdc": "Lista de temas del currículo de NERDC; los objetivos y las correspondencias son nuestros.",
-  "curriculumMadeFor": "Hecha para este tema"
+  "curriculumMadeFor": "Hecha para este tema",
+  "formulaLabel": "Fórmula",
+  "formulaSymbols": "Qué significa cada letra",
+  "formulaNoUnit": "sin unidad",
+  "formulaLive": "En el laboratorio ahora",
+  "formulaExample": "Ejemplo resuelto",
+  "formulaAnswer": "Respuesta: {answer}",
+  "calcHeading": "Resuélvelo: {name}",
+  "calcAnswer": "Tu respuesta",
+  "calcAnswerIn": "Tu respuesta, en {unit}",
+  "calcNotNumber": "Escribe un número, como 60 o 0,25.",
+  "calcRight": "Correcto.",
+  "calcWrong": "Todavía no. Repasa cada paso y vuelve a comprobar.",
+  "calcShowWorking": "Ver la solución",
+  "calcWorking": "La solución",
+  "calcExpected": "La respuesta es {answer}."
 }

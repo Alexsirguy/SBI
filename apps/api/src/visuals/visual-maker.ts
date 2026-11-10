@@ -36,6 +36,7 @@ export function createVisualMaker(deps: {
           claims: lesson.claims.map(({ claimId, text }) => ({ claimId, text })),
           steps: lesson.sections.flatMap((section) => section.steps ?? []).map((step) => step.text),
           experiment: lesson.experiment,
+          formulas: lesson.formulas,
         },
         pubchem: { cache: deps.pubchem },
         signal: AbortSignal.timeout(deps.timeoutMs ?? 150_000),

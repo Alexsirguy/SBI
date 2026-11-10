@@ -1,6 +1,6 @@
 "use client";
 
-import type { Experiment, LessonSection, LessonTask } from "@sbi/contracts";
+import type { Experiment, Formula, LessonSection, LessonTask } from "@sbi/contracts";
 import { Button, RadioGroup } from "@sbi/ui";
 import { useState } from "react";
 import type { ExperimentController } from "../experiment";
@@ -8,6 +8,7 @@ import { useLocale, useT } from "../../i18n/provider";
 import { formatReading, goalHint, goalMet } from "../goal";
 import { rich } from "../lesson-t";
 import { useExperiment, useReadout } from "../practice";
+import { FormulaPracticeCard } from "./formula";
 import { SectionFrame } from "./frame";
 
 interface Readout {
@@ -200,10 +201,13 @@ export function ApplySection({
   section,
   tasks,
   experiment,
+  formulas = [],
 }: {
   section: LessonSection;
   tasks: LessonTask[];
   experiment?: Experiment;
+  /** Each formula's calculation follows the challenges, once the learner has used the lab. */
+  formulas?: Formula[];
 }) {
   const readouts = experiment?.readouts ?? [];
   return (
@@ -212,6 +216,9 @@ export function ApplySection({
       <div className="challenges">
         {tasks.map((task, index) => (
           <ChallengeCard key={task.taskId} task={task} number={index + 1} readouts={readouts} />
+        ))}
+        {formulas.map((formula) => (
+          <FormulaPracticeCard key={formula.formulaId} formula={formula} />
         ))}
       </div>
     </SectionFrame>

@@ -958,3 +958,89 @@ main.lesson {
   padding-block: var(--sbi-space-2);
   border-top: 1px solid var(--sbi-rule);
 }
+
+/* Topic formulas (#434): the relation large, its letters and a worked example beneath. */
+.formula {
+  display: grid;
+  gap: var(--sbi-space-2);
+  margin: var(--sbi-space-3) 0;
+}
+
+.formula h3,
+.formula h4,
+.formula__working h4 {
+  margin: 0;
+}
+
+.formula h4,
+.formula__working h4 {
+  margin-top: var(--sbi-space-2);
+  font-size: var(--sbi-text-body);
+}
+
+.formula__label {
+  margin: 0;
+  color: var(--sbi-ink-soft);
+  font-size: var(--sbi-text-small);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.formula__expression {
+  margin: 0;
+  padding: var(--sbi-space-2) var(--sbi-space-3);
+  background: var(--sbi-paper-sunk);
+  border-left: 3px solid var(--sbi-action);
+  font-family: var(--sbi-font-mono);
+  font-size: var(--sbi-text-answer);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.formula__symbols {
+  margin: 0;
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.formula__symbols > div {
+  display: flex;
+  gap: var(--sbi-space-2);
+}
+
+.formula__symbols dd {
+  margin: 0;
+}
+
+.formula__symbol {
+  min-width: 2ch;
+  font-family: var(--sbi-font-mono);
+  font-weight: 700;
+}
+
+.formula__live ul {
+  list-style: none;
+  margin: var(--sbi-space-1) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sbi-space-1) var(--sbi-space-4);
+}
+
+.formula__steps {
+  margin: 0;
+  padding-left: 1.75rem;
+  display: grid;
+  gap: var(--sbi-space-1);
+}
+
+.formula__answer {
+  margin: 0;
+  font-weight: 700;
+}
+
+.formula__working {
+  display: grid;
+  gap: var(--sbi-space-2);
+}

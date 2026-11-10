@@ -1,6 +1,13 @@
 "use client";
 
-import type { DemonstrationStep, Lesson, LessonSection, LessonTask } from "@sbi/contracts";
+import type {
+  DemonstrationStep,
+  Experiment,
+  Formula,
+  Lesson,
+  LessonSection,
+  LessonTask,
+} from "@sbi/contracts";
 import { Button, VisuallyHidden } from "@sbi/ui";
 import { type ReactNode, useState } from "react";
 import { useT } from "../../i18n/provider";
@@ -8,6 +15,7 @@ import { rich } from "../lesson-t";
 import { useExperiment } from "../practice";
 import { GuessReveal } from "./activate";
 import { KeyIdeas } from "./first-principles";
+import { FormulaCard } from "./formula";
 import { SectionFrame } from "./frame";
 
 function StepButton({
@@ -47,9 +55,14 @@ export function DemonstrateSection({
   concepts,
   guess,
   pictures,
+  formulas = [],
+  experiment,
 }: {
   section: LessonSection;
   concepts: Lesson["concepts"];
+  /** A topic's formulas, shown after the experiment so their live values sit near it. */
+  formulas?: Formula[];
+  experiment?: Experiment;
   /** The activate guess, answered once the demonstration is done. */
   guess?: LessonTask;
   /** The lesson's experiment, drawn between the steps and the key ideas. */
@@ -74,6 +87,9 @@ export function DemonstrateSection({
         {shown}
       </p>
       {pictures}
+      {formulas.map((formula) => (
+        <FormulaCard key={formula.formulaId} formula={formula} experiment={experiment} />
+      ))}
       <KeyIdeas concepts={concepts} />
       {guess ? <GuessReveal task={guess} /> : null}
     </SectionFrame>

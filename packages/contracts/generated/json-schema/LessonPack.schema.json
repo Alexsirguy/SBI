@@ -593,6 +593,151 @@
           ],
           "additionalProperties": false
         },
+        "formulas": {
+          "default": [],
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "formulaId": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "expression": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "words": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "symbols": {
+                "minItems": 2,
+                "maxItems": 6,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "symbol": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 12
+                    },
+                    "meaning": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "unit": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "quantityId": {
+                      "type": "string",
+                      "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
+                    }
+                  },
+                  "required": [
+                    "symbol",
+                    "meaning",
+                    "unit"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "example": {
+                "type": "object",
+                "properties": {
+                  "problem": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 400
+                  },
+                  "steps": {
+                    "minItems": 1,
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300
+                    }
+                  },
+                  "answer": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "problem",
+                  "steps",
+                  "answer"
+                ],
+                "additionalProperties": false
+              },
+              "practice": {
+                "type": "object",
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 400
+                  },
+                  "answer": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "tolerance": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "working": {
+                    "minItems": 1,
+                    "maxItems": 6,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300
+                    }
+                  }
+                },
+                "required": [
+                  "prompt",
+                  "answer",
+                  "unit",
+                  "tolerance",
+                  "working"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "formulaId",
+              "name",
+              "expression",
+              "words",
+              "symbols",
+              "example",
+              "practice"
+            ],
+            "additionalProperties": false
+          }
+        },
         "safetyClass": {
           "type": "string",
           "enum": [
@@ -771,6 +916,7 @@
         "claims",
         "visuals",
         "tasks",
+        "formulas",
         "safetyClass",
         "reviewStatus",
         "reuse"

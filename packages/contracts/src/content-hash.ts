@@ -40,6 +40,8 @@ export async function lessonContentHash(lesson: Lesson): Promise<string> {
   // Only Merrill lessons carry these, so lessons drafted before them keep their hashes.
   if (lesson.tasks.length > 0) content.tasks = lesson.tasks;
   if (lesson.experiment) content.experiment = lesson.experiment;
+  // Callers may hash a lesson built before formulas existed, without parsing it first.
+  if (lesson.formulas?.length) content.formulas = lesson.formulas;
   return sha256Hex(canonicalJson(content));
 }
 

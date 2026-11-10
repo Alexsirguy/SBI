@@ -2,11 +2,14 @@ import { languageRule } from "./language";
 import { randomBytes } from "node:crypto";
 import { withoutInlineIds } from "./inline-ids";
 import {
+  draftFormulas,
   draftSteps,
   draftTasks,
+  FORMULAS_FRAGMENT_PROPERTY,
   inMerrillOrder,
   MERRILL_FRAGMENT_PROPERTIES,
   type FragmentExperiment,
+  type FragmentFormula,
   type FragmentStep,
   type FragmentTask,
 } from "./merrill-fragment";
@@ -227,20 +230,47 @@ const LESSON_DRAFT_PROMPT_V7: PromptVersion = {
 export const LESSON_DRAFT_PROMPT: PromptVersion = LESSON_DRAFT_PROMPT_V7;
 
 // Its own id, so topic lessons don't change the version every other cached lesson is reused by.
-export const LESSON_TOPIC_DRAFT_PROMPT: PromptVersion = {
+const TOPIC_RULE =
+  "A curriculum topic follows the question. The lesson teaches that topic at that level: the " +
+  "problem, the demonstration and every task serve its goals, and nothing goes beyond the " +
+  "level. Choose a problem and a new case a learner of that age meets in everyday life in " +
+  "the topic's country, using its familiar objects, places and units.";
+
+const TOPIC_TEMPLATE = LESSON_DRAFT_PROMPT_V7.template.replace(
+  "{{question}}\n",
+  "{{question}}\n{{curriculumTopic}}\n",
+);
+
+const LESSON_TOPIC_DRAFT_PROMPT_V1: PromptVersion = {
   id: "lesson-draft-topic",
   version: "1",
+  system: [LESSON_DRAFT_PROMPT_V7.system, TOPIC_RULE].join("\n"),
+  template: TOPIC_TEMPLATE,
+};
+
+// v2 (#434): learners are examined on the topic's formulas, so the lesson teaches them to use one.
+export const LESSON_TOPIC_DRAFT_PROMPT: PromptVersion = {
+  id: "lesson-draft-topic",
+  version: "2",
   system: [
     LESSON_DRAFT_PROMPT_V7.system,
-    "A curriculum topic follows the question. The lesson teaches that topic at that level: the " +
-      "problem, the demonstration and every task serve its goals, and nothing goes beyond the " +
-      "level. Choose a problem and a new case a learner of that age meets in everyday life in " +
-      "the topic's country, using its familiar objects, places and units.",
+    TOPIC_RULE,
+    "Formulas: when the topic is taught at this level with a formula or equation (a physics " +
+      "law, a chemistry calculation, a maths rule), give it in formulas, at most two, the main " +
+      "one first; otherwise formulas is []. Write expression with the symbols learners at that " +
+      "level use in class and in exams, such as F = μR or v = u + at, using × and ÷ and √ " +
+      'rather than code, and units as printed, such as m/s² and cm³. Give every symbol in it its meaning and unit (unit "" when it has ' +
+      "none); a symbol that is an experiment control or readout gives that id as quantityId, " +
+      'otherwise quantityId is "". Make the experiment a working model of the main formula: ' +
+      "its controls are the formula's inputs and a readout is its result. words says the " +
+      "relation in one plain sentence. example is a worked problem in the topic's everyday " +
+      "setting and units: steps write the formula, put in the numbers with units, and work it " +
+      "out one move per step; answer is the result with its unit. practice is a different " +
+      "problem the learner works out alone: answer is the number in unit, tolerance allows " +
+      "for rounding, and working is the solution in the same steps as the example. Name the " +
+      "formula in the demonstration's steps where it explains the result.",
   ].join("\n"),
-  template: LESSON_DRAFT_PROMPT_V7.template.replace(
-    "{{question}}\n",
-    "{{question}}\n{{curriculumTopic}}\n",
-  ),
+  template: TOPIC_TEMPLATE,
 };
 
 export const LESSON_TOPIC_DRAFT_PROMPT_VERSION = `${LESSON_TOPIC_DRAFT_PROMPT.id}@${LESSON_TOPIC_DRAFT_PROMPT.version}`;
@@ -257,6 +287,7 @@ export function createDraftPromptRegistry(): PromptRegistry {
     LESSON_DRAFT_PROMPT_V5,
     LESSON_DRAFT_PROMPT_V6,
     LESSON_DRAFT_PROMPT_V7,
+    LESSON_TOPIC_DRAFT_PROMPT_V1,
     LESSON_TOPIC_DRAFT_PROMPT,
   ]);
 }
@@ -285,6 +316,7 @@ interface DraftFragment {
   }[];
   tasks?: FragmentTask[];
   experiment?: FragmentExperiment;
+  formulas?: FragmentFormula[];
 }
 
 // The eight modules every v6 lesson had (ADR 0011).
@@ -340,6 +372,19 @@ const MERRILL_FRAGMENT_SCHEMA: Record<string, unknown> = {
   properties: { ...LEGACY_HEAD, newCase: { type: "string" }, ...MERRILL_FRAGMENT_PROPERTIES },
   required: [...(LEGACY_FRAGMENT_SCHEMA.required as string[]), "newCase", "tasks", "experiment"],
 };
+
+// Formulas come last, so their quantity ids can name the experiment's exactly.
+const FORMULA_FRAGMENT_SCHEMA: Record<string, unknown> = {
+  ...MERRILL_FRAGMENT_SCHEMA,
+  properties: {
+    ...(MERRILL_FRAGMENT_SCHEMA.properties as Record<string, unknown>),
+    formulas: FORMULAS_FRAGMENT_PROPERTY,
+  },
+  required: [...(MERRILL_FRAGMENT_SCHEMA.required as string[]), "formulas"],
+};
+
+const teachesFormulas = (ref: string) =>
+  ref.startsWith(`${LESSON_TOPIC_DRAFT_PROMPT.id}@`) && Number(ref.split("@").at(-1)) >= 2;
 
 // Every topic prompt is Merrill; lesson-draft became Merrill at v7.
 const isMerrillPrompt = (ref: string) =>
@@ -437,6 +482,9 @@ async function assemble(
     visuals: [],
     tasks: merrill ? draftTasks(fragment.tasks, fragment.experiment, known) : [],
     experiment: merrill ? fragment.experiment : undefined,
+    formulas: teachesFormulas(promptVersion)
+      ? draftFormulas(fragment.formulas, fragment.experiment)
+      : [],
     safetyClass: input.safetyClass,
     reviewStatus: "generated",
     reuse: {
@@ -506,7 +554,11 @@ export async function generateDraft(input: DraftInput, deps: DraftDeps): Promise
     messages,
     jsonSchema: {
       name: "LessonDraft",
-      schema: merrill ? MERRILL_FRAGMENT_SCHEMA : LEGACY_FRAGMENT_SCHEMA,
+      schema: teachesFormulas(`${prompt.id}@${prompt.version}`)
+        ? FORMULA_FRAGMENT_SCHEMA
+        : merrill
+          ? MERRILL_FRAGMENT_SCHEMA
+          : LEGACY_FRAGMENT_SCHEMA,
     },
     prompt: { id: prompt.id, version: prompt.version },
     parse: (text: string) => toFragment(JSON.parse(text)),

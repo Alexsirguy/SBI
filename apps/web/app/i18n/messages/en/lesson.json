@@ -197,5 +197,20 @@
   "curriculumNoticeNgss": "*NGSS is a registered trademark of WestEd. Neither WestEd nor the lead states and partners that developed the Next Generation Science Standards were involved in the production of this product, and do not endorse it.",
   "curriculumNoticeCcss": "Common Core State Standards © Copyright 2010. National Governors Association Center for Best Practices and Council of Chief State School Officers. All rights reserved.",
   "curriculumNoticeNerdc": "Topic list from the NERDC curriculum; goals and alignments are our own.",
-  "curriculumMadeFor": "Made for this topic"
+  "curriculumMadeFor": "Made for this topic",
+  "formulaLabel": "Formula",
+  "formulaSymbols": "What each letter means",
+  "formulaNoUnit": "no unit",
+  "formulaLive": "In the lab right now",
+  "formulaExample": "Worked example",
+  "formulaAnswer": "Answer: {answer}",
+  "calcHeading": "Work it out: {name}",
+  "calcAnswer": "Your answer",
+  "calcAnswerIn": "Your answer, in {unit}",
+  "calcNotNumber": "Type a number, such as 60 or 0.25.",
+  "calcRight": "Right.",
+  "calcWrong": "Not yet. Go through each step again, then check.",
+  "calcShowWorking": "Show the working",
+  "calcWorking": "The working",
+  "calcExpected": "The answer is {answer}."
 }

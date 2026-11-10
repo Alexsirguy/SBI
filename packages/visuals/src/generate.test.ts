@@ -275,6 +275,23 @@ describe("generateVisual with the lesson's experiment", () => {
     expect(result.attempts).toBe(1);
   });
 
+  it("gives the lesson's formulas so the readouts compute the same relation", async () => {
+    const { provider, requests } = scripted(PITCH_GRAPH);
+    const formulas = [
+      {
+        expression: "f = (1/2L) × √(T/μ)",
+        symbols: [
+          { symbol: "f", meaning: "pitch", unit: "Hz", quantityId: "pitch" },
+          { symbol: "L", meaning: "string length", unit: "m" },
+        ],
+      },
+    ];
+    await generateVisual({ provider, lesson: { ...guitar, formulas }, pubchem });
+    expect(String(requests[0]?.messages[1]?.content)).toContain(
+      "- f = (1/2L) × √(T/μ), where f = pitch (Hz) is pitch; L = string length (m)",
+    );
+  });
+
   it("sends a missing experiment id back for repair", async () => {
     const missing = { ...PITCH_GRAPH, readouts: [{ ...PITCH_GRAPH.readouts[0], id: "frequency" }] };
     const { provider, requests } = scripted(missing, PITCH_GRAPH);
